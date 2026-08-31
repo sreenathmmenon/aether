@@ -37,16 +37,39 @@ function migratedDecisionNotes() {
   ];
 }
 
+/**
+ * Restored state must be structurally coherent, not merely shaped right: the
+ * interface reads the active branch and its base revision on first render, so
+ * a workspace whose references dangle would crash to a blank page. Rejecting
+ * it here falls back to a fresh workspace instead.
+ */
 function looksLikeAetherState(value: unknown): value is AetherState {
   if (!value || typeof value !== "object") return false;
   const candidate = value as Partial<AetherState>;
-  return Boolean(
-    candidate.workspace &&
-    candidate.branches &&
-    candidate.revisions &&
-    candidate.audit &&
-    candidate.simulations,
-  );
+  if (
+    !candidate.workspace ||
+    !candidate.branches ||
+    !candidate.revisions ||
+    !candidate.audit ||
+    !candidate.simulations
+  )
+    return false;
+
+  const branches = candidate.branches;
+  const revisions = candidate.revisions;
+  if (typeof branches !== "object" || typeof revisions !== "object")
+    return false;
+
+  const activeBranch = branches[candidate.workspace.activeBranchId ?? ""];
+  if (!activeBranch) return false;
+
+  // Every branch must resolve to a revision that carries a graph, and must
+  // carry an operation list the branch engine can replay.
+  return Object.values(branches).every((branch) => {
+    if (!branch || !Array.isArray(branch.operations)) return false;
+    const revision = revisions[branch.baseRevisionId];
+    return Boolean(revision?.graph?.entities);
+  });
 }
 
 export function loadPersistedState(): AetherState | undefined {

@@ -51,4 +51,46 @@ describe("workspace persistence shape", () => {
       simulationEngineVersion,
     );
   });
+
+  it("rejects a workspace whose references do not resolve", () => {
+    const good = createInitialState(paymentPlatformBaseline);
+    // The interface reads the active branch and its base revision on first
+    // render, so a dangling reference would crash to a blank page.
+    const ghostBranch = parsePersistedState(
+      JSON.stringify({
+        ...good,
+        workspace: { ...good.workspace, activeBranchId: "branch-ghost" },
+      }),
+    );
+    expect(ghostBranch).toBeUndefined();
+
+    const ghostRevision = parsePersistedState(
+      JSON.stringify({
+        ...good,
+        branches: {
+          "branch-baseline": {
+            ...good.branches["branch-baseline"],
+            baseRevisionId: "revision-ghost",
+          },
+        },
+      }),
+    );
+    expect(ghostRevision).toBeUndefined();
+
+    const badOperations = parsePersistedState(
+      JSON.stringify({
+        ...good,
+        branches: {
+          "branch-baseline": {
+            ...good.branches["branch-baseline"],
+            operations: "not an array",
+          },
+        },
+      }),
+    );
+    expect(badOperations).toBeUndefined();
+
+    // A coherent workspace still restores.
+    expect(parsePersistedState(JSON.stringify(good))).toBeDefined();
+  });
 });

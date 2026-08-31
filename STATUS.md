@@ -344,6 +344,10 @@ None. Production is deployed on Railway with durable PostgreSQL-backed shared-wo
   - Evidence: with every component removed the engine reported 99.99% availability and zero violations, because impact share, capacity deficits, and replication checks all had nothing to measure. A human could therefore strip a branch to nothing and merge it to production on perfect-looking evidence — the simulator rewarded deletion. A graph with no operational components now returns zero availability and a violation naming the condition, which also keeps it out of the approval gate. Covered by a regression test asserting the empty result is strictly worse than the seeded baseline.
   - Also probed and confirmed correct: editing or rolling back the immutable baseline, creating a duplicate branch, and approving a stale version are each refused with the right code, and degenerate graphs with no relationships or a single component still surface their violations rather than crashing.
 
+- [x] **M14.27 — Survive a corrupt persisted workspace** `DONE`
+  - Acceptance: no stored state can render a blank page.
+  - Evidence: the loader checked only that the top-level keys existed, never that they resolved, so a workspace whose `activeBranchId` named a missing branch, or whose branch pointed at a missing revision, was accepted and then crashed the first render on a non-null assertion — a blank white page with no way to recover, reachable from an interrupted write or a workspace left by an older deploy. Restored state must now resolve its active branch, and every branch must resolve to a revision carrying a graph and hold a replayable operation list. Verified in the browser: a planted `branch-ghost` workspace previously crashed and now falls back to a fresh workspace with the full interface intact.
+
 ## Milestone 13 — Real-time architecture decision room
 
 - [x] **M13.1 — Define and build the unmistakable collaborative decision-room journey** `DONE`
