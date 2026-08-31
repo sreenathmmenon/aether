@@ -390,9 +390,16 @@ export function dispatch(
 
   if (command.type === "ADD_COMPONENT") {
     const branch = next.branches[command.input.branchId];
-    if (!branch || branch.status === "merged" || branch.status === "discarded")
+    if (!branch || branch.status === "discarded")
       return commandFailure("NOT_AVAILABLE", "This branch cannot be changed.");
     const graph = deriveGraph(next, branch);
+    // A committed architecture is immutable, except while it is still empty:
+    // an unbuilt canvas has nothing to protect and must be fillable.
+    const alreadyBuilt = Object.values(graph.entities).some(
+      (entity) => entity.kind !== "region",
+    );
+    if (branch.status === "merged" && alreadyBuilt)
+      return commandFailure("NOT_AVAILABLE", "This branch cannot be changed.");
     if (!graph.entities[command.input.regionId])
       return commandFailure("INVALID_INPUT", "Unknown region.");
     const entityId = `entity-${command.input.name
@@ -448,9 +455,13 @@ export function dispatch(
 
   if (command.type === "CONNECT_COMPONENTS") {
     const branch = next.branches[command.input.branchId];
-    if (!branch || branch.status === "merged" || branch.status === "discarded")
+    if (!branch || branch.status === "discarded")
       return commandFailure("NOT_AVAILABLE", "This branch cannot be changed.");
     const graph = deriveGraph(next, branch);
+    // Wiring is permitted on a baseline that is still being assembled.
+    const wired = Object.keys(graph.relationships).length > 0;
+    if (branch.status === "merged" && wired)
+      return commandFailure("NOT_AVAILABLE", "This branch cannot be changed.");
     if (
       !graph.entities[command.input.sourceId] ||
       !graph.entities[command.input.targetId]

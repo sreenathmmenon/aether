@@ -193,7 +193,7 @@ export function createAetherToolRegistry(
       await register({
         name: "get_architecture_summary",
         description:
-          "Read the active architecture branch, current evidence, and allowed next action.",
+          "Read the active branch, its evidence, and the next allowed action. An empty architecture means the user has not described their system yet.",
         inputSchema: {
           type: "object",
           properties: {},
@@ -507,7 +507,7 @@ export function createAetherToolRegistry(
         await register({
           name: "add_architecture_component",
           description:
-            "Add one new component to a non-merged branch. The component joins the deterministic model immediately and is reversible.",
+            "Add a component to the architecture. Use this to build a system the user describes, or to extend an existing one. It joins the deterministic model immediately and is reversible.",
           inputSchema: {
             type: "object",
             properties: {
@@ -570,7 +570,7 @@ export function createAetherToolRegistry(
         await register({
           name: "connect_components",
           description:
-            "Declare a dependency between two components on a non-merged branch so failure can propagate along it.",
+            "Declare that one component depends on another, so failure propagates along the edge. Call this after adding components to describe how the system actually connects.",
           inputSchema: {
             type: "object",
             properties: {

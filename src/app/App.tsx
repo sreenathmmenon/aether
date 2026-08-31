@@ -10,6 +10,7 @@ import {
 } from "@core/persistence";
 import { paymentPlatformBaseline } from "../fixtures/payment-platform/baseline";
 import { aiPlatformBaseline } from "../fixtures/ai-platform/baseline";
+import { blankBaseline } from "../fixtures/blank/baseline";
 import {
   loadRemoteWorkspace,
   saveRemoteWorkspace,
@@ -103,6 +104,13 @@ const systemTemplates = [
     name: "AI inference platform",
     summary: "A shared vector store feeding two independent read paths.",
     graph: aiPlatformBaseline,
+  },
+  {
+    id: "blank",
+    name: "Your own system",
+    summary:
+      "Empty canvas. Describe your architecture to an agent and it builds the model here.",
+    graph: blankBaseline,
   },
 ] as const;
 

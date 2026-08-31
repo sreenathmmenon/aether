@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { createInitialState, deriveGraph, dispatch } from "./branch-engine";
 import { paymentPlatformBaseline } from "../fixtures/payment-platform/baseline";
+import { blankBaseline } from "../fixtures/blank/baseline";
+import { runScenario } from "@simulation/engine";
 
 const human = {
   id: "sreenath",
@@ -397,6 +399,73 @@ describe("Aether command pipeline", () => {
       dispatch(
         state,
         { type: "APPROVE_BRANCH", input: { branchId, branchVersion: 1 } },
+        human,
+      ),
+    ).toMatchObject({ ok: false, code: "NOT_AVAILABLE" });
+  });
+
+  it("lets an agent build an architecture into an empty canvas", () => {
+    let state = createInitialState(blankBaseline, "blank");
+    const add = (name: string, kind: "service" | "database") => {
+      const result = dispatch(state, {
+        type: "ADD_COMPONENT",
+        input: {
+          branchId: "branch-baseline",
+          name,
+          kind,
+          regionId: "region-primary",
+          peakRps: 10000,
+          capacityRps: 12000,
+          monthlyCostUsd: 900,
+        },
+      });
+      if (!result.ok) throw new Error(`${name} must be addable`);
+      state = result.value;
+    };
+    add("Api", "service");
+    add("Database", "database");
+
+    const linked = dispatch(state, {
+      type: "CONNECT_COMPONENTS",
+      input: {
+        branchId: "branch-baseline",
+        sourceId: "entity-api",
+        targetId: "entity-database",
+        kind: "writes_to",
+      },
+    });
+    if (!linked.ok) throw new Error("components must be connectable");
+
+    const graph = deriveGraph(
+      linked.value,
+      linked.value.branches["branch-baseline"]!,
+    );
+    expect(Object.keys(graph.relationships)).toHaveLength(1);
+    // The engine treats a described system exactly like a seeded one.
+    const run = runScenario(graph, "regional_outage", "branch-baseline", 1);
+    expect(run.availability).toBeGreaterThan(0);
+    expect(run.affectedEntityIds).toContain("entity-database");
+    expect(run.monthlyCostUsd).toBe(1800);
+  });
+
+  it("keeps a built architecture immutable once it holds components", () => {
+    // The empty-canvas allowance must not weaken the committed baseline.
+    const seeded = createInitialState(paymentPlatformBaseline);
+    expect(
+      dispatch(
+        seeded,
+        {
+          type: "ADD_COMPONENT",
+          input: {
+            branchId: "branch-baseline",
+            name: "Sneaky",
+            kind: "service",
+            regionId: "region-mumbai",
+            peakRps: 1,
+            capacityRps: 2,
+            monthlyCostUsd: 1,
+          },
+        },
         human,
       ),
     ).toMatchObject({ ok: false, code: "NOT_AVAILABLE" });
