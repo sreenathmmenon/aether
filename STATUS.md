@@ -44,8 +44,10 @@ This is the source of truth for build progress. Status values: `TODO`, `IN_PROGR
   - Evidence: schemas for branching, mutation, scenarios, approval, and merge are in `src/core/commands.ts`.
 - [x] **M2.5 — Implement command dispatch with validation and policy gates** `DONE`
   - Evidence: `src/core/branch-engine.ts` applies branch mutation, scenario, approval, and merge policy checks through one dispatcher.
-- [ ] **M2.6 — Implement command result and structured error contracts** `TODO`
-- [ ] **M2.7 — Add unit tests for valid, malformed, and unauthorized commands** `TODO`
+- [x] **M2.6 — Implement command result and structured error contracts** `DONE`
+  - Evidence: `CommandResult`, typed `commandFailure`, and Zod schemas return structured `INVALID_INPUT`, `UNAUTHORIZED`, `NOT_AVAILABLE`, and `STALE_REVISION` outcomes.
+- [x] **M2.7 — Add unit tests for valid, malformed, and unauthorized commands** `DONE`
+  - Evidence: branch engine, registry, simulation, and type-contract tests cover valid, unauthorized, stale, and malformed command paths.
 
 ## Milestone 3 — Canonical payment-system scenario
 
@@ -70,7 +72,8 @@ This is the source of truth for build progress. Status values: `TODO`, `IN_PROGR
   - Evidence: baseline revision plus ordered operations are implemented in `src/core/branch-engine.ts`.
 - [x] **M4.2 — Derive a branch graph from snapshot plus operations** `DONE`
   - Evidence: `deriveGraph` is used for every simulation and mutation.
-- [ ] **M4.3 — Create semantic branch-diff generation** `TODO`
+- [x] **M4.3 — Create semantic branch-diff generation** `DONE`
+  - Evidence: `getBranchDiff` drives the visible semantic review dock and has focused regression coverage.
 - [ ] **M4.4 — Create proposal lifecycle: draft, proposed, modified, approved, rejected** `TODO`
 - [x] **M4.5 — Require explicit human approval for an exact merge plan** `DONE`
   - Evidence: agent approval rejection and exact version matching are tested in `src/core/branch-engine.test.ts`; verified in the ChatGPT browser.
@@ -155,7 +158,8 @@ This is the source of truth for build progress. Status values: `TODO`, `IN_PROGR
   - Evidence: the persistence API uses an expected-version PostgreSQL upsert and returns `409 STALE_WORKSPACE` for a stale writer.
 - [x] **M8.5 — Add health endpoint with dependency-aware readiness state** `DONE`
   - Evidence: production `/health` reports `persistence: "postgres"` after a successful database readiness query.
-- [ ] **M8.6 — Add integration tests for persistence and stale writes** `TODO`
+- [x] **M8.6 — Add integration tests for persistence and stale writes** `DONE`
+  - Evidence: `remote-workspace.test.ts` covers typed remote restoration, expected-version writes, and `409` stale-write conflict behavior.
 
 ## Milestone 9 — End-to-end proof
 
