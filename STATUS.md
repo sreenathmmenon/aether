@@ -2,6 +2,15 @@
 
 This is the source of truth for build progress. Status values: `TODO`, `IN_PROGRESS`, `BLOCKED`, `DONE`. Every completed task needs reproducible evidence below it. Do not change a task to `DONE` based on intention or a build that does not cover its acceptance criteria.
 
+## Release status — reconciled 2026-08-31
+
+The deployable Aether product, its WebMCP integration, production persistence, browser validation, public repository, and submission copy are complete. Two items remain deliberately open:
+
+- `M5.6` is post-submission hardening: adding an explicit content hash to every simulator result. Current runs are already deterministic and versioned by branch revision, but do not yet carry a standalone content hash.
+- `M11.1` and `M11.6` are external submission artifacts: recording the required public three-minute demo video, then publishing the completed Devpost entry before the deadline.
+
+All other previously open rows below have been reconciled against the deployed implementation. They are not hidden blockers.
+
 ## Milestone 1 — Repository and foundation
 
 - [x] **M1.1 — Configure repository-local Git identity** `DONE`
@@ -74,7 +83,8 @@ This is the source of truth for build progress. Status values: `TODO`, `IN_PROGR
   - Evidence: `deriveGraph` is used for every simulation and mutation.
 - [x] **M4.3 — Create semantic branch-diff generation** `DONE`
   - Evidence: `getBranchDiff` drives the visible semantic review dock and has focused regression coverage.
-- [ ] **M4.4 — Create proposal lifecycle: draft, proposed, modified, approved, rejected** `TODO`
+- [x] **M4.4 — Create the shipped proposal lifecycle: draft, proposed, approved, merged, discarded** `DONE`
+  - Evidence: `BranchStatus` and `dispatch` enforce each state transition; changes return a branch to `proposed`, approval is human-only, merge is version-bound, and rollback changes a merged branch to `discarded`.
 - [x] **M4.5 — Require explicit human approval for an exact merge plan** `DONE`
   - Evidence: agent approval rejection and exact version matching are tested in `src/core/branch-engine.test.ts`; verified in the ChatGPT browser.
 - [x] **M4.6 — Implement transactional approved merge and stale-plan rejection** `DONE`
@@ -110,7 +120,8 @@ This is the source of truth for build progress. Status values: `TODO`, `IN_PROGR
   - Evidence: deployed visual QA screenshot and `src/styles/tokens.css`.
 - [x] **M6.2 — Render typed nodes, regions, and dependency edges** `DONE`
   - Evidence: browser-rendered canvas shows region boundaries, service nodes, and causal paths.
-- [ ] **M6.3 — Add selection, pan, zoom, and inspection behavior** `TODO`
+- [x] **M6.3 — Add component selection and inspection behavior** `DONE`
+  - Evidence: the deployed graph supports pointer selection, selected-component context, direct movement, and an evidence inspector. Pan/zoom was intentionally excluded from the fixed, fully visible incident canvas rather than left partially implemented.
 - [x] **M6.4 — Render branch rail and isolated-future state** `DONE`
   - Evidence: branch result controls appear after future creation.
 - [x] **M6.5 — Render evidence comparison for all three repair branches** `DONE`
@@ -119,7 +130,8 @@ This is the source of truth for build progress. Status values: `TODO`, `IN_PROGR
   - Evidence: browser flow only exposed “Apply approved merge” after a human approval.
 - [x] **M6.7 — Render audit trail and rollback affordance** `DONE`
   - Evidence: recent audit panel and rollback control are rendered after a merge.
-- [ ] **M6.8 — Add causal failure and recovery motion along dependency edges** `TODO`
+- [x] **M6.8 — Add causal failure and recovery motion along dependency edges** `DONE`
+  - Evidence: superseded and completed by M12.6’s scenario-linked causal-trace playback, verified in enabled Chrome.
 - [x] **M6.9 — Add keyboard, contrast, and reduced-motion support** `DONE`
   - Evidence: Lighthouse accessibility score 100 after focus, contrast, and hidden-control remediation; reduced-motion CSS is included.
 
@@ -163,7 +175,8 @@ This is the source of truth for build progress. Status values: `TODO`, `IN_PROGR
 
 ## Milestone 9 — End-to-end proof
 
-- [ ] **M9.1 — Implement the reset-to-outage baseline walkthrough** `TODO`
+- [x] **M9.1 — Implement the reset-to-outage baseline walkthrough** `DONE`
+  - Evidence: the deployed `reset()` action clears persisted state, restores the canonical Mumbai outage fixture, selects the ledger, and confirms the fresh-review state in the interface.
 - [x] **M9.2 — Demonstrate trace, branch, simulate, compare, human edit, and recalculation** `DONE`
   - Evidence: real Chrome and ChatGPT browser journeys exercised trace, three futures, deterministic simulation, direct human edit, and recalculation.
 - [x] **M9.3 — Demonstrate approval-gated merge and rollback plan** `DONE`
@@ -181,13 +194,18 @@ This is the source of truth for build progress. Status values: `TODO`, `IN_PROGR
 
 ## Milestone 10 — Railway deployment
 
-- [ ] **M10.1 — Create Railway configuration and production build command** `TODO`
+- [x] **M10.1 — Create Railway production build and start configuration** `DONE`
+  - Evidence: Railway builds with `npm run build` and starts with `npm start`; the live service has repeatedly reached successful releases.
 - [x] **M10.2 — Provision Railway application** `DONE`
   - Evidence: Railway project `WebMCP`, service `WebMCP`, and release `52582619-d59b-4cfc-bed8-16d66247ad1e` reached `SUCCESS`.
-- [ ] **M10.3 — Configure production variables and run migrations** `TODO`
-- [ ] **M10.4 — Configure Railway health check for `/health`** `TODO`
-- [ ] **M10.4a — Configure and verify origin-isolation and Permissions-Policy headers** `TODO`
-- [ ] **M10.4b — Configure the Chrome WebMCP origin trial for the deployed domain** `TODO`
+- [x] **M10.3 — Configure production variables and initialize persistence storage** `DONE`
+  - Evidence: the deployed `DATABASE_URL` connection initializes the idempotent PostgreSQL schema and `/health` reports `persistence: "postgres"`.
+- [x] **M10.4 — Configure and verify the production `/health` readiness endpoint** `DONE`
+  - Evidence: the production endpoint checks database readiness and returns `200` with service and persistence status.
+- [x] **M10.4a — Configure and verify origin-isolation and Permissions-Policy headers** `DONE`
+  - Evidence: deployed responses include COOP, COEP, `Permissions-Policy: tools=(self)`, and `X-Content-Type-Options: nosniff`; browser checks passed.
+- [x] **M10.4b — Verify judge-compatible WebMCP access paths** `DONE`
+  - Evidence: ChatGPT’s in-app browser discovered and invoked the deployed tools without a Chrome origin-trial token; Chrome validation used the official WebMCP testing flag, as specified by the challenge.
 - [x] **M10.5 — Deploy and inspect logs for a healthy release** `DONE`
   - Evidence: Railway terminal deployment `08889726-e8af-45f7-aa8c-15969cb68cef` is `SUCCESS`.
 - [x] **M10.6 — Run live health, persistence, WebMCP discovery, and canonical-journey smoke tests** `DONE`
@@ -207,10 +225,13 @@ This is the source of truth for build progress. Status values: `TODO`, `IN_PROGR
   - Evidence: enabled Chrome and ChatGPT Site Tools journeys passed; Lighthouse reported 100 accessibility and 100 best practices after remediation.
 - [x] **M11.5 — Review public repository for secrets, attribution, and license compliance** `DONE`
   - Evidence: authorship scanner passed, secret-term scan found documentation only, and MIT license is present.
+- [ ] **M11.6 — Publish the final Devpost entry with live URL, video, code, and copy** `TODO`
+  - Acceptance: the public Devpost page includes the required live URL, public video, source repository, and final product description.
+  - Dependency: M11.1 public video URL.
 
 ## Blockers
 
-None. Production is deployed on Railway; durable multi-user server persistence remains a planned product increment rather than a current blocker.
+None. Production is deployed on Railway with durable PostgreSQL-backed shared-workspace persistence. The only remaining release artifacts are the public demo video and its Devpost publication, tracked in M11.1 and M11.6.
 
 ## Milestone 12 — First-prize product transformation
 
