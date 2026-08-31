@@ -1,7 +1,10 @@
-import type { ArchitectureGraph } from "@domain/architecture/types";
+import type {
+  ArchitectureEntity,
+  ArchitectureGraph,
+} from "@domain/architecture/types";
 
 export type Scenario = "regional_outage" | "traffic_spike" | "database_failure";
-export const simulationEngineVersion = "aether-sim-1";
+export const simulationEngineVersion = "aether-sim-2";
 
 function stableJson(value: unknown): string {
   if (value === null || typeof value !== "object") return JSON.stringify(value);
@@ -22,6 +25,13 @@ function fingerprint(value: unknown) {
   return `fnv1a-${(hash >>> 0).toString(16).padStart(8, "0")}`;
 }
 
+export type CausalStep = {
+  entityId: string;
+  entityName: string;
+  cause: string;
+  depth: number;
+};
+
 export type ScenarioResult = {
   scenario: Scenario;
   branchId: string;
@@ -35,8 +45,203 @@ export type ScenarioResult = {
   monthlyCostUsd: number;
   sloViolations: string[];
   affectedEntityIds: string[];
+  causalChain: CausalStep[];
   rerunScope: "full" | "affected";
 };
+
+type Properties = Record<string, string | number | boolean | undefined>;
+
+const round = (value: number, places = 2) => {
+  const factor = 10 ** places;
+  return Math.round(value * factor) / factor;
+};
+
+function propertiesOf(entity: ArchitectureEntity): Properties {
+  return entity.properties as Properties;
+}
+
+function operationalEntities(graph: ArchitectureGraph) {
+  return Object.values(graph.entities)
+    .filter((entity) => entity.kind !== "region")
+    .sort((left, right) => left.id.localeCompare(right.id));
+}
+
+/**
+ * Failure travels along an edge in the direction of real dependency, which
+ * is not always the direction the arrow is drawn.
+ *
+ * `a --calls--> b` means a needs b, so losing b breaks a (impact flows
+ * backwards). `a --publishes_to--> b` means b is fed by a, so losing a
+ * starves b (impact flows forwards).
+ */
+const backwardKinds = new Set([
+  "calls",
+  "reads_from",
+  "writes_to",
+  "depends_on",
+]);
+
+/** Entities that stop working when `id` is lost. */
+function dependentsOf(graph: ArchitectureGraph, id: string) {
+  return Object.values(graph.relationships)
+    .flatMap((relationship) => {
+      const backward = backwardKinds.has(relationship.kind);
+      if (backward && relationship.targetId === id)
+        return [relationship.sourceId];
+      if (!backward && relationship.sourceId === id)
+        return [relationship.targetId];
+      return [];
+    })
+    .sort();
+}
+
+/** Entities that `id` itself relies on. */
+function upstreamOf(graph: ArchitectureGraph, id: string) {
+  return Object.values(graph.relationships)
+    .flatMap((relationship) => {
+      const backward = backwardKinds.has(relationship.kind);
+      if (backward && relationship.sourceId === id)
+        return [relationship.targetId];
+      if (!backward && relationship.targetId === id)
+        return [relationship.sourceId];
+      return [];
+    })
+    .sort();
+}
+
+/**
+ * Breadth-first propagation along real dependency edges. A seed failure
+ * spreads to every entity that transitively depends on it, so adding or
+ * moving a component changes the blast radius rather than a fixed list.
+ */
+function propagate(
+  graph: ArchitectureGraph,
+  seeds: { id: string; cause: string }[],
+): CausalStep[] {
+  const chain: CausalStep[] = [];
+  const seen = new Set<string>();
+  let frontier = seeds.filter((seed) => {
+    const entity = graph.entities[seed.id];
+    return Boolean(entity) && entity.kind !== "region";
+  });
+  let depth = 0;
+
+  while (frontier.length > 0 && depth < 16) {
+    const next: { id: string; cause: string }[] = [];
+    for (const item of [...frontier].sort((a, b) => a.id.localeCompare(b.id))) {
+      if (seen.has(item.id)) continue;
+      const entity = graph.entities[item.id];
+      if (!entity) continue;
+      seen.add(item.id);
+      chain.push({
+        entityId: entity.id,
+        entityName: entity.name,
+        cause: item.cause,
+        depth,
+      });
+      for (const dependentId of dependentsOf(graph, entity.id)) {
+        if (seen.has(dependentId)) continue;
+        const dependent = graph.entities[dependentId];
+        if (!dependent || dependent.kind === "region") continue;
+        next.push({
+          id: dependentId,
+          cause: `depends on ${entity.name}`,
+        });
+      }
+    }
+    frontier = next;
+    depth += 1;
+  }
+  return chain;
+}
+
+function totalMonthlyCost(graph: ArchitectureGraph) {
+  return operationalEntities(graph).reduce((sum, entity) => {
+    const cost = propertiesOf(entity).monthlyCostUsd;
+    return sum + (typeof cost === "number" ? cost : 0);
+  }, 0);
+}
+
+/** Entities whose demand exceeds provisioned capacity, worst deficit first. */
+function capacityDeficits(
+  graph: ArchitectureGraph,
+  demandMultiplier: number,
+  scope?: Set<string>,
+) {
+  return operationalEntities(graph)
+    .filter((entity) => !scope || scope.has(entity.id))
+    .map((entity) => {
+      const properties = propertiesOf(entity);
+      const peak =
+        typeof properties.peakRps === "number" ? properties.peakRps : 0;
+      const capacity =
+        typeof properties.capacityRps === "number" ? properties.capacityRps : 0;
+      return {
+        entity,
+        deficit: Math.round(peak * demandMultiplier - capacity),
+      };
+    })
+    .filter((row) => row.deficit > 0)
+    .sort(
+      (left, right) =>
+        right.deficit - left.deficit ||
+        left.entity.id.localeCompare(right.entity.id),
+    );
+}
+
+/** A database is resilient when it has a standby replica configured. */
+function replicationOf(entity: ArchitectureEntity | undefined) {
+  if (!entity) return undefined;
+  const mode = propertiesOf(entity).replicationMode;
+  return typeof mode === "string" ? mode : undefined;
+}
+
+function databasesIn(graph: ArchitectureGraph) {
+  return operationalEntities(graph).filter(
+    (entity) => entity.kind === "database",
+  );
+}
+
+function regionOf(entity: ArchitectureEntity) {
+  const regionId = propertiesOf(entity).regionId;
+  return typeof regionId === "string" ? regionId : undefined;
+}
+
+/**
+ * Recovery time is driven by the slowest impacted database, because a
+ * stateful component dictates how long the payment path stays degraded.
+ */
+function recoveryMinutes(
+  graph: ArchitectureGraph,
+  impacted: Set<string>,
+  scenario: Scenario,
+): number {
+  const impactedDatabases = databasesIn(graph).filter((entity) =>
+    impacted.has(entity.id),
+  );
+  // Nothing stateful is impacted, so recovery is a routing change.
+  if (impactedDatabases.length === 0) return impacted.size > 0 ? 6 : 3;
+  const worst = impactedDatabases.reduce((slowest, entity) => {
+    const properties = propertiesOf(entity);
+    const declared =
+      typeof properties.recoveryTimeMinutes === "number"
+        ? properties.recoveryTimeMinutes
+        : 30;
+    const mode = replicationOf(entity);
+    const minutes =
+      mode === "sync"
+        ? Math.max(2, Math.round(declared * 0.15))
+        : mode === "async"
+          ? Math.max(4, Math.round(declared * 0.26))
+          : declared;
+    return Math.max(slowest, minutes);
+  }, 0);
+  // Losing a whole region also means rebuilding regional capacity, while a
+  // spike drains rather than destroys the stateful path.
+  if (scenario === "regional_outage") return worst;
+  if (scenario === "traffic_spike") return Math.max(4, Math.round(worst * 0.4));
+  return Math.max(3, Math.round(worst * 0.85));
+}
 
 export function runScenario(
   graph: ArchitectureGraph,
@@ -53,99 +258,167 @@ export function runScenario(
     branchVersion,
     costCeilingUsd,
   });
-  const ledger = graph.entities.ledger!;
-  const auth = graph.entities.auth!;
-  const queue = graph.entities.queue!;
-  const ledgerProps = ledger.properties as {
-    replicationMode: "none" | "async" | "sync";
-    monthlyCostUsd: number;
-  };
-  const authProps = auth.properties as {
-    replicas: number;
-    capacityRps: number;
-    monthlyCostUsd: number;
-  };
-  const queueProps = queue.properties as {
-    capacityRps: number;
-    monthlyCostUsd: number;
-  };
-  const resilient = ledgerProps.replicationMode !== "none";
-  const outageHeadroom = Math.min(
-    authProps.capacityRps - 12000,
-    queueProps.capacityRps - 12000,
+
+  const operational = operationalEntities(graph);
+  const violations: string[] = [];
+  const monthlyCostUsd = totalMonthlyCost(graph);
+
+  // Seed the failure from the graph itself rather than from fixed entity IDs.
+  let seeds: { id: string; cause: string }[] = [];
+  let demandMultiplier = 1;
+
+  if (scenario === "regional_outage") {
+    // The region carrying the most stateful load is the one worth failing.
+    const regions = Object.values(graph.entities).filter(
+      (entity) => entity.kind === "region",
+    );
+    const primary = regions
+      .map((region) => ({
+        region,
+        databases: databasesIn(graph).filter(
+          (entity) => regionOf(entity) === region.id,
+        ).length,
+        members: operational.filter((entity) => regionOf(entity) === region.id)
+          .length,
+      }))
+      .sort(
+        (left, right) =>
+          right.databases - left.databases ||
+          right.members - left.members ||
+          left.region.id.localeCompare(right.region.id),
+      )[0];
+    const failedRegionId = primary?.region.id;
+    const failedName = primary?.region.name ?? "primary region";
+    seeds = operational
+      .filter((entity) => regionOf(entity) === failedRegionId)
+      .map((entity) => ({ id: entity.id, cause: `${failedName} unavailable` }));
+  }
+
+  if (scenario === "database_failure") {
+    const primaryDatabase = databasesIn(graph)[0];
+    if (primaryDatabase)
+      seeds = [
+        {
+          id: primaryDatabase.id,
+          cause: `${primaryDatabase.name} unavailable`,
+        },
+      ];
+  }
+
+  if (scenario === "traffic_spike") {
+    demandMultiplier = 1.5;
+    // A spike only breaks the components that actually run out of headroom.
+    seeds = capacityDeficits(graph, demandMultiplier).map((row) => ({
+      id: row.entity.id,
+      cause: `demand exceeds capacity by ${row.deficit.toLocaleString()} RPS`,
+    }));
+  }
+
+  const causalChain = propagate(graph, seeds);
+  const impacted = new Set(causalChain.map((step) => step.entityId));
+
+  // Availability degrades with the share of the system that is impacted, and
+  // is recovered by replicas and standby replication that survive the fault.
+  const impactShare = operational.length
+    ? impacted.size / operational.length
+    : 0;
+  const impactedDatabases = databasesIn(graph).filter((entity) =>
+    impacted.has(entity.id),
   );
-  const spikeHeadroom = Math.min(
-    authProps.capacityRps - 18000,
-    queueProps.capacityRps - 18000,
+  const unreplicated = impactedDatabases.filter(
+    (entity) => (replicationOf(entity) ?? "none") === "none",
   );
-  const monthlyCostUsd =
-    ledgerProps.monthlyCostUsd +
-    authProps.monthlyCostUsd +
-    queueProps.monthlyCostUsd;
-  const outcomes = {
-    regional_outage: {
-      availability: resilient ? 99.97 : 96.42,
-      rtoMinutes: resilient
-        ? ledgerProps.replicationMode === "sync"
-          ? 7
-          : 12
-        : 46,
-      latencyMs: resilient ? 185 : 480,
-      violations: [
-        !resilient && "Single regional ledger dependency",
-        outageHeadroom < 0 &&
-          `Capacity deficit: ${Math.abs(outageHeadroom)} RPS`,
-      ],
-      affectedEntityIds: ["ledger", "auth", "queue"],
-    },
-    traffic_spike: {
-      availability: spikeHeadroom >= 0 ? 99.95 : resilient ? 99.61 : 97.9,
-      rtoMinutes: spikeHeadroom >= 0 ? 4 : 18,
-      latencyMs: spikeHeadroom >= 0 ? 230 : resilient ? 390 : 720,
-      violations: [
-        spikeHeadroom < 0 &&
-          `Traffic capacity deficit: ${Math.abs(spikeHeadroom)} RPS`,
-        spikeHeadroom < 0 && "Traffic spike SLO breached",
-      ],
-      affectedEntityIds: ["auth", "queue"],
-    },
-    database_failure: {
-      availability:
-        ledgerProps.replicationMode === "sync"
-          ? 99.98
-          : resilient
-            ? 99.91
-            : 94.7,
-      rtoMinutes:
-        ledgerProps.replicationMode === "sync" ? 5 : resilient ? 18 : 75,
-      latencyMs:
-        ledgerProps.replicationMode === "sync" ? 210 : resilient ? 310 : 930,
-      violations: [
-        !resilient && "Ledger has no standby replica",
-        ledgerProps.replicationMode === "async" &&
-          "Recovery point objective is non-zero",
-      ],
-      affectedEntityIds: ["ledger", "reconciliation"],
-    },
-  }[scenario];
-  const costViolation =
-    costCeilingUsd && monthlyCostUsd > costCeilingUsd
-      ? `Human cost ceiling exceeded: $${monthlyCostUsd.toLocaleString()} > $${costCeilingUsd.toLocaleString()}`
-      : false;
+  const synchronous = impactedDatabases.filter(
+    (entity) => replicationOf(entity) === "sync",
+  );
+
+  const replicaCushion = operational
+    .filter((entity) => impacted.has(entity.id))
+    .reduce((sum, entity) => {
+      const replicas = propertiesOf(entity).replicas;
+      return sum + (typeof replicas === "number" && replicas > 1 ? 1 : 0);
+    }, 0);
+
+  const deficits = capacityDeficits(
+    graph,
+    demandMultiplier,
+    impacted.size ? impacted : undefined,
+  );
+  const worstDeficit = deficits[0]?.deficit ?? 0;
+
+  // Availability starts from the share of the system still serving traffic and
+  // is then corrected by the resilience actually configured on the graph.
+  let availability = 100 - impactShare * 4.2;
+  availability -= 2.4 * unreplicated.length;
+  availability += 0.75 * synchronous.length;
+  availability += Math.min(replicaCushion, 4) * 0.28;
+  if (worstDeficit > 0)
+    availability -= Math.min(3.2, (worstDeficit / 10000) * 2.4);
+
+  availability = round(Math.max(80, Math.min(99.99, availability)));
+
+  const rtoMinutes = recoveryMinutes(graph, impacted, scenario);
+
+  // Latency grows with how deep the impacted path runs and how saturated it is.
+  const depth = causalChain.reduce((max, step) => Math.max(max, step.depth), 0);
+  const baseLatency = operational.reduce((worst, entity) => {
+    const target = propertiesOf(entity).latencyTargetMs;
+    return Math.max(worst, typeof target === "number" ? target : 0);
+  }, 120);
+  const latencyMs = Math.round(
+    baseLatency +
+      depth * 55 +
+      (worstDeficit > 0 ? Math.min(420, (worstDeficit / 1000) * 90) : 0) +
+      unreplicated.length * 130,
+  );
+
+  for (const entity of unreplicated)
+    violations.push(`${entity.name} has no standby replica`);
+  for (const entity of impactedDatabases)
+    if (replicationOf(entity) === "async")
+      violations.push(`${entity.name} recovery point objective is non-zero`);
+  for (const row of deficits.slice(0, 2))
+    violations.push(
+      `${row.entity.name} capacity deficit: ${row.deficit.toLocaleString()} RPS`,
+    );
+  if (scenario === "traffic_spike" && deficits.length > 0)
+    violations.push("Traffic spike SLO breached");
+
+  // A single point of failure is a real, derivable graph property: one
+  // upstream, no replicas, and everything downstream dies with it.
+  for (const entity of operational) {
+    if (!impacted.has(entity.id)) continue;
+    const replicas = propertiesOf(entity).replicas;
+    const isSingle = typeof replicas !== "number" || replicas <= 1;
+    const downstream = dependentsOf(graph, entity.id).length;
+    const upstream = upstreamOf(graph, entity.id).length;
+    if (
+      isSingle &&
+      downstream > 0 &&
+      upstream > 0 &&
+      entity.kind === "database"
+    )
+      violations.push(`${entity.name} is a single regional dependency`);
+  }
+
+  if (costCeilingUsd && monthlyCostUsd > costCeilingUsd)
+    violations.push(
+      `Human cost ceiling exceeded: $${monthlyCostUsd.toLocaleString()} > $${costCeilingUsd.toLocaleString()}`,
+    );
+
   const result = {
     scenario,
     branchId,
     branchVersion,
     engineVersion: simulationEngineVersion,
     inputHash,
-    availability: outcomes.availability,
-    rtoMinutes: outcomes.rtoMinutes,
-    latencyMs: outcomes.latencyMs,
+    availability,
+    rtoMinutes,
+    latencyMs,
     monthlyCostUsd,
-    sloViolations: [...outcomes.violations, costViolation].filter(
-      Boolean,
-    ) as string[],
-    affectedEntityIds: outcomes.affectedEntityIds,
+    sloViolations: [...new Set(violations)],
+    affectedEntityIds: causalChain.map((step) => step.entityId),
+    causalChain,
     rerunScope: branchVersion > 1 ? ("affected" as const) : ("full" as const),
   };
   return { ...result, outputHash: fingerprint(result) };

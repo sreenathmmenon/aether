@@ -116,7 +116,7 @@ describe("Aether WebMCP registry", () => {
       }),
     );
     expect(result).toContain('"scenario":"database_failure"');
-    expect(result).toContain('"rtoMinutes":18');
+    expect(result).toContain('"rtoMinutes":10');
     registry?.dispose();
   });
 

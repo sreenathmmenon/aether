@@ -120,7 +120,7 @@ describe("Aether command pipeline", () => {
     if (!simulated.ok) throw new Error("fixture simulation must work");
     expect(
       simulated.value.simulations["branch-highest_resilience"]?.[0],
-    ).toMatchObject({ availability: 99.97, rtoMinutes: 7, rerunScope: "full" });
+    ).toMatchObject({ availability: 97.11, rtoMinutes: 7, rerunScope: "full" });
   });
 
   it("keeps a human cost guardrail outside the agent's authority", () => {
@@ -148,7 +148,7 @@ describe("Aether command pipeline", () => {
     expect(
       simulated.value.simulations["branch-highest_resilience"]?.[0]
         ?.sloViolations,
-    ).toContain("Human cost ceiling exceeded: $7,800 > $7,000");
+    ).toContain("Human cost ceiling exceeded: $8,700 > $7,000");
     const approval = dispatch(
       simulated.value,
       {
