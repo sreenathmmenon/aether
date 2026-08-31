@@ -94,6 +94,22 @@ const systemTemplates = [
   },
 ] as const;
 
+/** Plain-language labels so the replay reads as decisions, not opcodes. */
+const commandLabels: Record<string, { label: string; impact: string }> = {
+  CREATE_BRANCH: { label: "branched a repair future", impact: "branch" },
+  SET_PROPERTY: { label: "changed a component property", impact: "edit" },
+  MOVE_ENTITY: { label: "moved a component", impact: "edit" },
+  ADD_COMPONENT: { label: "added a component", impact: "edit" },
+  CONNECT_COMPONENTS: { label: "connected a dependency", impact: "edit" },
+  REMOVE_COMPONENT: { label: "removed a component", impact: "edit" },
+  SET_COST_CEILING: { label: "locked a cost ceiling", impact: "guardrail" },
+  RUN_SCENARIO: { label: "ran a deterministic simulation", impact: "proof" },
+  APPROVE_BRANCH: { label: "approved the exact plan", impact: "gate" },
+  MERGE_BRANCH: { label: "committed the approved future", impact: "gate" },
+  ROLLBACK_MERGE: { label: "rolled back the merge", impact: "gate" },
+  ADD_DECISION_NOTE: { label: "recorded decision context", impact: "note" },
+};
+
 function display(value: string | number | boolean) {
   return typeof value === "number" ? value.toLocaleString() : String(value);
 }
@@ -1219,22 +1235,33 @@ export function App() {
                 state.audit
                   .slice(-7)
                   .reverse()
-                  .map((event, index) => (
-                    <li key={event.id}>
-                      <i>{state.audit.length - index}</i>
-                      <div>
-                        <strong>
-                          {event.actor.kind === "human"
-                            ? "Sreenath"
-                            : "Aether agent"}
-                        </strong>
-                        <span>
-                          {event.commandName.replaceAll("_", " ").toLowerCase()}
-                        </span>
-                      </div>
-                      <small>{event.result.nextState as string}</small>
-                    </li>
-                  ))
+                  .map((event, index) => {
+                    const described = commandLabels[event.commandName];
+                    return (
+                      <li
+                        key={event.id}
+                        className={`replay-${event.actor.kind} impact-${described?.impact ?? "edit"}`}
+                      >
+                        <i>{state.audit.length - index}</i>
+                        <div>
+                          <strong>
+                            {event.actor.kind === "human"
+                              ? "Sreenath"
+                              : "Aether agent"}
+                          </strong>
+                          <span>
+                            {described?.label ??
+                              event.commandName
+                                .replaceAll("_", " ")
+                                .toLowerCase()}
+                          </span>
+                        </div>
+                        <small>
+                          {String(event.result.nextState).replaceAll("_", " ")}
+                        </small>
+                      </li>
+                    );
+                  })
               ) : (
                 <li className="empty-history">
                   <i>1</i>
@@ -1348,7 +1375,8 @@ export function App() {
             .map((event) => (
               <li key={event.id}>
                 <b>{event.actor.kind === "human" ? "SREENATH" : "AETHER"}</b>{" "}
-                {event.commandName.replaceAll("_", " ").toLowerCase()}
+                {commandLabels[event.commandName]?.label ??
+                  event.commandName.replaceAll("_", " ").toLowerCase()}
               </li>
             ))}
         </ol>

@@ -1554,3 +1554,52 @@ button {
   font-size: 10px;
   line-height: 1.45;
 }
+
+/* The replay is the record of who decided what, so actor and consequence
+   must be readable at a glance rather than inferred from command names. */
+.decision-replay li {
+  position: relative;
+  padding-left: 12px;
+  border-left: 2px solid var(--line);
+}
+.decision-replay li.replay-human {
+  border-left-color: var(--ink);
+}
+.decision-replay li.replay-agent {
+  border-left-color: var(--cyan);
+}
+.decision-replay li strong::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 6px;
+  margin-bottom: 1px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.decision-replay li.replay-human strong {
+  color: var(--ink);
+}
+.decision-replay li.replay-agent strong {
+  color: var(--cyan);
+}
+.decision-replay li small {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: rgba(17, 36, 64, 0.06);
+  font-size: 9px;
+  letter-spacing: 0.03em;
+}
+.decision-replay li.impact-gate small {
+  color: #1d6b52;
+  background: rgba(36, 135, 101, 0.13);
+}
+.decision-replay li.impact-proof small {
+  color: #0d7d8a;
+  background: rgba(17, 167, 184, 0.13);
+}
+.decision-replay li.impact-guardrail small {
+  color: #a4641a;
+  background: rgba(236, 142, 45, 0.15);
+}
