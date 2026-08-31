@@ -155,4 +155,68 @@ describe("Aether WebMCP registry", () => {
     });
     registry?.dispose();
   });
+
+  it("returns parseable bounded results in the full three-future demo state", async () => {
+    const tools: RegisteredTool[] = [];
+    let state = createInitialState(paymentPlatformBaseline);
+    for (const intent of [
+      "lowest_cost",
+      "fastest_recovery",
+      "highest_resilience",
+    ] as const) {
+      const created = dispatch(state, {
+        type: "CREATE_BRANCH",
+        input: { name: "Repair future", intent },
+      });
+      if (!created.ok) throw new Error("fixture branch must be created");
+      state = created.value;
+      for (const scenario of [
+        "regional_outage",
+        "traffic_spike",
+        "database_failure",
+      ] as const) {
+        const simulated = dispatch(state, {
+          type: "RUN_SCENARIO",
+          input: { branchId: `branch-${intent}`, scenario },
+        });
+        if (!simulated.ok) throw new Error("fixture simulation must work");
+        state = simulated.value;
+      }
+    }
+
+    const registry = createAetherToolRegistry(
+      (next) => {
+        state = next;
+      },
+      undefined,
+      {
+        registerTool: async (tool) => {
+          tools.push(tool as RegisteredTool);
+        },
+      },
+    );
+    await registry?.refresh(state);
+
+    for (const name of [
+      "compare_architecture_futures",
+      "get_decision_record",
+      "get_architecture_summary",
+    ]) {
+      const tool = tools.find((candidate) => candidate.name === name);
+      const output = String(await tool?.execute({}));
+      expect(output.length).toBeLessThanOrEqual(1500);
+      expect(() => JSON.parse(output) as unknown).not.toThrow();
+      expect(output).not.toContain("RESULT_TOO_LARGE");
+    }
+
+    const compare = tools.find(
+      (tool) => tool.name === "compare_architecture_futures",
+    );
+    const comparison = JSON.parse(String(await compare?.execute({}))) as {
+      futures: { branchId: string; evidence: { scenario: string }[] }[];
+    };
+    expect(comparison.futures).toHaveLength(3);
+    expect(comparison.futures[0]?.evidence).toHaveLength(3);
+    registry?.dispose();
+  });
 });

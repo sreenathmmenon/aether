@@ -27,8 +27,16 @@ function modelContext(): ModelContext | undefined {
   return document.modelContext;
 }
 
+const maxToolResultLength = 1500;
+
 function toolResult(value: unknown) {
-  return JSON.stringify(value).slice(0, 1500);
+  const serialized = JSON.stringify(value);
+  if (serialized.length <= maxToolResultLength) return serialized;
+  return JSON.stringify({
+    error: "RESULT_TOO_LARGE",
+    message:
+      "The result exceeded the tool output budget. Request a narrower view.",
+  });
 }
 
 export function createAetherToolRegistry(
@@ -87,7 +95,7 @@ export function createAetherToolRegistry(
                 actor: note.actor.kind,
                 branchId: note.branchId,
                 entityId: note.entityId,
-                body: note.body,
+                body: note.body.slice(0, 160),
                 evidenceRef: note.evidenceRef,
               })),
             recentCommands: snapshot()
@@ -409,7 +417,15 @@ export function createAetherToolRegistry(
                   branchId: branch.id,
                   name: branch.name,
                   status: branch.status,
-                  simulations: snapshot().simulations[branch.id] ?? [],
+                  evidence: (snapshot().simulations[branch.id] ?? []).map(
+                    (run) => ({
+                      scenario: run.scenario,
+                      availability: run.availability,
+                      rtoMinutes: run.rtoMinutes,
+                      monthlyCostUsd: run.monthlyCostUsd,
+                      violations: run.sloViolations.length,
+                    }),
+                  ),
                 })),
               humanGate:
                 "Only Sreenath can approve and merge a branch in the visible Aether UI.",
