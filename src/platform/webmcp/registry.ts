@@ -40,6 +40,13 @@ export function createAetherToolRegistry(
   if (!context) return undefined;
   const webmcp = context;
   let registrations: Registration[] = [];
+  let currentState: AetherState | undefined;
+  let registeredCapabilityKey = "";
+
+  function snapshot() {
+    if (!currentState) throw new Error("Aether state is unavailable.");
+    return currentState;
+  }
 
   async function register(tool: WebMcpTool) {
     const controller = new AbortController();
@@ -49,6 +56,11 @@ export function createAetherToolRegistry(
 
   return {
     async refresh(state) {
+      currentState = state;
+      const capabilityKey =
+        Object.keys(state.branches).length > 1 ? "branched" : "baseline";
+      if (capabilityKey === registeredCapabilityKey) return;
+      registeredCapabilityKey = capabilityKey;
       registrations.forEach((registration) => registration.abort());
       registrations = [];
       onToolCount?.(0);
@@ -65,23 +77,27 @@ export function createAetherToolRegistry(
         execute: async () =>
           toolResult({
             incident: "Mumbai payment-path outage",
-            activeBranch: state.workspace.activeBranchId,
-            humanGuardrail: state.workspace.costCeilingUsd
-              ? `$${state.workspace.costCeilingUsd} monthly cost ceiling`
+            activeBranch: snapshot().workspace.activeBranchId,
+            humanGuardrail: snapshot().workspace.costCeilingUsd
+              ? `$${snapshot().workspace.costCeilingUsd} monthly cost ceiling`
               : "No cost ceiling set",
-            recentNotes: (state.decisionNotes ?? []).slice(-3).map((note) => ({
-              actor: note.actor.kind,
-              branchId: note.branchId,
-              entityId: note.entityId,
-              body: note.body,
-              evidenceRef: note.evidenceRef,
-            })),
-            recentCommands: state.audit.slice(-4).map((event) => ({
-              actor: event.actor.kind,
-              command: event.commandName,
-              branchId: event.branchId,
-              outcome: event.result.nextState,
-            })),
+            recentNotes: (snapshot().decisionNotes ?? [])
+              .slice(-3)
+              .map((note) => ({
+                actor: note.actor.kind,
+                branchId: note.branchId,
+                entityId: note.entityId,
+                body: note.body,
+                evidenceRef: note.evidenceRef,
+              })),
+            recentCommands: snapshot()
+              .audit.slice(-4)
+              .map((event) => ({
+                actor: event.actor.kind,
+                command: event.commandName,
+                branchId: event.branchId,
+                outcome: event.result.nextState,
+              })),
           }),
       });
       await register({
@@ -96,10 +112,10 @@ export function createAetherToolRegistry(
         annotations: { readOnlyHint: true, untrustedContentHint: false },
         execute: async () =>
           toolResult({
-            branchId: state.workspace.activeBranchId,
-            branches: Object.keys(state.branches).length - 1,
+            branchId: snapshot().workspace.activeBranchId,
+            branches: Object.keys(snapshot().branches).length - 1,
             nextAction:
-              Object.keys(state.branches).length > 1
+              Object.keys(snapshot().branches).length > 1
                 ? "run_failure_scenario"
                 : "create_architecture_branch",
           }),
@@ -133,7 +149,7 @@ export function createAetherToolRegistry(
               nextAction: "supply a branch name and supported intent",
             });
           const result = dispatch(
-            state,
+            snapshot(),
             { type: "CREATE_BRANCH", input: parsed.data },
             agent,
           );
@@ -146,7 +162,7 @@ export function createAetherToolRegistry(
           });
         },
       });
-      if (Object.keys(state.branches).length > 1) {
+      if (Object.keys(snapshot().branches).length > 1) {
         await register({
           name: "add_decision_note",
           description:
@@ -182,7 +198,7 @@ export function createAetherToolRegistry(
             const parsed = addDecisionNoteInput.safeParse(input);
             if (!parsed.success) return toolResult({ error: "INVALID_INPUT" });
             const result = dispatch(
-              state,
+              snapshot(),
               { type: "ADD_DECISION_NOTE", input: parsed.data },
               agent,
             );
@@ -225,7 +241,7 @@ export function createAetherToolRegistry(
             const parsed = runScenarioInput.safeParse(input);
             if (!parsed.success) return toolResult({ error: "INVALID_INPUT" });
             const result = dispatch(
-              state,
+              snapshot(),
               { type: "RUN_SCENARIO", input: parsed.data },
               agent,
             );
@@ -307,10 +323,10 @@ export function createAetherToolRegistry(
           const entityId = (input as { entityId?: unknown })?.entityId;
           if (
             typeof entityId !== "string" ||
-            !state.revisions["revision-baseline"]?.graph.entities[entityId]
+            !snapshot().revisions["revision-baseline"]?.graph.entities[entityId]
           )
             return toolResult({ error: "INVALID_INPUT" });
-          const graph = state.revisions["revision-baseline"]!.graph;
+          const graph = snapshot().revisions["revision-baseline"]!.graph;
           const dependencyPath = Object.values(graph.relationships)
             .filter(
               (relationship) =>
@@ -329,7 +345,7 @@ export function createAetherToolRegistry(
           });
         },
       });
-      if (Object.keys(state.branches).length > 1) {
+      if (Object.keys(snapshot().branches).length > 1) {
         await register({
           name: "propose_architecture_change",
           description:
@@ -361,7 +377,7 @@ export function createAetherToolRegistry(
             const parsed = setPropertyInput.safeParse(input);
             if (!parsed.success) return toolResult({ error: "INVALID_INPUT" });
             const result = dispatch(
-              state,
+              snapshot(),
               { type: "SET_PROPERTY", input: parsed.data },
               agent,
             );
@@ -387,13 +403,13 @@ export function createAetherToolRegistry(
           annotations: { readOnlyHint: true, untrustedContentHint: false },
           execute: async () =>
             toolResult({
-              futures: Object.values(state.branches)
+              futures: Object.values(snapshot().branches)
                 .filter((branch) => branch.id !== "branch-baseline")
                 .map((branch) => ({
                   branchId: branch.id,
                   name: branch.name,
                   status: branch.status,
-                  simulations: state.simulations[branch.id] ?? [],
+                  simulations: snapshot().simulations[branch.id] ?? [],
                 })),
               humanGate:
                 "Only Sreenath can approve and merge a branch in the visible Aether UI.",

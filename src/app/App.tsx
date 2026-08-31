@@ -162,8 +162,8 @@ export function App() {
     registryRef.current ??=
       createAetherToolRegistry(setState, setToolCount) ?? undefined;
     void registryRef.current?.refresh(state);
-    return () => registryRef.current?.dispose();
   }, [state]);
+  useEffect(() => () => registryRef.current?.dispose(), []);
   useEffect(() => {
     persistState(state);
     if (applyingRemoteRef.current) {
