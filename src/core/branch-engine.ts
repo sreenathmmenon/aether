@@ -31,7 +31,56 @@ const agent: Actor = {
   displayName: "Aether agent",
 };
 
-export function createInitialState(graph: ArchitectureGraph): AetherState {
+/**
+ * Seed the room with an agent finding and a human constraint that are true of
+ * the system actually loaded, rather than of one hardcoded fixture.
+ */
+function openingNotes(
+  graph: ArchitectureGraph,
+  timestamp: string,
+): DecisionNote[] {
+  const opening = runScenario(graph, "regional_outage", "branch-baseline", 1);
+  const origin = opening.causalChain[0];
+  const weakest = Object.values(graph.entities).find(
+    (entity) =>
+      entity.kind === "database" &&
+      (entity.properties as { replicationMode?: string }).replicationMode ===
+        "none",
+  );
+  const budget = Math.max(
+    1000,
+    Math.round((opening.monthlyCostUsd * 0.85) / 100) * 100,
+  );
+  return [
+    {
+      id: "note-1",
+      workspaceId: "workspace-payment",
+      branchId: "branch-baseline",
+      entityId: weakest?.id ?? origin?.entityId,
+      actor: agent,
+      body: weakest
+        ? `${weakest.name} has no standby, so the failure reaches ${opening.affectedEntityIds.length} components. I recommend testing an isolated repair before changing production.`
+        : "I recommend testing an isolated repair before changing production.",
+      evidenceRef: `${opening.availability.toFixed(2)}% availability · ${opening.rtoMinutes}m recovery`,
+      timestamp,
+    },
+    {
+      id: "note-2",
+      workspaceId: "workspace-payment",
+      branchId: "branch-baseline",
+      entityId: opening.causalChain.at(-1)?.entityId,
+      actor: human,
+      body: `Keep the monthly cost under $${budget.toLocaleString()}. Show me the resilience trade-off and the capacity risk before I approve anything.`,
+      evidenceRef: "Human constraint",
+      timestamp,
+    },
+  ];
+}
+
+export function createInitialState(
+  graph: ArchitectureGraph,
+  templateId = "payment-platform",
+): AetherState {
   const timestamp = new Date().toISOString();
   const baseRevision: Revision = {
     id: "revision-baseline",
@@ -57,6 +106,7 @@ export function createInitialState(graph: ArchitectureGraph): AetherState {
       name: "Payment platform",
       domain: "architecture",
       activeBranchId: baseline.id,
+      templateId,
       persistenceVersion: 0,
       createdAt: timestamp,
       updatedAt: timestamp,
@@ -64,28 +114,7 @@ export function createInitialState(graph: ArchitectureGraph): AetherState {
     revisions: { [baseRevision.id]: baseRevision },
     branches: { [baseline.id]: baseline },
     audit: [],
-    decisionNotes: [
-      {
-        id: "note-1",
-        workspaceId: "workspace-payment",
-        branchId: "branch-baseline",
-        entityId: "ledger",
-        actor: agent,
-        body: "Mumbai takes the only writable ledger path down. I recommend testing an isolated repair before changing production.",
-        evidenceRef: "Unreplicated ledger · 46m recovery",
-        timestamp,
-      },
-      {
-        id: "note-2",
-        workspaceId: "workspace-payment",
-        branchId: "branch-baseline",
-        entityId: "queue",
-        actor: human,
-        body: "Keep the monthly cost under $7,000. Show me the resilience trade-off and the capacity risk before I approve anything.",
-        evidenceRef: "Human constraint",
-        timestamp,
-      },
-    ],
+    decisionNotes: openingNotes(graph, timestamp),
     simulations: {},
   };
 }
@@ -172,72 +201,129 @@ export function dispatch(
         "CONFLICT",
         "That architecture future already exists.",
       );
+    // Repair presets are derived from the live graph so every system, not just
+    // the seeded one, gets meaningful alternatives.
+    const graph = deriveGraph(next, next.branches["branch-baseline"]!);
+    const components = Object.values(graph.entities).filter(
+      (entity) => entity.kind !== "region",
+    );
+    const unreplicated = components.find(
+      (entity) =>
+        entity.kind === "database" &&
+        (entity.properties as { replicationMode?: string }).replicationMode ===
+          "none",
+    );
+    const tightest = components
+      .map((entity) => {
+        const props = entity.properties as {
+          peakRps?: number;
+          capacityRps?: number;
+        };
+        return {
+          entity,
+          headroom: (props.capacityRps ?? 0) - (props.peakRps ?? 0),
+        };
+      })
+      .filter((row) => Number.isFinite(row.headroom))
+      .sort(
+        (a, b) =>
+          a.headroom - b.headroom || a.entity.id.localeCompare(b.entity.id),
+      )[0]?.entity;
+    const scalable = components.find(
+      (entity) =>
+        typeof (entity.properties as { replicas?: number }).replicas ===
+        "number",
+    );
+    const costOf = (entity: { properties: unknown } | undefined) =>
+      typeof (entity?.properties as { monthlyCostUsd?: number })
+        ?.monthlyCostUsd === "number"
+        ? (entity!.properties as { monthlyCostUsd: number }).monthlyCostUsd
+        : 0;
+    const capacityOf = (entity: { properties: unknown } | undefined) =>
+      typeof (entity?.properties as { capacityRps?: number })?.capacityRps ===
+      "number"
+        ? (entity!.properties as { capacityRps: number }).capacityRps
+        : 0;
+    const peakOf = (entity: { properties: unknown } | undefined) =>
+      typeof (entity?.properties as { peakRps?: number })?.peakRps === "number"
+        ? (entity!.properties as { peakRps: number }).peakRps
+        : 0;
+
+    const set = (
+      entityId: string,
+      property: string,
+      value: string | number,
+    ) => ({ kind: "set_property" as const, entityId, property, value });
+
     const operations = {
-      lowest_cost: [
-        {
-          kind: "set_property" as const,
-          entityId: "queue",
-          property: "capacityRps",
-          value: 13000,
-        },
-        {
-          kind: "set_property" as const,
-          entityId: "queue",
-          property: "monthlyCostUsd",
-          value: 500,
-        },
-      ],
-      fastest_recovery: [
-        {
-          kind: "set_property" as const,
-          entityId: "ledger",
-          property: "replicationMode",
-          value: "async",
-        },
-        {
-          kind: "set_property" as const,
-          entityId: "ledger",
-          property: "monthlyCostUsd",
-          value: 4300,
-        },
-      ],
+      // Trim spend on the tightest component and accept the risk.
+      lowest_cost: tightest
+        ? [
+            set(
+              tightest.id,
+              "monthlyCostUsd",
+              Math.max(100, Math.round(costOf(tightest) * 0.7)),
+            ),
+          ]
+        : [],
+      // Add asynchronous standby to the component that has none.
+      fastest_recovery: unreplicated
+        ? [
+            set(unreplicated.id, "replicationMode", "async"),
+            set(
+              unreplicated.id,
+              "monthlyCostUsd",
+              Math.round(costOf(unreplicated) * 1.26),
+            ),
+          ]
+        : [],
+      // Synchronous standby, more replicas, and capacity above peak demand.
       highest_resilience: [
-        {
-          kind: "set_property" as const,
-          entityId: "ledger",
-          property: "replicationMode",
-          value: "sync",
-        },
-        {
-          kind: "set_property" as const,
-          entityId: "ledger",
-          property: "monthlyCostUsd",
-          value: 5200,
-        },
-        {
-          kind: "set_property" as const,
-          entityId: "auth",
-          property: "replicas",
-          value: 4,
-        },
-        {
-          kind: "set_property" as const,
-          entityId: "auth",
-          property: "monthlyCostUsd",
-          value: 1600,
-        },
-        {
-          kind: "set_property" as const,
-          entityId: "queue",
-          property: "capacityRps",
-          value: 16000,
-        },
-        {
-          kind: "set_property" as const,
-          entityId: "queue",
-          property: "monthlyCostUsd",
-          value: 1000,
-        },
+        ...(unreplicated
+          ? [
+              set(unreplicated.id, "replicationMode", "sync"),
+              set(
+                unreplicated.id,
+                "monthlyCostUsd",
+                Math.round(costOf(unreplicated) * 1.53),
+              ),
+            ]
+          : []),
+        ...(scalable
+          ? [
+              set(
+                scalable.id,
+                "replicas",
+                Math.max(
+                  4,
+                  ((scalable.properties as { replicas?: number }).replicas ??
+                    1) + 1,
+                ),
+              ),
+              set(
+                scalable.id,
+                "monthlyCostUsd",
+                Math.round(costOf(scalable) * 1.33),
+              ),
+            ]
+          : []),
+        ...(tightest
+          ? [
+              set(
+                tightest.id,
+                "capacityRps",
+                Math.max(
+                  capacityOf(tightest),
+                  Math.round(peakOf(tightest) * 1.6),
+                ),
+              ),
+              set(
+                tightest.id,
+                "monthlyCostUsd",
+                Math.round(costOf(tightest) * 1.66),
+              ),
+            ]
+          : []),
       ],
     }[command.input.intent];
     const canonicalName = {

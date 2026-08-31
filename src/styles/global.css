@@ -1523,3 +1523,34 @@ button {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* Switching the modelled system proves the engine is not one fixture. */
+.system-switch {
+  display: grid;
+  gap: 5px;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+.system-switch label {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.system-switch select {
+  min-height: 34px;
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+}
+.system-switch small {
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.45;
+}

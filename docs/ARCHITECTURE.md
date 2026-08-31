@@ -48,6 +48,10 @@ Each simulation must be reproducible from `snapshotHash + scenario + engineVersi
 - Availability, recovery time, and latency follow from the share of the system impacted, the replication configured on impacted databases, surviving replicas, propagation depth, and capacity deficits. Monthly cost is summed across the whole graph.
 - Violations are derived, not asserted: a missing standby replica, a non-zero recovery point objective, a capacity deficit, a single regional dependency, and a breached human cost ceiling each fall out of the graph's own properties.
 
+## Nothing is fixture-specific
+
+The engine, the repair presets, the seeded decision notes, the scenario narrative, the region labels, and the quick human actions are all derived from whichever graph is loaded. Aether ships two starting systems — a two-region payment platform with a single writable ledger, and an inference platform whose shared vector store feeds two independent read paths — and a visitor can extend either, or model something else entirely, without any code path special-casing a component name.
+
 ## Expansion rule
 
 New domains implement a schema, validators, scenarios, and simulator behind the Core interfaces. They must not alter the shared command, proposal, approval, audit, or branch semantics.

@@ -128,7 +128,15 @@ function propagate(
 
   while (frontier.length > 0 && depth < 16) {
     const next: { id: string; cause: string }[] = [];
-    for (const item of [...frontier].sort((a, b) => a.id.localeCompare(b.id))) {
+    // Within a wave, the component the most others rely on leads: it is the
+    // one a reader should understand first.
+    const ranked = [...frontier].sort((left, right) => {
+      const weight = (id: string) => dependentsOf(graph, id).length;
+      return (
+        weight(right.id) - weight(left.id) || left.id.localeCompare(right.id)
+      );
+    });
+    for (const item of ranked) {
       if (seen.has(item.id)) continue;
       const entity = graph.entities[item.id];
       if (!entity) continue;

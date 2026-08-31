@@ -6,7 +6,7 @@ Aether is a real-time architecture decision room. Architects and agents work on 
 
 **Live app:** [webmcp-production-38e5.up.railway.app](https://webmcp-production-38e5.up.railway.app)
 
-It is not a generic whiteboard or an AI diagram generator. Architecture Lab is Aether's first domain package; the core is designed so other structured decision domains can follow without changing its command, branch, approval, or audit foundations.
+It is not a generic whiteboard or an AI diagram generator. The model is yours to shape: switch between starting systems, add components and dependencies, and every metric, repair alternative, and narrative re-derives from the graph you are actually looking at. Architecture Lab is Aether's first domain package; the core is designed so other structured decision domains can follow without changing its command, branch, approval, or audit foundations.
 
 ## What Aether does that other tools do not
 

@@ -148,7 +148,7 @@ describe("Aether command pipeline", () => {
     expect(
       simulated.value.simulations["branch-highest_resilience"]?.[0]
         ?.sloViolations,
-    ).toContain("Human cost ceiling exceeded: $8,700 > $7,000");
+    ).toContain("Human cost ceiling exceeded: $8,694 > $7,000");
     const approval = dispatch(
       simulated.value,
       {
@@ -247,7 +247,7 @@ describe("Aether command pipeline", () => {
     if (!simulated.ok) throw new Error("simulation must work");
     const run = simulated.value.simulations["branch-highest_resilience"]![0]!;
     expect(run.affectedEntityIds).toContain("entity-fraud-engine");
-    expect(run.monthlyCostUsd).toBe(10100);
+    expect(run.monthlyCostUsd).toBe(10094);
 
     // The same component cannot be added twice, and self-dependency is refused.
     expect(

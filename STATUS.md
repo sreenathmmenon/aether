@@ -289,6 +289,12 @@ None. Production is deployed on Railway with durable PostgreSQL-backed shared-wo
   - Acceptance: an agent can extend the architecture and can address components a person just created.
   - Evidence: `add_architecture_component` and `connect_architecture_components` join the branch-gated surface, taking the tool count from nine to eleven. Component and region enums in every schema are now enumerated from the live derived graph rather than a fixed list, so agent and human edits address the same evolving model.
 
+- [x] **M14.9 — Remove every fixture-specific assumption from the product** `DONE`
+  - Acceptance: a visitor can model a materially different system and the whole interface stays truthful.
+  - Evidence: repair presets targeted `ledger`, `auth`, and `queue` by name, the seeded notes quoted the payment story, and region labels, scenario tabs, agent narrative, and quick actions were hardcoded, so any other system would have produced silently empty branches beside copy about Mumbai. All of it now derives from the loaded graph: presets pick the unreplicated database, the tightest component, and a scalable one; notes state what is actually true; the cost ceiling and bottleneck action come from live values. A second starting system ships alongside the payment platform, and `src/fixtures/ai-platform/baseline.test.ts` asserts fan-out propagation through a shared dependency and a coherent trade-off curve with no fixture-specific presets. Verified in Chrome across both systems.
+- [x] **M14.10 — Lead the causal chain with the true single point of failure** `DONE`
+  - Evidence: components reached in the same propagation wave were ordered alphabetically, so a regional outage opened with "Authentication is the causal break" rather than the ledger everything depends on. Within a wave, the component with the most dependents now leads: the payment platform opens on Primary Ledger and the inference platform on Vector Store.
+
 ## Milestone 13 — Real-time architecture decision room
 
 - [x] **M13.1 — Define and build the unmistakable collaborative decision-room journey** `DONE`

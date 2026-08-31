@@ -9,6 +9,7 @@ import {
   storageKey,
 } from "@core/persistence";
 import { paymentPlatformBaseline } from "../fixtures/payment-platform/baseline";
+import { aiPlatformBaseline } from "../fixtures/ai-platform/baseline";
 import {
   loadRemoteWorkspace,
   saveRemoteWorkspace,
@@ -20,43 +21,78 @@ import {
   type ToolRegistry,
 } from "@platform/webmcp/registry";
 import { runScenario, type Scenario } from "@simulation/engine";
+import type { ArchitectureGraph } from "@domain/architecture/types";
 
 const humanActor = {
   id: "sreenath",
   kind: "human" as const,
   displayName: "Sreenath",
 };
-const scenarioCopy: Record<
-  Scenario,
-  { label: string; short: string; agent: string }
-> = {
-  regional_outage: {
-    label: "Regional outage",
-    short: "Mumbai unavailable",
-    agent:
-      "The ledger is the causal break. A repair must preserve payment writes outside Mumbai.",
-  },
-  traffic_spike: {
-    label: "Traffic spike",
-    short: "18,000 RPS burst",
-    agent:
-      "Traffic pressure is isolated to authentication and the queue. Capacity is the deciding variable.",
-  },
-  database_failure: {
-    label: "Ledger failure",
-    short: "Primary ledger lost",
-    agent:
-      "Replication mode is the decisive trade-off: async lowers recovery time, sync eliminates the recovery-point gap.",
-  },
-};
+function scenarioNarrative(
+  graph: ArchitectureGraph,
+  evidence: { causalChain?: { entityId: string; entityName: string }[] },
+): Record<Scenario, { label: string; short: string; agent: string }> {
+  const components = Object.values(graph.entities).filter(
+    (entity) => entity.kind !== "region",
+  );
+  const primaryRegion = Object.values(graph.entities).find(
+    (entity) => entity.kind === "region",
+  );
+  const database = components.find((entity) => entity.kind === "database");
+  const origin = evidence.causalChain?.[0]?.entityName;
+  const tightest = components
+    .map((entity) => {
+      const props = entity.properties as {
+        peakRps?: number;
+        capacityRps?: number;
+      };
+      return {
+        entity,
+        headroom: (props.capacityRps ?? 0) - (props.peakRps ?? 0),
+      };
+    })
+    .sort((a, b) => a.headroom - b.headroom)[0]?.entity;
+  const peak = Math.round(
+    ((components[0]?.properties as { peakRps?: number })?.peakRps ?? 12000) *
+      1.5,
+  );
+  return {
+    regional_outage: {
+      label: "Regional outage",
+      short: `${primaryRegion?.name ?? "Primary region"} unavailable`,
+      agent: `${origin ?? database?.name ?? "The critical component"} is the causal break. A repair must preserve the critical path outside ${primaryRegion?.name ?? "that region"}.`,
+    },
+    traffic_spike: {
+      label: "Traffic spike",
+      short: `${peak.toLocaleString()} RPS burst`,
+      agent: `Demand pressure concentrates on ${tightest?.name ?? "the tightest component"}. Capacity is the deciding variable.`,
+    },
+    database_failure: {
+      label: `${database?.name ?? "Database"} failure`,
+      short: `${database?.name ?? "Primary database"} lost`,
+      agent:
+        "Replication mode is the decisive trade-off: async lowers recovery time, sync eliminates the recovery-point gap.",
+    },
+  };
+}
 
 const introStorageKey = "aether.intro.v1";
 
-const scenarioOnset: Record<Scenario, string> = {
-  regional_outage: "Mumbai region lost",
-  traffic_spike: "Demand burst crosses provisioned capacity",
-  database_failure: "Primary ledger becomes unavailable",
-};
+/** Starting systems a visitor can model, so the product is not one story. */
+const systemTemplates = [
+  {
+    id: "payment-platform",
+    name: "Payment platform",
+    summary: "Two regions, one writable ledger on the critical path.",
+    graph: paymentPlatformBaseline,
+  },
+  {
+    id: "ai-platform",
+    name: "AI inference platform",
+    summary: "A shared vector store feeding two independent read paths.",
+    graph: aiPlatformBaseline,
+  },
+] as const;
 
 function display(value: string | number | boolean) {
   return typeof value === "number" ? value.toLocaleString() : String(value);
@@ -153,8 +189,41 @@ export function App() {
     [state.revisions, selectedScenario, state.workspace.costCeilingUsd],
   );
   const selectedEntity =
-    graph.entities[selectedEntityId] ?? graph.entities.ledger!;
+    graph.entities[selectedEntityId] ??
+    Object.values(graph.entities).find((entity) => entity.kind !== "region")!;
   const diff = getBranchDiff(state, activeBranch);
+
+  // The quick human actions target whatever this system's bottleneck actually
+  // is, and propose a ceiling just under its current spend.
+  const bottleneck = useMemo(() => {
+    const components = Object.values(graph.entities).filter(
+      (entity) => entity.kind !== "region",
+    );
+    return components
+      .map((entity) => {
+        const props = entity.properties as {
+          peakRps?: number;
+          capacityRps?: number;
+        };
+        return {
+          entity,
+          headroom: (props.capacityRps ?? 0) - (props.peakRps ?? 0),
+          peak: props.peakRps ?? 0,
+        };
+      })
+      .sort(
+        (a, b) =>
+          a.headroom - b.headroom || a.entity.id.localeCompare(b.entity.id),
+      )[0];
+  }, [graph]);
+  const suggestedCeiling = Math.max(
+    1000,
+    Math.round((evidence.monthlyCostUsd * 0.85) / 100) * 100,
+  );
+  const scenarioCopy = useMemo(
+    () => scenarioNarrative(graph, evidence),
+    [graph, evidence],
+  );
   // The trace is the engine's own causal chain, so playback walks the exact
   // path the simulation derived rather than a hand-written storyboard.
   const traceSteps = useMemo(() => {
@@ -162,7 +231,7 @@ export function App() {
     return [
       {
         entityId: undefined as string | undefined,
-        label: scenarioOnset[selectedScenario],
+        label: scenarioCopy[selectedScenario].short,
         detail: "Failure onset",
       },
       ...chain.map((step) => ({
@@ -176,7 +245,7 @@ export function App() {
         detail: `${evidence.availability.toFixed(2)}% availability · ${evidence.rtoMinutes}m recovery`,
       },
     ];
-  }, [evidence, selectedScenario]);
+  }, [evidence, scenarioCopy, selectedScenario]);
   const tracing = traceStep >= 0;
   // While tracing, only the entities revealed so far are lit.
   const tracedEntityIds = useMemo(() => {
@@ -384,14 +453,34 @@ export function App() {
       // A blocked storage write must never keep the product behind the intro.
     }
   }
-  function reset() {
+  function loadTemplate(templateId: string) {
+    const template =
+      systemTemplates.find((candidate) => candidate.id === templateId) ??
+      systemTemplates[0];
     clearPersistedState();
-    setState(createInitialState(paymentPlatformBaseline));
-    setSelectedEntityId("ledger");
+    const fresh = createInitialState(template.graph, template.id);
+    setState(fresh);
+    // Select whatever the engine says is most consequential in this system.
+    const opening = runScenario(
+      template.graph,
+      "regional_outage",
+      "branch-baseline",
+      1,
+    );
+    setSelectedEntityId(
+      opening.causalChain[0]?.entityId ??
+        Object.values(template.graph.entities).find(
+          (entity) => entity.kind !== "region",
+        )?.id ??
+        "",
+    );
     setSelectedScenario("regional_outage");
     setMessage(
-      "Baseline reset. Mumbai is failed and ready for a fresh review.",
+      `${template.name} loaded. The baseline is failing and ready for review.`,
     );
+  }
+  function reset() {
+    loadTemplate(systemTemplates[0].id);
   }
   function createFutures() {
     let next = state;
@@ -631,8 +720,31 @@ export function App() {
               })}
             </div>
           )}
+          <div className="system-switch">
+            <label htmlFor="system-template">Model a different system</label>
+            <select
+              id="system-template"
+              value={state.workspace.templateId ?? systemTemplates[0].id}
+              onChange={(event) => loadTemplate(event.target.value)}
+            >
+              {systemTemplates.map((template) => (
+                <option key={template.id} value={template.id}>
+                  {template.name}
+                </option>
+              ))}
+            </select>
+            <small>
+              {
+                systemTemplates.find(
+                  (template) =>
+                    template.id ===
+                    (state.workspace.templateId ?? systemTemplates[0].id),
+                )?.summary
+              }
+            </small>
+          </div>
           <button className="reset-link" onClick={reset}>
-            Reset winning demo
+            Reset this system
           </button>
         </aside>
         <section
@@ -674,12 +786,19 @@ export function App() {
             </button>
           </div>
           <div className="canvas-world" ref={canvasRef}>
-            <div className="region-box region-box-mumbai">
-              <span>MUMBAI · AP-SOUTH-1</span>
-            </div>
-            <div className="region-box region-box-blr">
-              <span>BENGALURU · DR</span>
-            </div>
+            {regions.slice(0, 2).map((region, index) => (
+              <div
+                className={`region-box ${index === 0 ? "region-box-mumbai" : "region-box-blr"}`}
+                key={region.id}
+              >
+                <span>
+                  {region.name.toUpperCase()} ·{" "}
+                  {(
+                    region.properties as { failureDomain?: string }
+                  ).failureDomain?.toUpperCase() ?? ""}
+                </span>
+              </div>
+            ))}
             <svg
               className="architecture-lines"
               viewBox="0 0 1000 700"
@@ -899,13 +1018,13 @@ export function App() {
                 onClick={() =>
                   apply({
                     type: "SET_COST_CEILING",
-                    input: { amountUsd: 7000 },
+                    input: { amountUsd: suggestedCeiling },
                   })
                 }
               >
                 {state.workspace.costCeilingUsd
                   ? `Cost ceiling locked · $${state.workspace.costCeilingUsd.toLocaleString()}`
-                  : "Lock cost ceiling at $7,000"}
+                  : `Lock cost ceiling at $${suggestedCeiling.toLocaleString()}`}
               </button>
               <button
                 disabled={!writable}
@@ -914,14 +1033,16 @@ export function App() {
                     type: "SET_PROPERTY",
                     input: {
                       branchId: activeBranch.id,
-                      entityId: "queue",
+                      entityId: bottleneck?.entity.id ?? "",
                       property: "capacityRps",
-                      value: 18000,
+                      value: Math.round((bottleneck?.peak ?? 12000) * 1.6),
                     },
                   })
                 }
               >
-                Increase queue to 18K RPS
+                {bottleneck
+                  ? `Scale ${bottleneck.entity.name} to ${Math.round(bottleneck.peak * 1.6).toLocaleString()} RPS`
+                  : "Scale the bottleneck"}
               </button>
               <button
                 disabled={!writable}
