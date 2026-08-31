@@ -125,13 +125,13 @@ This is the source of truth for build progress. Status values: `TODO`, `IN_PROGR
 - [x] **M7.1 — Add feature detection and local development adapter** `DONE`
   - Evidence: `src/platform/webmcp/feature-detection.ts` and browser feature status.
 - [x] **M7.2 — Register read-only architecture inspection capabilities** `DONE`
-  - Evidence: deployed ChatGPT Site Tools discovery exposed `get_architecture_summary` with `readOnlyHint`.
+  - Evidence: ChatGPT Site Tools discovery exposed `get_architecture_summary`, `inspect_failure_domain`, and `trace_architecture_dependency` with `readOnlyHint`.
 - [x] **M7.3 — Register branch and proposal capabilities through command dispatch** `DONE`
   - Evidence: deployed `create_architecture_branch` and `propose_architecture_change` use shared dispatch.
 - [x] **M7.4 — Register simulation and branch-comparison capabilities** `DONE`
   - Evidence: deployed Site Tools returned deterministic scenario output and comparison capability.
 - [x] **M7.5 — Implement state-dependent capability registration** `DONE`
-  - Evidence: discovery changed from two initial tools to five after branch creation in the ChatGPT browser.
+  - Evidence: discovery changes from four initial tools to seven after branch creation in the ChatGPT browser.
 - [x] **M7.6 — Gate merge capability on non-stale human approval** `DONE`
   - Evidence: no agent merge capability exists; only a current human approval reveals the visible merge control.
 - [x] **M7.7 — Add capability schemas, hints, cancellation, and error tests** `DONE`

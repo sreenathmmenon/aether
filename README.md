@@ -44,7 +44,7 @@ Read the detailed contracts in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [do
 - Top-level WebMCP Imperative API, using the official `webmcp-types` definitions
 - Deterministic regional-outage, traffic-spike, and database-failure simulations
 
-The production server supplies origin-isolation and `Permissions-Policy: tools=(self)` headers required for WebMCP. In ChatGPT’s in-app browser, Aether begins with two tools and exposes three more after a branch exists: inspection, branch creation, failure simulation, reversible proposal, and comparison. It deliberately exposes no agent approval or merge tool.
+The production server supplies origin-isolation and `Permissions-Policy: tools=(self)` headers required for WebMCP. In ChatGPT’s in-app browser, Aether begins with four state-aware tools—summary, failure-domain inspection, dependency trace, and isolated branch creation—and exposes three additional tools after a branch exists: deterministic simulation, reversible proposal, and comparison. Tools that mutate the auditable workspace never claim to be read-only. It deliberately exposes no agent approval or merge tool.
 
 ## Run locally
 
@@ -80,7 +80,7 @@ All repository authorship is **Sreenath <sreenathmmmenon@gmail.com>**. See `AGEN
 
 ## Status
 
-The live execution ledger is [STATUS.md](STATUS.md). The functional WebMCP, browser validation, Railway release, and deterministic resilience workflow are complete; remaining release tasks are the optional public demo video and Devpost publishing steps.
+The live execution ledger is [STATUS.md](STATUS.md). The functional WebMCP, browser validation, Railway release, and deterministic resilience workflow are complete. The current release also includes branch-derived topology, semantic review, a human-only cost ceiling, live tab-to-tab workspace synchronization, and a verified 100/100 Lighthouse quality gate; remaining release tasks are the optional public demo video and Devpost publishing steps.
 
 ## License
 
