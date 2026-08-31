@@ -24,6 +24,15 @@ export type ToolRegistry = {
   dispose: () => void;
 };
 
+/** A single agent tool invocation, surfaced live in the interface. */
+export type ToolCall = {
+  id: number;
+  name: string;
+  summary: string;
+  outcome: "ok" | "rejected";
+  at: number;
+};
+
 function modelContext(): ModelContext | undefined {
   return document.modelContext;
 }
@@ -60,6 +69,7 @@ export function createAetherToolRegistry(
   onState: (state: AetherState) => void,
   onToolCount?: (count: number) => void,
   contextOverride?: ModelContext,
+  onToolCall?: (call: ToolCall) => void,
 ): ToolRegistry | undefined {
   const context = contextOverride ?? modelContext();
   if (!context) return undefined;
@@ -73,9 +83,40 @@ export function createAetherToolRegistry(
     return currentState;
   }
 
+  let callSequence = 0;
+
+  /** Describe a call for the activity feed without leaking raw payloads. */
+  function summarize(input: unknown) {
+    if (!input || typeof input !== "object") return "no arguments";
+    const entries = Object.entries(input as Record<string, unknown>)
+      .filter(([, value]) => value !== undefined)
+      .slice(0, 3)
+      .map(([key, value]) => `${key}: ${String(value).slice(0, 28)}`);
+    return entries.length ? entries.join(" · ") : "no arguments";
+  }
+
   async function register(tool: WebMcpTool) {
     const controller = new AbortController();
-    await webmcp.registerTool(tool, { signal: controller.signal });
+    const inner = tool.execute;
+    const observed: WebMcpTool = {
+      ...tool,
+      execute: async (
+        input: Record<string, unknown>,
+        options: WebMCP.ToolExecuteCallbackOptions,
+      ) => {
+        const result = await inner(input, options);
+        callSequence += 1;
+        onToolCall?.({
+          id: callSequence,
+          name: tool.name,
+          summary: summarize(input),
+          outcome: String(result).includes('"error"') ? "rejected" : "ok",
+          at: Date.now(),
+        });
+        return result;
+      },
+    };
+    await webmcp.registerTool(observed, { signal: controller.signal });
     registrations.push({ abort: () => controller.abort() });
   }
 

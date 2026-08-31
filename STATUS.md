@@ -271,6 +271,13 @@ None. Production is deployed on Railway with durable PostgreSQL-backed shared-wo
   - Acceptance: a rejected tool call names the failed fields and the valid values.
   - Evidence: six of eight error paths returned a bare `INVALID_INPUT` and discarded the Zod issues that explained the failure, so a model could not self-correct. Every path now returns `problems` plus a `nextAction`; `create_architecture_branch` with a bad intent names both fields and lists the three valid intents, and `trace_architecture_dependency` lists the real component IDs. Covered by a registry regression test.
 
+- [x] **M14.4 — Explain the product before dropping a visitor into it** `DONE`
+  - Acceptance: a first-time visitor understands what Aether is, what it proves, and who holds control, before the decision room.
+  - Evidence: the application opened straight into a mid-incident workspace with no framing, so a judge spending fifteen seconds saw an unexplained operations dashboard. A dismissible intro now states the product thesis, the three-step model, and the human gate, and reports live WebMCP availability and tool count on the page. The choice persists in browser storage and a blocked write still lets the visitor through.
+- [x] **M14.5 — Make agent tool activity visible in the interface** `DONE`
+  - Acceptance: every WebMCP tool call is surfaced live, distinguishing accepted from rejected calls.
+  - Evidence: tool invocations previously reached only the command audit trail, which names commands rather than tools, so the WebMCP layer was invisible in the product being judged on it. A single registration wrapper now observes all nine tools and reports name, bounded argument summary, and outcome to a live panel. Covered by a registry test asserting both an accepted and a rejected call.
+
 ## Milestone 13 — Real-time architecture decision room
 
 - [x] **M13.1 — Define and build the unmistakable collaborative decision-room journey** `DONE`

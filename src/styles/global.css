@@ -1270,3 +1270,171 @@ button {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Onboarding: one screen of framing before the decision room. */
+.intro-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(16, 35, 63, 0.72);
+  animation: intro-fade 0.35s ease;
+}
+@keyframes intro-fade {
+  from {
+    opacity: 0;
+  }
+}
+.intro-card {
+  width: min(680px, 100%);
+  max-height: 92vh;
+  overflow: auto;
+  padding: 40px 44px 34px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  box-shadow: 0 40px 90px -40px rgba(16, 35, 63, 0.7);
+  animation: intro-rise 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes intro-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.985);
+  }
+}
+.intro-card h2 {
+  margin: 0 0 14px;
+  font-family: Georgia, serif;
+  font-size: 33px;
+  line-height: 1.08;
+  letter-spacing: -0.035em;
+}
+.intro-card h2 em {
+  font-style: italic;
+  color: var(--blue);
+}
+.intro-lede {
+  margin: 0 0 24px;
+  max-width: 54ch;
+  color: #43516a;
+  font-size: 14px;
+  line-height: 1.55;
+}
+.intro-steps {
+  display: grid;
+  gap: 14px;
+  margin: 0 0 28px;
+  padding: 0;
+  list-style: none;
+}
+.intro-steps li {
+  display: flex;
+  gap: 13px;
+  align-items: flex-start;
+}
+.intro-steps b {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 23px;
+  height: 23px;
+  border-radius: 50%;
+  color: #fff;
+  background: var(--ink);
+  font-size: 11px;
+}
+.intro-steps span {
+  display: grid;
+  gap: 3px;
+  color: #556174;
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+.intro-steps strong {
+  color: var(--ink);
+  font-size: 13.5px;
+}
+.intro-foot {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding-top: 22px;
+  border-top: 1px solid var(--line);
+}
+.intro-start {
+  padding: 13px 22px;
+  border: 0;
+  color: #fff;
+  background: var(--ink);
+  font-size: 13px;
+  font-weight: 750;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+.intro-start:hover,
+.intro-start:focus-visible {
+  background: var(--blue);
+}
+.intro-foot small {
+  color: var(--muted);
+  font-size: 11px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .intro-overlay,
+  .intro-card {
+    animation: none;
+  }
+}
+
+/* Live feed of agent tool invocations, so WebMCP activity is visible. */
+.tool-feed {
+  margin-top: 14px;
+  padding: 13px 14px;
+  border: 1px solid rgba(17, 167, 184, 0.28);
+  background: rgba(17, 167, 184, 0.05);
+}
+.tool-feed .eyebrow {
+  margin-bottom: 9px;
+  color: var(--cyan);
+}
+.tool-feed ol {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.tool-feed li {
+  display: grid;
+  gap: 2px;
+  padding-left: 11px;
+  border-left: 2px solid var(--cyan);
+  animation: tool-call-in 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.tool-feed li.tool-call-rejected {
+  border-left-color: var(--coral);
+}
+.tool-feed code {
+  color: var(--ink);
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 11px;
+  font-weight: 600;
+}
+.tool-feed small {
+  color: var(--muted);
+  font-size: 10px;
+  overflow-wrap: anywhere;
+}
+@keyframes tool-call-in {
+  from {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tool-feed li {
+    animation: none;
+  }
+}

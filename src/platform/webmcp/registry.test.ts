@@ -252,4 +252,37 @@ describe("Aether WebMCP registry", () => {
     expect(trace.nextAction).toContain("ledger");
     registry?.dispose();
   });
+
+  it("reports every agent tool call to the interface", async () => {
+    const tools: RegisteredTool[] = [];
+    const calls: { name: string; outcome: string; summary: string }[] = [];
+    const registry = createAetherToolRegistry(
+      () => undefined,
+      undefined,
+      {
+        registerTool: async (tool) => {
+          tools.push(tool as RegisteredTool);
+        },
+      },
+      (call) => calls.push(call),
+    );
+    await registry?.refresh(createInitialState(paymentPlatformBaseline));
+
+    await tools
+      .find((tool) => tool.name === "inspect_failure_domain")
+      ?.execute({ scenario: "regional_outage" });
+    await tools
+      .find((tool) => tool.name === "inspect_failure_domain")
+      ?.execute({ scenario: "meltdown" });
+
+    expect(calls).toHaveLength(2);
+    expect(calls[0]).toMatchObject({
+      name: "inspect_failure_domain",
+      outcome: "ok",
+    });
+    expect(calls[0]?.summary).toContain("regional_outage");
+    // A rejected call is distinguishable from a successful one.
+    expect(calls[1]?.outcome).toBe("rejected");
+    registry?.dispose();
+  });
 });
