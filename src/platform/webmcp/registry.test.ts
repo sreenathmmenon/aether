@@ -310,4 +310,83 @@ describe("Aether WebMCP registry", () => {
     expect(reported).not.toContain("merge_branch");
     registry?.dispose();
   });
+
+  it("carries an agent through the whole journey via the registered tools", async () => {
+    const tools: RegisteredTool[] = [];
+    let state = createInitialState(paymentPlatformBaseline);
+    const registry = createAetherToolRegistry(
+      (next) => {
+        state = next;
+      },
+      undefined,
+      {
+        registerTool: async (tool) => {
+          tools.push(tool as RegisteredTool);
+        },
+      },
+    );
+
+    // Refresh re-registers only when the capability class changes, so take the
+    // most recently registered tool of each name, as a host would.
+    const call = async (name: string, input: Record<string, unknown>) => {
+      await registry?.refresh(state);
+      const tool = tools.filter((candidate) => candidate.name === name).at(-1);
+      if (!tool) throw new Error(`${name} was not registered`);
+      return JSON.parse(String(await tool.execute(input))) as Record<
+        string,
+        unknown
+      >;
+    };
+
+    expect(await call("get_architecture_summary", {})).toMatchObject({
+      nextAction: "create_architecture_branch",
+    });
+    expect(
+      await call("create_architecture_branch", {
+        name: "Resilient",
+        intent: "highest_resilience",
+      }),
+    ).toMatchObject({
+      branchId: "branch-highest_resilience",
+      nextAction: "run_failure_scenario",
+    });
+    expect(
+      await call("run_failure_scenario", {
+        branchId: "branch-highest_resilience",
+        scenario: "regional_outage",
+      }),
+    ).toMatchObject({ engineVersion: "aether-sim-2" });
+    expect(
+      await call("add_architecture_component", {
+        branchId: "branch-highest_resilience",
+        name: "Fraud Engine",
+        kind: "service",
+        regionId: "region-mumbai",
+        peakRps: 9000,
+        capacityRps: 12000,
+        monthlyCostUsd: 1400,
+      }),
+    ).toMatchObject({
+      addedEntityId: "entity-fraud-engine",
+      nextAction: "connect_architecture_components",
+    });
+    expect(
+      await call("connect_architecture_components", {
+        branchId: "branch-highest_resilience",
+        sourceId: "entity-fraud-engine",
+        targetId: "ledger",
+        kind: "writes_to",
+      }),
+    ).toMatchObject({ connected: "entity-fraud-engine -> ledger" });
+
+    const comparison = (await call("compare_architecture_futures", {})) as {
+      futures: { branchId: string }[];
+      humanGate: string;
+    };
+    expect(comparison.futures[0]?.branchId).toBe("branch-highest_resilience");
+    // The journey ends at the human boundary, never at a merge tool.
+    expect(comparison.humanGate).toContain("approve and merge");
+    expect(tools.some((tool) => /approve|merge/.test(tool.name))).toBe(false);
+    registry?.dispose();
+  });
 });

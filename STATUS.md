@@ -348,6 +348,10 @@ None. Production is deployed on Railway with durable PostgreSQL-backed shared-wo
   - Acceptance: no stored state can render a blank page.
   - Evidence: the loader checked only that the top-level keys existed, never that they resolved, so a workspace whose `activeBranchId` named a missing branch, or whose branch pointed at a missing revision, was accepted and then crashed the first render on a non-null assertion — a blank white page with no way to recover, reachable from an interrupted write or a workspace left by an older deploy. Restored state must now resolve its active branch, and every branch must resolve to a revision carrying a graph and hold a replayable operation list. Verified in the browser: a planted `branch-ghost` workspace previously crashed and now falls back to a fresh workspace with the full interface intact.
 
+- [x] **M14.28 — Cover the whole agent journey through the registered tools** `DONE`
+  - Acceptance: the canonical chain is exercised through the real tool surface, not through the command engine beneath it.
+  - Evidence: existing coverage tested tools individually and the command pipeline separately, so nothing asserted that an agent could actually complete the journey end to end through the registered surface. A regression test now drives summary, branch creation, simulation, component creation, dependency creation, and comparison through the tools a host would call, asserting each result parses, names the next action, and that the chain terminates at the human boundary with no approve or merge tool registered. Running it also confirmed the registry's deliberate short-circuit: `refresh` re-registers only when the capability class changes.
+
 ## Milestone 13 — Real-time architecture decision room
 
 - [x] **M13.1 — Define and build the unmistakable collaborative decision-room journey** `DONE`
