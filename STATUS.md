@@ -4,10 +4,10 @@ This is the source of truth for build progress. Status values: `TODO`, `IN_PROGR
 
 ## Release status — reconciled 2026-08-31
 
-The deployable Aether product, its WebMCP integration, production persistence, browser validation, public repository, and submission copy are complete. Two items remain deliberately open:
+The deployable Aether product, its WebMCP integration, production persistence, browser validation, public repository, and submission copy are complete, and the full decision journey has been verified end to end on the deployed origin for both seeded systems. Two items remain deliberately open:
 
 - `M10.4b` is verified on the server side: the issued Chrome origin-trial token is configured on Railway and the live origin emits the `Origin-Trial` header. Confirming `document.modelContext` in a Chrome profile with no experimental flag enabled is still outstanding.
-- `M11.1` and `M11.6` are external submission artifacts: recording the required public three-minute demo video, then publishing the completed Devpost entry before the deadline.
+- `M11.1` and `M11.6` are external submission artifacts: recording the required public three-minute demo video, then publishing the completed Devpost entry before the 2026-09-03 deadline.
 
 All other previously open rows below have been reconciled against the deployed implementation. They are not hidden blockers.
 
@@ -332,6 +332,12 @@ None. Production is deployed on Railway with durable PostgreSQL-backed shared-wo
   - Evidence: the engine required every simulated scenario on the branch version to be clean, but the panel showed violations only for the scenario on screen, so a reviewer saw "No SLO violations in this future" beside a refusal reading "Resolve the current scenario violations" and had no way to reconcile them. Eligibility is now computed across every current run and blockers from other scenarios are named in the evidence panel, so the interface reports "Traffic spike still blocks approval: Primary Ledger capacity deficit: 4,500 RPS". The strict rule is kept because approving a production change on one scenario's evidence would be wrong.
 - [x] **M14.23 — Give the guardrail and the bottleneck a resolvable path** `DONE`
   - Evidence: the proposed cost ceiling derived from whichever future was on screen, so viewing an expensive option produced a ceiling that disqualified every future and left the journey with no approvable option. The ceiling now derives from the cheapest future that clears its own violations, a locked ceiling can be raised to admit the plan under review, and the capacity action resolves every current deficit and re-runs all scenarios rather than revealing one bottleneck at a time. Verified end to end in the browser: blocked with a named reason, one action resolves three components, then approve, commit, and rollback all succeed.
+
+- [x] **M14.24 — Reconcile the submission package with the shipped product** `DONE`
+  - Acceptance: the copy a judge reads matches what the deployed application does.
+  - Evidence: the Devpost description predated the editable model, the bounded agent authority, the second seeded system, and the derived guardrails, and the capture plan still referenced a fixed $7,000 ceiling and a nine-tool surface that is now eleven. The description now leads with the verification gap it closes and states the propagation model, the editable graph, the live-enumerated tool schemas, and the authority bounds; the standards list cites the deployed origin-trial header, the state-dependent registration, and the test count; and `docs/WEBMCP_EVALS.md` keeps its dated observation while recording the current surface.
+- [x] **M14.25 — Verify the full journey on the deployed origin for both systems** `DONE`
+  - Evidence: on the live application a cleared browser opens a private workspace, creates three futures, is blocked with a named cross-scenario reason, resolves it in one action, then approves, commits, and rolls back. The identical journey succeeds on the inference platform, where the capacity action correctly reports two undersized components rather than the payment platform's three.
 
 ## Milestone 13 — Real-time architecture decision room
 
