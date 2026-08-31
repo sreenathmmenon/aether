@@ -95,6 +95,17 @@ export function createAetherToolRegistry(
       .map((entity) => entity.id);
   }
 
+  /**
+   * The model is editable while a repair future is open, and also while a
+   * user-built architecture is still being assembled on its baseline.
+   */
+  function canEditModel() {
+    const state = snapshot();
+    if (Object.keys(state.branches).length > 1) return true;
+    const branch = state.branches[state.workspace.activeBranchId];
+    return Boolean(branch && state.workspace.templateId === "blank");
+  }
+
   /** Component IDs an agent may currently reference, including user-added ones. */
   function componentIds() {
     const state = snapshot();
@@ -146,8 +157,9 @@ export function createAetherToolRegistry(
   return {
     async refresh(state) {
       currentState = state;
-      const capabilityKey =
-        Object.keys(state.branches).length > 1 ? "branched" : "baseline";
+      const capabilityKey = `${
+        Object.keys(state.branches).length > 1 ? "branched" : "baseline"
+      }:${state.workspace.templateId === "blank" ? "own" : "seeded"}`;
       if (capabilityKey === registeredCapabilityKey) return;
       registeredCapabilityKey = capabilityKey;
       registrations.forEach((registration) => registration.abort());
@@ -252,7 +264,7 @@ export function createAetherToolRegistry(
           });
         },
       });
-      if (Object.keys(snapshot().branches).length > 1) {
+      if (canEditModel()) {
         await register({
           name: "add_decision_note",
           description:
@@ -454,56 +466,7 @@ export function createAetherToolRegistry(
           });
         },
       });
-      if (Object.keys(snapshot().branches).length > 1) {
-        await register({
-          name: "propose_architecture_change",
-          description:
-            "Propose a reversible property change on a non-merged architecture branch. This never approves or commits a design.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              branchId: {
-                type: "string",
-                description: "Existing non-merged branch ID.",
-              },
-              entityId: { type: "string", enum: componentIds() },
-              property: {
-                type: "string",
-                enum: [
-                  "replicas",
-                  "capacityRps",
-                  "monthlyCostUsd",
-                  "replicationMode",
-                ],
-              },
-              value: {},
-            },
-            required: ["branchId", "entityId", "property", "value"],
-            additionalProperties: false,
-          },
-          annotations: { readOnlyHint: false, untrustedContentHint: false },
-          execute: async (input) => {
-            const parsed = setPropertyInput.safeParse(input);
-            if (!parsed.success)
-              return invalidInput(
-                parsed.error,
-                "replicationMode takes none, async, or sync; every other property takes a non-negative number.",
-              );
-            const result = dispatch(
-              snapshot(),
-              { type: "SET_PROPERTY", input: parsed.data },
-              agent,
-            );
-            if (!result.ok) return toolResult(result);
-            onState(result.value);
-            return toolResult({
-              branchId: parsed.data.branchId,
-              branchVersion:
-                result.value.branches[parsed.data.branchId]?.version,
-              nextAction: "run_failure_scenario",
-            });
-          },
-        });
+      if (canEditModel()) {
         await register({
           name: "add_architecture_component",
           description:
@@ -513,7 +476,7 @@ export function createAetherToolRegistry(
             properties: {
               branchId: {
                 type: "string",
-                description: "Existing non-merged branch ID.",
+                description: "Branch to build into.",
               },
               name: {
                 type: "string",
@@ -612,6 +575,57 @@ export function createAetherToolRegistry(
             onState(result.value);
             return toolResult({
               connected: `${parsed.data.sourceId} -> ${parsed.data.targetId}`,
+              nextAction: "run_failure_scenario",
+            });
+          },
+        });
+      }
+      if (Object.keys(snapshot().branches).length > 1) {
+        await register({
+          name: "propose_architecture_change",
+          description:
+            "Propose a reversible property change on a non-merged architecture branch. This never approves or commits a design.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              branchId: {
+                type: "string",
+                description: "Existing non-merged branch ID.",
+              },
+              entityId: { type: "string", enum: componentIds() },
+              property: {
+                type: "string",
+                enum: [
+                  "replicas",
+                  "capacityRps",
+                  "monthlyCostUsd",
+                  "replicationMode",
+                ],
+              },
+              value: {},
+            },
+            required: ["branchId", "entityId", "property", "value"],
+            additionalProperties: false,
+          },
+          annotations: { readOnlyHint: false, untrustedContentHint: false },
+          execute: async (input) => {
+            const parsed = setPropertyInput.safeParse(input);
+            if (!parsed.success)
+              return invalidInput(
+                parsed.error,
+                "replicationMode takes none, async, or sync; every other property takes a non-negative number.",
+              );
+            const result = dispatch(
+              snapshot(),
+              { type: "SET_PROPERTY", input: parsed.data },
+              agent,
+            );
+            if (!result.ok) return toolResult(result);
+            onState(result.value);
+            return toolResult({
+              branchId: parsed.data.branchId,
+              branchVersion:
+                result.value.branches[parsed.data.branchId]?.version,
               nextAction: "run_failure_scenario",
             });
           },

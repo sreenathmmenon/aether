@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { createInitialState } from "@core/branch-engine";
 import { dispatch } from "@core/branch-engine";
 import { paymentPlatformBaseline } from "../../fixtures/payment-platform/baseline";
+import { blankBaseline } from "../../fixtures/blank/baseline";
 import { createAetherToolRegistry } from "./registry";
 
 type RegisteredTool = {
@@ -66,9 +67,9 @@ describe("Aether WebMCP registry", () => {
       "run_failure_scenario",
       "inspect_failure_domain",
       "trace_architecture_dependency",
-      "propose_architecture_change",
       "add_architecture_component",
       "connect_components",
+      "propose_architecture_change",
       "compare_architecture_futures",
     ]);
     const note = tools.find((tool) => tool.name === "add_decision_note");
@@ -425,6 +426,88 @@ describe("Aether WebMCP registry", () => {
       for (const property of Object.values(tool.inputSchema?.properties ?? {}))
         expect((property.description ?? "").length).toBeLessThan(150);
     }
+    registry?.dispose();
+  });
+
+  it("lets an agent build and simulate the user's own system", async () => {
+    const tools: RegisteredTool[] = [];
+    let state = createInitialState(blankBaseline, "blank");
+    const registry = createAetherToolRegistry(
+      (next) => {
+        state = next;
+      },
+      undefined,
+      {
+        registerTool: async (tool) => {
+          tools.push(tool as RegisteredTool);
+        },
+      },
+    );
+    const call = async (name: string, input: Record<string, unknown>) => {
+      await registry?.refresh(state);
+      const tool = tools.filter((candidate) => candidate.name === name).at(-1);
+      if (!tool) throw new Error(`${name} was not registered`);
+      return JSON.parse(String(await tool.execute(input))) as Record<
+        string,
+        unknown
+      >;
+    };
+
+    // An empty canvas is the point: the agent turns a description into a graph.
+    expect(
+      await call("add_architecture_component", {
+        branchId: "branch-baseline",
+        name: "Web Api",
+        kind: "service",
+        regionId: "region-primary",
+        peakRps: 12000,
+        capacityRps: 15000,
+        monthlyCostUsd: 1100,
+      }),
+    ).toMatchObject({ addedEntityId: "entity-web-api" });
+    await call("add_architecture_component", {
+      branchId: "branch-baseline",
+      name: "Orders Db",
+      kind: "database",
+      regionId: "region-primary",
+      peakRps: 12000,
+      capacityRps: 13000,
+      monthlyCostUsd: 3200,
+    });
+    expect(
+      await call("connect_components", {
+        branchId: "branch-baseline",
+        sourceId: "entity-web-api",
+        targetId: "entity-orders-db",
+        kind: "writes_to",
+      }),
+    ).toMatchObject({ nextAction: "run_failure_scenario" });
+
+    // And the engine proves consequences on it, exactly as on a seeded system.
+    const run = (await call("run_failure_scenario", {
+      branchId: "branch-baseline",
+      scenario: "regional_outage",
+    })) as { monthlyCostUsd: number; affectedEntityIds: string[] };
+    expect(run.monthlyCostUsd).toBe(4300);
+    expect(run.affectedEntityIds).toContain("entity-orders-db");
+    registry?.dispose();
+  });
+
+  it("does not expose build tools on a seeded architecture", async () => {
+    const tools: RegisteredTool[] = [];
+    const registry = createAetherToolRegistry(() => undefined, undefined, {
+      registerTool: async (tool) => {
+        tools.push(tool as RegisteredTool);
+      },
+    });
+    await registry?.refresh(
+      createInitialState(paymentPlatformBaseline, "payment-platform"),
+    );
+    // A committed architecture is read-only until the reviewer branches it.
+    expect(tools.map((tool) => tool.name)).not.toContain(
+      "add_architecture_component",
+    );
+    expect(tools.map((tool) => tool.name)).not.toContain("connect_components");
     registry?.dispose();
   });
 });
