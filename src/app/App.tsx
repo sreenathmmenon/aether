@@ -189,8 +189,12 @@ export function App() {
     [state, activeBranch],
   );
   const branchCount = Object.keys(state.branches).length - 1;
+  // A seeded architecture is committed and read-only. A system the user is
+  // building themselves stays editable on its baseline until they branch.
+  const ownSystem = state.workspace.templateId === "blank";
   const writable =
-    activeBranch.status !== "merged" && activeBranch.status !== "discarded";
+    (activeBranch.status !== "merged" || ownSystem) &&
+    activeBranch.status !== "discarded";
   const activeSimulation =
     (state.simulations[activeBranch.id] ?? []).find(
       (run) => run.scenario === selectedScenario,
@@ -1196,62 +1200,71 @@ export function App() {
                 </p>
               ))}
           </div>
-          {branchCount > 0 && (
+          {(branchCount > 0 || ownSystem) && (
             <div className="human-actions">
-              <p className="eyebrow">Human control</p>
-              <button
-                disabled={!writable}
-                onClick={() =>
-                  apply({
-                    type: "SET_COST_CEILING",
-                    input: {
-                      amountUsd:
-                        // A locked ceiling can be raised to the cheapest
-                        // clean option, so a guardrail never becomes a dead
-                        // end the reviewer cannot resolve.
-                        state.workspace.costCeilingUsd === suggestedCeiling
-                          ? Math.max(
-                              suggestedCeiling,
-                              Math.ceil(evidence.monthlyCostUsd / 100) * 100,
-                            )
-                          : suggestedCeiling,
-                    },
-                  })
-                }
-              >
-                {state.workspace.costCeilingUsd
-                  ? state.workspace.costCeilingUsd < evidence.monthlyCostUsd
-                    ? `Raise ceiling to $${(Math.ceil(evidence.monthlyCostUsd / 100) * 100).toLocaleString()}`
-                    : `Cost ceiling locked · $${state.workspace.costCeilingUsd.toLocaleString()}`
-                  : `Lock cost ceiling at $${suggestedCeiling.toLocaleString()}`}
-              </button>
-              <button disabled={!writable} onClick={resolveCapacity}>
-                {undersized.length > 1
-                  ? `Scale ${undersized.length} components past peak demand`
-                  : bottleneck
-                    ? `Scale ${bottleneck.entity.name} to ${Math.round(bottleneck.peak * 1.6).toLocaleString()} RPS`
-                    : "Scale the bottleneck"}
-              </button>
-              <button
-                disabled={!writable}
-                onClick={() =>
-                  apply({
-                    type: "RUN_SCENARIO",
-                    input: {
-                      branchId: activeBranch.id,
-                      scenario: selectedScenario,
-                    },
-                  })
-                }
-              >
-                Recalculate affected evidence
-              </button>
-              <button
-                className="secondary-action"
-                onClick={() => setComparing(true)}
-              >
-                Compare futures
-              </button>
+              <p className="eyebrow">
+                {ownSystem && branchCount === 0
+                  ? "Build your system"
+                  : "Human control"}
+              </p>
+              {entities.length > 0 && branchCount > 0 && (
+                <>
+                  <button
+                    disabled={!writable}
+                    onClick={() =>
+                      apply({
+                        type: "SET_COST_CEILING",
+                        input: {
+                          amountUsd:
+                            // A locked ceiling can be raised to the cheapest
+                            // clean option, so a guardrail never becomes a dead
+                            // end the reviewer cannot resolve.
+                            state.workspace.costCeilingUsd === suggestedCeiling
+                              ? Math.max(
+                                  suggestedCeiling,
+                                  Math.ceil(evidence.monthlyCostUsd / 100) *
+                                    100,
+                                )
+                              : suggestedCeiling,
+                        },
+                      })
+                    }
+                  >
+                    {state.workspace.costCeilingUsd
+                      ? state.workspace.costCeilingUsd < evidence.monthlyCostUsd
+                        ? `Raise ceiling to $${(Math.ceil(evidence.monthlyCostUsd / 100) * 100).toLocaleString()}`
+                        : `Cost ceiling locked · $${state.workspace.costCeilingUsd.toLocaleString()}`
+                      : `Lock cost ceiling at $${suggestedCeiling.toLocaleString()}`}
+                  </button>
+                  <button disabled={!writable} onClick={resolveCapacity}>
+                    {undersized.length > 1
+                      ? `Scale ${undersized.length} components past peak demand`
+                      : bottleneck
+                        ? `Scale ${bottleneck.entity.name} to ${Math.round(bottleneck.peak * 1.6).toLocaleString()} RPS`
+                        : "Scale the bottleneck"}
+                  </button>
+                  <button
+                    disabled={!writable}
+                    onClick={() =>
+                      apply({
+                        type: "RUN_SCENARIO",
+                        input: {
+                          branchId: activeBranch.id,
+                          scenario: selectedScenario,
+                        },
+                      })
+                    }
+                  >
+                    Recalculate affected evidence
+                  </button>
+                  <button
+                    className="secondary-action"
+                    onClick={() => setComparing(true)}
+                  >
+                    Compare futures
+                  </button>
+                </>
+              )}
               <form className="component-composer" onSubmit={addComponent}>
                 <label htmlFor="component-name">
                   Add a component to this future

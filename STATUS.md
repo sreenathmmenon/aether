@@ -214,12 +214,12 @@ All other previously open rows below have been reconciled against the deployed i
   - Partial browser evidence: public Chrome 151 on the live URL reports `document.modelContext` as an object with a `registerTool` function, the interface shows “WebMCP live”, and the registry reports eleven state-aware tools with no origin-trial `<meta>` present in the document. This measurement is **not** conclusive, because the same browser also exposes `document.modelContext` on `https://example.com`, which serves no token; the WebMCP testing flag is therefore enabled in that profile and masks the trial path.
   - Remaining: repeat the check in a Chrome profile with `chrome://flags/#enable-webmcp-testing` set to Default, confirming `document.modelContext` is defined on the public URL and absent on an unrelated origin. The first two acceptance clauses are verified; the third is not yet.
 - [x] **M10.5 — Deploy and inspect logs for a healthy release** `DONE`
-  - Evidence: Railway terminal deployment `f844da1f-1197-445b-9fcc-ed64735b7c0a` is `SUCCESS`.
+  - Evidence: Railway terminal deployment `e40cb836-2be1-4282-9335-3b3d9eefa82f` is `SUCCESS`.
 - [x] **M10.6 — Run live health, persistence, WebMCP discovery, and canonical-journey smoke tests** `DONE`
   - Evidence: live `/health` headers, ChatGPT Site Tool discovery/calls, and persisted-branch reload completed on 2026-08-31.
 - [x] **M10.7 — Record live URL, release ID, and verification evidence here** `DONE`
   - URL: `https://webmcp-production-38e5.up.railway.app`
-  - Release: `f844da1f-1197-445b-9fcc-ed64735b7c0a`
+  - Release: `e40cb836-2be1-4282-9335-3b3d9eefa82f`
 
 ## Milestone 11 — Submission and release
 
