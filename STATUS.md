@@ -407,6 +407,9 @@ None. Production is deployed on Railway with durable PostgreSQL-backed per-visit
   - Acceptance: the human constraint on the opening screen is consistent with what the product enforces.
   - Evidence: the seeded human note asked to keep monthly cost under 85% of the baseline — $5,200 against a system already costing $6,100 — while the cost-ceiling control offered $8,700, the cheapest option that clears its violations. The opening screen therefore stated a budget the architecture already exceeded and that contradicted the enforceable figure a few pixels away. The stated budget now sits deliberately between them at $7,100: above today's spend and both cheaper repairs, below the only clean option, so the trade-off the room exists to resolve is legible from the first screen. A regression test asserts the constraint stays between the baseline cost and the cheapest violation-free repair.
 
+- [x] **M15.8 — Confirm the opening screen reads coherently on the deployed origin** `DONE`
+  - Evidence: on production from a cleared workspace, the incident brief, agent recommendation, human gate, agent narrative, and the stated constraint all render, and the two cost figures now tell one story — the human asks for $7,100 while the only violation-free repair costs $8,700, which is the trade-off the room exists to resolve rather than a contradiction. Locking the ceiling leaves the genuine capacity blocker, named and clearable, so the approval gate reports a real reason.
+
 ## Milestone 13 — Real-time architecture decision room
 
 - [x] **M13.1 — Define and build the unmistakable collaborative decision-room journey** `DONE`
