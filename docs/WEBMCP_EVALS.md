@@ -4,18 +4,18 @@ This evaluation set separates deterministic application correctness from probabi
 
 ## Deterministic checks
 
-| Journey                 | Expected tool sequence                                 | Required result                                                                  |
-| ----------------------- | ------------------------------------------------------ | -------------------------------------------------------------------------------- |
-| Inspect baseline        | `get_architecture_summary`                             | No mutation; next action is branch creation.                                     |
-| Read live decision      | `get_decision_record`                                  | Returns incident, guardrail, attributed notes, and recorded commands.            |
-| Create repair           | `create_architecture_branch`                           | Named isolated branch exists; output names `run_failure_scenario`.               |
-| Evaluate outage         | `run_failure_scenario`                                 | Exact deterministic availability, RTO, cost, and violations returned.            |
-| Change then re-evaluate | `propose_architecture_change` → `run_failure_scenario` | Version increments and rerun scope is `affected`.                                |
-| Compare                 | `compare_architecture_futures`                         | Returns only branch evidence and the human approval boundary.                    |
-| Record agent context    | `add_decision_note`                                    | Adds a bounded, component-anchored note; cannot approve or merge.                |
-| Human gate              | No agent approval or merge tool                        | Only the visible human control can approve and merge.                            |
-| Invalid input           | Any tool with malformed data                           | Returns concise `INVALID_INPUT`; no state mutation.                              |
-| Bounded output          | Any tool in the full three-future state                | Every result stays within the 1,500-character budget and remains parseable JSON. |
+| Journey                 | Expected tool sequence                                 | Required result                                                                             |
+| ----------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------- |
+| Inspect baseline        | `get_architecture_summary`                             | No mutation; next action is branch creation.                                                |
+| Read live decision      | `get_decision_record`                                  | Returns incident, guardrail, attributed notes, and recorded commands.                       |
+| Create repair           | `create_architecture_branch`                           | Named isolated branch exists; output names `run_failure_scenario`.                          |
+| Evaluate outage         | `run_failure_scenario`                                 | Exact deterministic availability, RTO, cost, and violations returned.                       |
+| Change then re-evaluate | `propose_architecture_change` → `run_failure_scenario` | Version increments and rerun scope is `affected`.                                           |
+| Compare                 | `compare_architecture_futures`                         | Returns only branch evidence and the human approval boundary.                               |
+| Record agent context    | `add_decision_note`                                    | Adds a bounded, component-anchored note; cannot approve or merge.                           |
+| Human gate              | No agent approval or merge tool                        | Only the visible human control can approve and merge.                                       |
+| Invalid input           | Any tool with malformed data                           | Returns `INVALID_INPUT` naming the failed fields and their valid values; no state mutation. |
+| Bounded output          | Any tool in the full three-future state                | Every result stays within the 1,500-character budget and remains parseable JSON.            |
 
 ## Tool-selection prompts
 

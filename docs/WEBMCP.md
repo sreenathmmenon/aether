@@ -41,7 +41,7 @@ Aether targets the shared subset of the two current implementation paths:
 - Update capability availability when the workspace state changes. Unregister a capability with its registration abort signal only when availability has changed; do not cancel an in-flight execution merely by changing the tool list.
 - Use read-only and untrusted-content hints where supported. Imported text and external content are untrusted.
 - Return concise structured IDs, metrics, violations, UI-side effect summaries, and next allowed actions; do not return hidden reasoning or raw untrusted content unless essential.
-- Reject cancelled, stale, unauthorized, malformed, or over-scoped requests with clear recoverable errors.
+- Reject cancelled, stale, unauthorized, malformed, or over-scoped requests with clear recoverable errors. A rejected input returns the specific fields that failed and the valid values for them, so the calling model can correct its own call instead of retrying blindly.
 
 ## Human gate
 

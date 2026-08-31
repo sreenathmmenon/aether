@@ -219,4 +219,37 @@ describe("Aether WebMCP registry", () => {
     expect(comparison.futures[0]?.evidence).toHaveLength(3);
     registry?.dispose();
   });
+
+  it("returns actionable errors an agent can correct itself from", async () => {
+    const tools: RegisteredTool[] = [];
+    const registry = createAetherToolRegistry(() => undefined, undefined, {
+      registerTool: async (tool) => {
+        tools.push(tool as RegisteredTool);
+      },
+    });
+    await registry?.refresh(createInitialState(paymentPlatformBaseline));
+
+    const branch = JSON.parse(
+      String(
+        await tools
+          .find((tool) => tool.name === "create_architecture_branch")
+          ?.execute({ name: "x", intent: "cheap" }),
+      ),
+    ) as { error: string; problems: string[]; nextAction: string };
+    expect(branch.error).toBe("INVALID_INPUT");
+    // The agent is told which fields failed and what the valid options are.
+    expect(branch.problems.join(" ")).toContain("name");
+    expect(branch.problems.join(" ")).toContain("intent");
+    expect(branch.nextAction).toContain("highest_resilience");
+
+    const trace = JSON.parse(
+      String(
+        await tools
+          .find((tool) => tool.name === "trace_architecture_dependency")
+          ?.execute({ entityId: "nope" }),
+      ),
+    ) as { nextAction: string };
+    expect(trace.nextAction).toContain("ledger");
+    registry?.dispose();
+  });
 });

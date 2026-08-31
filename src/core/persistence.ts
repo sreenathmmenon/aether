@@ -16,7 +16,7 @@ function migratedDecisionNotes() {
         displayName: "Aether agent",
       },
       body: "Mumbai takes the only writable ledger path down. I recommend testing an isolated repair before changing production.",
-      evidenceRef: "96.42% availability · 46m recovery",
+      evidenceRef: "Unreplicated ledger · 46m recovery",
       timestamp,
     },
     {

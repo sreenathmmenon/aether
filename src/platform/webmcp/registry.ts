@@ -1,3 +1,4 @@
+import { z } from "zod";
 import {
   addDecisionNoteInput,
   createBranchInput,
@@ -36,6 +37,22 @@ function toolResult(value: unknown) {
     error: "RESULT_TOO_LARGE",
     message:
       "The result exceeded the tool output budget. Request a narrower view.",
+  });
+}
+
+/**
+ * Turn a Zod failure into the specific, actionable text an agent needs to
+ * correct its own call, rather than a bare error code it cannot act on.
+ */
+function invalidInput(error: z.ZodError, retryHint: string) {
+  const problems = error.issues.slice(0, 3).map((issue) => {
+    const field = issue.path.join(".") || "input";
+    return `${field}: ${issue.message}`;
+  });
+  return toolResult({
+    error: "INVALID_INPUT",
+    problems,
+    nextAction: retryHint,
   });
 }
 
@@ -152,10 +169,10 @@ export function createAetherToolRegistry(
         execute: async (input: unknown) => {
           const parsed = createBranchInput.safeParse(input);
           if (!parsed.success)
-            return toolResult({
-              error: "INVALID_INPUT",
-              nextAction: "supply a branch name and supported intent",
-            });
+            return invalidInput(
+              parsed.error,
+              "Supply a plain-text name of 3-48 characters and an intent of lowest_cost, fastest_recovery, or highest_resilience.",
+            );
           const result = dispatch(
             snapshot(),
             { type: "CREATE_BRANCH", input: parsed.data },
@@ -204,7 +221,11 @@ export function createAetherToolRegistry(
           annotations: { readOnlyHint: false, untrustedContentHint: true },
           execute: async (input: unknown) => {
             const parsed = addDecisionNoteInput.safeParse(input);
-            if (!parsed.success) return toolResult({ error: "INVALID_INPUT" });
+            if (!parsed.success)
+              return invalidInput(
+                parsed.error,
+                "Supply an existing branchId and a body of 3-280 characters.",
+              );
             const result = dispatch(
               snapshot(),
               { type: "ADD_DECISION_NOTE", input: parsed.data },
@@ -247,7 +268,11 @@ export function createAetherToolRegistry(
             if (context?.signal?.aborted)
               return toolResult({ error: "CANCELLED" });
             const parsed = runScenarioInput.safeParse(input);
-            if (!parsed.success) return toolResult({ error: "INVALID_INPUT" });
+            if (!parsed.success)
+              return invalidInput(
+                parsed.error,
+                "Supply an existing branchId and a scenario of regional_outage, traffic_spike, or database_failure.",
+              );
             const result = dispatch(
               snapshot(),
               { type: "RUN_SCENARIO", input: parsed.data },
@@ -286,7 +311,12 @@ export function createAetherToolRegistry(
             scenario !== "traffic_spike" &&
             scenario !== "database_failure"
           )
-            return toolResult({ error: "INVALID_INPUT" });
+            return toolResult({
+              error: "INVALID_INPUT",
+              problems: ["scenario: unknown failure scenario"],
+              nextAction:
+                "Choose regional_outage, traffic_spike, or database_failure.",
+            });
           const failureDomains = {
             regional_outage: {
               failedDomain: "Mumbai / ap-south-1",
@@ -333,7 +363,16 @@ export function createAetherToolRegistry(
             typeof entityId !== "string" ||
             !snapshot().revisions["revision-baseline"]?.graph.entities[entityId]
           )
-            return toolResult({ error: "INVALID_INPUT" });
+            return toolResult({
+              error: "INVALID_INPUT",
+              problems: ["entityId: unknown architecture component"],
+              nextAction: `Choose one of: ${Object.values(
+                snapshot().revisions["revision-baseline"]!.graph.entities,
+              )
+                .filter((entity) => entity.kind !== "region")
+                .map((entity) => entity.id)
+                .join(", ")}.`,
+            });
           const graph = snapshot().revisions["revision-baseline"]!.graph;
           const dependencyPath = Object.values(graph.relationships)
             .filter(
@@ -383,7 +422,11 @@ export function createAetherToolRegistry(
           annotations: { readOnlyHint: false, untrustedContentHint: false },
           execute: async (input) => {
             const parsed = setPropertyInput.safeParse(input);
-            if (!parsed.success) return toolResult({ error: "INVALID_INPUT" });
+            if (!parsed.success)
+              return invalidInput(
+                parsed.error,
+                "replicationMode takes none, async, or sync; every other property takes a non-negative number.",
+              );
             const result = dispatch(
               snapshot(),
               { type: "SET_PROPERTY", input: parsed.data },

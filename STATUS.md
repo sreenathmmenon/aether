@@ -6,7 +6,7 @@ This is the source of truth for build progress. Status values: `TODO`, `IN_PROGR
 
 The deployable Aether product, its WebMCP integration, production persistence, browser validation, public repository, and submission copy are complete. Two items remain deliberately open:
 
-- `M5.6` is post-submission hardening: adding an explicit content hash to every simulator result. Current runs are already deterministic and versioned by branch revision, but do not yet carry a standalone content hash.
+- `M10.4b` is verified on the server side: the issued Chrome origin-trial token is configured on Railway and the live origin emits the `Origin-Trial` header. Confirming `document.modelContext` in a Chrome profile with no experimental flag enabled is still outstanding.
 - `M11.1` and `M11.6` are external submission artifacts: recording the required public three-minute demo video, then publishing the completed Devpost entry before the deadline.
 
 All other previously open rows below have been reconciled against the deployed implementation. They are not hidden blockers.
@@ -71,7 +71,7 @@ All other previously open rows below have been reconciled against the deployed i
 - [x] **M3.4 — Seed cheapest, fastest-recovery, and highest-resilience repair patterns** `DONE`
   - Evidence: intent-specific branch operations are encoded in `src/core/branch-engine.ts`; browser comparison showed all three isolated futures on 2026-08-31.
 - [x] **M3.5 — Validate the seed graph and document expected baseline metrics** `DONE`
-  - Evidence: `src/simulation/engine.test.ts` fixes baseline outage values at 96.42% availability and 46-minute recovery.
+  - Evidence: `src/simulation/engine.test.ts` pins the baseline outage to a 46-minute recovery and sub-99% availability derived from the unreplicated ledger. The earlier fixed 96.42% figure belonged to the retired `aether-sim-1` lookup table; see M14.1.
 - [x] **M3.6 — Add deterministic fixtures for every scenario state** `DONE`
   - Evidence: regional outage, traffic spike, and database failure outcomes are covered by fixed unit tests in `src/simulation/engine.test.ts`.
 
@@ -258,6 +258,18 @@ None. Production is deployed on Railway with durable PostgreSQL-backed shared-wo
   - Evidence: enabled Chrome exercised the live causal-trace control and all four scenario-linked timeline stages on release `e9ee9c13-f9ec-4f75-aa20-764a54ad9d64`.
 - [x] **M12.7 — Run first-prize visual, interaction, and browser-validation loops** `DONE`
   - Evidence: enabled Chrome exercised the deployed causal trace; ChatGPT Site Tools rediscovered the settled dynamic registry and invoked `inspect_failure_domain` on the production URL; Lighthouse reported 100/100 for accessibility, best practices, SEO, and agentic browsing; release `2b354995-6a13-45dd-8dc2-16c90287ceb7` is `SUCCESS`.
+
+## Milestone 14 — Product depth for judging
+
+- [x] **M14.1 — Make the simulator read the architecture graph** `DONE`
+  - Acceptance: the topology is load-bearing, so changing the architecture changes the evidence.
+  - Evidence: `aether-sim-1` read three hardcoded entity IDs and returned lookup-table constants, so adding a critical service to the failing region left every metric byte-identical. `aether-sim-2` propagates failure breadth-first along real dependency edges with relationship-aware direction, and derives availability, recovery, latency, capacity deficits, cost, and every violation from entity properties. Adding a service now changes availability and cost; moving the ledger out of the failed region changes the causal chain. `src/simulation/engine.test.ts` covers blast radius, replication improvement, topology growth, capacity deficits, whole-graph cost, and hash reproducibility.
+- [x] **M14.2 — Play the real causal chain on the canvas** `DONE`
+  - Acceptance: the causal trace animates the actual dependency path and returns to its idle state.
+  - Evidence: playback previously highlighted a four-line hand-written list and left the control reading "Tracing causal path" permanently. It now walks the engine's `causalChain`, lighting nodes in propagation order with the leading node pulsing and failing an edge only once both endpoints are lit. Verified in Chrome: the control advanced 2/7 to 7/7 and reset to "Play causal trace", with each step naming its derived cause.
+- [x] **M14.3 — Return errors an agent can correct itself from** `DONE`
+  - Acceptance: a rejected tool call names the failed fields and the valid values.
+  - Evidence: six of eight error paths returned a bare `INVALID_INPUT` and discarded the Zod issues that explained the failure, so a model could not self-correct. Every path now returns `problems` plus a `nextAction`; `create_architecture_branch` with a bad intent names both fields and lists the three valid intents, and `trace_architecture_dependency` lists the real component IDs. Covered by a registry regression test.
 
 ## Milestone 13 — Real-time architecture decision room
 
