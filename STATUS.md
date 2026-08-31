@@ -339,6 +339,11 @@ None. Production is deployed on Railway with durable PostgreSQL-backed shared-wo
 - [x] **M14.25 — Verify the full journey on the deployed origin for both systems** `DONE`
   - Evidence: on the live application a cleared browser opens a private workspace, creates three futures, is blocked with a named cross-scenario reason, resolves it in one action, then approves, commits, and rolls back. The identical journey succeeds on the inference platform, where the capacity action correctly reports two undersized components rather than the payment platform's three.
 
+- [x] **M14.26 — Never let deleting the architecture look like an improvement** `DONE`
+  - Acceptance: an empty architecture cannot report healthy evidence or become approvable.
+  - Evidence: with every component removed the engine reported 99.99% availability and zero violations, because impact share, capacity deficits, and replication checks all had nothing to measure. A human could therefore strip a branch to nothing and merge it to production on perfect-looking evidence — the simulator rewarded deletion. A graph with no operational components now returns zero availability and a violation naming the condition, which also keeps it out of the approval gate. Covered by a regression test asserting the empty result is strictly worse than the seeded baseline.
+  - Also probed and confirmed correct: editing or rolling back the immutable baseline, creating a duplicate branch, and approving a stale version are each refused with the right code, and degenerate graphs with no relationships or a single component still surface their violations rather than crashing.
+
 ## Milestone 13 — Real-time architecture decision room
 
 - [x] **M13.1 — Define and build the unmistakable collaborative decision-room journey** `DONE`

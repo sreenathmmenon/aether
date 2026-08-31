@@ -191,4 +191,23 @@ describe("dependency-graph simulation", () => {
     expect(constrained.inputHash).not.toBe(first.inputHash);
     expect(constrained.outputHash).not.toBe(first.outputHash);
   });
+
+  it("never rewards deleting the architecture", () => {
+    const empty = structuredClone(paymentPlatformBaseline);
+    for (const id of Object.keys(empty.entities))
+      if (empty.entities[id]!.kind !== "region") delete empty.entities[id];
+    empty.relationships = {};
+
+    const result = runScenario(empty, "regional_outage", "branch", 1);
+    // A system serving no traffic must not read as perfectly available, or
+    // removing components would look like an improvement and be approvable.
+    expect(result.availability).toBe(0);
+    expect(result.sloViolations).toContain(
+      "The architecture has no components and serves no traffic",
+    );
+    expect(result.availability).toBeLessThan(
+      runScenario(paymentPlatformBaseline, "regional_outage", "branch", 1)
+        .availability,
+    );
+  });
 });

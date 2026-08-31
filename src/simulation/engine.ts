@@ -271,6 +271,30 @@ export function runScenario(
   const violations: string[] = [];
   const monthlyCostUsd = totalMonthlyCost(graph);
 
+  // A system with nothing left in it is not perfectly available; it serves no
+  // traffic at all. Report that plainly so deleting components can never look
+  // like an improvement or become approvable.
+  if (operational.length === 0) {
+    const empty = {
+      scenario,
+      branchId,
+      branchVersion,
+      engineVersion: simulationEngineVersion,
+      inputHash,
+      availability: 0,
+      rtoMinutes: 0,
+      latencyMs: 0,
+      monthlyCostUsd: 0,
+      sloViolations: [
+        "The architecture has no components and serves no traffic",
+      ],
+      affectedEntityIds: [] as string[],
+      causalChain: [] as CausalStep[],
+      rerunScope: branchVersion > 1 ? ("affected" as const) : ("full" as const),
+    };
+    return { ...empty, outputHash: fingerprint(empty) };
+  }
+
   // Seed the failure from the graph itself rather than from fixed entity IDs.
   let seeds: { id: string; cause: string }[] = [];
   let demandMultiplier = 1;
