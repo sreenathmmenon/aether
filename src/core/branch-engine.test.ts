@@ -448,8 +448,8 @@ describe("Aether command pipeline", () => {
     expect(run.monthlyCostUsd).toBe(1800);
   });
 
-  it("keeps a built architecture immutable once it holds components", () => {
-    // The empty-canvas allowance must not weaken the committed baseline.
+  it("keeps a seeded architecture immutable on its baseline", () => {
+    // The own-system allowance must not weaken a committed architecture.
     const seeded = createInitialState(paymentPlatformBaseline);
     expect(
       dispatch(
