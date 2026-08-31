@@ -263,6 +263,19 @@ export function dispatch(
         "UNAUTHORIZED",
         "Only a human can approve an architecture branch.",
       );
+    const currentEvidence = (next.simulations[branch.id] ?? []).filter(
+      (run) => run.branchVersion === branch.version,
+    );
+    if (!currentEvidence.length)
+      return commandFailure(
+        "NOT_AVAILABLE",
+        "Run a current deterministic scenario before approval.",
+      );
+    if (currentEvidence.some((run) => run.sloViolations.length > 0))
+      return commandFailure(
+        "NOT_AVAILABLE",
+        "Resolve the current scenario violations before approval.",
+      );
     branch.status = "approved";
     branch.updatedAt = now;
     nextState = "human_approved";

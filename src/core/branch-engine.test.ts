@@ -33,9 +33,16 @@ describe("Aether command pipeline", () => {
   });
 
   it("invalidates approval after a human edit", () => {
-    const state = branchState();
+    const scenario = dispatch(branchState(), {
+      type: "RUN_SCENARIO",
+      input: {
+        branchId: "branch-highest_resilience",
+        scenario: "regional_outage",
+      },
+    });
+    if (!scenario.ok) throw new Error("fixture simulation must work");
     const approved = dispatch(
-      state,
+      scenario.value,
       {
         type: "APPROVE_BRANCH",
         input: { branchId: "branch-highest_resilience", branchVersion: 1 },
@@ -66,6 +73,40 @@ describe("Aether command pipeline", () => {
       human,
     );
     expect(staleMerge).toMatchObject({ ok: false, code: "STALE_REVISION" });
+  });
+
+  it("requires current clean deterministic evidence before a human approval", () => {
+    const state = branchState();
+    const beforeSimulation = dispatch(
+      state,
+      {
+        type: "APPROVE_BRANCH",
+        input: { branchId: "branch-highest_resilience", branchVersion: 1 },
+      },
+      human,
+    );
+    expect(beforeSimulation).toMatchObject({
+      ok: false,
+      code: "NOT_AVAILABLE",
+    });
+
+    const simulated = dispatch(state, {
+      type: "RUN_SCENARIO",
+      input: {
+        branchId: "branch-highest_resilience",
+        scenario: "regional_outage",
+      },
+    });
+    if (!simulated.ok) throw new Error("fixture simulation must work");
+    const approved = dispatch(
+      simulated.value,
+      {
+        type: "APPROVE_BRANCH",
+        input: { branchId: "branch-highest_resilience", branchVersion: 1 },
+      },
+      human,
+    );
+    expect(approved).toMatchObject({ ok: true, nextState: "human_approved" });
   });
 
   it("records deterministic outcome evidence for the resilient future", () => {
@@ -108,5 +149,14 @@ describe("Aether command pipeline", () => {
       simulated.value.simulations["branch-highest_resilience"]?.[0]
         ?.sloViolations,
     ).toContain("Human cost ceiling exceeded: $7,800 > $7,000");
+    const approval = dispatch(
+      simulated.value,
+      {
+        type: "APPROVE_BRANCH",
+        input: { branchId: "branch-highest_resilience", branchVersion: 1 },
+      },
+      human,
+    );
+    expect(approval).toMatchObject({ ok: false, code: "NOT_AVAILABLE" });
   });
 });

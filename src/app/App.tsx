@@ -91,6 +91,11 @@ export function App() {
     (state.simulations[activeBranch.id] ?? []).find(
       (run) => run.scenario === selectedScenario,
     ) ?? (state.simulations[activeBranch.id] ?? []).at(-1);
+  const approvalEligible = Boolean(
+    activeSimulation &&
+    activeSimulation.branchVersion === activeBranch.version &&
+    activeSimulation.sloViolations.length === 0,
+  );
   const evidence = activeSimulation ?? {
     availability: 96.42,
     rtoMinutes: 46,
@@ -697,7 +702,7 @@ export function App() {
             <button
               className="approve-button"
               disabled={
-                !activeSimulation ||
+                !approvalEligible ||
                 !writable ||
                 activeBranch.id === "branch-baseline"
               }
@@ -711,7 +716,9 @@ export function App() {
                 })
               }
             >
-              Human approve exact plan
+              {activeSimulation && !approvalEligible
+                ? "Resolve evidence before approval"
+                : "Human approve exact plan"}
             </button>
           )}
         </div>
