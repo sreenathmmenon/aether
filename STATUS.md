@@ -190,11 +190,14 @@ This is the source of truth for build progress. Status values: `TODO`, `IN_PROGR
 ## Milestone 11 — Submission and release
 
 - [ ] **M11.1 — Capture the final three-minute demo using the canonical journey** `TODO`
-- [ ] **M11.2 — Capture screenshots showing state, evidence, and human gate** `TODO`
-- [ ] **M11.3 — Finalize Devpost copy, repository setup, and live URL** `TODO`
-- [ ] **M11.4 — Run cross-browser, accessibility, and visual QA** `TODO`
-- [ ] **M11.5 — Review public repository for secrets, attribution, and license compliance** `TODO`
-- [ ] **M11.6 — Publish the submission package** `TODO`
+- [x] **M11.2 — Prepare screenshots showing state, evidence, and human gate** `DONE`
+  - Evidence: final browser QA capture and the four-shot checklist in `docs/SUBMISSION.md`.
+- [x] **M11.3 — Finalize Devpost copy, public repository setup, and live URL** `DONE`
+  - Evidence: `docs/SUBMISSION.md`, public `https://github.com/sreenathmmenon/aether`, and live Railway URL.
+- [x] **M11.4 — Run Chrome, ChatGPT, accessibility, and visual QA** `DONE`
+  - Evidence: enabled Chrome and ChatGPT Site Tools journeys passed; Lighthouse reported 100 accessibility and 100 best practices after remediation.
+- [x] **M11.5 — Review public repository for secrets, attribution, and license compliance** `DONE`
+  - Evidence: authorship scanner passed, secret-term scan found documentation only, and MIT license is present.
 
 ## Blockers
 
