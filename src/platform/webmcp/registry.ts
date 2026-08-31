@@ -1,12 +1,14 @@
 import { z } from "zod";
 import {
+  addComponentInput,
+  connectComponentsInput,
   addDecisionNoteInput,
   createBranchInput,
   runScenarioInput,
   setPropertyInput,
 } from "@core/commands";
 import type { AetherState } from "@core/branch-engine";
-import { dispatch } from "@core/branch-engine";
+import { deriveGraph, dispatch } from "@core/branch-engine";
 import type { Actor } from "@core/types";
 
 type Registration = { abort: () => void };
@@ -84,6 +86,25 @@ export function createAetherToolRegistry(
   }
 
   let callSequence = 0;
+
+  function regionIds() {
+    const state = snapshot();
+    return Object.values(state.revisions["revision-baseline"]!.graph.entities)
+      .filter((entity) => entity.kind === "region")
+      .map((entity) => entity.id);
+  }
+
+  /** Component IDs an agent may currently reference, including user-added ones. */
+  function componentIds() {
+    const state = snapshot();
+    const branch = state.branches[state.workspace.activeBranchId];
+    const graph = branch
+      ? deriveGraph(state, branch)
+      : state.revisions["revision-baseline"]!.graph;
+    return Object.values(graph.entities)
+      .filter((entity) => entity.kind !== "region")
+      .map((entity) => entity.id);
+  }
 
   /** Describe a call for the activity feed without leaking raw payloads. */
   function summarize(input: unknown) {
@@ -242,7 +263,7 @@ export function createAetherToolRegistry(
               },
               entityId: {
                 type: "string",
-                enum: ["gateway", "auth", "ledger", "queue", "reconciliation"],
+                enum: componentIds(),
                 description: "Optional component the note concerns.",
               },
               body: {
@@ -389,10 +410,7 @@ export function createAetherToolRegistry(
         inputSchema: {
           type: "object",
           properties: {
-            entityId: {
-              type: "string",
-              enum: ["gateway", "auth", "ledger", "queue", "reconciliation"],
-            },
+            entityId: { type: "string", enum: componentIds() },
           },
           required: ["entityId"],
           additionalProperties: false,
@@ -445,7 +463,7 @@ export function createAetherToolRegistry(
                 type: "string",
                 description: "Existing non-merged branch ID.",
               },
-              entityId: { type: "string", enum: ["ledger", "auth", "queue"] },
+              entityId: { type: "string", enum: componentIds() },
               property: {
                 type: "string",
                 enum: [
@@ -479,6 +497,118 @@ export function createAetherToolRegistry(
               branchId: parsed.data.branchId,
               branchVersion:
                 result.value.branches[parsed.data.branchId]?.version,
+              nextAction: "run_failure_scenario",
+            });
+          },
+        });
+        await register({
+          name: "add_architecture_component",
+          description:
+            "Add one new component to a non-merged branch. The component joins the deterministic model immediately and is reversible.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              branchId: {
+                type: "string",
+                description: "Existing non-merged branch ID.",
+              },
+              name: {
+                type: "string",
+                description: "Short plain-text component name.",
+              },
+              kind: {
+                type: "string",
+                enum: ["service", "database", "queue", "gateway"],
+              },
+              regionId: { type: "string", enum: regionIds() },
+              peakRps: {
+                type: "number",
+                description: "Expected peak requests per second.",
+              },
+              capacityRps: {
+                type: "number",
+                description: "Provisioned requests per second.",
+              },
+              monthlyCostUsd: { type: "number" },
+            },
+            required: [
+              "branchId",
+              "name",
+              "kind",
+              "regionId",
+              "peakRps",
+              "capacityRps",
+              "monthlyCostUsd",
+            ],
+            additionalProperties: false,
+          },
+          annotations: { readOnlyHint: false, untrustedContentHint: true },
+          execute: async (input: unknown) => {
+            const parsed = addComponentInput.safeParse(input);
+            if (!parsed.success)
+              return invalidInput(
+                parsed.error,
+                `Supply a plain-text name, a kind of service, database, queue, or gateway, and a regionId from: ${regionIds().join(", ")}.`,
+              );
+            const result = dispatch(
+              snapshot(),
+              { type: "ADD_COMPONENT", input: parsed.data },
+              agent,
+            );
+            if (!result.ok) return toolResult(result);
+            onState(result.value);
+            return toolResult({
+              branchId: parsed.data.branchId,
+              addedEntityId: result.affectedEntityIds[0],
+              nextAction: "connect_architecture_components",
+            });
+          },
+        });
+        await register({
+          name: "connect_architecture_components",
+          description:
+            "Declare a dependency between two components on a non-merged branch so failure can propagate along it.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              branchId: { type: "string" },
+              sourceId: { type: "string" },
+              targetId: { type: "string" },
+              kind: {
+                type: "string",
+                enum: [
+                  "calls",
+                  "reads_from",
+                  "writes_to",
+                  "publishes_to",
+                  "consumes_from",
+                  "routes_to",
+                  "depends_on",
+                ],
+                description:
+                  "How the source relates to the target, which sets the direction failure travels.",
+              },
+            },
+            required: ["branchId", "sourceId", "targetId", "kind"],
+            additionalProperties: false,
+          },
+          annotations: { readOnlyHint: false, untrustedContentHint: false },
+          execute: async (input: unknown) => {
+            const parsed = connectComponentsInput.safeParse(input);
+            if (!parsed.success)
+              return invalidInput(
+                parsed.error,
+                `Supply two different component IDs from: ${componentIds().join(", ")}.`,
+              );
+            const result = dispatch(
+              snapshot(),
+              { type: "CONNECT_COMPONENTS", input: parsed.data },
+              agent,
+            );
+            if (!result.ok) return toolResult(result);
+            onState(result.value);
+            return toolResult({
+              connected: `${parsed.data.sourceId} -> ${parsed.data.targetId}`,
               nextAction: "run_failure_scenario",
             });
           },

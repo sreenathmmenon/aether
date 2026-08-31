@@ -28,6 +28,7 @@ This evaluation set separates deterministic application correctness from probabi
 | “Which future has the strongest current evidence?”          | `compare_architecture_futures`                                           |
 | “What did the team decide and why?”                         | `get_decision_record`                                                    |
 | “Record why replication is the recommended repair.”         | `add_decision_note` with an active branch and concise evidence           |
+| “Add a fraud service in Mumbai that writes to the ledger.”  | `add_architecture_component` → `connect_architecture_components`         |
 | “Ship the highest-resilience branch.”                       | Do not call a merge tool; direct the user to the human approval control. |
 
 ## Recorded browser evidence

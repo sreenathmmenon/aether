@@ -1,7 +1,11 @@
 import type { Actor, BranchId, CommandResult, RevisionId } from "@core/types";
 import { commandFailure } from "@core/types";
 import type { AetherCommand } from "@core/commands";
-import type { ArchitectureGraph } from "@domain/architecture/types";
+import type {
+  ArchitectureEntity,
+  ArchitectureGraph,
+  ArchitectureRelationship,
+} from "@domain/architecture/types";
 import type {
   AuditEvent,
   Branch,
@@ -102,6 +106,50 @@ export function deriveGraph(
     if (operation.kind === "move_entity") {
       const entity = graph.entities[operation.entityId];
       if (entity) entity.position = { x: operation.x, y: operation.y };
+    }
+    if (operation.kind === "add_entity") {
+      graph.entities[operation.entityId] = {
+        id: operation.entityId,
+        kind: operation.entityKind as ArchitectureEntity["kind"],
+        name: operation.name,
+        position: { x: operation.x, y: operation.y },
+        properties: {
+          regionId: operation.regionId,
+          peakRps: operation.peakRps,
+          capacityRps: operation.capacityRps,
+          monthlyCostUsd: operation.monthlyCostUsd,
+          ...(operation.entityKind === "service"
+            ? { replicas: 1, latencyTargetMs: 150 }
+            : {}),
+          ...(operation.entityKind === "database"
+            ? { replicationMode: "none", recoveryTimeMinutes: 30 }
+            : {}),
+          ...(operation.entityKind === "queue" ? { durable: true } : {}),
+        } as ArchitectureEntity["properties"],
+        version: 1,
+        createdAt: operation.entityId,
+        updatedAt: operation.entityId,
+      };
+    }
+    if (operation.kind === "add_relationship") {
+      graph.relationships[operation.relationshipId] = {
+        id: operation.relationshipId,
+        kind: operation.relationshipKind as ArchitectureRelationship["kind"],
+        sourceId: operation.sourceId,
+        targetId: operation.targetId,
+        version: 1,
+        createdAt: operation.relationshipId,
+        updatedAt: operation.relationshipId,
+      };
+    }
+    if (operation.kind === "remove_entity") {
+      delete graph.entities[operation.entityId];
+      for (const [id, relationship] of Object.entries(graph.relationships))
+        if (
+          relationship.sourceId === operation.entityId ||
+          relationship.targetId === operation.entityId
+        )
+          delete graph.relationships[id];
     }
   }
   return graph;
@@ -252,6 +300,100 @@ export function dispatch(
     branch.updatedAt = now;
     affectedEntityIds = [command.input.entityId];
     nextState = "human_edit";
+  }
+
+  if (command.type === "ADD_COMPONENT") {
+    const branch = next.branches[command.input.branchId];
+    if (!branch || branch.status === "merged" || branch.status === "discarded")
+      return commandFailure("NOT_AVAILABLE", "This branch cannot be changed.");
+    const graph = deriveGraph(next, branch);
+    if (!graph.entities[command.input.regionId])
+      return commandFailure("INVALID_INPUT", "Unknown region.");
+    const entityId = `entity-${command.input.name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "")}`;
+    if (graph.entities[entityId])
+      return commandFailure(
+        "CONFLICT",
+        "A component with that name already exists.",
+      );
+    // Place a new component clear of the components already on the canvas.
+    const placed = Object.values(graph.entities).filter(
+      (entity) => entity.kind !== "region",
+    );
+    const x = 90 + (placed.length % 5) * 180;
+    const y = 190 + Math.floor(placed.length / 5) * 170;
+    branch.operations.push({
+      kind: "add_entity",
+      entityId,
+      name: command.input.name,
+      entityKind: command.input.kind,
+      regionId: command.input.regionId,
+      x,
+      y,
+      peakRps: command.input.peakRps,
+      capacityRps: command.input.capacityRps,
+      monthlyCostUsd: command.input.monthlyCostUsd,
+    });
+    branch.version += 1;
+    branch.status = "proposed";
+    branch.updatedAt = now;
+    affectedEntityIds = [entityId];
+    nextState = "component_added";
+  }
+
+  if (command.type === "CONNECT_COMPONENTS") {
+    const branch = next.branches[command.input.branchId];
+    if (!branch || branch.status === "merged" || branch.status === "discarded")
+      return commandFailure("NOT_AVAILABLE", "This branch cannot be changed.");
+    const graph = deriveGraph(next, branch);
+    if (
+      !graph.entities[command.input.sourceId] ||
+      !graph.entities[command.input.targetId]
+    )
+      return commandFailure("INVALID_INPUT", "Unknown architecture component.");
+    if (command.input.sourceId === command.input.targetId)
+      return commandFailure(
+        "INVALID_INPUT",
+        "A component cannot depend on itself.",
+      );
+    const relationshipId = `${command.input.sourceId}-${command.input.targetId}`;
+    if (graph.relationships[relationshipId])
+      return commandFailure("CONFLICT", "That dependency already exists.");
+    branch.operations.push({
+      kind: "add_relationship",
+      relationshipId,
+      sourceId: command.input.sourceId,
+      targetId: command.input.targetId,
+      relationshipKind: command.input.kind,
+    });
+    branch.version += 1;
+    branch.status = "proposed";
+    branch.updatedAt = now;
+    affectedEntityIds = [command.input.sourceId, command.input.targetId];
+    nextState = "dependency_added";
+  }
+
+  if (command.type === "REMOVE_COMPONENT") {
+    const branch = next.branches[command.input.branchId];
+    if (!branch || branch.status === "merged" || branch.status === "discarded")
+      return commandFailure("NOT_AVAILABLE", "This branch cannot be changed.");
+    const graph = deriveGraph(next, branch);
+    const entity = graph.entities[command.input.entityId];
+    if (!entity)
+      return commandFailure("INVALID_INPUT", "Unknown architecture component.");
+    if (entity.kind === "region")
+      return commandFailure("NOT_AVAILABLE", "A region cannot be removed.");
+    branch.operations.push({
+      kind: "remove_entity",
+      entityId: command.input.entityId,
+    });
+    branch.version += 1;
+    branch.status = "proposed";
+    branch.updatedAt = now;
+    affectedEntityIds = [command.input.entityId];
+    nextState = "component_removed";
   }
 
   if (command.type === "SET_COST_CEILING") {

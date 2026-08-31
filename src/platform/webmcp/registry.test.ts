@@ -67,6 +67,8 @@ describe("Aether WebMCP registry", () => {
       "inspect_failure_domain",
       "trace_architecture_dependency",
       "propose_architecture_change",
+      "add_architecture_component",
+      "connect_architecture_components",
       "compare_architecture_futures",
     ]);
     const note = tools.find((tool) => tool.name === "add_decision_note");

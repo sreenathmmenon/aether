@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createInitialState, dispatch } from "./branch-engine";
+import { createInitialState, deriveGraph, dispatch } from "./branch-engine";
 import { paymentPlatformBaseline } from "../fixtures/payment-platform/baseline";
 
 const human = {
@@ -195,5 +195,113 @@ describe("Aether command pipeline", () => {
       ok: false,
       code: "INVALID_INPUT",
     });
+  });
+
+  it("lets a person or agent extend the architecture itself", () => {
+    const state = branchState();
+    const added = dispatch(
+      state,
+      {
+        type: "ADD_COMPONENT",
+        input: {
+          branchId: "branch-highest_resilience",
+          name: "Fraud Engine",
+          kind: "service",
+          regionId: "region-mumbai",
+          peakRps: 9000,
+          capacityRps: 12000,
+          monthlyCostUsd: 1400,
+        },
+      },
+      human,
+    );
+    if (!added.ok) throw new Error("component must be added");
+    const branch = added.value.branches["branch-highest_resilience"]!;
+    expect(branch.status).toBe("proposed");
+    expect(
+      deriveGraph(added.value, branch).entities["entity-fraud-engine"],
+    ).toBeDefined();
+
+    // A new component is inert until it is wired into the system.
+    const connected = dispatch(
+      added.value,
+      {
+        type: "CONNECT_COMPONENTS",
+        input: {
+          branchId: "branch-highest_resilience",
+          sourceId: "entity-fraud-engine",
+          targetId: "ledger",
+          kind: "writes_to",
+        },
+      },
+      human,
+    );
+    if (!connected.ok) throw new Error("dependency must be added");
+    const simulated = dispatch(connected.value, {
+      type: "RUN_SCENARIO",
+      input: {
+        branchId: "branch-highest_resilience",
+        scenario: "regional_outage",
+      },
+    });
+    if (!simulated.ok) throw new Error("simulation must work");
+    const run = simulated.value.simulations["branch-highest_resilience"]![0]!;
+    expect(run.affectedEntityIds).toContain("entity-fraud-engine");
+    expect(run.monthlyCostUsd).toBe(10100);
+
+    // The same component cannot be added twice, and self-dependency is refused.
+    expect(
+      dispatch(
+        connected.value,
+        {
+          type: "ADD_COMPONENT",
+          input: {
+            branchId: "branch-highest_resilience",
+            name: "Fraud Engine",
+            kind: "service",
+            regionId: "region-mumbai",
+            peakRps: 1,
+            capacityRps: 1,
+            monthlyCostUsd: 1,
+          },
+        },
+        human,
+      ),
+    ).toMatchObject({ ok: false, code: "CONFLICT" });
+    expect(
+      dispatch(
+        connected.value,
+        {
+          type: "CONNECT_COMPONENTS",
+          input: {
+            branchId: "branch-highest_resilience",
+            sourceId: "ledger",
+            targetId: "ledger",
+            kind: "calls",
+          },
+        },
+        human,
+      ),
+    ).toMatchObject({ ok: false, code: "INVALID_INPUT" });
+  });
+
+  it("removes a component and the dependencies that referenced it", () => {
+    const state = branchState();
+    const removed = dispatch(
+      state,
+      {
+        type: "REMOVE_COMPONENT",
+        input: { branchId: "branch-highest_resilience", entityId: "queue" },
+      },
+      human,
+    );
+    if (!removed.ok) throw new Error("component must be removable");
+    const graph = deriveGraph(
+      removed.value,
+      removed.value.branches["branch-highest_resilience"]!,
+    );
+    expect(graph.entities.queue).toBeUndefined();
+    expect(graph.relationships["ledger-queue"]).toBeUndefined();
+    expect(graph.relationships["queue-reconciliation"]).toBeUndefined();
   });
 });

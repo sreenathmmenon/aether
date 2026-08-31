@@ -61,7 +61,20 @@ export type BranchOperation =
       sourceId: EntityId;
       targetId: EntityId;
       relationshipKind: string;
-    };
+    }
+  | {
+      kind: "add_entity";
+      entityId: EntityId;
+      name: string;
+      entityKind: string;
+      regionId: EntityId;
+      x: number;
+      y: number;
+      peakRps: number;
+      capacityRps: number;
+      monthlyCostUsd: number;
+    }
+  | { kind: "remove_entity"; entityId: EntityId };
 
 export type Proposal = {
   id: ProposalId;

@@ -282,6 +282,13 @@ None. Production is deployed on Railway with durable PostgreSQL-backed shared-wo
   - Acceptance: the origin of a failure is visually distinct from what merely degraded because of it.
   - Evidence: every impacted component and edge rendered in the same coral, so a five-component blast radius read as undifferentiated alarm and nothing looked more urgent than anything else. Components at causal depth zero now render as a direct failure and deeper ones as downstream degradation, with matching edge treatment and labels; healthy links carry a slow traffic flow. Verified in Chrome: a regional outage shows three direct failures in Mumbai and two degraded components in the recovery region.
 
+- [x] **M14.7 — Let people and agents build the architecture, not just tour it** `DONE`
+  - Acceptance: the model is editable, so a visitor can represent their own system rather than only the seeded one.
+  - Evidence: the graph was effectively read-only — only properties and canvas positions could change — so every visitor explored the same five hardcoded components and three canned branches, and the product demonstrated a scenario rather than a capability. `ADD_COMPONENT`, `CONNECT_COMPONENTS`, and `REMOVE_COMPONENT` now run through the same validated dispatch, rejecting duplicate names, self-dependencies, unknown regions, and edits to settled branches. A new component enters the causal chain and the cost total immediately: adding a fraud service and wiring it to the ledger moved monthly cost from $8,700 to $9,500 and put it in the blast radius, verified in Chrome.
+- [x] **M14.8 — Expose model extension to agents with live identifiers** `DONE`
+  - Acceptance: an agent can extend the architecture and can address components a person just created.
+  - Evidence: `add_architecture_component` and `connect_architecture_components` join the branch-gated surface, taking the tool count from nine to eleven. Component and region enums in every schema are now enumerated from the live derived graph rather than a fixed list, so agent and human edits address the same evolving model.
+
 ## Milestone 13 — Real-time architecture decision room
 
 - [x] **M13.1 — Define and build the unmistakable collaborative decision-room journey** `DONE`

@@ -1476,3 +1476,50 @@ button {
 .architecture-node.node-degraded small {
   color: #a4641a;
 }
+
+/* Architects add their own components, so the model is theirs to shape. */
+.component-composer {
+  display: grid;
+  gap: 7px;
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px dashed rgba(17, 36, 64, 0.22);
+  background: rgba(255, 255, 255, 0.5);
+}
+.component-composer label {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.component-composer input,
+.component-composer select {
+  min-height: 32px;
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+  font-size: 12px;
+}
+.component-composer > div {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 6px;
+}
+.component-composer button {
+  padding: 0 14px;
+  border: 0;
+  color: #fff;
+  background: var(--ink);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.component-composer button:disabled,
+.component-composer input:disabled,
+.component-composer select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

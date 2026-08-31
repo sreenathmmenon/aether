@@ -84,6 +84,11 @@ export function App() {
   );
   const [traceStep, setTraceStep] = useState(-1);
   const [noteBody, setNoteBody] = useState("");
+  const [componentDraft, setComponentDraft] = useState({
+    name: "",
+    kind: "service" as "service" | "database" | "queue" | "gateway",
+    regionId: "region-mumbai",
+  });
   const [dragPreview, setDragPreview] = useState<
     { id: string; x: number; y: number } | undefined
   >(undefined);
@@ -197,6 +202,9 @@ export function App() {
   );
   const entities = Object.values(graph.entities).filter(
     (entity) => entity.kind !== "region",
+  );
+  const regions = Object.values(graph.entities).filter(
+    (entity) => entity.kind === "region",
   );
   const decisionNotes = state.decisionNotes ?? [];
   const activeNotes = decisionNotes
@@ -437,6 +445,28 @@ export function App() {
     setMessage(
       "Playing the causal failure trace across the active architecture future.",
     );
+  }
+  function addComponent(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const name = componentDraft.name.trim();
+    if (name.length < 2) {
+      setMessage("Name the component before adding it to the architecture.");
+      return;
+    }
+    apply({
+      type: "ADD_COMPONENT",
+      input: {
+        branchId: activeBranch.id,
+        name,
+        kind: componentDraft.kind,
+        regionId: componentDraft.regionId,
+        // Sensible starting capacity; the architect tunes it from the canvas.
+        peakRps: 8000,
+        capacityRps: 10000,
+        monthlyCostUsd: 800,
+      },
+    });
+    setComponentDraft((draft) => ({ ...draft, name: "" }));
   }
   function postDecisionNote(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -913,6 +943,62 @@ export function App() {
               >
                 Compare futures
               </button>
+              <form className="component-composer" onSubmit={addComponent}>
+                <label htmlFor="component-name">
+                  Add a component to this future
+                </label>
+                <input
+                  id="component-name"
+                  value={componentDraft.name}
+                  maxLength={32}
+                  placeholder="Fraud Engine"
+                  disabled={!writable}
+                  onChange={(event) =>
+                    setComponentDraft((draft) => ({
+                      ...draft,
+                      name: event.target.value,
+                    }))
+                  }
+                />
+                <div>
+                  <select
+                    aria-label="Component kind"
+                    value={componentDraft.kind}
+                    disabled={!writable}
+                    onChange={(event) =>
+                      setComponentDraft((draft) => ({
+                        ...draft,
+                        kind: event.target.value as typeof componentDraft.kind,
+                      }))
+                    }
+                  >
+                    <option value="service">Service</option>
+                    <option value="database">Database</option>
+                    <option value="queue">Queue</option>
+                    <option value="gateway">Gateway</option>
+                  </select>
+                  <select
+                    aria-label="Region"
+                    value={componentDraft.regionId}
+                    disabled={!writable}
+                    onChange={(event) =>
+                      setComponentDraft((draft) => ({
+                        ...draft,
+                        regionId: event.target.value,
+                      }))
+                    }
+                  >
+                    {regions.map((region) => (
+                      <option key={region.id} value={region.id}>
+                        {region.name}
+                      </option>
+                    ))}
+                  </select>
+                  <button type="submit" disabled={!writable}>
+                    Add
+                  </button>
+                </div>
+              </form>
             </div>
           )}
           <div className="webmcp-status">
