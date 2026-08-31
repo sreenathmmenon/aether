@@ -176,7 +176,8 @@ This is the source of truth for build progress. Status values: `TODO`, `IN_PROGR
   - Evidence: deployed malformed Site Tool input returned `INVALID_INPUT`; unit test covers stale approval and unauthorized agent actions.
 - [x] **M9.7 — Add direct and open-ended WebMCP tool-selection evaluation dataset** `DONE`
   - Evidence: `docs/WEBMCP_EVALS.md` includes direct and open-ended expected-call cases.
-- [ ] **M9.8 — Add prompt-injection regression for untrusted tool output** `TODO`
+- [x] **M9.8 — Add prompt-injection regression for untrusted tool output** `DONE`
+  - Evidence: unsafe labels are rejected by schema validation and even plain agent-supplied labels are normalized to fixed product-owned future names before persistence or tool output; registry regression test covers both cases.
 
 ## Milestone 10 — Railway deployment
 
