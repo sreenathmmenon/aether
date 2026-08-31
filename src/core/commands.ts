@@ -1,7 +1,14 @@
 import { z } from "zod";
 
 export const createBranchInput = z.object({
-  name: z.string().min(3).max(48),
+  name: z
+    .string()
+    .min(3)
+    .max(48)
+    .regex(
+      /^[A-Za-z0-9][A-Za-z0-9 ]*$/,
+      "Use a short plain-text branch label.",
+    ),
   intent: z.enum(["lowest_cost", "fastest_recovery", "highest_resilience"]),
 });
 

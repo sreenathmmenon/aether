@@ -163,12 +163,17 @@ export function dispatch(
         },
       ],
     }[command.input.intent];
+    const canonicalName = {
+      lowest_cost: "Lowest cost",
+      fastest_recovery: "Fastest recovery",
+      highest_resilience: "Highest resilience",
+    }[command.input.intent];
     next.branches[id] = {
       id,
       workspaceId: next.workspace.id,
       parentBranchId: "branch-baseline",
       baseRevisionId: "revision-baseline",
-      name: command.input.name,
+      name: canonicalName,
       status: "draft",
       createdBy: actor,
       operations,
