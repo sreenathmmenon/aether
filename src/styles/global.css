@@ -1658,3 +1658,23 @@ button {
   font-size: 10px;
   line-height: 1.45;
 }
+
+/* Approval needs every scenario clean, so blockers from the scenarios that
+   are not on screen must still be visible. */
+.other-scenario-block {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin: 7px 0 0;
+  color: #a4641a;
+  font-size: 10px;
+  line-height: 1.45;
+}
+.other-scenario-block i {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  margin-top: 4px;
+  border-radius: 50%;
+  background: var(--orange);
+}

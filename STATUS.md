@@ -327,6 +327,12 @@ None. Production is deployed on Railway with durable PostgreSQL-backed shared-wo
 - [x] **M14.21 — Frame the product by its mechanism rather than its demo domain** `DONE`
   - Evidence: the README, product definition, and submission copy all opened with "architecture decision room", which reads as a narrow niche even though the mechanism — typed model, isolated branch, deterministic evidence, bounded agent authority, human-only commit — is what any team faces when an agent proposes changes to something consequential. The positioning now leads with that gap and presents architecture resilience as the domain where the consequences are measurable, without claiming domains the build does not ship.
 
+- [x] **M14.22 — Make the approval gate explain itself** `DONE`
+  - Acceptance: a reviewer can always see why approval is blocked and what would unblock it.
+  - Evidence: the engine required every simulated scenario on the branch version to be clean, but the panel showed violations only for the scenario on screen, so a reviewer saw "No SLO violations in this future" beside a refusal reading "Resolve the current scenario violations" and had no way to reconcile them. Eligibility is now computed across every current run and blockers from other scenarios are named in the evidence panel, so the interface reports "Traffic spike still blocks approval: Primary Ledger capacity deficit: 4,500 RPS". The strict rule is kept because approving a production change on one scenario's evidence would be wrong.
+- [x] **M14.23 — Give the guardrail and the bottleneck a resolvable path** `DONE`
+  - Evidence: the proposed cost ceiling derived from whichever future was on screen, so viewing an expensive option produced a ceiling that disqualified every future and left the journey with no approvable option. The ceiling now derives from the cheapest future that clears its own violations, a locked ceiling can be raised to admit the plan under review, and the capacity action resolves every current deficit and re-runs all scenarios rather than revealing one bottleneck at a time. Verified end to end in the browser: blocked with a named reason, one action resolves three components, then approve, commit, and rollback all succeed.
+
 ## Milestone 13 — Real-time architecture decision room
 
 - [x] **M13.1 — Define and build the unmistakable collaborative decision-room journey** `DONE`

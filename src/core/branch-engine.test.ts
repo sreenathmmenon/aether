@@ -370,4 +370,35 @@ describe("Aether command pipeline", () => {
     // The refusal names the reason and the recoverable next step.
     expect(attempt.message).toContain("dependencies rely on it");
   });
+
+  it("requires every simulated scenario to be clean before approval", () => {
+    let state = branchState();
+    const branchId = "branch-highest_resilience";
+    // The regional outage is clean on this branch, but the traffic spike is
+    // not, so approving on the strength of one scenario must be refused.
+    for (const scenario of ["regional_outage", "traffic_spike"] as const) {
+      const run = dispatch(state, {
+        type: "RUN_SCENARIO",
+        input: { branchId, scenario },
+      });
+      if (!run.ok) throw new Error("simulation must work");
+      state = run.value;
+    }
+    const runs = state.simulations[branchId]!;
+    expect(
+      runs.find((run) => run.scenario === "regional_outage")!.sloViolations,
+    ).toHaveLength(0);
+    expect(
+      runs.find((run) => run.scenario === "traffic_spike")!.sloViolations
+        .length,
+    ).toBeGreaterThan(0);
+
+    expect(
+      dispatch(
+        state,
+        { type: "APPROVE_BRANCH", input: { branchId, branchVersion: 1 } },
+        human,
+      ),
+    ).toMatchObject({ ok: false, code: "NOT_AVAILABLE" });
+  });
 });

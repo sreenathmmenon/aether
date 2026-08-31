@@ -187,10 +187,17 @@ export function App() {
     (state.simulations[activeBranch.id] ?? []).find(
       (run) => run.scenario === selectedScenario,
     ) ?? (state.simulations[activeBranch.id] ?? []).at(-1);
+  // Approval requires every simulated scenario on this branch version to be
+  // clean, so the interface must report blockers from all of them rather than
+  // only the scenario currently on screen.
+  const currentRuns = (state.simulations[activeBranch.id] ?? []).filter(
+    (run) => run.branchVersion === activeBranch.version,
+  );
+  const blockingRuns = currentRuns.filter(
+    (run) => run.sloViolations.length > 0,
+  );
   const approvalEligible = Boolean(
-    activeSimulation &&
-    activeSimulation.branchVersion === activeBranch.version &&
-    activeSimulation.sloViolations.length === 0,
+    currentRuns.length > 0 && blockingRuns.length === 0,
   );
   // With no stored run yet, show the live engine result for the branch the
   // user is looking at rather than a hardcoded placeholder.
@@ -246,10 +253,7 @@ export function App() {
           a.headroom - b.headroom || a.entity.id.localeCompare(b.entity.id),
       )[0];
   }, [graph]);
-  const suggestedCeiling = Math.max(
-    1000,
-    Math.round((evidence.monthlyCostUsd * 0.85) / 100) * 100,
-  );
+
   const scenarioCopy = useMemo(
     () => scenarioNarrative(graph, evidence),
     [graph, evidence],
@@ -305,6 +309,44 @@ export function App() {
   const regions = Object.values(graph.entities).filter(
     (entity) => entity.kind === "region",
   );
+  // A guardrail should force a trade-off, not create a dead end. Derive it
+  // from the cheapest future that actually clears its own violations, so at
+  // least one option remains approvable once the ceiling is locked.
+  // Components that cannot absorb a 1.5x demand burst, worst first.
+  const undersized = useMemo(
+    () =>
+      Object.values(graph.entities)
+        .filter((entity) => entity.kind !== "region")
+        .map((entity) => {
+          const props = entity.properties as {
+            peakRps?: number;
+            capacityRps?: number;
+          };
+          return {
+            entity,
+            peak: props.peakRps ?? 0,
+            deficit: (props.peakRps ?? 0) * 1.5 - (props.capacityRps ?? 0),
+          };
+        })
+        .filter((row) => row.deficit > 0)
+        .sort((left, right) => right.deficit - left.deficit),
+    [graph],
+  );
+  const suggestedCeiling = useMemo(() => {
+    const clean = futures
+      .flatMap((branch) => state.simulations[branch.id] ?? [])
+      .filter(
+        (run) =>
+          run.scenario === selectedScenario &&
+          run.sloViolations.every((violation) =>
+            violation.startsWith("Human cost ceiling"),
+          ),
+      )
+      .map((run) => run.monthlyCostUsd)
+      .sort((left, right) => left - right)[0];
+    const basis = clean ?? evidence.monthlyCostUsd * 0.85;
+    return Math.max(1000, Math.ceil(basis / 100) * 100);
+  }, [futures, state.simulations, selectedScenario, evidence.monthlyCostUsd]);
   const decisionNotes = state.decisionNotes ?? [];
   const activeNotes = decisionNotes
     .filter(
@@ -513,6 +555,51 @@ export function App() {
     setSelectedScenario("regional_outage");
     setMessage(
       `${template.name} loaded. The baseline is failing and ready for review.`,
+    );
+  }
+  function resolveCapacity() {
+    // Raising one component only reveals the next bottleneck, which is honest
+    // but slow to walk through; resolve every current deficit in one action
+    // and re-run each scenario so approval eligibility is accurate.
+    let next = state;
+    for (const row of undersized.length
+      ? undersized
+      : bottleneck
+        ? [bottleneck]
+        : []) {
+      const outcome = dispatch(
+        next,
+        {
+          type: "SET_PROPERTY",
+          input: {
+            branchId: activeBranch.id,
+            entityId: row.entity.id,
+            property: "capacityRps",
+            value: Math.round(row.peak * 1.6),
+          },
+        },
+        humanActor,
+      );
+      if (outcome.ok) next = outcome.value;
+    }
+    for (const scenario of [
+      "regional_outage",
+      "traffic_spike",
+      "database_failure",
+    ] as const) {
+      const outcome = dispatch(
+        next,
+        {
+          type: "RUN_SCENARIO",
+          input: { branchId: activeBranch.id, scenario },
+        },
+        humanActor,
+      );
+      if (outcome.ok) next = outcome.value;
+    }
+    setState(next);
+    setMessage(
+      "Capacity raised past peak demand. Every scenario recomputed against the new plan.",
     );
   }
   function reset() {
@@ -1087,8 +1174,19 @@ export function App() {
                 </p>
               ))
             ) : (
-              <p className="no-violation">No SLO violations in this future.</p>
+              <p className="no-violation">
+                No SLO violations in {scenarioCopy[selectedScenario].label}.
+              </p>
             )}
+            {blockingRuns
+              .filter((run) => run.scenario !== selectedScenario)
+              .map((run) => (
+                <p className="other-scenario-block" key={run.scenario}>
+                  <i />
+                  {scenarioCopy[run.scenario].label} still blocks approval:{" "}
+                  {run.sloViolations[0]}
+                </p>
+              ))}
           </div>
           {branchCount > 0 && (
             <div className="human-actions">
@@ -1098,31 +1196,33 @@ export function App() {
                 onClick={() =>
                   apply({
                     type: "SET_COST_CEILING",
-                    input: { amountUsd: suggestedCeiling },
-                  })
-                }
-              >
-                {state.workspace.costCeilingUsd
-                  ? `Cost ceiling locked · $${state.workspace.costCeilingUsd.toLocaleString()}`
-                  : `Lock cost ceiling at $${suggestedCeiling.toLocaleString()}`}
-              </button>
-              <button
-                disabled={!writable}
-                onClick={() =>
-                  apply({
-                    type: "SET_PROPERTY",
                     input: {
-                      branchId: activeBranch.id,
-                      entityId: bottleneck?.entity.id ?? "",
-                      property: "capacityRps",
-                      value: Math.round((bottleneck?.peak ?? 12000) * 1.6),
+                      amountUsd:
+                        // A locked ceiling can be raised to the cheapest
+                        // clean option, so a guardrail never becomes a dead
+                        // end the reviewer cannot resolve.
+                        state.workspace.costCeilingUsd === suggestedCeiling
+                          ? Math.max(
+                              suggestedCeiling,
+                              Math.ceil(evidence.monthlyCostUsd / 100) * 100,
+                            )
+                          : suggestedCeiling,
                     },
                   })
                 }
               >
-                {bottleneck
-                  ? `Scale ${bottleneck.entity.name} to ${Math.round(bottleneck.peak * 1.6).toLocaleString()} RPS`
-                  : "Scale the bottleneck"}
+                {state.workspace.costCeilingUsd
+                  ? state.workspace.costCeilingUsd < evidence.monthlyCostUsd
+                    ? `Raise ceiling to $${(Math.ceil(evidence.monthlyCostUsd / 100) * 100).toLocaleString()}`
+                    : `Cost ceiling locked · $${state.workspace.costCeilingUsd.toLocaleString()}`
+                  : `Lock cost ceiling at $${suggestedCeiling.toLocaleString()}`}
+              </button>
+              <button disabled={!writable} onClick={resolveCapacity}>
+                {undersized.length > 1
+                  ? `Scale ${undersized.length} components past peak demand`
+                  : bottleneck
+                    ? `Scale ${bottleneck.entity.name} to ${Math.round(bottleneck.peak * 1.6).toLocaleString()} RPS`
+                    : "Scale the bottleneck"}
               </button>
               <button
                 disabled={!writable}
