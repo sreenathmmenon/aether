@@ -393,12 +393,10 @@ export function dispatch(
     if (!branch || branch.status === "discarded")
       return commandFailure("NOT_AVAILABLE", "This branch cannot be changed.");
     const graph = deriveGraph(next, branch);
-    // A committed architecture is immutable, except while it is still empty:
-    // an unbuilt canvas has nothing to protect and must be fillable.
-    const alreadyBuilt = Object.values(graph.entities).some(
-      (entity) => entity.kind !== "region",
-    );
-    if (branch.status === "merged" && alreadyBuilt)
+    // A seeded architecture is committed and immutable. A workspace the user
+    // is building themselves has nothing committed yet, so its baseline stays
+    // editable until they branch from it.
+    if (branch.status === "merged" && next.workspace.templateId !== "blank")
       return commandFailure("NOT_AVAILABLE", "This branch cannot be changed.");
     if (!graph.entities[command.input.regionId])
       return commandFailure("INVALID_INPUT", "Unknown region.");
@@ -458,9 +456,9 @@ export function dispatch(
     if (!branch || branch.status === "discarded")
       return commandFailure("NOT_AVAILABLE", "This branch cannot be changed.");
     const graph = deriveGraph(next, branch);
-    // Wiring is permitted on a baseline that is still being assembled.
-    const wired = Object.keys(graph.relationships).length > 0;
-    if (branch.status === "merged" && wired)
+    // Wiring follows the same rule as adding: a user-built baseline is not a
+    // committed architecture.
+    if (branch.status === "merged" && next.workspace.templateId !== "blank")
       return commandFailure("NOT_AVAILABLE", "This branch cannot be changed.");
     if (
       !graph.entities[command.input.sourceId] ||

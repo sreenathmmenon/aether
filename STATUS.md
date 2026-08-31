@@ -376,6 +376,9 @@ None. Production is deployed on Railway with durable PostgreSQL-backed per-visit
 - [x] **M14.34 — Re-verify the journey after the accessibility and persistence changes** `DONE`
   - Evidence: the previous cycle changed every branch, node, and comparison label and altered the workspace GET contract, both on paths the demo depends on. A fresh run on the deployed origin from a cleared browser completed the whole journey — private workspace, five named tools, three futures, the blocked approval with its named cross-scenario reason, one action to resolve it, then approve, commit, and rollback to a discarded branch and the baseline — with no JavaScript errors. The accessibility tree confirms each control now leads with its visible text while still carrying live evidence, so the label-content rule holds and the names remain useful.
 
+- [x] **M14.35 — Keep a user-built blank system editable until its first branch** `DONE`
+  - Evidence: the custom-system path previously let the first component be added but then treated the baseline as committed, making the user fight the product while assembling their own architecture. Blank workspaces now keep their baseline editable until the user branches from it, while seeded payment and inference systems remain immutable once committed. The interface also avoids component-specific controls when the graph has no operational components. `npm run test -- --run`, `npm run typecheck`, and `npm run lint` passed with 45 tests.
+
 ## Milestone 13 — Real-time architecture decision room
 
 - [x] **M13.1 — Define and build the unmistakable collaborative decision-room journey** `DONE`
