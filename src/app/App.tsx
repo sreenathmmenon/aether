@@ -210,6 +210,9 @@ export function App() {
       if (event.key !== storageKey || !event.newValue) return;
       const incoming = parsePersistedState(event.newValue);
       if (!incoming) return;
+      applyingRemoteRef.current = true;
+      remoteVersionRef.current =
+        incoming.workspace.persistenceVersion ?? remoteVersionRef.current;
       setState(incoming);
       setMessage(
         "Live workspace update received. Reviewing the shared future.",
