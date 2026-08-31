@@ -1,4 +1,5 @@
 import {
+  addDecisionNoteInput,
   createBranchInput,
   runScenarioInput,
   setPropertyInput,
@@ -51,6 +52,38 @@ export function createAetherToolRegistry(
       registrations.forEach((registration) => registration.abort());
       registrations = [];
       onToolCount?.(0);
+      await register({
+        name: "get_decision_record",
+        description:
+          "Read the live incident, active architecture future, human guardrails, and recent attributable decision history.",
+        inputSchema: {
+          type: "object",
+          properties: {},
+          additionalProperties: false,
+        },
+        annotations: { readOnlyHint: true, untrustedContentHint: false },
+        execute: async () =>
+          toolResult({
+            incident: "Mumbai payment-path outage",
+            activeBranch: state.workspace.activeBranchId,
+            humanGuardrail: state.workspace.costCeilingUsd
+              ? `$${state.workspace.costCeilingUsd} monthly cost ceiling`
+              : "No cost ceiling set",
+            recentNotes: (state.decisionNotes ?? []).slice(-3).map((note) => ({
+              actor: note.actor.kind,
+              branchId: note.branchId,
+              entityId: note.entityId,
+              body: note.body,
+              evidenceRef: note.evidenceRef,
+            })),
+            recentCommands: state.audit.slice(-4).map((event) => ({
+              actor: event.actor.kind,
+              command: event.commandName,
+              branchId: event.branchId,
+              outcome: event.result.nextState,
+            })),
+          }),
+      });
       await register({
         name: "get_architecture_summary",
         description:
@@ -114,6 +147,55 @@ export function createAetherToolRegistry(
         },
       });
       if (Object.keys(state.branches).length > 1) {
+        await register({
+          name: "add_decision_note",
+          description:
+            "Add a concise agent decision note anchored to a branch or component. This records context but cannot approve or merge.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              branchId: {
+                type: "string",
+                description: "Existing architecture branch ID.",
+              },
+              entityId: {
+                type: "string",
+                enum: ["gateway", "auth", "ledger", "queue", "reconciliation"],
+                description: "Optional component the note concerns.",
+              },
+              body: {
+                type: "string",
+                description:
+                  "Concise, evidence-grounded decision context for collaborators.",
+              },
+              evidenceRef: {
+                type: "string",
+                description:
+                  "Short metric or evidence reference supporting the note.",
+              },
+            },
+            required: ["branchId", "body"],
+            additionalProperties: false,
+          },
+          annotations: { readOnlyHint: false, untrustedContentHint: true },
+          execute: async (input: unknown) => {
+            const parsed = addDecisionNoteInput.safeParse(input);
+            if (!parsed.success) return toolResult({ error: "INVALID_INPUT" });
+            const result = dispatch(
+              state,
+              { type: "ADD_DECISION_NOTE", input: parsed.data },
+              agent,
+            );
+            if (!result.ok) return toolResult(result);
+            onState(result.value);
+            return toolResult({
+              branchId: parsed.data.branchId,
+              entityId: parsed.data.entityId,
+              outcome: "decision_noted",
+              humanGate: "This note cannot approve or merge the architecture.",
+            });
+          },
+        });
         await register({
           name: "run_failure_scenario",
           description:

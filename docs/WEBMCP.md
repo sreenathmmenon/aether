@@ -21,17 +21,18 @@ Aether targets the shared subset of the two current implementation paths:
 - **ChatGPT Site Tools:** ChatGPT desktop's built-in browser lets ChatGPT Work and Codex discover imperative WebMCP tools on the current page. Use GPT-5.6 Sol or GPT-5.6 Terra; Site Tools are not available with GPT-5.6 Luna or in Enterprise/Edu workspaces. Tool availability also depends on rollout and the page's registered tools.
 - **Chrome:** local development requires the `chrome://flags/#enable-webmcp-testing` flag and relaunch. A live Chrome deployment requires a Chrome 149+ WebMCP origin-trial configuration while the API remains experimental.
 - **Shared safe surface:** Register tools in the top-level Aether document. Do not rely on declarative form annotations or tools registered from any iframe: ChatGPT currently does not discover either.
-- **Current app state:** Aether's headers and feature detection are implemented, but tool registration has not been implemented yet. It must not be described as a working Site Tools/WebMCP integration until Milestone 7 passes the live tests below.
+- **Current app state:** Aether registers live top-level imperative tools in the deployed application and has been verified in ChatGPT Site Tools and Chrome with the WebMCP testing flag. Its tool set changes with the active decision state: the always-available read surface includes architecture and decision-record inspection; branch, simulation, proposal, comparison, and attributed-note tools appear only when a repair future exists.
 
 ## Initial capability surface
 
-| Family  | Capability                                                                                                            | Mutates state | Availability                              |
-| ------- | --------------------------------------------------------------------------------------------------------------------- | ------------- | ----------------------------------------- |
-| Inspect | `get_architecture_summary`, `trace_dependency_path`, `list_failure_domains`                                           | No            | Always in an open workspace               |
-| Branch  | `create_architecture_branch`, `propose_structural_change`, `revise_proposal`, `discard_branch`                        | Yes           | Valid active workspace/branch             |
-| Verify  | `run_failure_scenario`, `check_capacity_constraints`, `compare_architecture_branches`, `validate_architecture_branch` | No            | Complete branch model                     |
-| Review  | `prepare_merge`, `request_human_review`                                                                               | Yes           | Valid, simulated proposed branch          |
-| Commit  | `apply_approved_merge`, `rollback_last_merge`                                                                         | Yes           | Human-approved, non-stale merge plan only |
+| Family  | Capability                                                                                                   | Mutates state | Availability                                                                                |
+| ------- | ------------------------------------------------------------------------------------------------------------ | ------------- | ------------------------------------------------------------------------------------------- |
+| Inspect | `get_decision_record`, `get_architecture_summary`, `inspect_failure_domain`, `trace_architecture_dependency` | No            | Always in an open workspace                                                                 |
+| Branch  | `create_architecture_branch`                                                                                 | Yes           | Always; creates a bounded, named repair future                                              |
+| Verify  | `run_failure_scenario`, `compare_architecture_futures`                                                       | Yes / No      | A repair future exists                                                                      |
+| Discuss | `add_decision_note`                                                                                          | Yes           | A repair future exists; records an attributed, bounded note but cannot alter approval state |
+| Propose | `propose_architecture_change`                                                                                | Yes           | A repair future exists; change remains reversible and unapproved                            |
+| Commit  | No WebMCP approval or merge capability                                                                       | No            | Human-only visible controls after clean current evidence                                    |
 
 ## Registration and execution
 
@@ -44,7 +45,7 @@ Aether targets the shared subset of the two current implementation paths:
 
 ## Human gate
 
-`apply_approved_merge` is absent until a human interface action records approval for the exact prepared merge plan. Any branch mutation, changed constraints, or expired approval invalidates the plan. At execution, Aether presents the exact merge summary through `requestUserInteraction()` where supported and proceeds only after that confirmation. An agent can request review but can never approve its own work.
+No approval or merge tool is registered. Any branch mutation or changed constraint invalidates approval. The visible Aether interface presents the exact merge summary and proceeds only after an explicit human action. An agent can add an attributed, evidence-bound decision note or propose a reversible change, but can never approve or merge its own work.
 
 ## Required verification
 

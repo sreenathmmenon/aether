@@ -85,6 +85,17 @@ export type AuditEvent = {
   timestamp: IsoTimestamp;
 };
 
+export type DecisionNote = {
+  id: string;
+  workspaceId: WorkspaceId;
+  branchId: BranchId;
+  entityId?: EntityId;
+  actor: Actor;
+  body: string;
+  evidenceRef?: string;
+  timestamp: IsoTimestamp;
+};
+
 export type SimulationRun = {
   id: SimulationRunId;
   branchId: BranchId;

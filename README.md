@@ -2,15 +2,21 @@
 
 > **Branch it. Break it. Commit with confidence.**
 
-Aether is a counterfactual architecture laboratory. Architects and agents work on the same typed system model, create isolated design futures, run deterministic failure simulations, compare evidence, and safely merge an approved design.
+Aether is a real-time architecture decision room. Architects and agents work on the same typed system model, create isolated design futures, run deterministic failure simulations, discuss the evidence in context, replay who changed what, and safely merge an approved design.
 
 **Live app:** [webmcp-production-38e5.up.railway.app](https://webmcp-production-38e5.up.railway.app)
 
 It is not a generic whiteboard or an AI diagram generator. Architecture Lab is Aether's first domain package; the core is designed so other structured decision domains can follow without changing its command, branch, approval, or audit foundations.
 
+## What Aether does that other tools do not
+
+Most architecture tools either draw the system, report an outage after it happens, or put a chatbot beside a diagram. Aether makes the decision itself a shared system object: an incident, an agent recommendation, a human constraint, every proposed change, its deterministic consequence, the discussion around it, approval, and rollback all refer to the exact same architecture future.
+
+The opening decision room answers five questions immediately: **what is failing, what are we deciding, what does the agent recommend, what did the human say, and what action is safe next.** That makes the product useful during a design review or live incident—not just as a generated diagram.
+
 ## The demo moment
 
-An architect asks what happens if a region fails during peak payment traffic. The agent traces the critical path, creates three repair branches, and runs the same deterministic outage against each. The architect directly changes the recommended branch; Aether recomputes only the affected evidence, exposes a capacity violation, and lets the architect approve the eventual merge. The agent never self-approves or bypasses product rules.
+An architect enters a Mumbai payment-path outage with the decision already visible. The agent traces the critical path, creates three repair futures, and records its evidence-bound recommendation. The architect adds the cost constraint directly on the affected component, Aether recomputes only the affected evidence, and the complete human-agent discussion and command history remain replayable beside the branch diff. The agent never self-approves or bypasses product rules.
 
 ## Product principles
 
@@ -18,7 +24,7 @@ An architect asks what happens if a region fails during peak payment traffic. Th
 - **One command path.** Canvas interactions and WebMCP tool calls use the same validated commands.
 - **Branches are real.** Each alternative has an immutable base, ordered changes, isolated simulation results, and a semantic diff.
 - **People control consequential actions.** A human must approve before a merge capability is exposed.
-- **The interface is evidence-first.** Tool activity, branch state, simulation consequences, and decision history are visible in the workspace.
+- **The interface is evidence-first.** Tool activity, branch state, simulation consequences, component-anchored discussion, and replayable decision history are visible in the workspace.
 
 ## Architecture
 
@@ -44,7 +50,7 @@ Read the detailed contracts in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [do
 - Top-level WebMCP Imperative API, using the official `webmcp-types` definitions
 - Deterministic regional-outage, traffic-spike, and database-failure simulations
 
-The production server supplies origin-isolation and `Permissions-Policy: tools=(self)` headers required for WebMCP. In ChatGPT’s in-app browser, Aether begins with four state-aware tools—summary, failure-domain inspection, dependency trace, and isolated branch creation—and exposes three additional tools after a branch exists: deterministic simulation, reversible proposal, and comparison. Tools that mutate the auditable workspace never claim to be read-only. It deliberately exposes no agent approval or merge tool.
+The production server supplies origin-isolation and `Permissions-Policy: tools=(self)` headers required for WebMCP. In ChatGPT’s in-app browser, Aether begins with five state-aware tools—decision record, summary, failure-domain inspection, dependency trace, and isolated branch creation—and exposes four additional tools after a branch exists: deterministic simulation, reversible proposal, comparison, and a bounded component-anchored decision note. Tools that mutate the auditable workspace never claim to be read-only. It deliberately exposes no agent approval or merge tool.
 
 ## Run locally
 

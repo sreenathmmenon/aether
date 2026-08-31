@@ -30,6 +30,7 @@ describe("Aether WebMCP registry", () => {
 
     await registry?.refresh(state);
     expect(tools.map((tool) => tool.name)).toEqual([
+      "get_decision_record",
       "get_architecture_summary",
       "create_architecture_branch",
       "inspect_failure_domain",
@@ -58,14 +59,31 @@ describe("Aether WebMCP registry", () => {
     tools.length = 0;
     await registry?.refresh(state);
     expect(tools.map((tool) => tool.name)).toEqual([
+      "get_decision_record",
       "get_architecture_summary",
       "create_architecture_branch",
+      "add_decision_note",
       "run_failure_scenario",
       "inspect_failure_domain",
       "trace_architecture_dependency",
       "propose_architecture_change",
       "compare_architecture_futures",
     ]);
+    const note = tools.find((tool) => tool.name === "add_decision_note");
+    expect(
+      String(
+        await note?.execute({
+          branchId: "branch-highest_resilience",
+          entityId: "ledger",
+          body: "Replication removes the writable-path risk.",
+          evidenceRef: "99.97% availability",
+        }),
+      ),
+    ).toContain("decision_noted");
+    expect(state.decisionNotes.at(-1)).toMatchObject({
+      actor: { kind: "agent" },
+      entityId: "ledger",
+    });
     registry?.dispose();
   });
 

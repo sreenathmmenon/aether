@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { createInitialState, deriveGraph, dispatch } from "@core/branch-engine";
 import { getBranchDiff } from "@core/branch-diff";
 import {
@@ -88,6 +88,7 @@ export function App() {
     useState<Scenario>("regional_outage");
   const [comparing, setComparing] = useState(false);
   const [traceStep, setTraceStep] = useState(-1);
+  const [noteBody, setNoteBody] = useState("");
   const [dragPreview, setDragPreview] = useState<
     { id: string; x: number; y: number } | undefined
   >(undefined);
@@ -147,6 +148,15 @@ export function App() {
   const entities = Object.values(graph.entities).filter(
     (entity) => entity.kind !== "region",
   );
+  const decisionNotes = state.decisionNotes ?? [];
+  const activeNotes = decisionNotes
+    .filter(
+      (note) =>
+        note.branchId === activeBranch.id ||
+        note.branchId === "branch-baseline",
+    )
+    .slice(-5)
+    .reverse();
 
   useEffect(() => {
     registryRef.current ??=
@@ -364,6 +374,25 @@ export function App() {
       "Playing the causal failure trace across the active architecture future.",
     );
   }
+  function postDecisionNote(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (noteBody.trim().length < 3) {
+      setMessage("Add a short, decision-relevant note before posting.");
+      return;
+    }
+    apply({
+      type: "ADD_DECISION_NOTE",
+      input: {
+        branchId: activeBranch.id,
+        entityId: selectedEntity.id,
+        body: noteBody,
+        evidenceRef: activeSimulation
+          ? `${activeSimulation.availability.toFixed(2)}% availability · ${activeSimulation.rtoMinutes}m recovery`
+          : "Baseline evidence",
+      },
+    });
+    setNoteBody("");
+  }
 
   return (
     <main className="aether-shell">
@@ -390,15 +419,50 @@ export function App() {
       </header>
       <section className="hero-bar">
         <div>
-          <p className="eyebrow">Counterfactual architecture laboratory</p>
+          <p className="eyebrow">Live architecture decision room</p>
           <h1>
-            Break the future <em>before</em> it breaks production.
+            Mumbai is down. <em>Choose</em> the repair before payment traffic
+            peaks.
           </h1>
         </div>
         <div className="hero-proof">
-          <span>Current incident</span>
+          <span>Decision now</span>
+          <strong>
+            {branchCount
+              ? `Review ${activeBranch.name}`
+              : "Create repair futures"}
+          </strong>
+          <small>Sreenath + Aether · shared, auditable</small>
+        </div>
+      </section>
+      <section
+        className="decision-brief"
+        aria-label="Current decision briefing"
+      >
+        <div className="brief-incident">
+          <span className="brief-label">01 · Incident</span>
           <strong>{scenarioCopy[selectedScenario].short}</strong>
-          <small>Deterministic engine · v1</small>
+          <small>Payment writes have one vulnerable path in Mumbai.</small>
+        </div>
+        <div className="brief-recommendation">
+          <span className="brief-label">02 · Agent recommendation</span>
+          <strong>
+            {branchCount
+              ? `${activeBranch.name} is the active evidence-backed future.`
+              : "Create isolated futures before touching production."}
+          </strong>
+          <small>
+            The agent can propose. The deterministic model must prove.
+          </small>
+        </div>
+        <div className="brief-gate">
+          <span className="brief-label">03 · Human decision</span>
+          <strong>
+            {activeBranch.status === "approved"
+              ? "Exact plan approved — ready to commit"
+              : "Evidence and explicit approval required"}
+          </strong>
+          <small>Only Sreenath can set guardrails, approve, or merge.</small>
         </div>
       </section>
       <section
@@ -749,6 +813,109 @@ export function App() {
             </strong>
           </div>
         </aside>
+      </section>
+      <section
+        className="decision-room"
+        aria-label="Live decision history and discussion"
+      >
+        <div className="decision-room-head">
+          <div>
+            <p className="eyebrow">Live decision record</p>
+            <h2>Discussion attached to the architecture, not lost in chat.</h2>
+          </div>
+          <span className="room-live">
+            <i /> Shared and durable
+          </span>
+        </div>
+        <div className="decision-room-grid">
+          <section
+            className="decision-thread"
+            aria-label="Human and agent discussion"
+          >
+            <div className="thread-heading">
+              <strong>Human + agent discussion</strong>
+              <span>{activeNotes.length} decision notes</span>
+            </div>
+            <div className="thread-notes">
+              {activeNotes.map((note) => (
+                <article
+                  className={`decision-note note-${note.actor.kind}`}
+                  key={note.id}
+                >
+                  <div>
+                    <strong>
+                      {note.actor.kind === "human"
+                        ? "Sreenath"
+                        : "Aether agent"}
+                    </strong>
+                    <span>
+                      {note.entityId
+                        ? `Anchored to ${graph.entities[note.entityId]?.name ?? note.entityId}`
+                        : "Workspace note"}
+                    </span>
+                  </div>
+                  <p>{note.body}</p>
+                  {note.evidenceRef && <small>{note.evidenceRef}</small>}
+                </article>
+              ))}
+            </div>
+            <form className="note-composer" onSubmit={postDecisionNote}>
+              <label htmlFor="decision-note">
+                Record Sreenath’s decision note · {selectedEntity.name}
+              </label>
+              <div>
+                <input
+                  id="decision-note"
+                  value={noteBody}
+                  onChange={(event) => setNoteBody(event.target.value)}
+                  maxLength={280}
+                  placeholder="Explain the constraint, question, or decision…"
+                />
+                <button type="submit">Add to record</button>
+              </div>
+            </form>
+          </section>
+          <section
+            className="decision-replay"
+            aria-label="Replayable change history"
+          >
+            <div className="thread-heading">
+              <strong>Replayable change history</strong>
+              <span>{state.audit.length} recorded commands</span>
+            </div>
+            <ol>
+              {state.audit.length ? (
+                state.audit
+                  .slice(-7)
+                  .reverse()
+                  .map((event, index) => (
+                    <li key={event.id}>
+                      <i>{state.audit.length - index}</i>
+                      <div>
+                        <strong>
+                          {event.actor.kind === "human"
+                            ? "Sreenath"
+                            : "Aether agent"}
+                        </strong>
+                        <span>
+                          {event.commandName.replaceAll("_", " ").toLowerCase()}
+                        </span>
+                      </div>
+                      <small>{event.result.nextState as string}</small>
+                    </li>
+                  ))
+              ) : (
+                <li className="empty-history">
+                  <i>1</i>
+                  <div>
+                    <strong>Incident opened</strong>
+                    <span>Baseline is ready for a safe, shared review.</span>
+                  </div>
+                </li>
+              )}
+            </ol>
+          </section>
+        </div>
       </section>
       <section className="review-dock" aria-label="Branch review and approval">
         <div className="review-head">

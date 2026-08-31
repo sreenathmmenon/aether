@@ -24,7 +24,13 @@ export function parsePersistedState(
 ): AetherState | undefined {
   try {
     const value: unknown = JSON.parse(raw ?? "null");
-    return looksLikeAetherState(value) ? value : undefined;
+    if (!looksLikeAetherState(value)) return undefined;
+    return {
+      ...value,
+      decisionNotes: Array.isArray(value.decisionNotes)
+        ? value.decisionNotes
+        : [],
+    };
   } catch {
     return undefined;
   }

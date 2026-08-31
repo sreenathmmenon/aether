@@ -2,7 +2,13 @@ import type { Actor, BranchId, CommandResult, RevisionId } from "@core/types";
 import { commandFailure } from "@core/types";
 import type { AetherCommand } from "@core/commands";
 import type { ArchitectureGraph } from "@domain/architecture/types";
-import type { AuditEvent, Branch, Revision, Workspace } from "./workspace";
+import type {
+  AuditEvent,
+  Branch,
+  DecisionNote,
+  Revision,
+  Workspace,
+} from "./workspace";
 import { runScenario, type ScenarioResult } from "@simulation/engine";
 
 export type AetherState = {
@@ -10,6 +16,7 @@ export type AetherState = {
   revisions: Record<RevisionId, Revision>;
   branches: Record<BranchId, Branch>;
   audit: AuditEvent[];
+  decisionNotes: DecisionNote[];
   simulations: Record<BranchId, ScenarioResult[]>;
 };
 
@@ -53,6 +60,28 @@ export function createInitialState(graph: ArchitectureGraph): AetherState {
     revisions: { [baseRevision.id]: baseRevision },
     branches: { [baseline.id]: baseline },
     audit: [],
+    decisionNotes: [
+      {
+        id: "note-1",
+        workspaceId: "workspace-payment",
+        branchId: "branch-baseline",
+        entityId: "ledger",
+        actor: agent,
+        body: "Mumbai takes the only writable ledger path down. I recommend testing an isolated repair before changing production.",
+        evidenceRef: "96.42% availability · 46m recovery",
+        timestamp,
+      },
+      {
+        id: "note-2",
+        workspaceId: "workspace-payment",
+        branchId: "branch-baseline",
+        entityId: "queue",
+        actor: human,
+        body: "Keep the monthly cost under $7,000. Show me the resilience trade-off and the capacity risk before I approve anything.",
+        evidenceRef: "Human constraint",
+        timestamp,
+      },
+    ],
     simulations: {},
   };
 }
@@ -322,6 +351,29 @@ export function dispatch(
     branch.updatedAt = now;
     next.workspace.activeBranchId = "branch-baseline";
     nextState = "rolled_back";
+  }
+
+  if (command.type === "ADD_DECISION_NOTE") {
+    const branch = next.branches[command.input.branchId];
+    if (!branch)
+      return commandFailure("INVALID_INPUT", "Unknown architecture branch.");
+    if (
+      command.input.entityId &&
+      !deriveGraph(next, branch).entities[command.input.entityId]
+    )
+      return commandFailure("INVALID_INPUT", "Unknown architecture component.");
+    next.decisionNotes.push({
+      id: `note-${next.decisionNotes.length + 1}`,
+      workspaceId: next.workspace.id,
+      branchId: branch.id,
+      entityId: command.input.entityId,
+      actor,
+      body: command.input.body,
+      evidenceRef: command.input.evidenceRef,
+      timestamp: now,
+    });
+    affectedEntityIds = command.input.entityId ? [command.input.entityId] : [];
+    nextState = "decision_noted";
   }
 
   next.audit.push({

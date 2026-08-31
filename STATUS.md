@@ -251,3 +251,18 @@ None. Production is deployed on Railway with durable PostgreSQL-backed shared-wo
   - Evidence: enabled Chrome exercised the live causal-trace control and all four scenario-linked timeline stages on release `e9ee9c13-f9ec-4f75-aa20-764a54ad9d64`.
 - [x] **M12.7 — Run first-prize visual, interaction, and browser-validation loops** `DONE`
   - Evidence: enabled Chrome exercised the deployed causal trace; ChatGPT Site Tools rediscovered the settled dynamic registry and invoked `inspect_failure_domain` on the production URL; Lighthouse reported 100/100 for accessibility, best practices, SEO, and agentic browsing; release `2b354995-6a13-45dd-8dc2-16c90287ceb7` is `SUCCESS`.
+
+## Milestone 13 — Real-time architecture decision room
+
+- [x] **M13.1 — Define and build the unmistakable collaborative decision-room journey** `DONE`
+  - Acceptance: the opening viewport explains the live incident, active participants, agent recommendation, human decision, evidence, and next safe action without requiring product knowledge.
+  - Evidence: local end-user browser validation showed the incident brief, agent recommendation, explicit human gate, live evidence, and safe next action in the opening screen.
+- [x] **M13.2 — Add attributable decision messages anchored to components, branches, and evidence** `DONE`
+  - Evidence: `DecisionNote` records actor, branch, component, bounded message, evidence reference, and timestamp through the same validated dispatch path; both human UI and agent WebMCP calls were exercised locally.
+- [x] **M13.3 — Add replayable shared activity history for human and agent changes** `DONE`
+  - Evidence: the decision room renders the most recent command sequence with actor and state outcome alongside the semantic review surface.
+- [x] **M13.4 — Make collaboration state real-time, durable, and visibly synchronized** `DONE`
+  - Evidence: decision notes are part of the persisted canonical workspace; the existing optimistic PostgreSQL writer, three-second remote reconciliation, and same-browser storage events distribute the full decision record.
+- [x] **M13.5 — Add collaboration-aware WebMCP capabilities and evaluations** `DONE`
+  - Evidence: `get_decision_record` is read-only; state-dependent `add_decision_note` is bounded, marked untrusted-content aware, invokes the validated command path, and returns no approval authority. Unit and in-app-browser calls passed.
+- [ ] **M13.6 — Validate the complete decision-room journey in Chrome, ChatGPT, and production** `TODO`

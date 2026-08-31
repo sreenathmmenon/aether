@@ -159,4 +159,41 @@ describe("Aether command pipeline", () => {
     );
     expect(approval).toMatchObject({ ok: false, code: "NOT_AVAILABLE" });
   });
+
+  it("records a component-anchored human or agent decision note in shared state", () => {
+    const state = branchState();
+    const noted = dispatch(
+      state,
+      {
+        type: "ADD_DECISION_NOTE",
+        input: {
+          branchId: "branch-highest_resilience",
+          entityId: "ledger",
+          body: "Keep the recovery path visible in the approval review.",
+          evidenceRef: "7m recovery",
+        },
+      },
+      human,
+    );
+    expect(noted).toMatchObject({ ok: true, nextState: "decision_noted" });
+    if (!noted.ok) throw new Error("decision note must be recorded");
+    expect(noted.value.decisionNotes.at(-1)).toMatchObject({
+      branchId: "branch-highest_resilience",
+      entityId: "ledger",
+      actor: { kind: "human" },
+      evidenceRef: "7m recovery",
+    });
+    const invalidComponent = dispatch(noted.value, {
+      type: "ADD_DECISION_NOTE",
+      input: {
+        branchId: "branch-highest_resilience",
+        entityId: "unknown",
+        body: "This must not attach to a non-existent component.",
+      },
+    });
+    expect(invalidComponent).toMatchObject({
+      ok: false,
+      code: "INVALID_INPUT",
+    });
+  });
 });

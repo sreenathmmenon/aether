@@ -52,6 +52,12 @@ export const mergeBranchInput = z.object({
   branchVersion: z.number().int().positive(),
 });
 export const rollbackMergeInput = z.object({ branchId: z.string().min(1) });
+export const addDecisionNoteInput = z.object({
+  branchId: z.string().min(1),
+  entityId: z.string().min(1).optional(),
+  body: z.string().trim().min(3).max(280),
+  evidenceRef: z.string().trim().min(3).max(120).optional(),
+});
 
 export type AetherCommand =
   | { type: "CREATE_BRANCH"; input: z.infer<typeof createBranchInput> }
@@ -61,4 +67,5 @@ export type AetherCommand =
   | { type: "RUN_SCENARIO"; input: z.infer<typeof runScenarioInput> }
   | { type: "APPROVE_BRANCH"; input: z.infer<typeof approveBranchInput> }
   | { type: "MERGE_BRANCH"; input: z.infer<typeof mergeBranchInput> }
-  | { type: "ROLLBACK_MERGE"; input: z.infer<typeof rollbackMergeInput> };
+  | { type: "ROLLBACK_MERGE"; input: z.infer<typeof rollbackMergeInput> }
+  | { type: "ADD_DECISION_NOTE"; input: z.infer<typeof addDecisionNoteInput> };
