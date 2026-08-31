@@ -395,6 +395,10 @@ None. Production is deployed on Railway with durable PostgreSQL-backed per-visit
   - Acceptance: an architecture that has been repaired can reach approval.
   - Evidence: the single-regional-dependency rule fired on any single-replica database with upstream and downstream dependencies, ignoring replication, so a synchronously replicated database was still called a single point of failure. On a self-built system that left an unresolvable blocker with no quick action for it: the highest-resilience future set `replicationMode` to `sync`, the interface reported the database repaired, and approval stayed refused. Caught by taking a browser-built system through to approval rather than stopping at the build. A replicated database is now exempt, an unreplicated one is still reported by the more precise standby-replica rule, and a regression test covers both directions.
 
+- [x] **M15.5 — Prove the whole journey on a self-built system in production** `DONE`
+  - Acceptance: an architecture Aether does not ship completes the decision journey on the deployed origin.
+  - Evidence: from a cleared browser on the live application — switch to "Your own system", build three components on the empty canvas, create three repair futures with a real trade-off curve, hit the blocked approval with its named cross-scenario reason, clear it with one action, then approve, commit, and roll back. No JavaScript errors. The same journey that previously existed only for the two shipped examples now runs on a system described from nothing.
+
 ## Milestone 13 — Real-time architecture decision room
 
 - [x] **M13.1 — Define and build the unmistakable collaborative decision-room journey** `DONE`
