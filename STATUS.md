@@ -201,7 +201,7 @@ This is the source of truth for build progress. Status values: `TODO`, `IN_PROGR
 
 ## Blockers
 
-None. Railway provisioning is intentionally deferred until the product has a deployable health endpoint and authorized account access.
+None. Production is deployed on Railway; durable multi-user server persistence remains a planned product increment rather than a current blocker.
 
 ## Milestone 12 — First-prize product transformation
 
@@ -214,5 +214,8 @@ None. Railway provisioning is intentionally deferred until the product has a dep
 - [x] **M12.4 — Render causal failure evidence and agent reasoning in context** `DONE`
   - Evidence: live scenario tabs, affected dependency paths, causal evidence, and agent rationale are now tied to the active branch.
 - [ ] **M12.5 — Add real-time collaborative state transport and durable multi-user persistence** `TODO`
+- [x] **M12.5a — Add live browser-tab workspace synchronization** `DONE`
+  - Evidence: Aether synchronizes persisted canonical workspace changes through browser storage events and visibly reports received shared-state updates.
 - [ ] **M12.6 — Add high-fidelity failure/recovery motion and timeline playback** `TODO`
-- [ ] **M12.7 — Run first-prize visual, interaction, and browser-validation loops** `IN_PROGRESS`
+- [x] **M12.7 — Run first-prize visual, interaction, and browser-validation loops** `DONE`
+  - Evidence: enabled Chrome and ChatGPT Site Tools verified WebMCP discovery and invocation on the production URL; Lighthouse reported 100/100 for accessibility, best practices, SEO, and agentic browsing; release `96255057-66b8-4545-b982-815f4cc61b11` is `SUCCESS`.
