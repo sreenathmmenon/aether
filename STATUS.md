@@ -180,12 +180,12 @@ This is the source of truth for build progress. Status values: `TODO`, `IN_PROGR
 - [ ] **M10.4a — Configure and verify origin-isolation and Permissions-Policy headers** `TODO`
 - [ ] **M10.4b — Configure the Chrome WebMCP origin trial for the deployed domain** `TODO`
 - [x] **M10.5 — Deploy and inspect logs for a healthy release** `DONE`
-  - Evidence: Railway terminal deployment `52582619-d59b-4cfc-bed8-16d66247ad1e` is `SUCCESS`.
+  - Evidence: Railway terminal deployment `08889726-e8af-45f7-aa8c-15969cb68cef` is `SUCCESS`.
 - [x] **M10.6 — Run live health, persistence, WebMCP discovery, and canonical-journey smoke tests** `DONE`
   - Evidence: live `/health` headers, ChatGPT Site Tool discovery/calls, and persisted-branch reload completed on 2026-08-31.
 - [x] **M10.7 — Record live URL, release ID, and verification evidence here** `DONE`
   - URL: `https://webmcp-production-38e5.up.railway.app`
-  - Release: `52582619-d59b-4cfc-bed8-16d66247ad1e`
+  - Release: `08889726-e8af-45f7-aa8c-15969cb68cef`
 
 ## Milestone 11 — Submission and release
 
