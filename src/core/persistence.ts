@@ -61,9 +61,10 @@ export function parsePersistedState(
     if (!looksLikeAetherState(value)) return undefined;
     return {
       ...value,
-      decisionNotes: Array.isArray(value.decisionNotes)
-        ? value.decisionNotes
-        : migratedDecisionNotes(),
+      decisionNotes:
+        Array.isArray(value.decisionNotes) && value.decisionNotes.length > 0
+          ? value.decisionNotes
+          : migratedDecisionNotes(),
     };
   } catch {
     return undefined;

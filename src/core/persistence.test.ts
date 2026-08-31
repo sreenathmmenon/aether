@@ -25,4 +25,11 @@ describe("workspace persistence shape", () => {
       entityId: "ledger",
     });
   });
+
+  it("backfills an empty pre-decision-room note collection", () => {
+    const legacy = createInitialState(paymentPlatformBaseline);
+    legacy.decisionNotes = [];
+    const restored = parsePersistedState(JSON.stringify(legacy));
+    expect(restored?.decisionNotes).toHaveLength(2);
+  });
 });
