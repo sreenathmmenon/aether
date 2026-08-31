@@ -488,6 +488,29 @@ export function dispatch(
       return commandFailure("INVALID_INPUT", "Unknown architecture component.");
     if (entity.kind === "region")
       return commandFailure("NOT_AVAILABLE", "A region cannot be removed.");
+    // An agent may reshape a future, but it may not dismantle the system it
+    // was asked to repair. Removal that guts the model is a human decision.
+    if (actor.kind !== "human") {
+      const remaining = Object.values(graph.entities).filter(
+        (candidate) =>
+          candidate.kind !== "region" && candidate.id !== entity.id,
+      );
+      if (remaining.length < 2)
+        return commandFailure(
+          "UNAUTHORIZED",
+          "An agent cannot reduce the architecture below two components. Ask a human to remove it.",
+        );
+      const dependents = Object.values(graph.relationships).filter(
+        (relationship) =>
+          relationship.sourceId === entity.id ||
+          relationship.targetId === entity.id,
+      );
+      if (dependents.length >= 3)
+        return commandFailure(
+          "UNAUTHORIZED",
+          `An agent cannot remove ${entity.name} because ${dependents.length} dependencies rely on it. Propose the change for human review instead.`,
+        );
+    }
     branch.operations.push({
       kind: "remove_entity",
       entityId: command.input.entityId,

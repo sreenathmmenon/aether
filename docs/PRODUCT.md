@@ -2,7 +2,9 @@
 
 ## Scope lock
 
-**Aether is a real-time architecture decision room where people and agents can see a consequential system change, challenge it with deterministic evidence, and safely decide what becomes real.**
+**Aether is where a proposed change to a running system meets deterministic proof: people and agents see the consequence, challenge it with evidence, and a human decides what becomes real.**
+
+The problem is not specific to architecture. Any team letting an agent propose changes to a consequential system has the same gap — the model's suggestion arrives with confidence but no verification, and the tools that would check it live somewhere else. Architecture resilience is where Aether demonstrates the mechanism because the consequences are measurable: availability, recovery time, capacity, and cost all fall out of a graph.
 
 Architecture Lab is the first Aether domain package. Future domains may reuse Core contracts, but the challenge build stays entirely on architecture resilience.
 

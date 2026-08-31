@@ -1255,8 +1255,9 @@ export function App() {
                   ))}
                 </ol>
                 <p className="tool-gate">
-                  No approve or merge tool is registered. Only Sreenath can
-                  commit a future.
+                  No approve or merge tool is registered, and an agent cannot
+                  dismantle the system or remove a heavily depended-on
+                  component. Only Sreenath can commit a future.
                 </p>
               </>
             )}

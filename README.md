@@ -2,7 +2,9 @@
 
 > **Branch it. Break it. Commit with confidence.**
 
-Aether is a real-time architecture decision room. Architects and agents work on the same typed system model, create isolated design futures, run deterministic failure simulations, discuss the evidence in context, replay who changed what, and safely merge an approved design.
+Aether is where an agent's proposal meets proof. When a language model suggests a change to a running system, there is normally nothing to check it against — the claim is only as good as the model's confidence. Aether makes the consequence computable: people and agents work the same typed system model, branch a change in isolation, run a deterministic failure simulation, and see what the change actually does before anyone commits it.
+
+Architecture resilience is the domain it demonstrates. The mechanism — typed model, isolated branch, deterministic evidence, bounded agent authority, human-only commit — is what any team faces the moment they let an agent propose changes to something that matters.
 
 **Live app:** [webmcp-production-38e5.up.railway.app](https://webmcp-production-38e5.up.railway.app)
 

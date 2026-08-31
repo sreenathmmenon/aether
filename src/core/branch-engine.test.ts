@@ -304,4 +304,70 @@ describe("Aether command pipeline", () => {
     expect(graph.relationships["ledger-queue"]).toBeUndefined();
     expect(graph.relationships["queue-reconciliation"]).toBeUndefined();
   });
+
+  it("stops an agent from dismantling the system it was asked to repair", () => {
+    let state = branchState();
+    const branchId = "branch-highest_resilience";
+    // The agent may reshape a future, so early removals succeed.
+    for (const entityId of ["ledger", "auth", "gateway"]) {
+      const removed = dispatch(state, {
+        type: "REMOVE_COMPONENT",
+        input: { branchId, entityId },
+      });
+      if (!removed.ok) throw new Error("agent may reshape a future");
+      state = removed.value;
+    }
+
+    // It cannot reduce the architecture to something unreviewable.
+    expect(
+      dispatch(state, {
+        type: "REMOVE_COMPONENT",
+        input: { branchId, entityId: "queue" },
+      }),
+    ).toMatchObject({ ok: false, code: "UNAUTHORIZED" });
+
+    // A human retains full authority over the same command.
+    const byHuman = dispatch(
+      state,
+      {
+        type: "REMOVE_COMPONENT",
+        input: { branchId, entityId: "queue" },
+      },
+      human,
+    );
+    expect(byHuman.ok).toBe(true);
+  });
+
+  it("stops an agent from removing a heavily depended-on component", () => {
+    const state = branchState();
+    const added = dispatch(state, {
+      type: "CONNECT_COMPONENTS",
+      input: {
+        branchId: "branch-highest_resilience",
+        sourceId: "reconciliation",
+        targetId: "ledger",
+        kind: "depends_on",
+      },
+    });
+    if (!added.ok) throw new Error("dependency must be added");
+    const withThird = dispatch(added.value, {
+      type: "CONNECT_COMPONENTS",
+      input: {
+        branchId: "branch-highest_resilience",
+        sourceId: "gateway",
+        targetId: "ledger",
+        kind: "depends_on",
+      },
+    });
+    if (!withThird.ok) throw new Error("dependency must be added");
+
+    const attempt = dispatch(withThird.value, {
+      type: "REMOVE_COMPONENT",
+      input: { branchId: "branch-highest_resilience", entityId: "ledger" },
+    });
+    expect(attempt).toMatchObject({ ok: false, code: "UNAUTHORIZED" });
+    if (attempt.ok) throw new Error("unreachable");
+    // The refusal names the reason and the recoverable next step.
+    expect(attempt.message).toContain("dependencies rely on it");
+  });
 });

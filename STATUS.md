@@ -321,6 +321,12 @@ None. Production is deployed on Railway with durable PostgreSQL-backed shared-wo
   - Acceptance: a reviewer browsing manually can see which capabilities the page publishes and that no approval tool exists.
   - Evidence: the tool feed rendered only after a call had happened, so a reviewer opening the page without an agent connected saw nothing and could not distinguish an agent action from an ordinary UI change — the criterion the project is judged hardest on was invisible in the common case. The panel now always names the live surface: it lists the registered tool names, states that no approve or merge tool is registered, and switches to call activity once an agent invokes something. The registry reports its own registered names rather than a duplicated list, and a page with no WebMCP support still shows the capabilities it would publish. Verified in Chrome: the inventory grows from five to eleven entries when a repair future exists.
 
+- [x] **M14.20 — Bound an agent's destructive authority** `DONE`
+  - Acceptance: an agent cannot dismantle the system it was asked to repair.
+  - Evidence: the merge gate held — an agent could never reach production — but `REMOVE_COMPONENT` was unbounded, so an agent could empty an entire branch of every component and leave a human reviewing a destroyed model with no signal. Removal by an agent is now refused when it would leave fewer than two components, or when three or more dependencies rely on the component, and the refusal names the reason and the recoverable next step. A human retains full authority over the same command. Covered by two regression tests and stated in the visible tool-surface panel.
+- [x] **M14.21 — Frame the product by its mechanism rather than its demo domain** `DONE`
+  - Evidence: the README, product definition, and submission copy all opened with "architecture decision room", which reads as a narrow niche even though the mechanism — typed model, isolated branch, deterministic evidence, bounded agent authority, human-only commit — is what any team faces when an agent proposes changes to something consequential. The positioning now leads with that gap and presents architecture resilience as the domain where the consequences are measurable, without claiming domains the build does not ship.
+
 ## Milestone 13 — Real-time architecture decision room
 
 - [x] **M13.1 — Define and build the unmistakable collaborative decision-room journey** `DONE`

@@ -6,7 +6,7 @@ Aether: Branch it. Break it. Commit with confidence.
 
 ## One-line description
 
-A real-time architecture decision room where people and agents turn an incident, a proposed system change, its evidence, discussion, and human approval into one replayable decision record.
+When an agent proposes a change to a running system, Aether computes what that change actually does — branch it, simulate it deterministically, and keep the commit decision with a human.
 
 ## Live links
 
