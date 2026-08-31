@@ -309,6 +309,14 @@ None. Production is deployed on Railway with durable PostgreSQL-backed shared-wo
 - [x] **M14.15 — Compare only like-for-like evidence** `DONE`
   - Evidence: branch cards and the comparison overlay fell back to a branch's first stored run when the selected scenario had none, so a future simulated under a traffic spike was shown beside one simulated under a regional outage and the highest-resilience option could appear worse than a cheaper one. Futures are now simulated across all three scenarios on creation and each view reads only the selected scenario. Verified in Chrome: ordering is monotonic in availability, recovery, and cost within both scenarios.
 
+- [x] **M14.16 — Give every control a meaningful accessible name** `DONE`
+  - Acceptance: the accessibility tree names every interactive element.
+  - Evidence: branch cards, canvas nodes, and comparison choices split their text across `span`, `strong`, `small`, and `b`, so the computed name came out empty and Chrome's accessibility tree listed ten unnamed buttons. Each now carries an explicit label stating what it is and its current evidence, so a canvas node announces "Primary Ledger, database, direct failure" and a branch card its status and availability. Verified against the live accessibility tree.
+- [x] **M14.17 — Make the human controls read as pressable** `DONE`
+  - Evidence: the consequential human actions were flat transparent boxes with a hairline border, visually indistinguishable from static labels. They now have a surface, a resting shadow, a directional affordance, and hover, focus, and active states, with the motion removed under reduced-motion preferences.
+- [x] **M14.18 — Land the value proposition in one read** `DONE`
+  - Evidence: the intro carried a headline, a scenario paragraph, and a three-step explainer that duplicated the visible 01/02/03 briefing strip, so a reviewer skimming for fifteen seconds read the headline and skipped the rest. It is now one headline and one sentence naming the agent, the deterministic proof, and the human gate, and the shorter card leaves the product visible behind it.
+
 ## Milestone 13 — Real-time architecture decision room
 
 - [x] **M13.1 — Define and build the unmistakable collaborative decision-room journey** `DONE`

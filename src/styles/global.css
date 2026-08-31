@@ -726,19 +726,58 @@ button {
 .human-actions .eyebrow {
   margin-bottom: 1px;
 }
+/* These carry the consequential human actions, so they must read as
+   pressable controls rather than static labels. */
 .human-actions button {
-  padding: 9px;
-  border: 1px solid var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 11px;
+  border: 1px solid rgba(17, 36, 64, 0.3);
   color: var(--ink);
-  background: transparent;
+  background: #fff;
+  box-shadow: 0 1px 0 rgba(17, 36, 64, 0.16);
   font-size: 10px;
   font-weight: 750;
   text-align: left;
   cursor: pointer;
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease,
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+.human-actions button::after {
+  content: "→";
+  color: var(--blue);
+  font-size: 11px;
+  opacity: 0.65;
+}
+.human-actions button:hover:not(:disabled),
+.human-actions button:focus-visible:not(:disabled) {
+  border-color: var(--blue);
+  background: #f7fbff;
+  box-shadow: 0 2px 0 rgba(32, 104, 191, 0.32);
+  transform: translateY(-1px);
+}
+.human-actions button:active:not(:disabled) {
+  box-shadow: none;
+  transform: translateY(1px);
 }
 .human-actions button:disabled {
   cursor: not-allowed;
   opacity: 0.4;
+  box-shadow: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .human-actions button {
+    transition: none;
+  }
+  .human-actions button:hover:not(:disabled),
+  .human-actions button:focus-visible:not(:disabled) {
+    transform: none;
+  }
 }
 .human-actions .secondary-action {
   border-color: var(--line);
@@ -1339,7 +1378,7 @@ button {
   width: min(680px, 100%);
   max-height: 92vh;
   overflow: auto;
-  padding: 40px 44px 34px;
+  padding: 44px 46px 34px;
   border: 1px solid var(--line);
   background: var(--panel);
   box-shadow: 0 40px 90px -40px rgba(16, 35, 63, 0.7);
@@ -1363,45 +1402,11 @@ button {
   color: var(--blue);
 }
 .intro-lede {
-  margin: 0 0 24px;
+  margin: 0 0 30px;
   max-width: 54ch;
   color: #43516a;
   font-size: 14px;
   line-height: 1.55;
-}
-.intro-steps {
-  display: grid;
-  gap: 14px;
-  margin: 0 0 28px;
-  padding: 0;
-  list-style: none;
-}
-.intro-steps li {
-  display: flex;
-  gap: 13px;
-  align-items: flex-start;
-}
-.intro-steps b {
-  display: grid;
-  place-items: center;
-  flex: none;
-  width: 23px;
-  height: 23px;
-  border-radius: 50%;
-  color: #fff;
-  background: var(--ink);
-  font-size: 11px;
-}
-.intro-steps span {
-  display: grid;
-  gap: 3px;
-  color: #556174;
-  font-size: 12.5px;
-  line-height: 1.5;
-}
-.intro-steps strong {
-  color: var(--ink);
-  font-size: 13.5px;
 }
 .intro-foot {
   display: flex;
