@@ -41,6 +41,33 @@ function openingNotes(
 ): DecisionNote[] {
   const opening = runScenario(graph, "regional_outage", "branch-baseline", 1);
   const origin = opening.causalChain[0];
+  const built = Object.values(graph.entities).some(
+    (entity) => entity.kind !== "region",
+  );
+
+  // An empty canvas has nothing to diagnose. Saying otherwise would open the
+  // product on a recommendation about an architecture that does not exist.
+  if (!built)
+    return [
+      {
+        id: "note-1",
+        workspaceId: "workspace-payment",
+        branchId: "branch-baseline",
+        actor: agent,
+        body: "This canvas is empty. Describe your architecture and I will build it here — name each service, database, queue, or gateway, and how they depend on each other.",
+        evidenceRef: "Waiting for your system",
+        timestamp,
+      },
+      {
+        id: "note-2",
+        workspaceId: "workspace-payment",
+        branchId: "branch-baseline",
+        actor: human,
+        body: "Once it is modelled, show me what a regional outage does to it before we change anything.",
+        evidenceRef: "Human constraint",
+        timestamp,
+      },
+    ];
   const weakest = Object.values(graph.entities).find(
     (entity) =>
       entity.kind === "database" &&

@@ -781,8 +781,17 @@ export function App() {
         <div>
           <p className="eyebrow">Live architecture decision room</p>
           <h1>
-            Mumbai is down. <em>Choose</em> the repair before payment traffic
-            peaks.
+            {entities.length === 0 ? (
+              <>
+                Describe your system. <em>Aether proves</em> what a failure does
+                to it.
+              </>
+            ) : (
+              <>
+                {regions[0]?.name ?? "The primary region"} is down.{" "}
+                <em>Choose</em> the repair before traffic peaks.
+              </>
+            )}
           </h1>
         </div>
         <div className="hero-proof">
@@ -1140,7 +1149,9 @@ export function App() {
             <span>Agent read</span>
             {activeSimulation
               ? scenarioCopy[selectedScenario].agent
-              : "The primary ledger has no standby path. Create futures to test repairs without changing the current architecture."}
+              : entities.length === 0
+                ? "Nothing is modelled yet. Add the components of your system and I will show you what a regional failure costs."
+                : scenarioCopy[selectedScenario].agent}
           </p>
           <div className="metric-grid">
             <div>

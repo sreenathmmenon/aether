@@ -410,6 +410,10 @@ None. Production is deployed on Railway with durable PostgreSQL-backed per-visit
 - [x] **M15.8 — Confirm the opening screen reads coherently on the deployed origin** `DONE`
   - Evidence: on production from a cleared workspace, the incident brief, agent recommendation, human gate, agent narrative, and the stated constraint all render, and the two cost figures now tell one story — the human asks for $7,100 while the only violation-free repair costs $8,700, which is the trade-off the room exists to resolve rather than a contradiction. Locking the ceiling leaves the genuine capacity blocker, named and clearable, so the approval gate reports a real reason.
 
+- [x] **M15.9 — Say only what is true of the system on screen** `DONE`
+  - Acceptance: no headline, narrative, or seeded note describes an architecture that is not loaded.
+  - Evidence: on the empty canvas — the flagship path — the hero still read "Mumbai is down", the agent narrative still described "the primary ledger", and the seeded note recommended "testing an isolated repair" beside 0.00% availability, all of a system with no components. A reviewer arriving through the own-system route met three statements about an architecture that did not exist. The hero and agent narrative now derive from the loaded graph, and an unbuilt canvas gets its own opening: the agent asks for the architecture and the human asks to see a regional outage once it is modelled. Verified across all three systems: "Mumbai is down", "N. Virginia is down", and "Describe your system".
+
 ## Milestone 13 — Real-time architecture decision room
 
 - [x] **M13.1 — Define and build the unmistakable collaborative decision-room journey** `DONE`
