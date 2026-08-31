@@ -391,6 +391,10 @@ None. Production is deployed on Railway with durable PostgreSQL-backed per-visit
   - Acceptance: a repair future inherits whatever the reviewer built, so a self-built system can reach approval.
   - Evidence: a new branch based on `revision-baseline`, which on an own-system workspace is the empty canvas, because the reviewer's components live in the baseline branch's operations rather than in that revision. Branching a self-built architecture therefore produced an empty graph, every scenario returned zero availability with the no-components violation, and approval was unreachable — the decision journey worked only on the two shipped examples. Branch creation now freezes the derived graph into a revision when the baseline carries operations, keeping the base immutable while inheriting the built system. Verified end to end: a two-component system built from nothing branches with real repair operations, simulates to 96.83% and 99.99% with no violations, and completes approval and merge.
 
+- [x] **M15.4 — Stop reporting a flaw the repair already fixed** `DONE`
+  - Acceptance: an architecture that has been repaired can reach approval.
+  - Evidence: the single-regional-dependency rule fired on any single-replica database with upstream and downstream dependencies, ignoring replication, so a synchronously replicated database was still called a single point of failure. On a self-built system that left an unresolvable blocker with no quick action for it: the highest-resilience future set `replicationMode` to `sync`, the interface reported the database repaired, and approval stayed refused. Caught by taking a browser-built system through to approval rather than stopping at the build. A replicated database is now exempt, an unreplicated one is still reported by the more precise standby-replica rule, and a regression test covers both directions.
+
 ## Milestone 13 — Real-time architecture decision room
 
 - [x] **M13.1 — Define and build the unmistakable collaborative decision-room journey** `DONE`

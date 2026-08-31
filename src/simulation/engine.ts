@@ -426,16 +426,17 @@ export function runScenario(
   // upstream, no replicas, and everything downstream dies with it.
   for (const entity of operational) {
     if (!impacted.has(entity.id)) continue;
+    if (entity.kind !== "database") continue;
+    // Replication is what removes a single point of failure. A database with
+    // a standby is not one, however many things depend on it, so the rule
+    // must not fire on an architecture that has already been repaired.
+    const mode = replicationOf(entity) ?? "none";
+    if (mode !== "none") continue;
     const replicas = propertiesOf(entity).replicas;
     const isSingle = typeof replicas !== "number" || replicas <= 1;
     const downstream = dependentsOf(graph, entity.id).length;
     const upstream = upstreamOf(graph, entity.id).length;
-    if (
-      isSingle &&
-      downstream > 0 &&
-      upstream > 0 &&
-      entity.kind === "database"
-    )
+    if (isSingle && downstream > 0 && upstream > 0)
       violations.push(`${entity.name} is a single regional dependency`);
   }
 

@@ -210,4 +210,30 @@ describe("dependency-graph simulation", () => {
         .availability,
     );
   });
+
+  it("stops calling a replicated database a single point of failure", () => {
+    const replicated = withProperty(
+      paymentPlatformBaseline,
+      "ledger",
+      "replicationMode",
+      "sync",
+    );
+    const result = runScenario(replicated, "regional_outage", "branch", 1);
+    // A standby is exactly what removes the single dependency, so a repaired
+    // architecture must not keep reporting the flaw it just fixed.
+    expect(result.sloViolations).not.toContain(
+      "Primary Ledger is a single regional dependency",
+    );
+
+    // An unreplicated database is still reported, by the more precise rule.
+    const unrepaired = runScenario(
+      paymentPlatformBaseline,
+      "regional_outage",
+      "branch",
+      1,
+    );
+    expect(unrepaired.sloViolations).toContain(
+      "Primary Ledger has no standby replica",
+    );
+  });
 });
