@@ -48,7 +48,7 @@ Read the detailed contracts in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [do
 
 - TypeScript, React, Vite, Hono, and a Node server
 - Shared command/domain packages with Zod-backed tool-input validation
-- PostgreSQL-backed shared workspace recovery, optimistic writes, and Railway deployment
+- PostgreSQL-backed per-visitor workspace persistence, optimistic writes, and Railway deployment
 - Top-level WebMCP Imperative API, using the official `webmcp-types` definitions
 - Deterministic dependency-graph simulation of regional outage, traffic spike, and database failure
 

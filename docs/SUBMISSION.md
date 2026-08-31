@@ -50,7 +50,7 @@ Agent authority is bounded at both ends. No approve or merge tool is registered 
 - Official `webmcp-types` compile-time definitions.
 - Narrow JSON schemas, Zod runtime validation, `readOnlyHint`, abort-signal registration lifecycle, and bounded output.
 - COOP, COEP, and `Permissions-Policy: tools=(self)` on the live app.
-- PostgreSQL-backed workspace persistence, optimistic writes, and cross-device reconciliation.
+- PostgreSQL-backed persistence with a private workspace per visitor, optimistic expected-version writes, `409` stale-write rejection, and live synchronisation across tabs of the same browser.
 - ChatGPT Site Tools live discovery/calls recorded in `docs/WEBMCP_EVALS.md`; the Chrome origin-trial token is configured on the deployed origin, which serves the `Origin-Trial` header alongside the isolation headers.
 - State-dependent registration: the surface grows from five tools to eleven when a repair future exists, and component enums are enumerated from the live graph rather than a fixed list.
 - Bounded agent authority: no approve or merge tool is registered, destructive removal is refused, and every rejection names the failed fields and the values that would succeed.

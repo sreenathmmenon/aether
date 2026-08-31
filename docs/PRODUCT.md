@@ -15,7 +15,7 @@ Architecture Lab is the first Aether domain package. Future domains may reuse Co
 3. Ask: “What happens if Mumbai fails during peak traffic?” and inspect the anchored causal trace and evidence.
 4. Create isolated repair futures: cheapest, fastest recovery, highest resilience.
 5. Run the identical deterministic outage on each future; the result is a decision artifact, not an opaque chat answer.
-6. Discuss a component-anchored proposal with the agent and a teammate. Every message names its branch, evidence, actor, and consequence.
+6. Discuss a component-anchored proposal with the agent. Every note names its branch, evidence, actor, and consequence, and the record synchronises live across tabs of the same browser.
 7. Directly alter the recommended future and set a human cost constraint; Aether records who changed it and why.
 8. Recalculate only affected evidence, surface the new capacity failure, and compare the futures in the shared room.
 9. Replay the decision history, inspect the semantic diff and rollback plan, then approve explicitly.

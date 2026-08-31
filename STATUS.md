@@ -238,7 +238,7 @@ All other previously open rows below have been reconciled against the deployed i
 
 ## Blockers
 
-None. Production is deployed on Railway with durable PostgreSQL-backed shared-workspace persistence. The only remaining release artifacts are the public demo video and its Devpost publication, tracked in M11.1 and M11.6.
+None. Production is deployed on Railway with durable PostgreSQL-backed per-visitor workspace persistence. The only remaining release artifacts are the public demo video and its Devpost publication, tracked in M11.1 and M11.6.
 
 ## Milestone 12 — First-prize product transformation
 
@@ -250,8 +250,8 @@ None. Production is deployed on Railway with durable PostgreSQL-backed shared-wo
   - Evidence: comparison overlay presents availability, recovery, cost, and SLO consequences for each future.
 - [x] **M12.4 — Render causal failure evidence and agent reasoning in context** `DONE`
   - Evidence: live scenario tabs, affected dependency paths, causal evidence, and agent rationale are now tied to the active branch.
-- [x] **M12.5 — Add real-time collaborative state transport and durable multi-user persistence** `DONE`
-  - Evidence: production PostgreSQL persistence, optimistic writes, and three-second remote-version reconciliation restore teammate changes across devices while browser storage events provide immediate same-browser propagation.
+- [x] **M12.5 — Add durable persistence and live state transport** `DONE`
+  - Evidence: production PostgreSQL persistence, optimistic expected-version writes, `409` stale-write rejection, and three-second remote reconciliation, with browser storage events providing immediate propagation between tabs. Superseded in scope by M14.13: workspaces are now private to each visitor, so synchronisation is live across tabs of one browser rather than between separate people. That trade was deliberate — a single shared row meant two reviewers overwrote each other's decisions.
 - [x] **M12.5a — Add live browser-tab workspace synchronization** `DONE`
   - Evidence: Aether synchronizes persisted canonical workspace changes through browser storage events and visibly reports received shared-state updates.
 - [x] **M12.6 — Add high-fidelity failure/recovery motion and timeline playback** `DONE`
@@ -363,6 +363,10 @@ None. Production is deployed on Railway with durable PostgreSQL-backed shared-wo
 - [x] **M14.31 — Tell a reviewer without WebMCP what to do** `DONE`
   - Acceptance: a visitor in an ordinary browser understands the WebMCP state and that the product still works.
   - Evidence: the header read "WebMCP unavailable", the panel read "Unavailable", and the intro said only that tools "activate in a supporting browser" — accurate but unhelpful to a reviewer who does not know which browser or whether anything is broken. Since most reviewers arrive without WebMCP, that is the common first impression. The header now reads "WebMCP not detected", the panel states how many tools the page publishes, and the intro names ChatGPT's browser or Chrome 149+ and says plainly that everything below works without one. Degradation itself was probed across four states — no document, a document without `modelContext`, a registry with no context, and a document with it — and was already correct; a regression test now covers it.
+
+- [x] **M14.32 — Stop claiming collaboration the build no longer provides** `DONE`
+  - Acceptance: every statement about shared state matches what actually happens.
+  - Evidence: giving each visitor a private workspace in M14.13 was the right fix for two reviewers overwriting each other, but it silently invalidated the collaboration story left behind in the copy. The header still read "Shared live", the interface announced "A teammate changed the shared architecture", and the submission claimed cross-device reconciliation — none of which is true once workspaces are per-visitor. Probing the identifier confirmed exactly what survives: two tabs of one browser share a workspace, a second browser does not. The chip now reads "Synced", messages name another tab rather than a teammate, and the README, submission, product definition, and the M12.5 record state live synchronisation across tabs of one browser with the trade explained. Verified in two real tabs: the same session id, three futures created in one appearing in the other.
 
 ## Milestone 13 — Real-time architecture decision room
 

@@ -386,9 +386,7 @@ export function App() {
           applyingRemoteRef.current = true;
           remoteVersionRef.current = remote.workspace.persistenceVersion ?? 0;
           setState(remote);
-          setMessage(
-            "A teammate updated this workspace. Shared state refreshed.",
-          );
+          setMessage("Another tab updated this workspace. State refreshed.");
         });
     });
   }, [state]);
@@ -414,9 +412,7 @@ export function App() {
         applyingRemoteRef.current = true;
         remoteVersionRef.current = remoteVersion;
         setState(remote);
-        setMessage(
-          "A teammate changed the shared architecture. Evidence is live.",
-        );
+        setMessage("Another tab changed this architecture. Evidence is live.");
       });
     };
     const interval = window.setInterval(poll, 3000);
@@ -432,7 +428,7 @@ export function App() {
         incoming.workspace.persistenceVersion ?? remoteVersionRef.current;
       setState(incoming);
       setMessage(
-        "Live workspace update received. Reviewing the shared future.",
+        "Live workspace update received. Reviewing the current future.",
       );
     };
     window.addEventListener("storage", sync);
@@ -761,7 +757,7 @@ export function App() {
           >
             {webMcp.available ? "WebMCP live" : "WebMCP not detected"}
           </span>
-          <span className="shared-live">Shared live</span>
+          <span className="shared-live">Synced</span>
           <span className="human-chip">S</span>
         </div>
       </header>
