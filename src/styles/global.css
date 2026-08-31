@@ -1178,18 +1178,41 @@ button {
     stroke-dashoffset: -24;
   }
 }
-@media (max-width: 1080px) {
+/* Below the three-column width the evidence panel moves under the canvas
+   rather than disappearing: it carries the metrics, the human controls, and
+   the live WebMCP surface, so hiding it would remove the product. */
+@media (max-width: 1180px) {
   .studio {
-    grid-template-columns: 220px minmax(540px, 1fr);
+    grid-template-columns: 220px minmax(0, 1fr);
   }
   .intelligence-panel {
-    display: none;
+    grid-column: 1 / -1;
+    border-left: 0;
+    border-top: 1px solid var(--line);
+  }
+  .intelligence-panel .metric-grid {
+    grid-template-columns: repeat(4, 1fr);
   }
   .review-dock {
     grid-template-columns: 220px 1fr 220px;
   }
   .decision-brief > div {
     padding: 18px;
+  }
+}
+@media (max-width: 900px) {
+  .studio {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .future-rail {
+    grid-column: 1 / -1;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .future-stack {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 9px;
   }
 }
 @media (max-width: 740px) {
