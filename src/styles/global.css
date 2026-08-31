@@ -571,6 +571,33 @@ button {
   border-right: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
 }
+.simulation-provenance {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  padding: 10px 11px;
+  color: #405066;
+  border: 1px solid var(--line);
+  border-top: 0;
+  background: rgba(17, 167, 184, 0.045);
+  font-size: 10px;
+}
+.simulation-provenance span {
+  color: var(--cyan);
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.simulation-provenance code {
+  padding: 2px 5px;
+  color: #314156;
+  border: 1px solid rgba(17, 167, 184, 0.24);
+  border-radius: 2px;
+  background: #fff;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 9px;
+}
 .metric-grid span {
   color: var(--muted);
   font-size: 10px;

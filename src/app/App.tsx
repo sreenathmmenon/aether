@@ -138,6 +138,9 @@ export function App() {
     ],
     affectedEntityIds: ["ledger", "auth", "queue"],
     rerunScope: "full" as const,
+    engineVersion: "aether-sim-1",
+    inputHash: "baseline-fixture",
+    outputHash: "baseline-fixture",
   };
   const selectedEntity =
     graph.entities[selectedEntityId] ?? graph.entities.ledger!;
@@ -736,6 +739,14 @@ export function App() {
               <span>Monthly cost</span>
               <strong>${evidence.monthlyCostUsd.toLocaleString()}</strong>
             </div>
+          </div>
+          <div
+            className="simulation-provenance"
+            title="A stable fingerprint of the exact simulation input and result."
+          >
+            <span>Deterministic proof</span>
+            <code>{evidence.engineVersion}</code>
+            <code>{evidence.outputHash}</code>
           </div>
           <div className="violation-list">
             <span className="eyebrow">Causal evidence</span>

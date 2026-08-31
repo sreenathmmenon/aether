@@ -1,10 +1,34 @@
 import type { ArchitectureGraph } from "@domain/architecture/types";
 
 export type Scenario = "regional_outage" | "traffic_spike" | "database_failure";
+export const simulationEngineVersion = "aether-sim-1";
+
+function stableJson(value: unknown): string {
+  if (value === null || typeof value !== "object") return JSON.stringify(value);
+  if (Array.isArray(value)) return `[${value.map(stableJson).join(",")}]`;
+  const record = value as Record<string, unknown>;
+  return `{${Object.keys(record)
+    .sort()
+    .map((key) => `${JSON.stringify(key)}:${stableJson(record[key])}`)
+    .join(",")}}`;
+}
+
+function fingerprint(value: unknown) {
+  let hash = 0x811c9dc5;
+  for (const character of stableJson(value)) {
+    hash ^= character.charCodeAt(0);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return `fnv1a-${(hash >>> 0).toString(16).padStart(8, "0")}`;
+}
+
 export type ScenarioResult = {
   scenario: Scenario;
   branchId: string;
   branchVersion: number;
+  engineVersion: string;
+  inputHash: string;
+  outputHash: string;
   availability: number;
   rtoMinutes: number;
   latencyMs: number;
@@ -21,6 +45,14 @@ export function runScenario(
   branchVersion: number,
   costCeilingUsd?: number,
 ): ScenarioResult {
+  const inputHash = fingerprint({
+    engineVersion: simulationEngineVersion,
+    graph,
+    scenario,
+    branchId,
+    branchVersion,
+    costCeilingUsd,
+  });
   const ledger = graph.entities.ledger!;
   const auth = graph.entities.auth!;
   const queue = graph.entities.queue!;
@@ -100,10 +132,12 @@ export function runScenario(
     costCeilingUsd && monthlyCostUsd > costCeilingUsd
       ? `Human cost ceiling exceeded: $${monthlyCostUsd.toLocaleString()} > $${costCeilingUsd.toLocaleString()}`
       : false;
-  return {
+  const result = {
     scenario,
     branchId,
     branchVersion,
+    engineVersion: simulationEngineVersion,
+    inputHash,
     availability: outcomes.availability,
     rtoMinutes: outcomes.rtoMinutes,
     latencyMs: outcomes.latencyMs,
@@ -112,6 +146,7 @@ export function runScenario(
       Boolean,
     ) as string[],
     affectedEntityIds: outcomes.affectedEntityIds,
-    rerunScope: branchVersion > 1 ? "affected" : "full",
+    rerunScope: branchVersion > 1 ? ("affected" as const) : ("full" as const),
   };
+  return { ...result, outputHash: fingerprint(result) };
 }

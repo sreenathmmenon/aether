@@ -108,7 +108,8 @@ All other previously open rows below have been reconciled against the deployed i
   - Evidence: all five metrics return from each simulator run and were observed through deployed Site Tools.
 - [x] **M5.5 — Identify violations with traceable causal evidence** `DONE`
   - Evidence: simulator returns concise violation messages and affected entity IDs.
-- [ ] **M5.6 — Version and hash all simulation inputs and outputs** `TODO`
+- [x] **M5.6 — Version and hash all simulation inputs and outputs** `DONE`
+  - Evidence: `aether-sim-1` adds stable FNV-1a fingerprints for normalized inputs and outputs; unit tests prove identical inputs retain both hashes while a changed cost constraint changes both. The active evidence panel displays the engine version and result fingerprint.
 - [x] **M5.7 — Re-run only branches invalidated by a relevant mutation** `DONE`
   - Evidence: branch-version mutations produce `rerunScope: "affected"`; unchanged first runs are `full`.
 - [x] **M5.8 — Add fixed-fixture reproducibility tests** `DONE`

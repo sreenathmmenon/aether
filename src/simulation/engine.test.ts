@@ -53,4 +53,35 @@ describe("regional outage simulation", () => {
     );
     expect(result.rerunScope).toBe("affected");
   });
+
+  it("fingerprints the exact simulation input and output reproducibly", () => {
+    const first = runScenario(
+      paymentPlatformBaseline,
+      "regional_outage",
+      "branch-baseline",
+      1,
+    );
+    const repeat = runScenario(
+      paymentPlatformBaseline,
+      "regional_outage",
+      "branch-baseline",
+      1,
+    );
+    const constrained = runScenario(
+      paymentPlatformBaseline,
+      "regional_outage",
+      "branch-baseline",
+      1,
+      5000,
+    );
+    expect(first).toMatchObject({
+      engineVersion: "aether-sim-1",
+      inputHash: expect.stringMatching(/^fnv1a-[0-9a-f]{8}$/),
+      outputHash: expect.stringMatching(/^fnv1a-[0-9a-f]{8}$/),
+    });
+    expect(repeat.inputHash).toBe(first.inputHash);
+    expect(repeat.outputHash).toBe(first.outputHash);
+    expect(constrained.inputHash).not.toBe(first.inputHash);
+    expect(constrained.outputHash).not.toBe(first.outputHash);
+  });
 });
