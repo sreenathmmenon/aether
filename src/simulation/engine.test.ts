@@ -38,4 +38,19 @@ describe("regional outage simulation", () => {
     expect(database.rtoMinutes).toBe(75);
     expect(database.affectedEntityIds).toEqual(["ledger", "reconciliation"]);
   });
+
+  it("turns a human cost ceiling into deterministic review evidence", () => {
+    const result = runScenario(
+      paymentPlatformBaseline,
+      "regional_outage",
+      "branch-baseline",
+      2,
+      5000,
+    );
+    expect(result.monthlyCostUsd).toBe(5200);
+    expect(result.sloViolations).toContain(
+      "Human cost ceiling exceeded: $5,200 > $5,000",
+    );
+    expect(result.rerunScope).toBe("affected");
+  });
 });

@@ -202,3 +202,17 @@ This is the source of truth for build progress. Status values: `TODO`, `IN_PROGR
 ## Blockers
 
 None. Railway provisioning is intentionally deferred until the product has a deployable health endpoint and authorized account access.
+
+## Milestone 12 — First-prize product transformation
+
+- [x] **M12.1 — Replace the fixed diagram shell with branch-derived architecture state** `DONE`
+  - Evidence: `deriveGraph` now drives the visual canvas, paths, selected component state, and semantic review surface.
+- [x] **M12.2 — Add direct architecture manipulation with human attribution** `DONE`
+  - Evidence: draggable nodes create one `MOVE_ENTITY` command and an audit event at the end of a human drag.
+- [x] **M12.3 — Turn branch comparison into a visual decision surface** `DONE`
+  - Evidence: comparison overlay presents availability, recovery, cost, and SLO consequences for each future.
+- [x] **M12.4 — Render causal failure evidence and agent reasoning in context** `DONE`
+  - Evidence: live scenario tabs, affected dependency paths, causal evidence, and agent rationale are now tied to the active branch.
+- [ ] **M12.5 — Add real-time collaborative state transport and durable multi-user persistence** `TODO`
+- [ ] **M12.6 — Add high-fidelity failure/recovery motion and timeline playback** `TODO`
+- [ ] **M12.7 — Run first-prize visual, interaction, and browser-validation loops** `IN_PROGRESS`

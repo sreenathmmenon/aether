@@ -19,6 +19,7 @@ export function runScenario(
   scenario: Scenario,
   branchId: string,
   branchVersion: number,
+  costCeilingUsd?: number,
 ): ScenarioResult {
   const ledger = graph.entities.ledger!;
   const auth = graph.entities.auth!;
@@ -48,8 +49,7 @@ export function runScenario(
   const monthlyCostUsd =
     ledgerProps.monthlyCostUsd +
     authProps.monthlyCostUsd +
-    queueProps.monthlyCostUsd +
-    (resilient ? 2000 : 0);
+    queueProps.monthlyCostUsd;
   const outcomes = {
     regional_outage: {
       availability: resilient ? 99.97 : 96.42,
@@ -96,6 +96,10 @@ export function runScenario(
       affectedEntityIds: ["ledger", "reconciliation"],
     },
   }[scenario];
+  const costViolation =
+    costCeilingUsd && monthlyCostUsd > costCeilingUsd
+      ? `Human cost ceiling exceeded: $${monthlyCostUsd.toLocaleString()} > $${costCeilingUsd.toLocaleString()}`
+      : false;
   return {
     scenario,
     branchId,
@@ -104,7 +108,9 @@ export function runScenario(
     rtoMinutes: outcomes.rtoMinutes,
     latencyMs: outcomes.latencyMs,
     monthlyCostUsd,
-    sloViolations: outcomes.violations.filter(Boolean) as string[],
+    sloViolations: [...outcomes.violations, costViolation].filter(
+      Boolean,
+    ) as string[],
     affectedEntityIds: outcomes.affectedEntityIds,
     rerunScope: branchVersion > 1 ? "affected" : "full",
   };

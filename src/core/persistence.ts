@@ -1,6 +1,6 @@
 import type { AetherState } from "./branch-engine";
 
-const storageKey = "aether.workspace.payment.v1";
+export const storageKey = "aether.workspace.payment.v1";
 
 function looksLikeAetherState(value: unknown): value is AetherState {
   if (!value || typeof value !== "object") return false;
@@ -16,10 +16,14 @@ function looksLikeAetherState(value: unknown): value is AetherState {
 
 export function loadPersistedState(): AetherState | undefined {
   if (typeof window === "undefined") return undefined;
+  return parsePersistedState(window.localStorage.getItem(storageKey));
+}
+
+export function parsePersistedState(
+  raw: string | null,
+): AetherState | undefined {
   try {
-    const value: unknown = JSON.parse(
-      window.localStorage.getItem(storageKey) ?? "null",
-    );
+    const value: unknown = JSON.parse(raw ?? "null");
     return looksLikeAetherState(value) ? value : undefined;
   } catch {
     return undefined;

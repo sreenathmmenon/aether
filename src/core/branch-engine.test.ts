@@ -81,4 +81,32 @@ describe("Aether command pipeline", () => {
       simulated.value.simulations["branch-highest_resilience"]?.[0],
     ).toMatchObject({ availability: 99.97, rtoMinutes: 7, rerunScope: "full" });
   });
+
+  it("keeps a human cost guardrail outside the agent's authority", () => {
+    const state = branchState();
+    const agentAttempt = dispatch(state, {
+      type: "SET_COST_CEILING",
+      input: { amountUsd: 7000 },
+    });
+    expect(agentAttempt).toMatchObject({ ok: false, code: "UNAUTHORIZED" });
+
+    const guarded = dispatch(
+      state,
+      { type: "SET_COST_CEILING", input: { amountUsd: 7000 } },
+      human,
+    );
+    if (!guarded.ok) throw new Error("human cost guardrail must work");
+    const simulated = dispatch(guarded.value, {
+      type: "RUN_SCENARIO",
+      input: {
+        branchId: "branch-highest_resilience",
+        scenario: "regional_outage",
+      },
+    });
+    if (!simulated.ok) throw new Error("guarded simulation must work");
+    expect(
+      simulated.value.simulations["branch-highest_resilience"]?.[0]
+        ?.sloViolations,
+    ).toContain("Human cost ceiling exceeded: $7,800 > $7,000");
+  });
 });

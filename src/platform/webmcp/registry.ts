@@ -133,7 +133,7 @@ export function createAetherToolRegistry(
             required: ["branchId", "scenario"],
             additionalProperties: false,
           },
-          annotations: { readOnlyHint: true, untrustedContentHint: false },
+          annotations: { readOnlyHint: false, untrustedContentHint: false },
           execute: async (
             input: unknown,
             context?: { signal?: AbortSignal },
@@ -150,10 +150,104 @@ export function createAetherToolRegistry(
             if (!result.ok) return toolResult(result);
             onState(result.value);
             return toolResult(
-              result.value.simulations[parsed.data.branchId]?.[0],
+              result.value.simulations[parsed.data.branchId]?.find(
+                (run) => run.scenario === parsed.data.scenario,
+              ),
             );
           },
         });
+      }
+      await register({
+        name: "inspect_failure_domain",
+        description:
+          "Read the deterministic blast radius and decision variables for a named failure scenario. Use this before proposing a repair.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            scenario: {
+              type: "string",
+              enum: ["regional_outage", "traffic_spike", "database_failure"],
+            },
+          },
+          required: ["scenario"],
+          additionalProperties: false,
+        },
+        annotations: { readOnlyHint: true, untrustedContentHint: false },
+        execute: async (input: unknown) => {
+          const scenario = (input as { scenario?: unknown })?.scenario;
+          if (
+            scenario !== "regional_outage" &&
+            scenario !== "traffic_spike" &&
+            scenario !== "database_failure"
+          )
+            return toolResult({ error: "INVALID_INPUT" });
+          const failureDomains = {
+            regional_outage: {
+              failedDomain: "Mumbai / ap-south-1",
+              blastRadius: ["gateway", "auth", "ledger", "queue"],
+              decisionVariables: [
+                "replicationMode",
+                "capacityRps",
+                "monthlyCostUsd",
+              ],
+            },
+            traffic_spike: {
+              failedDomain: "18,000 RPS demand burst",
+              blastRadius: ["auth", "queue"],
+              decisionVariables: ["capacityRps", "replicas", "monthlyCostUsd"],
+            },
+            database_failure: {
+              failedDomain: "Primary ledger",
+              blastRadius: ["ledger", "reconciliation"],
+              decisionVariables: ["replicationMode", "monthlyCostUsd"],
+            },
+          }[scenario];
+          return toolResult({ scenario, ...failureDomains });
+        },
+      });
+      await register({
+        name: "trace_architecture_dependency",
+        description:
+          "Read the directed dependency path through the payment architecture for a known component.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            entityId: {
+              type: "string",
+              enum: ["gateway", "auth", "ledger", "queue", "reconciliation"],
+            },
+          },
+          required: ["entityId"],
+          additionalProperties: false,
+        },
+        annotations: { readOnlyHint: true, untrustedContentHint: false },
+        execute: async (input: unknown) => {
+          const entityId = (input as { entityId?: unknown })?.entityId;
+          if (
+            typeof entityId !== "string" ||
+            !state.revisions["revision-baseline"]?.graph.entities[entityId]
+          )
+            return toolResult({ error: "INVALID_INPUT" });
+          const graph = state.revisions["revision-baseline"]!.graph;
+          const dependencyPath = Object.values(graph.relationships)
+            .filter(
+              (relationship) =>
+                relationship.sourceId === entityId ||
+                relationship.targetId === entityId,
+            )
+            .map((relationship) => ({
+              from: relationship.sourceId,
+              relationship: relationship.kind,
+              to: relationship.targetId,
+            }));
+          return toolResult({
+            entityId,
+            entity: graph.entities[entityId]?.name,
+            dependencyPath,
+          });
+        },
+      });
+      if (Object.keys(state.branches).length > 1) {
         await register({
           name: "propose_architecture_change",
           description:

@@ -16,6 +16,7 @@ export type Workspace = {
   name: string;
   domain: "architecture";
   activeBranchId: BranchId;
+  costCeilingUsd?: number;
   createdAt: IsoTimestamp;
   updatedAt: IsoTimestamp;
 };

@@ -102,6 +102,12 @@ export function dispatch(
           property: "capacityRps",
           value: 13000,
         },
+        {
+          kind: "set_property" as const,
+          entityId: "queue",
+          property: "monthlyCostUsd",
+          value: 500,
+        },
       ],
       fastest_recovery: [
         {
@@ -109,6 +115,12 @@ export function dispatch(
           entityId: "ledger",
           property: "replicationMode",
           value: "async",
+        },
+        {
+          kind: "set_property" as const,
+          entityId: "ledger",
+          property: "monthlyCostUsd",
+          value: 4300,
         },
       ],
       highest_resilience: [
@@ -120,15 +132,33 @@ export function dispatch(
         },
         {
           kind: "set_property" as const,
+          entityId: "ledger",
+          property: "monthlyCostUsd",
+          value: 5200,
+        },
+        {
+          kind: "set_property" as const,
           entityId: "auth",
           property: "replicas",
           value: 4,
         },
         {
           kind: "set_property" as const,
+          entityId: "auth",
+          property: "monthlyCostUsd",
+          value: 1600,
+        },
+        {
+          kind: "set_property" as const,
           entityId: "queue",
           property: "capacityRps",
           value: 16000,
+        },
+        {
+          kind: "set_property" as const,
+          entityId: "queue",
+          property: "monthlyCostUsd",
+          value: 1000,
         },
       ],
     }[command.input.intent];
@@ -169,6 +199,37 @@ export function dispatch(
     nextState = "human_edit";
   }
 
+  if (command.type === "MOVE_ENTITY") {
+    const branch = next.branches[command.input.branchId];
+    if (!branch || branch.status === "merged" || branch.status === "discarded")
+      return commandFailure("NOT_AVAILABLE", "This branch cannot be changed.");
+    const graph = deriveGraph(next, branch);
+    if (!graph.entities[command.input.entityId])
+      return commandFailure("INVALID_INPUT", "Unknown architecture entity.");
+    branch.operations.push({
+      kind: "move_entity",
+      entityId: command.input.entityId,
+      x: command.input.x,
+      y: command.input.y,
+    });
+    branch.version += 1;
+    branch.status = "proposed";
+    branch.updatedAt = now;
+    affectedEntityIds = [command.input.entityId];
+    nextState = "human_edit";
+  }
+
+  if (command.type === "SET_COST_CEILING") {
+    if (actor.kind !== "human")
+      return commandFailure(
+        "UNAUTHORIZED",
+        "Only a human can set a workspace cost ceiling.",
+      );
+    next.workspace.costCeilingUsd = command.input.amountUsd;
+    next.workspace.updatedAt = now;
+    nextState = "human_cost_guardrail";
+  }
+
   if (command.type === "RUN_SCENARIO") {
     const branch = next.branches[command.input.branchId];
     if (!branch)
@@ -178,6 +239,7 @@ export function dispatch(
       command.input.scenario,
       branch.id,
       branch.version,
+      next.workspace.costCeilingUsd,
     );
     next.simulations[branch.id] = [
       ...(next.simulations[branch.id] ?? []).filter(

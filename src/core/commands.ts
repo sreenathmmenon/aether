@@ -20,9 +20,20 @@ export const setPropertyInput = z.object({
   ]),
 });
 
+export const moveEntityInput = z.object({
+  branchId: z.string().min(1),
+  entityId: z.string().min(1),
+  x: z.number().finite().min(0).max(1000),
+  y: z.number().finite().min(0).max(700),
+});
+
 export const runScenarioInput = z.object({
   branchId: z.string().min(1),
   scenario: z.enum(["regional_outage", "traffic_spike", "database_failure"]),
+});
+
+export const setCostCeilingInput = z.object({
+  amountUsd: z.number().finite().int().positive().max(100_000),
 });
 
 export const approveBranchInput = z.object({
@@ -38,6 +49,8 @@ export const rollbackMergeInput = z.object({ branchId: z.string().min(1) });
 export type AetherCommand =
   | { type: "CREATE_BRANCH"; input: z.infer<typeof createBranchInput> }
   | { type: "SET_PROPERTY"; input: z.infer<typeof setPropertyInput> }
+  | { type: "MOVE_ENTITY"; input: z.infer<typeof moveEntityInput> }
+  | { type: "SET_COST_CEILING"; input: z.infer<typeof setCostCeilingInput> }
   | { type: "RUN_SCENARIO"; input: z.infer<typeof runScenarioInput> }
   | { type: "APPROVE_BRANCH"; input: z.infer<typeof approveBranchInput> }
   | { type: "MERGE_BRANCH"; input: z.infer<typeof mergeBranchInput> }
