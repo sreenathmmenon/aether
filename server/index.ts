@@ -107,7 +107,10 @@ app.put("/api/workspaces/:id", async (context) => {
   if (!isWorkspace(body.state) || !Number.isInteger(body.expectedVersion))
     return context.json({ error: "INVALID_INPUT" }, 400);
   const id = context.req.param("id");
-  if (body.state.workspace?.id !== "workspace-payment")
+  // Each visitor owns a workspace keyed by their own session id.
+  if (!/^[A-Za-z0-9-]{4,48}$/.test(id))
+    return context.json({ error: "INVALID_WORKSPACE" }, 400);
+  if (!body.state.workspace?.id)
     return context.json({ error: "INVALID_WORKSPACE" }, 400);
   const version = Number(body.expectedVersion);
   const saved = await pool!.query<{ version: number }>(

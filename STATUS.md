@@ -301,6 +301,14 @@ None. Production is deployed on Railway with durable PostgreSQL-backed shared-wo
   - Acceptance: no viewport removes product capability.
   - Evidence: below 1080px the intelligence panel was hidden outright, taking the metrics, human controls, WebMCP status, and live tool feed with it, and the three-column grid needed 1140px so 1080–1140 overflowed horizontally. The panel now reflows beneath the canvas at 1180px and the future rail moves above it at 900px; no `display: none` on the panel remains at any width, verified against the live stylesheet.
 
+- [x] **M14.13 — Give every visitor a private workspace** `DONE`
+  - Acceptance: two people evaluating at the same time cannot overwrite each other.
+  - Evidence: the client wrote to one hardcoded `payment-platform` row, so every visitor shared a single stored workspace: a reviewer arrived to somebody else's branches, a maxed-out futures rail, and a foreign command history, and concurrent reviewers would have corrupted each other's decisions. Each browser now mints a durable session workspace and the server accepts any well-formed workspace id. Verified in Chrome: a cleared browser opens on a private id with the intro shown and zero futures.
+- [x] **M14.14 — Never leave an added component inert or overlapping** `DONE`
+  - Evidence: a new component was placed on a fixed grid slot with no collision check and no dependency, so it could land on top of the causal timeline and, having no edges, could not affect any result. Placement now scans for a slot clear of every existing component, and the composer wires the new component to a chosen dependency in the same gesture. Verified: adding a component raised the edge count and overlapped nothing.
+- [x] **M14.15 — Compare only like-for-like evidence** `DONE`
+  - Evidence: branch cards and the comparison overlay fell back to a branch's first stored run when the selected scenario had none, so a future simulated under a traffic spike was shown beside one simulated under a regional outage and the highest-resilience option could appear worse than a cheaper one. Futures are now simulated across all three scenarios on creation and each view reads only the selected scenario. Verified in Chrome: ordering is monotonic in availability, recovery, and cost within both scenarios.
+
 ## Milestone 13 — Real-time architecture decision room
 
 - [x] **M13.1 — Define and build the unmistakable collaborative decision-room journey** `DONE`

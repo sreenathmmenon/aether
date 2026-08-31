@@ -139,7 +139,8 @@ export function App() {
   const [componentDraft, setComponentDraft] = useState({
     name: "",
     kind: "service" as "service" | "database" | "queue" | "gateway",
-    regionId: "region-mumbai",
+    regionId: "",
+    dependsOn: "",
   });
   const [dragPreview, setDragPreview] = useState<
     { id: string; x: number; y: number } | undefined
@@ -513,18 +514,27 @@ export function App() {
         humanActor,
       );
       if (!created.ok) return;
-      const simulated = dispatch(
-        created.value,
-        {
-          type: "RUN_SCENARIO",
-          input: {
-            branchId: created.value.workspace.activeBranchId,
-            scenario: "regional_outage",
+      // Simulate every scenario up front so switching tabs compares
+      // like for like instead of showing a future with no evidence.
+      next = created.value;
+      for (const scenario of [
+        "regional_outage",
+        "traffic_spike",
+        "database_failure",
+      ] as const) {
+        const simulated = dispatch(
+          next,
+          {
+            type: "RUN_SCENARIO",
+            input: {
+              branchId: created.value.workspace.activeBranchId,
+              scenario,
+            },
           },
-        },
-        humanActor,
-      );
-      next = simulated.ok ? simulated.value : created.value;
+          humanActor,
+        );
+        if (simulated.ok) next = simulated.value;
+      }
     });
     setState(next);
     setMessage(
@@ -558,19 +568,52 @@ export function App() {
       setMessage("Name the component before adding it to the architecture.");
       return;
     }
-    apply({
-      type: "ADD_COMPONENT",
-      input: {
-        branchId: activeBranch.id,
-        name,
-        kind: componentDraft.kind,
-        regionId: componentDraft.regionId,
-        // Sensible starting capacity; the architect tunes it from the canvas.
-        peakRps: 8000,
-        capacityRps: 10000,
-        monthlyCostUsd: 800,
+    const regionId = componentDraft.regionId || regions[0]?.id || "";
+    const added = dispatch(
+      state,
+      {
+        type: "ADD_COMPONENT",
+        input: {
+          branchId: activeBranch.id,
+          name,
+          kind: componentDraft.kind,
+          regionId,
+          // Sensible starting capacity; the architect tunes it on the canvas.
+          peakRps: 8000,
+          capacityRps: 10000,
+          monthlyCostUsd: 800,
+        },
       },
-    });
+      humanActor,
+    );
+    if (!added.ok) {
+      setMessage(added.message);
+      return;
+    }
+    // A component with no dependency cannot affect anything, so wire it up in
+    // the same gesture rather than leaving an inert node on the canvas.
+    const newEntityId = added.affectedEntityIds[0]!;
+    const dependsOn = componentDraft.dependsOn || selectedEntity.id;
+    const connected = dispatch(
+      added.value,
+      {
+        type: "CONNECT_COMPONENTS",
+        input: {
+          branchId: activeBranch.id,
+          sourceId: newEntityId,
+          targetId: dependsOn,
+          kind: "depends_on",
+        },
+      },
+      humanActor,
+    );
+    setState(connected.ok ? connected.value : added.value);
+    setSelectedEntityId(newEntityId);
+    setMessage(
+      connected.ok
+        ? `${name} added and wired to ${graph.entities[dependsOn]?.name ?? dependsOn}. Recalculate to see its consequence.`
+        : `${name} added. Connect it to record its dependency.`,
+    );
     setComponentDraft((draft) => ({ ...draft, name: "" }));
   }
   function postDecisionNote(event: FormEvent<HTMLFormElement>) {
@@ -703,10 +746,9 @@ export function App() {
           ) : (
             <div className="future-stack">
               {futures.map((branch) => {
-                const result =
-                  state.simulations[branch.id]?.find(
-                    (run) => run.scenario === selectedScenario,
-                  ) ?? state.simulations[branch.id]?.[0];
+                const result = state.simulations[branch.id]?.find(
+                  (run) => run.scenario === selectedScenario,
+                );
                 return (
                   <button
                     className={`future-card ${branch.id === activeBranch.id ? "future-card-active" : ""}`}
@@ -1116,7 +1158,7 @@ export function App() {
                   </select>
                   <select
                     aria-label="Region"
-                    value={componentDraft.regionId}
+                    value={componentDraft.regionId || regions[0]?.id || ""}
                     disabled={!writable}
                     onChange={(event) =>
                       setComponentDraft((draft) => ({
@@ -1135,6 +1177,23 @@ export function App() {
                     Add
                   </button>
                 </div>
+                <select
+                  aria-label="Depends on"
+                  value={componentDraft.dependsOn || selectedEntity.id}
+                  disabled={!writable}
+                  onChange={(event) =>
+                    setComponentDraft((draft) => ({
+                      ...draft,
+                      dependsOn: event.target.value,
+                    }))
+                  }
+                >
+                  {entities.map((entity) => (
+                    <option key={entity.id} value={entity.id}>
+                      depends on {entity.name}
+                    </option>
+                  ))}
+                </select>
               </form>
             </div>
           )}
@@ -1400,10 +1459,9 @@ export function App() {
             <h2>Three possible futures. One human decision.</h2>
             <div className="compare-grid">
               {futures.map((branch) => {
-                const result =
-                  state.simulations[branch.id]?.find(
-                    (run) => run.scenario === selectedScenario,
-                  ) ?? state.simulations[branch.id]?.[0];
+                const result = state.simulations[branch.id]?.find(
+                  (run) => run.scenario === selectedScenario,
+                );
                 return (
                   <button
                     key={branch.id}

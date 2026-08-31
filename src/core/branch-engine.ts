@@ -404,12 +404,29 @@ export function dispatch(
         "CONFLICT",
         "A component with that name already exists.",
       );
-    // Place a new component clear of the components already on the canvas.
+    // Place the component on a free slot: scan a grid and take the first
+    // position that clears every existing component, so a new node never
+    // lands on top of another one or on the canvas overlays.
     const placed = Object.values(graph.entities).filter(
       (entity) => entity.kind !== "region",
     );
-    const x = 90 + (placed.length % 5) * 180;
-    const y = 190 + Math.floor(placed.length / 5) * 170;
+    const columns = [90, 270, 450, 630, 810];
+    const rows = [190, 340, 60];
+    const clear = (cx: number, cy: number) =>
+      placed.every(
+        (entity) =>
+          Math.abs(entity.position.x - cx) > 150 ||
+          Math.abs(entity.position.y - cy) > 120,
+      );
+    let x = columns[0]!;
+    let y = rows[0]!;
+    outer: for (const candidateY of rows)
+      for (const candidateX of columns)
+        if (clear(candidateX, candidateY)) {
+          x = candidateX;
+          y = candidateY;
+          break outer;
+        }
     branch.operations.push({
       kind: "add_entity",
       entityId,

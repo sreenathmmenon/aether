@@ -1,7 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createInitialState } from "./branch-engine";
 import { paymentPlatformBaseline } from "../fixtures/payment-platform/baseline";
-import { loadRemoteWorkspace, saveRemoteWorkspace } from "./remote-workspace";
+import {
+  loadRemoteWorkspace,
+  saveRemoteWorkspace,
+  workspaceId,
+} from "./remote-workspace";
 
 const state = createInitialState(paymentPlatformBaseline);
 
@@ -40,8 +44,30 @@ describe("production workspace persistence contract", () => {
     await expect(saveRemoteWorkspace(state, 3)).resolves.toBe(4);
     await expect(saveRemoteWorkspace(state, 3)).resolves.toBe("conflict");
     expect(fetchMock).toHaveBeenCalledWith(
-      "/api/workspaces/payment-platform",
+      `/api/workspaces/${workspaceId()}`,
       expect.objectContaining({ method: "PUT" }),
     );
+  });
+
+  it("gives each visitor a private workspace that survives reloads", () => {
+    // A shared identifier would let two people evaluating at once overwrite
+    // each other's decisions in the same stored workspace.
+    const store = new Map<string, string>();
+    vi.stubGlobal("window", {
+      localStorage: {
+        getItem: (key: string) => store.get(key) ?? null,
+        setItem: (key: string, value: string) => store.set(key, value),
+      },
+    });
+
+    const first = workspaceId();
+    expect(first).toMatch(/^w-[a-z0-9-]+$/i);
+    expect(first).not.toBe("payment-platform");
+    // The same browser keeps its workspace across reloads.
+    expect(workspaceId()).toBe(first);
+
+    // A different browser gets a different workspace.
+    store.clear();
+    expect(workspaceId()).not.toBe(first);
   });
 });
