@@ -47,9 +47,12 @@ function openingNotes(
       (entity.properties as { replicationMode?: string }).replicationMode ===
         "none",
   );
+  // The stated constraint has to be a real tension: comfortably above what
+  // the system costs today, and below what the strongest repair would, so the
+  // trade-off the room exists to resolve is visible from the first screen.
   const budget = Math.max(
     1000,
-    Math.round((opening.monthlyCostUsd * 0.85) / 100) * 100,
+    Math.ceil((opening.monthlyCostUsd * 1.15) / 100) * 100,
   );
   return [
     {

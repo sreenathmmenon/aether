@@ -606,4 +606,47 @@ describe("Aether command pipeline", () => {
       }),
     ).toMatchObject({ ok: false, code: "UNAUTHORIZED" });
   });
+
+  it("states a constraint the repairs actually have to resolve", () => {
+    const state = createInitialState(paymentPlatformBaseline);
+    const stated = state.decisionNotes.find(
+      (note) => note.actor.kind === "human",
+    )!.body;
+    const budget = Number(
+      /under \$([\d,]+)/.exec(stated)![1]!.replace(/,/g, ""),
+    );
+
+    const baseline = runScenario(
+      paymentPlatformBaseline,
+      "regional_outage",
+      "branch-baseline",
+      1,
+    );
+    // A constraint below today's spend is unreachable; one above every repair
+    // is not a constraint. It has to sit between them to mean anything.
+    expect(budget).toBeGreaterThan(baseline.monthlyCostUsd);
+
+    const cleanest = (
+      ["lowest_cost", "fastest_recovery", "highest_resilience"] as const
+    )
+      .map((intent) => {
+        const created = dispatch(
+          state,
+          { type: "CREATE_BRANCH", input: { name: "X", intent } },
+          human,
+        );
+        if (!created.ok) throw new Error("branch must be created");
+        return runScenario(
+          deriveGraph(
+            created.value,
+            created.value.branches[`branch-${intent}`]!,
+          ),
+          "regional_outage",
+          "branch",
+          1,
+        );
+      })
+      .filter((run) => run.sloViolations.length === 0)[0]!;
+    expect(budget).toBeLessThan(cleanest.monthlyCostUsd);
+  });
 });

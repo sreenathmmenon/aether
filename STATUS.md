@@ -403,6 +403,10 @@ None. Production is deployed on Railway with durable PostgreSQL-backed per-visit
   - Acceptance: an architecture unlike either shipped example still gets the full product, and durability holds.
   - Evidence: probed the cases a reviewer actually reaches. A single-component system with no database simulates and still produces meaningful repair operations; an agent cannot remove the last component; duplicate names return `CONFLICT` and a dependency on a missing component returns `INVALID_INPUT`. A built system survives a reload on the deployed origin with its template, components, and editability intact, and the tool panel lists all nine capabilities including component and dependency creation alongside the statement of what an agent cannot do. Regression coverage added for the database-free system.
 
+- [x] **M15.7 — State a constraint the repairs have to resolve** `DONE`
+  - Acceptance: the human constraint on the opening screen is consistent with what the product enforces.
+  - Evidence: the seeded human note asked to keep monthly cost under 85% of the baseline — $5,200 against a system already costing $6,100 — while the cost-ceiling control offered $8,700, the cheapest option that clears its violations. The opening screen therefore stated a budget the architecture already exceeded and that contradicted the enforceable figure a few pixels away. The stated budget now sits deliberately between them at $7,100: above today's spend and both cheaper repairs, below the only clean option, so the trade-off the room exists to resolve is legible from the first screen. A regression test asserts the constraint stays between the baseline cost and the cheapest violation-free repair.
+
 ## Milestone 13 — Real-time architecture decision room
 
 - [x] **M13.1 — Define and build the unmistakable collaborative decision-room journey** `DONE`
