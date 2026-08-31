@@ -561,4 +561,49 @@ describe("Aether command pipeline", () => {
       ).ok,
     ).toBe(true);
   });
+
+  it("holds its guarantees on a system with no database", () => {
+    // A reviewer's architecture may not look like either shipped example.
+    let state = createInitialState(blankBaseline, "blank");
+    const added = dispatch(
+      state,
+      {
+        type: "ADD_COMPONENT",
+        input: {
+          branchId: "branch-baseline",
+          name: "Solo",
+          kind: "service",
+          regionId: "region-primary",
+          peakRps: 8000,
+          capacityRps: 10000,
+          monthlyCostUsd: 800,
+        },
+      },
+      human,
+    );
+    if (!added.ok) throw new Error("component must be addable");
+    state = added.value;
+
+    // Repair presets still find something meaningful to change.
+    const branched = dispatch(
+      state,
+      {
+        type: "CREATE_BRANCH",
+        input: { name: "Repair", intent: "highest_resilience" },
+      },
+      human,
+    );
+    if (!branched.ok) throw new Error("must be branchable without a database");
+    expect(
+      branched.value.branches["branch-highest_resilience"]!.operations.length,
+    ).toBeGreaterThan(0);
+
+    // And the agent still cannot empty the architecture.
+    expect(
+      dispatch(state, {
+        type: "REMOVE_COMPONENT",
+        input: { branchId: "branch-baseline", entityId: "entity-solo" },
+      }),
+    ).toMatchObject({ ok: false, code: "UNAUTHORIZED" });
+  });
 });

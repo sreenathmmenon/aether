@@ -399,6 +399,10 @@ None. Production is deployed on Railway with durable PostgreSQL-backed per-visit
   - Acceptance: an architecture Aether does not ship completes the decision journey on the deployed origin.
   - Evidence: from a cleared browser on the live application — switch to "Your own system", build three components on the empty canvas, create three repair futures with a real trade-off curve, hit the blocked approval with its named cross-scenario reason, clear it with one action, then approve, commit, and roll back. No JavaScript errors. The same journey that previously existed only for the two shipped examples now runs on a system described from nothing.
 
+- [x] **M15.6 — Harden the own-system path against a reviewer's real behaviour** `DONE`
+  - Acceptance: an architecture unlike either shipped example still gets the full product, and durability holds.
+  - Evidence: probed the cases a reviewer actually reaches. A single-component system with no database simulates and still produces meaningful repair operations; an agent cannot remove the last component; duplicate names return `CONFLICT` and a dependency on a missing component returns `INVALID_INPUT`. A built system survives a reload on the deployed origin with its template, components, and editability intact, and the tool panel lists all nine capabilities including component and dependency creation alongside the statement of what an agent cannot do. Regression coverage added for the database-free system.
+
 ## Milestone 13 — Real-time architecture decision room
 
 - [x] **M13.1 — Define and build the unmistakable collaborative decision-room journey** `DONE`
