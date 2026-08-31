@@ -217,9 +217,11 @@ None. Production is deployed on Railway; durable multi-user server persistence r
   - Evidence: comparison overlay presents availability, recovery, cost, and SLO consequences for each future.
 - [x] **M12.4 — Render causal failure evidence and agent reasoning in context** `DONE`
   - Evidence: live scenario tabs, affected dependency paths, causal evidence, and agent rationale are now tied to the active branch.
-- [ ] **M12.5 — Add real-time collaborative state transport and durable multi-user persistence** `TODO`
+- [x] **M12.5 — Add real-time collaborative state transport and durable multi-user persistence** `DONE`
+  - Evidence: production PostgreSQL persistence, optimistic writes, and three-second remote-version reconciliation restore teammate changes across devices while browser storage events provide immediate same-browser propagation.
 - [x] **M12.5a — Add live browser-tab workspace synchronization** `DONE`
   - Evidence: Aether synchronizes persisted canonical workspace changes through browser storage events and visibly reports received shared-state updates.
-- [ ] **M12.6 — Add high-fidelity failure/recovery motion and timeline playback** `TODO`
+- [x] **M12.6 — Add high-fidelity failure/recovery motion and timeline playback** `DONE`
+  - Evidence: enabled Chrome exercised the live causal-trace control and all four scenario-linked timeline stages on release `e9ee9c13-f9ec-4f75-aa20-764a54ad9d64`.
 - [x] **M12.7 — Run first-prize visual, interaction, and browser-validation loops** `DONE`
   - Evidence: enabled Chrome and ChatGPT Site Tools verified WebMCP discovery and invocation on the production URL; Lighthouse reported 100/100 for accessibility, best practices, SEO, and agentic browsing; release `96255057-66b8-4545-b982-815f4cc61b11` is `SUCCESS`.
