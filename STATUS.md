@@ -295,6 +295,12 @@ None. Production is deployed on Railway with durable PostgreSQL-backed shared-wo
 - [x] **M14.10 — Lead the causal chain with the true single point of failure** `DONE`
   - Evidence: components reached in the same propagation wave were ordered alphabetically, so a regional outage opened with "Authentication is the causal break" rather than the ledger everything depends on. Within a wave, the component with the most dependents now leads: the payment platform opens on Primary Ledger and the inference platform on Vector Store.
 
+- [x] **M14.11 — Make the decision replay readable as decisions** `DONE`
+  - Evidence: the replay printed raw command names in a flat list with no visual distinction between a human approval and an agent simulation, which undercut the section's whole purpose. Entries now carry plain-language descriptions, an actor-coloured rule and marker, and a tinted outcome chip keyed to the kind of change — gate, proof, guardrail, edit, or note. The shared activity strip uses the same descriptions.
+- [x] **M14.12 — Keep the evidence panel at every viewport width** `DONE`
+  - Acceptance: no viewport removes product capability.
+  - Evidence: below 1080px the intelligence panel was hidden outright, taking the metrics, human controls, WebMCP status, and live tool feed with it, and the three-column grid needed 1140px so 1080–1140 overflowed horizontally. The panel now reflows beneath the canvas at 1180px and the future rail moves above it at 900px; no `display: none` on the panel remains at any width, verified against the live stylesheet.
+
 ## Milestone 13 — Real-time architecture decision room
 
 - [x] **M13.1 — Define and build the unmistakable collaborative decision-room journey** `DONE`
