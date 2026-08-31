@@ -78,6 +78,18 @@ function scenarioNarrative(
 
 const introStorageKey = "aether.intro.v1";
 
+/**
+ * Shown when the browser exposes no WebMCP surface, so a reviewer can still
+ * see which capabilities this page publishes to an agent.
+ */
+const offlineToolSurface = [
+  "get_decision_record",
+  "get_architecture_summary",
+  "create_architecture_branch",
+  "inspect_failure_domain",
+  "trace_architecture_dependency",
+];
+
 /** Starting systems a visitor can model, so the product is not one story. */
 const systemTemplates = [
   {
@@ -124,6 +136,7 @@ export function App() {
   );
   const [toolCount, setToolCount] = useState(0);
   const [toolCalls, setToolCalls] = useState<ToolCall[]>([]);
+  const [registeredTools, setRegisteredTools] = useState<string[]>([]);
   const [selectedEntityId, setSelectedEntityId] = useState("ledger");
   const [selectedScenario, setSelectedScenario] =
     useState<Scenario>("regional_outage");
@@ -304,8 +317,14 @@ export function App() {
 
   useEffect(() => {
     registryRef.current ??=
-      createAetherToolRegistry(setState, setToolCount, undefined, (call) =>
-        setToolCalls((current) => [call, ...current].slice(0, 6)),
+      createAetherToolRegistry(
+        setState,
+        (count, names) => {
+          setToolCount(count);
+          if (names.length) setRegisteredTools(names);
+        },
+        undefined,
+        (call) => setToolCalls((current) => [call, ...current].slice(0, 6)),
       ) ?? undefined;
     void registryRef.current?.refresh(state);
   }, [state]);
@@ -1208,9 +1227,11 @@ export function App() {
                 : "Unavailable"}
             </strong>
           </div>
-          {toolCalls.length > 0 && (
-            <div className="tool-feed" aria-live="polite">
-              <p className="eyebrow">Agent tool activity</p>
+          <div className="tool-feed" aria-live="polite">
+            <p className="eyebrow">
+              {toolCalls.length ? "Agent tool activity" : "Agent tool surface"}
+            </p>
+            {toolCalls.length ? (
               <ol>
                 {toolCalls.map((call) => (
                   <li key={call.id} className={`tool-call-${call.outcome}`}>
@@ -1219,8 +1240,27 @@ export function App() {
                   </li>
                 ))}
               </ol>
-            </div>
-          )}
+            ) : (
+              <>
+                {/* Without an agent connected there is no activity to show, so
+                    name the surface itself: what is exposed and what is not. */}
+                <ol className="tool-inventory">
+                  {(registeredTools.length
+                    ? registeredTools
+                    : offlineToolSurface
+                  ).map((tool) => (
+                    <li key={tool}>
+                      <code>{tool}</code>
+                    </li>
+                  ))}
+                </ol>
+                <p className="tool-gate">
+                  No approve or merge tool is registered. Only Sreenath can
+                  commit a future.
+                </p>
+              </>
+            )}
+          </div>
         </aside>
       </section>
       <section

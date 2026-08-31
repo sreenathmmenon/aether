@@ -317,6 +317,10 @@ None. Production is deployed on Railway with durable PostgreSQL-backed shared-wo
 - [x] **M14.18 — Land the value proposition in one read** `DONE`
   - Evidence: the intro carried a headline, a scenario paragraph, and a three-step explainer that duplicated the visible 01/02/03 briefing strip, so a reviewer skimming for fifteen seconds read the headline and skipped the rest. It is now one headline and one sentence naming the agent, the deterministic proof, and the human gate, and the shorter card leaves the product visible behind it.
 
+- [x] **M14.19 — Make the WebMCP surface verifiable without an agent** `DONE`
+  - Acceptance: a reviewer browsing manually can see which capabilities the page publishes and that no approval tool exists.
+  - Evidence: the tool feed rendered only after a call had happened, so a reviewer opening the page without an agent connected saw nothing and could not distinguish an agent action from an ordinary UI change — the criterion the project is judged hardest on was invisible in the common case. The panel now always names the live surface: it lists the registered tool names, states that no approve or merge tool is registered, and switches to call activity once an agent invokes something. The registry reports its own registered names rather than a duplicated list, and a page with no WebMCP support still shows the capabilities it would publish. Verified in Chrome: the inventory grows from five to eleven entries when a repair future exists.
+
 ## Milestone 13 — Real-time architecture decision room
 
 - [x] **M13.1 — Define and build the unmistakable collaborative decision-room journey** `DONE`

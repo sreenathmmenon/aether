@@ -43,6 +43,10 @@ Aether targets the shared subset of the two current implementation paths:
 - Return concise structured IDs, metrics, violations, UI-side effect summaries, and next allowed actions; do not return hidden reasoning or raw untrusted content unless essential.
 - Reject cancelled, stale, unauthorized, malformed, or over-scoped requests with clear recoverable errors. A rejected input returns the specific fields that failed and the valid values for them, so the calling model can correct its own call instead of retrying blindly.
 
+## Visible surface
+
+The workspace names its own capability surface in the interface. With no agent connected it lists the currently registered tool names and states that no approval or merge tool exists; once an agent invokes a tool the same panel switches to live call activity, showing each tool name, a bounded argument summary, and whether the call was accepted or rejected. The list is reported by the registry itself, so it cannot drift from what is actually registered.
+
 ## Human gate
 
 No approval or merge tool is registered. Any branch mutation or changed constraint invalidates approval. The visible Aether interface presents the exact merge summary and proceeds only after an explicit human action. An agent can add an attributed, evidence-bound decision note or propose a reversible change, but can never approve or merge its own work.

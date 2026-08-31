@@ -69,7 +69,7 @@ function invalidInput(error: z.ZodError, retryHint: string) {
 
 export function createAetherToolRegistry(
   onState: (state: AetherState) => void,
-  onToolCount?: (count: number) => void,
+  onToolCount?: (count: number, names: string[]) => void,
   contextOverride?: ModelContext,
   onToolCall?: (call: ToolCall) => void,
 ): ToolRegistry | undefined {
@@ -77,6 +77,7 @@ export function createAetherToolRegistry(
   if (!context) return undefined;
   const webmcp = context;
   let registrations: Registration[] = [];
+  let registeredNames: string[] = [];
   let currentState: AetherState | undefined;
   let registeredCapabilityKey = "";
 
@@ -139,6 +140,7 @@ export function createAetherToolRegistry(
     };
     await webmcp.registerTool(observed, { signal: controller.signal });
     registrations.push({ abort: () => controller.abort() });
+    registeredNames.push(tool.name);
   }
 
   return {
@@ -150,7 +152,8 @@ export function createAetherToolRegistry(
       registeredCapabilityKey = capabilityKey;
       registrations.forEach((registration) => registration.abort());
       registrations = [];
-      onToolCount?.(0);
+      registeredNames = [];
+      onToolCount?.(0, []);
       await register({
         name: "get_decision_record",
         description:
@@ -646,7 +649,7 @@ export function createAetherToolRegistry(
             }),
         });
       }
-      onToolCount?.(registrations.length);
+      onToolCount?.(registrations.length, registeredNames);
     },
     dispose() {
       registrations.forEach((registration) => registration.abort());

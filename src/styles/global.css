@@ -1631,3 +1631,30 @@ button {
   color: #a4641a;
   background: rgba(236, 142, 45, 0.15);
 }
+
+/* Naming the published capabilities makes the WebMCP surface verifiable
+   without an agent connected. */
+.tool-inventory {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.tool-inventory li {
+  padding-left: 10px;
+  border-left: 2px solid rgba(17, 167, 184, 0.35);
+}
+.tool-inventory code {
+  color: #35485f;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 10px;
+}
+.tool-gate {
+  margin: 9px 0 0;
+  padding-top: 8px;
+  border-top: 1px solid rgba(17, 36, 64, 0.1);
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.45;
+}

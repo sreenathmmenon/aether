@@ -287,4 +287,27 @@ describe("Aether WebMCP registry", () => {
     expect(calls[1]?.outcome).toBe("rejected");
     registry?.dispose();
   });
+
+  it("reports the registered tool names so the surface is visible", async () => {
+    const tools: RegisteredTool[] = [];
+    let reported: string[] = [];
+    const registry = createAetherToolRegistry(
+      () => undefined,
+      (_count, names) => {
+        if (names.length) reported = names;
+      },
+      {
+        registerTool: async (tool) => {
+          tools.push(tool as RegisteredTool);
+        },
+      },
+    );
+    await registry?.refresh(createInitialState(paymentPlatformBaseline));
+    // A reviewer with no agent connected still sees what this page publishes.
+    expect(reported).toEqual(tools.map((tool) => tool.name));
+    expect(reported).toContain("create_architecture_branch");
+    expect(reported).not.toContain("approve_branch");
+    expect(reported).not.toContain("merge_branch");
+    registry?.dispose();
+  });
 });
