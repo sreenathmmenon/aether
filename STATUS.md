@@ -206,7 +206,7 @@ All other previously open rows below have been reconciled against the deployed i
   - Evidence: deployed responses include COOP, COEP, `Permissions-Policy: tools=(self)`, and `X-Content-Type-Options: nosniff`; browser checks passed.
 - [ ] **M10.4b — Enroll the deployed Chrome origin in the WebMCP origin trial and verify it** `TODO`
   - Acceptance: Railway holds `WEBMCP_ORIGIN_TRIAL_TOKEN`, the live response emits the `Origin-Trial` header, and Chrome exposes `document.modelContext` on the public application URL.
-  - Current evidence: ChatGPT’s in-app browser discovers and invokes the deployed tools; public Chrome correctly renders the product but reports the experimental `tools` policy as origin-trial gated until the issued token is configured.
+  - Current evidence: ChatGPT’s in-app browser discovers and invokes the deployed tools; public Chrome correctly renders the product but reports the experimental `tools` policy as origin-trial gated until the issued token is configured. The server-side path was validated locally: `WEBMCP_ORIGIN_TRIAL_TOKEN=validation-token` emitted `Origin-Trial: validation-token` with the required isolation and permissions headers.
 - [x] **M10.5 — Deploy and inspect logs for a healthy release** `DONE`
   - Evidence: Railway terminal deployment `08889726-e8af-45f7-aa8c-15969cb68cef` is `SUCCESS`.
 - [x] **M10.6 — Run live health, persistence, WebMCP discovery, and canonical-journey smoke tests** `DONE`
