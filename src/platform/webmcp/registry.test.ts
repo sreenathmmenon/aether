@@ -68,7 +68,7 @@ describe("Aether WebMCP registry", () => {
       "trace_architecture_dependency",
       "propose_architecture_change",
       "add_architecture_component",
-      "connect_architecture_components",
+      "connect_components",
       "compare_architecture_futures",
     ]);
     const note = tools.find((tool) => tool.name === "add_decision_note");
@@ -368,10 +368,10 @@ describe("Aether WebMCP registry", () => {
       }),
     ).toMatchObject({
       addedEntityId: "entity-fraud-engine",
-      nextAction: "connect_architecture_components",
+      nextAction: "connect_components",
     });
     expect(
-      await call("connect_architecture_components", {
+      await call("connect_components", {
         branchId: "branch-highest_resilience",
         sourceId: "entity-fraud-engine",
         targetId: "ledger",
@@ -387,6 +387,44 @@ describe("Aether WebMCP registry", () => {
     // The journey ends at the human boundary, never at a merge tool.
     expect(comparison.humanGate).toContain("approve and merge");
     expect(tools.some((tool) => /approve|merge/.test(tool.name))).toBe(false);
+    registry?.dispose();
+  });
+
+  it("keeps every tool within the WebMCP metadata limits", async () => {
+    const tools: (RegisteredTool & {
+      description?: string;
+      inputSchema?: {
+        properties?: Record<string, { description?: string }>;
+      };
+    })[] = [];
+    let state = createInitialState(paymentPlatformBaseline);
+    const registry = createAetherToolRegistry(
+      (next) => {
+        state = next;
+      },
+      undefined,
+      {
+        registerTool: async (tool) => {
+          tools.push(tool as (typeof tools)[number]);
+        },
+      },
+    );
+    await registry?.refresh(state);
+    const created = dispatch(state, {
+      type: "CREATE_BRANCH",
+      input: { name: "Resilient", intent: "highest_resilience" },
+    });
+    if (!created.ok) throw new Error("fixture branch must be created");
+    await registry?.refresh(created.value);
+
+    expect(tools.length).toBeGreaterThan(0);
+    for (const tool of tools) {
+      // Names under 30, descriptions under 500, parameters under 150.
+      expect(tool.name.length).toBeLessThan(30);
+      expect((tool.description ?? "").length).toBeLessThan(500);
+      for (const property of Object.values(tool.inputSchema?.properties ?? {}))
+        expect((property.description ?? "").length).toBeLessThan(150);
+    }
     registry?.dispose();
   });
 });

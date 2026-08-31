@@ -287,7 +287,7 @@ None. Production is deployed on Railway with durable PostgreSQL-backed shared-wo
   - Evidence: the graph was effectively read-only — only properties and canvas positions could change — so every visitor explored the same five hardcoded components and three canned branches, and the product demonstrated a scenario rather than a capability. `ADD_COMPONENT`, `CONNECT_COMPONENTS`, and `REMOVE_COMPONENT` now run through the same validated dispatch, rejecting duplicate names, self-dependencies, unknown regions, and edits to settled branches. A new component enters the causal chain and the cost total immediately: adding a fraud service and wiring it to the ledger moved monthly cost from $8,700 to $9,500 and put it in the blast radius, verified in Chrome.
 - [x] **M14.8 — Expose model extension to agents with live identifiers** `DONE`
   - Acceptance: an agent can extend the architecture and can address components a person just created.
-  - Evidence: `add_architecture_component` and `connect_architecture_components` join the branch-gated surface, taking the tool count from nine to eleven. Component and region enums in every schema are now enumerated from the live derived graph rather than a fixed list, so agent and human edits address the same evolving model.
+  - Evidence: `add_architecture_component` and `connect_components` join the branch-gated surface, taking the tool count from nine to eleven. Component and region enums in every schema are now enumerated from the live derived graph rather than a fixed list, so agent and human edits address the same evolving model.
 
 - [x] **M14.9 — Remove every fixture-specific assumption from the product** `DONE`
   - Acceptance: a visitor can model a materially different system and the whole interface stays truthful.
@@ -351,6 +351,10 @@ None. Production is deployed on Railway with durable PostgreSQL-backed shared-wo
 - [x] **M14.28 — Cover the whole agent journey through the registered tools** `DONE`
   - Acceptance: the canonical chain is exercised through the real tool surface, not through the command engine beneath it.
   - Evidence: existing coverage tested tools individually and the command pipeline separately, so nothing asserted that an agent could actually complete the journey end to end through the registered surface. A regression test now drives summary, branch creation, simulation, component creation, dependency creation, and comparison through the tools a host would call, asserting each result parses, names the next action, and that the chain terminates at the human boundary with no approve or merge tool registered. Running it also confirmed the registry's deliberate short-circuit: `refresh` re-registers only when the capability class changes.
+
+- [x] **M14.29 — Hold every tool to the WebMCP metadata limits** `DONE`
+  - Acceptance: no registered tool exceeds the documented name, description, or parameter limits.
+  - Evidence: `connect_architecture_components` was 31 characters, breaching the under-30 name limit that `AGENTS.md` and the Chrome guidance both state — a self-inflicted spec violation introduced when the model-extension tools were added. It is renamed to `connect_components`. An audit of the full surface found every description under 500 characters and all 24 parameter descriptions under 150. A regression test now asserts all three limits across both the baseline and branched surfaces, and was confirmed to fail against a deliberately over-length name.
 
 ## Milestone 13 — Real-time architecture decision room
 

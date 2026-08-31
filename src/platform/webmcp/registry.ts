@@ -563,12 +563,12 @@ export function createAetherToolRegistry(
             return toolResult({
               branchId: parsed.data.branchId,
               addedEntityId: result.affectedEntityIds[0],
-              nextAction: "connect_architecture_components",
+              nextAction: "connect_components",
             });
           },
         });
         await register({
-          name: "connect_architecture_components",
+          name: "connect_components",
           description:
             "Declare a dependency between two components on a non-merged branch so failure can propagate along it.",
           inputSchema: {
