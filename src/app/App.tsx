@@ -233,9 +233,10 @@ export function App() {
       ),
     [state.revisions, selectedScenario, state.workspace.costCeilingUsd],
   );
+  // An unbuilt canvas has no components at all, so nothing may assume one.
   const selectedEntity =
     graph.entities[selectedEntityId] ??
-    Object.values(graph.entities).find((entity) => entity.kind !== "region")!;
+    Object.values(graph.entities).find((entity) => entity.kind !== "region");
   const diff = getBranchDiff(state, activeBranch);
 
   // The quick human actions target whatever this system's bottleneck actually
@@ -701,28 +702,31 @@ export function App() {
       return;
     }
     // A component with no dependency cannot affect anything, so wire it up in
-    // the same gesture rather than leaving an inert node on the canvas.
+    // the same gesture. The first component on an empty canvas has nothing to
+    // depend on yet, which is expected rather than an error.
     const newEntityId = added.affectedEntityIds[0]!;
-    const dependsOn = componentDraft.dependsOn || selectedEntity.id;
-    const connected = dispatch(
-      added.value,
-      {
-        type: "CONNECT_COMPONENTS",
-        input: {
-          branchId: activeBranch.id,
-          sourceId: newEntityId,
-          targetId: dependsOn,
-          kind: "depends_on",
-        },
-      },
-      humanActor,
-    );
-    setState(connected.ok ? connected.value : added.value);
+    const dependsOn = componentDraft.dependsOn || selectedEntity?.id;
+    const connected = dependsOn
+      ? dispatch(
+          added.value,
+          {
+            type: "CONNECT_COMPONENTS",
+            input: {
+              branchId: activeBranch.id,
+              sourceId: newEntityId,
+              targetId: dependsOn,
+              kind: "depends_on",
+            },
+          },
+          humanActor,
+        )
+      : undefined;
+    setState(connected?.ok ? connected.value : added.value);
     setSelectedEntityId(newEntityId);
     setMessage(
-      connected.ok
+      connected?.ok && dependsOn
         ? `${name} added and wired to ${graph.entities[dependsOn]?.name ?? dependsOn}. Recalculate to see its consequence.`
-        : `${name} added. Connect it to record its dependency.`,
+        : `${name} added. Add another component to connect it to.`,
     );
     setComponentDraft((draft) => ({ ...draft, name: "" }));
   }
@@ -736,7 +740,7 @@ export function App() {
       type: "ADD_DECISION_NOTE",
       input: {
         branchId: activeBranch.id,
-        entityId: selectedEntity.id,
+        entityId: selectedEntity?.id,
         body: noteBody,
         evidenceRef: activeSimulation
           ? `${activeSimulation.availability.toFixed(2)}% availability · ${activeSimulation.rtoMinutes}m recovery`
@@ -1030,7 +1034,7 @@ export function App() {
                 tracing && traceSteps[traceStep]?.entityId === entity.id;
               return (
                 <button
-                  className={`architecture-node ${entity.kind} ${affected ? (downstream ? "node-degraded" : "node-affected") : ""} ${propagating ? "node-propagating" : ""} ${entity.id === selectedEntity.id ? "node-selected" : ""}`}
+                  className={`architecture-node ${entity.kind} ${affected ? (downstream ? "node-degraded" : "node-affected") : ""} ${propagating ? "node-propagating" : ""} ${entity.id === selectedEntity?.id ? "node-selected" : ""}`}
                   key={entity.id}
                   style={{
                     left: `${
@@ -1305,7 +1309,7 @@ export function App() {
                 </div>
                 <select
                   aria-label="Depends on"
-                  value={componentDraft.dependsOn || selectedEntity.id}
+                  value={componentDraft.dependsOn || selectedEntity?.id || ""}
                   disabled={!writable}
                   onChange={(event) =>
                     setComponentDraft((draft) => ({
@@ -1415,7 +1419,8 @@ export function App() {
             </div>
             <form className="note-composer" onSubmit={postDecisionNote}>
               <label htmlFor="decision-note">
-                Record Sreenath’s decision note · {selectedEntity.name}
+                Record Sreenath’s decision note
+                {selectedEntity ? ` · ${selectedEntity.name}` : ""}
               </label>
               <div>
                 <input

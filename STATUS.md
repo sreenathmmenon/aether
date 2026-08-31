@@ -147,7 +147,7 @@ All other previously open rows below have been reconciled against the deployed i
 - [x] **M7.4 — Register simulation and branch-comparison capabilities** `DONE`
   - Evidence: deployed Site Tools returned deterministic scenario output and comparison capability.
 - [x] **M7.5 — Implement state-dependent capability registration** `DONE`
-  - Evidence: discovery changes from five initial tools to nine after branch creation in the ChatGPT browser; `src/platform/webmcp/registry.test.ts` asserts both exact tool lists.
+  - Evidence: discovery changes from five initial tools to eleven after branch creation in the ChatGPT browser; `src/platform/webmcp/registry.test.ts` asserts both exact tool lists.
 - [x] **M7.6 — Gate merge capability on non-stale human approval** `DONE`
   - Evidence: no agent merge capability exists; only a current human approval reveals the visible merge control.
 - [x] **M7.7 — Add capability schemas, hints, cancellation, and error tests** `DONE`
@@ -211,15 +211,15 @@ All other previously open rows below have been reconciled against the deployed i
 - [ ] **M10.4b — Enroll the deployed Chrome origin in the WebMCP origin trial and verify it** `IN_PROGRESS`
   - Acceptance: Railway holds `WEBMCP_ORIGIN_TRIAL_TOKEN`, the live response emits the `Origin-Trial` header, and Chrome exposes `document.modelContext` on the public application URL.
   - Evidence: on 2026-08-31 the issued token was set on the Railway production service and the redeployed origin now serves `Origin-Trial` alongside `Cross-Origin-Opener-Policy: same-origin`, `Cross-Origin-Embedder-Policy: require-corp`, and `Permissions-Policy: tools=(self)`, confirmed by `curl -I` against the live URL. The token payload decodes to origin `https://webmcp-production-38e5.up.railway.app:443`, feature `WebMCP`, expiry 2026-11-17. Post-deploy `/health` reports `persistence: "postgres"` and the workspace API returns `200`.
-  - Partial browser evidence: public Chrome 151 on the live URL reports `document.modelContext` as an object with a `registerTool` function, the interface shows “WebMCP live”, and the registry reports nine state-aware tools with no origin-trial `<meta>` present in the document. This measurement is **not** conclusive, because the same browser also exposes `document.modelContext` on `https://example.com`, which serves no token; the WebMCP testing flag is therefore enabled in that profile and masks the trial path.
+  - Partial browser evidence: public Chrome 151 on the live URL reports `document.modelContext` as an object with a `registerTool` function, the interface shows “WebMCP live”, and the registry reports eleven state-aware tools with no origin-trial `<meta>` present in the document. This measurement is **not** conclusive, because the same browser also exposes `document.modelContext` on `https://example.com`, which serves no token; the WebMCP testing flag is therefore enabled in that profile and masks the trial path.
   - Remaining: repeat the check in a Chrome profile with `chrome://flags/#enable-webmcp-testing` set to Default, confirming `document.modelContext` is defined on the public URL and absent on an unrelated origin. The first two acceptance clauses are verified; the third is not yet.
 - [x] **M10.5 — Deploy and inspect logs for a healthy release** `DONE`
-  - Evidence: Railway terminal deployment `08889726-e8af-45f7-aa8c-15969cb68cef` is `SUCCESS`.
+  - Evidence: Railway terminal deployment `f844da1f-1197-445b-9fcc-ed64735b7c0a` is `SUCCESS`.
 - [x] **M10.6 — Run live health, persistence, WebMCP discovery, and canonical-journey smoke tests** `DONE`
   - Evidence: live `/health` headers, ChatGPT Site Tool discovery/calls, and persisted-branch reload completed on 2026-08-31.
 - [x] **M10.7 — Record live URL, release ID, and verification evidence here** `DONE`
   - URL: `https://webmcp-production-38e5.up.railway.app`
-  - Release: `08889726-e8af-45f7-aa8c-15969cb68cef`
+  - Release: `f844da1f-1197-445b-9fcc-ed64735b7c0a`
 
 ## Milestone 11 — Submission and release
 
@@ -390,4 +390,4 @@ None. Production is deployed on Railway with durable PostgreSQL-backed per-visit
 - [x] **M13.5 — Add collaboration-aware WebMCP capabilities and evaluations** `DONE`
   - Evidence: `get_decision_record` is read-only; state-dependent `add_decision_note` is bounded, marked untrusted-content aware, invokes the validated command path, and returns no approval authority. Unit and in-app-browser calls passed.
 - [ ] **M13.6 — Validate the complete decision-room journey in Chrome, ChatGPT, and production** `IN_PROGRESS`
-  - Evidence: live Railway health is PostgreSQL-ready; ChatGPT’s in-app browser discovers and calls `get_decision_record`; Chrome visual/a11y audit is 100/100/100/100 but its public WebMCP API verification is blocked on M10.4b’s origin-trial token.
+  - Evidence: live Railway health is PostgreSQL-ready; ChatGPT’s in-app browser discovers and calls `get_decision_record`; the deployed origin emits the Chrome WebMCP origin-trial token, COOP, COEP, and `Permissions-Policy: tools=(self)` headers; Chrome visual/a11y audit is 100/100/100/100. The only remaining Chrome clause is repeating the WebMCP API check in a Chrome profile with the WebMCP testing flag disabled, so origin-trial activation is proven without the local flag masking it.
