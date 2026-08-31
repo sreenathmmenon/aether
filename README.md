@@ -8,7 +8,7 @@ Architecture resilience is the domain it demonstrates. The mechanism — typed m
 
 **Live app:** [webmcp-production-38e5.up.railway.app](https://webmcp-production-38e5.up.railway.app)
 
-It is not a generic whiteboard or an AI diagram generator. The model is yours to shape: switch between starting systems, add components and dependencies, and every metric, repair alternative, and narrative re-derives from the graph you are actually looking at. Architecture Lab is Aether's first domain package; the core is designed so other structured decision domains can follow without changing its command, branch, approval, or audit foundations.
+It is not a generic whiteboard or an AI diagram generator. Describe your own architecture to an agent and it builds the model here — components, dependencies, and all — then the deterministic engine proves what a failure would do to it. Two worked systems ship for anyone who wants the story immediately, and every metric, repair alternative, and narrative re-derives from the graph you are actually looking at. Architecture Lab is Aether's first domain package; the core is designed so other structured decision domains can follow without changing its command, branch, approval, or audit foundations.
 
 ## What Aether does that other tools do not
 

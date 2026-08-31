@@ -379,6 +379,14 @@ None. Production is deployed on Railway with durable PostgreSQL-backed per-visit
 - [x] **M14.35 — Keep a user-built blank system editable until its first branch** `DONE`
   - Evidence: the custom-system path previously let the first component be added but then treated the baseline as committed, making the user fight the product while assembling their own architecture. Blank workspaces now keep their baseline editable until the user branches from it, while seeded payment and inference systems remain immutable once committed. The interface also avoids component-specific controls when the graph has no operational components. `npm run test -- --run`, `npm run typecheck`, and `npm run lint` passed with 45 tests.
 
+## Milestone 15 — The agent as the way in
+
+- [x] **M15.1 — Let a reviewer model their own system through an agent** `DONE`
+  - Acceptance: an architecture the product does not ship can be described into existence and proved.
+  - Evidence: Aether shipped two worked examples and no way to represent anything else, so WebMCP was a second route into a fixed demo rather than the reason to use the product — remove it and everything still worked through buttons. "Your own system" is an empty two-region canvas whose baseline stays editable because nothing is committed yet. Verified live on the deployed origin: three components built from nothing produced 93.40% availability, 30m recovery, $2,400, and a causal chain naming each one.
+- [x] **M15.2 — Make the build surface reachable through WebMCP** `DONE`
+  - Evidence: the canvas shipped with its tools still gated behind an existing repair branch, so through WebMCP an agent met an empty canvas it could not touch — the capability existed only in the interface, inverting the point. Model editing and simulation now share one rule, a repair future is open or a user-built architecture is being assembled, and the capability key includes it so the surface re-registers when editability changes. Confirmed on production through `document.modelContext`: a committed architecture exposes five read and branch tools, an own-system canvas exposes nine including component creation, dependency creation, and simulation, and the seeded journey still completes approve, merge, and rollback with no errors.
+
 ## Milestone 13 — Real-time architecture decision room
 
 - [x] **M13.1 — Define and build the unmistakable collaborative decision-room journey** `DONE`
