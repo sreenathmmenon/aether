@@ -1,0 +1,24 @@
+:root {
+  color: #112440;
+  background: #f3f0e9;
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  --ink: #112440;
+  --muted: #66748a;
+  --line: #d7d9d2;
+  --paper: #f3f0e9;
+  --panel: #fbfaf6;
+  --blue: #2068bf;
+  --cyan: #11a7b8;
+  --orange: #ec8e2d;
+  --coral: #d95d4f;
+  --green: #248765;
+}

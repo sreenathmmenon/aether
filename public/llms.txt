@@ -1,0 +1,5 @@
+# Aether
+
+Evidence-first counterfactual architecture laboratory for branching, testing, and reviewing system designs.
+
+- [Product overview](https://github.com/sreenathmmmenon/aether)
