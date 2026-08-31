@@ -278,6 +278,10 @@ None. Production is deployed on Railway with durable PostgreSQL-backed shared-wo
   - Acceptance: every WebMCP tool call is surfaced live, distinguishing accepted from rejected calls.
   - Evidence: tool invocations previously reached only the command audit trail, which names commands rather than tools, so the WebMCP layer was invisible in the product being judged on it. A single registration wrapper now observes all nine tools and reports name, bounded argument summary, and outcome to a live panel. Covered by a registry test asserting both an accepted and a rejected call.
 
+- [x] **M14.6 — Separate direct failure from downstream degradation on the canvas** `DONE`
+  - Acceptance: the origin of a failure is visually distinct from what merely degraded because of it.
+  - Evidence: every impacted component and edge rendered in the same coral, so a five-component blast radius read as undifferentiated alarm and nothing looked more urgent than anything else. Components at causal depth zero now render as a direct failure and deeper ones as downstream degradation, with matching edge treatment and labels; healthy links carry a slow traffic flow. Verified in Chrome: a regional outage shows three direct failures in Mumbai and two degraded components in the recovery region.
+
 ## Milestone 13 — Real-time architecture decision room
 
 - [x] **M13.1 — Define and build the unmistakable collaborative decision-room journey** `DONE`

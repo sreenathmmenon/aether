@@ -395,6 +395,31 @@ button {
 .path-healthy {
   stroke: rgba(17, 167, 184, 0.62);
 }
+/* Healthy links carry a slow flow so a working path reads as live traffic. */
+.path-flow {
+  stroke: rgba(17, 167, 184, 0.85);
+  stroke-width: 3.2;
+  stroke-linecap: round;
+  stroke-dasharray: 2 26;
+  animation: traffic-flow 2.4s linear infinite;
+}
+@keyframes traffic-flow {
+  to {
+    stroke-dashoffset: -28;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .path-flow {
+    animation: none;
+    opacity: 0;
+  }
+}
+.path-degraded {
+  stroke: var(--orange);
+  stroke-dasharray: 7 5;
+  opacity: 0.85;
+  animation: dash 1.4s linear infinite;
+}
 .path-failed {
   stroke: var(--coral);
   stroke-dasharray: 7 5;
@@ -1437,4 +1462,17 @@ button {
   .tool-feed li {
     animation: none;
   }
+}
+
+/* A component that only degraded because something upstream failed reads as
+   secondary damage, so the origin of a failure stays visually distinct. */
+.architecture-node.node-degraded {
+  border-color: rgba(236, 142, 45, 0.75);
+  background: linear-gradient(180deg, #fff8ef 0%, var(--panel) 62%);
+  box-shadow:
+    0 0 0 1px rgba(236, 142, 45, 0.25),
+    0 10px 24px -16px rgba(236, 142, 45, 0.6);
+}
+.architecture-node.node-degraded small {
+  color: #a4641a;
 }

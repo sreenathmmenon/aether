@@ -187,6 +187,11 @@ export function App() {
     tracedEntityIds
       ? tracedEntityIds.has(entityId)
       : evidence.affectedEntityIds.includes(entityId);
+  // Depth separates a component that failed directly from one that only
+  // degraded because something upstream of it did.
+  const depthOf = (entityId: string) =>
+    (evidence.causalChain ?? []).find((step) => step.entityId === entityId)
+      ?.depth ?? 0;
   const futures = Object.values(state.branches).filter(
     (branch) => branch.id !== "branch-baseline",
   );
@@ -661,29 +666,52 @@ export function App() {
                 )
                   return null;
                 const affected = isLit(source.id) && isLit(target.id);
+                // The edge takes the severity of the component it reaches.
+                const edgeDegraded = affected && depthOf(target.id) > 0;
                 const sourcePosition =
                   dragPreview?.id === source.id ? dragPreview : source.position;
                 const targetPosition =
                   dragPreview?.id === target.id ? dragPreview : target.position;
+                const x1 = sourcePosition.x + 75;
+                const y1 = sourcePosition.y + 35;
+                const x2 = targetPosition.x + 75;
+                const y2 = targetPosition.y + 35;
                 return (
-                  <line
-                    key={relation.id}
-                    className={affected ? "path-failed" : "path-healthy"}
-                    x1={sourcePosition.x + 75}
-                    y1={sourcePosition.y + 35}
-                    x2={targetPosition.x + 75}
-                    y2={targetPosition.y + 35}
-                  />
+                  <g key={relation.id}>
+                    <line
+                      className={
+                        affected
+                          ? edgeDegraded
+                            ? "path-degraded"
+                            : "path-failed"
+                          : "path-healthy"
+                      }
+                      x1={x1}
+                      y1={y1}
+                      x2={x2}
+                      y2={y2}
+                    />
+                    {!affected && (
+                      <line
+                        className="path-flow"
+                        x1={x1}
+                        y1={y1}
+                        x2={x2}
+                        y2={y2}
+                      />
+                    )}
+                  </g>
                 );
               })}
             </svg>
             {entities.map((entity) => {
               const affected = isLit(entity.id);
+              const downstream = affected && depthOf(entity.id) > 0;
               const propagating =
                 tracing && traceSteps[traceStep]?.entityId === entity.id;
               return (
                 <button
-                  className={`architecture-node ${entity.kind} ${affected ? "node-affected" : ""} ${propagating ? "node-propagating" : ""} ${entity.id === selectedEntity.id ? "node-selected" : ""}`}
+                  className={`architecture-node ${entity.kind} ${affected ? (downstream ? "node-degraded" : "node-affected") : ""} ${propagating ? "node-propagating" : ""} ${entity.id === selectedEntity.id ? "node-selected" : ""}`}
                   key={entity.id}
                   style={{
                     left: `${
@@ -726,10 +754,10 @@ export function App() {
                   <strong>{entity.name}</strong>
                   <small>
                     {affected
-                      ? "Causally affected"
-                      : entity.kind === "queue"
-                        ? "Reroute ready"
-                        : "Nominal"}
+                      ? downstream
+                        ? "Degraded downstream"
+                        : "Direct failure"
+                      : "Nominal"}
                   </small>
                 </button>
               );

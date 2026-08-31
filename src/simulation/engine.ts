@@ -307,11 +307,17 @@ export function runScenario(
 
   if (scenario === "traffic_spike") {
     demandMultiplier = 1.5;
-    // A spike only breaks the components that actually run out of headroom.
-    seeds = capacityDeficits(graph, demandMultiplier).map((row) => ({
-      id: row.entity.id,
-      cause: `demand exceeds capacity by ${row.deficit.toLocaleString()} RPS`,
-    }));
+    // A spike saturates the tightest bottleneck first; everything downstream
+    // of it degrades, but components with headroom keep serving.
+    const worst = capacityDeficits(graph, demandMultiplier)[0];
+    seeds = worst
+      ? [
+          {
+            id: worst.entity.id,
+            cause: `demand exceeds capacity by ${worst.deficit.toLocaleString()} RPS`,
+          },
+        ]
+      : [];
   }
 
   const causalChain = propagate(graph, seeds);
