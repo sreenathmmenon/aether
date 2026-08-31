@@ -88,7 +88,10 @@ app.get("/api/workspaces/:id", async (context) => {
     context.req.param("id"),
   ]);
   const row = result.rows[0];
-  if (!row) return context.json({ error: "NOT_FOUND" }, 404);
+  // A first-time visitor has no stored workspace yet. That is the normal
+  // opening state, not an error, so it must not log a console failure on
+  // every first load.
+  if (!row) return context.json({ state: null });
   return context.json({
     state: {
       ...row.state,

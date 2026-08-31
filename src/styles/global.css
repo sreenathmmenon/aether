@@ -983,8 +983,10 @@ button {
   color: var(--blue);
   text-transform: capitalize;
 }
-.empty-history {
-  opacity: 0.8;
+/* This placeholder is the first-visit state, so it must meet contrast on its
+   own rather than being dimmed below the threshold. */
+.empty-history span {
+  color: #5c6472;
 }
 .review-dock {
   display: grid;

@@ -821,7 +821,7 @@ export function App() {
           </div>
           <button
             className={`baseline-card ${activeBranch.id === "branch-baseline" ? "future-card-active" : ""}`}
-            aria-label={`View the current baseline architecture: ${baselineEvidence.availability.toFixed(2)}% availability, ${baselineEvidence.sloViolations.length} ${baselineEvidence.sloViolations.length === 1 ? "violation" : "violations"}`}
+            aria-label={`CURRENT Baseline breach — ${baselineEvidence.availability.toFixed(2)}% availability, ${baselineEvidence.sloViolations.length} ${baselineEvidence.sloViolations.length === 1 ? "violation" : "violations"}`}
             onClick={() =>
               setState({
                 ...state,
@@ -856,7 +856,7 @@ export function App() {
                   <button
                     className={`future-card ${branch.id === activeBranch.id ? "future-card-active" : ""}`}
                     key={branch.id}
-                    aria-label={`${branch.id === activeBranch.id ? "Viewing" : "Inspect"} the ${branch.name} future, status ${branch.status}${result ? `, ${result.availability.toFixed(2)}% availability` : ", awaiting evidence"}`}
+                    aria-label={`${branch.status} ${branch.name}${result ? ` — ${result.availability.toFixed(2)}% availability` : " — awaiting evidence"} — ${branch.id === activeBranch.id ? "Viewing" : "Inspect"}`}
                     onClick={() =>
                       setState({
                         ...state,
@@ -1040,7 +1040,7 @@ export function App() {
                       100
                     }%`,
                   }}
-                  aria-label={`${entity.name}, ${entity.kind}${affected ? (downstream ? ", degraded downstream" : ", direct failure") : ", nominal"}`}
+                  aria-label={`${entity.kind.toUpperCase()} ${entity.name} — ${affected ? (downstream ? "degraded downstream" : "direct failure") : "nominal"}`}
                   onClick={() => setSelectedEntityId(entity.id)}
                   onPointerDown={(event) => {
                     if (!writable) return;
@@ -1610,7 +1610,7 @@ export function App() {
                         ? "compare-choice selected-choice"
                         : "compare-choice"
                     }
-                    aria-label={`Select the ${branch.name} future${result ? `, ${result.availability.toFixed(2)}% availability, ${result.sloViolations.length} ${result.sloViolations.length === 1 ? "violation" : "violations"}` : ""}`}
+                    aria-label={`${branch.name}${result ? ` — ${result.availability.toFixed(2)}% availability, ${result.sloViolations.length} ${result.sloViolations.length === 1 ? "violation" : "violations"}` : ""} — select this future`}
                     onClick={() => {
                       setState({
                         ...state,
