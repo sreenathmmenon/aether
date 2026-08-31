@@ -204,8 +204,9 @@ All other previously open rows below have been reconciled against the deployed i
   - Evidence: the production endpoint checks database readiness and returns `200` with service and persistence status.
 - [x] **M10.4a — Configure and verify origin-isolation and Permissions-Policy headers** `DONE`
   - Evidence: deployed responses include COOP, COEP, `Permissions-Policy: tools=(self)`, and `X-Content-Type-Options: nosniff`; browser checks passed.
-- [x] **M10.4b — Verify judge-compatible WebMCP access paths** `DONE`
-  - Evidence: ChatGPT’s in-app browser discovered and invoked the deployed tools without a Chrome origin-trial token; Chrome validation used the official WebMCP testing flag, as specified by the challenge.
+- [ ] **M10.4b — Enroll the deployed Chrome origin in the WebMCP origin trial and verify it** `TODO`
+  - Acceptance: Railway holds `WEBMCP_ORIGIN_TRIAL_TOKEN`, the live response emits the `Origin-Trial` header, and Chrome exposes `document.modelContext` on the public application URL.
+  - Current evidence: ChatGPT’s in-app browser discovers and invokes the deployed tools; public Chrome correctly renders the product but reports the experimental `tools` policy as origin-trial gated until the issued token is configured.
 - [x] **M10.5 — Deploy and inspect logs for a healthy release** `DONE`
   - Evidence: Railway terminal deployment `08889726-e8af-45f7-aa8c-15969cb68cef` is `SUCCESS`.
 - [x] **M10.6 — Run live health, persistence, WebMCP discovery, and canonical-journey smoke tests** `DONE`
@@ -265,4 +266,5 @@ None. Production is deployed on Railway with durable PostgreSQL-backed shared-wo
   - Evidence: decision notes are part of the persisted canonical workspace; the existing optimistic PostgreSQL writer, three-second remote reconciliation, and same-browser storage events distribute the full decision record.
 - [x] **M13.5 — Add collaboration-aware WebMCP capabilities and evaluations** `DONE`
   - Evidence: `get_decision_record` is read-only; state-dependent `add_decision_note` is bounded, marked untrusted-content aware, invokes the validated command path, and returns no approval authority. Unit and in-app-browser calls passed.
-- [ ] **M13.6 — Validate the complete decision-room journey in Chrome, ChatGPT, and production** `TODO`
+- [ ] **M13.6 — Validate the complete decision-room journey in Chrome, ChatGPT, and production** `IN_PROGRESS`
+  - Evidence: live Railway health is PostgreSQL-ready; ChatGPT’s in-app browser discovers and calls `get_decision_record`; Chrome visual/a11y audit is 100/100/100/100 but its public WebMCP API verification is blocked on M10.4b’s origin-trial token.

@@ -19,7 +19,7 @@ WebMCP is a progressive enhancement. Aether remains usable through its human int
 Aether targets the shared subset of the two current implementation paths:
 
 - **ChatGPT Site Tools:** ChatGPT desktop's built-in browser lets ChatGPT Work and Codex discover imperative WebMCP tools on the current page. Use GPT-5.6 Sol or GPT-5.6 Terra; Site Tools are not available with GPT-5.6 Luna or in Enterprise/Edu workspaces. Tool availability also depends on rollout and the page's registered tools.
-- **Chrome:** local development requires the `chrome://flags/#enable-webmcp-testing` flag and relaunch. A live Chrome deployment requires a Chrome 149+ WebMCP origin-trial configuration while the API remains experimental.
+- **Chrome:** local development requires the `chrome://flags/#enable-webmcp-testing` flag and relaunch. A live Chrome deployment requires a Chrome 149+ WebMCP origin-trial configuration while the API remains experimental. Set the issued token as Railway’s `WEBMCP_ORIGIN_TRIAL_TOKEN`; the server emits it only as the required `Origin-Trial` response header and never exposes it in source control.
 - **Shared safe surface:** Register tools in the top-level Aether document. Do not rely on declarative form annotations or tools registered from any iframe: ChatGPT currently does not discover either.
 - **Current app state:** Aether registers live top-level imperative tools in the deployed application and has been verified in ChatGPT Site Tools and Chrome with the WebMCP testing flag. Its tool set changes with the active decision state: the always-available read surface includes architecture and decision-record inspection; branch, simulation, proposal, comparison, and attributed-note tools appear only when a repair future exists.
 

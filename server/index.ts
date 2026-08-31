@@ -12,6 +12,7 @@ type PersistedWorkspace = {
 };
 
 const databaseUrl = process.env.DATABASE_URL;
+const webMcpOriginTrialToken = process.env.WEBMCP_ORIGIN_TRIAL_TOKEN;
 const pool = databaseUrl
   ? new Pool({ connectionString: databaseUrl })
   : undefined;
@@ -53,6 +54,8 @@ app.use("*", async (context, next) => {
   context.header("Cross-Origin-Opener-Policy", "same-origin");
   context.header("Cross-Origin-Embedder-Policy", "require-corp");
   context.header("Permissions-Policy", "tools=(self)");
+  if (webMcpOriginTrialToken)
+    context.header("Origin-Trial", webMcpOriginTrialToken);
   context.header("X-Content-Type-Options", "nosniff");
   await next();
 });
