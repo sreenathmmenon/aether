@@ -145,12 +145,16 @@ This is the source of truth for build progress. Status values: `TODO`, `IN_PROGR
 
 ## Milestone 8 — Persistence and reliability
 
-- [ ] **M8.1 — Add PostgreSQL schema and migrations** `TODO`
-- [ ] **M8.2 — Persist workspace, branches, proposals, runs, and audit events** `TODO`
+- [x] **M8.1 — Add PostgreSQL schema and migrations** `DONE`
+  - Evidence: Railway Postgres service and the idempotent `aether_workspaces` schema initialization are live in release `aab9ce53-24c1-450e-afb4-81a0a63dd558`.
+- [x] **M8.2 — Persist workspace, branches, proposals, runs, and audit events** `DONE`
+  - Evidence: production `GET`/optimistic `PUT /api/workspaces/payment-platform` persisted branch, simulation, and audit state; API returned persisted version 2 after an in-browser traffic-spike simulation.
 - [x] **M8.3 — Add workspace recovery from persisted canonical state** `DONE`
   - Evidence: browser-local canonical state persists across reload; deployed Site Tools summary retained the created branch after reload on 2026-08-31.
-- [ ] **M8.4 — Add concurrency and optimistic-version handling** `TODO`
-- [ ] **M8.5 — Add health endpoint with dependency-aware readiness state** `TODO`
+- [x] **M8.4 — Add concurrency and optimistic-version handling** `DONE`
+  - Evidence: the persistence API uses an expected-version PostgreSQL upsert and returns `409 STALE_WORKSPACE` for a stale writer.
+- [x] **M8.5 — Add health endpoint with dependency-aware readiness state** `DONE`
+  - Evidence: production `/health` reports `persistence: "postgres"` after a successful database readiness query.
 - [ ] **M8.6 — Add integration tests for persistence and stale writes** `TODO`
 
 ## Milestone 9 — End-to-end proof
