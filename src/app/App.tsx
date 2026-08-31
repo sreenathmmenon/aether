@@ -759,7 +759,7 @@ export function App() {
           <span
             className={`connection ${webMcp.available ? "connection-live" : ""}`}
           >
-            {webMcp.available ? "WebMCP live" : "WebMCP unavailable"}
+            {webMcp.available ? "WebMCP live" : "WebMCP not detected"}
           </span>
           <span className="shared-live">Shared live</span>
           <span className="human-chip">S</span>
@@ -1324,7 +1324,7 @@ export function App() {
             <strong>
               {webMcp.available
                 ? `${toolCount} state-aware tools`
-                : "Unavailable"}
+                : `${offlineToolSurface.length} tools published · no agent detected`}
             </strong>
           </div>
           <div className="tool-feed" aria-live="polite">
@@ -1674,7 +1674,7 @@ export function App() {
               <small>
                 {webMcp.available
                   ? `WebMCP live · ${toolCount} state-aware tools on this page`
-                  : "WebMCP tools activate in a supporting browser"}
+                  : "Open in ChatGPT's browser, or Chrome 149+, to let an agent drive these tools. Everything below works without one."}
               </small>
             </div>
           </div>

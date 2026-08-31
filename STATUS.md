@@ -360,6 +360,10 @@ None. Production is deployed on Railway with durable PostgreSQL-backed shared-wo
   - Acceptance: the standards document a judge opens reflects what has actually been verified.
   - Evidence: ten rows still read `Planned` or `In progress` from the original audit, so the checklist described a far less complete project than the deployed one — cooperative UI, state-dependent registration, human control, lifecycle, origin isolation, permissions boundary, output quality, tool-selection quality, and end-to-end reliability were all verified during this build but never recorded. Each row now carries specific evidence and a verified state, the Chrome row states that the token is deployed and the eleven-tool surface was read back from the live origin while noting the flag-disabled confirmation is still outstanding, and the submission row names exactly what is missing. Also audited the repository a judge would clone: no secrets in tracked files, `.env` untracked, and all five external and seven relative documentation links resolve.
 
+- [x] **M14.31 — Tell a reviewer without WebMCP what to do** `DONE`
+  - Acceptance: a visitor in an ordinary browser understands the WebMCP state and that the product still works.
+  - Evidence: the header read "WebMCP unavailable", the panel read "Unavailable", and the intro said only that tools "activate in a supporting browser" — accurate but unhelpful to a reviewer who does not know which browser or whether anything is broken. Since most reviewers arrive without WebMCP, that is the common first impression. The header now reads "WebMCP not detected", the panel states how many tools the page publishes, and the intro names ChatGPT's browser or Chrome 149+ and says plainly that everything below works without one. Degradation itself was probed across four states — no document, a document without `modelContext`, a registry with no context, and a document with it — and was already correct; a regression test now covers it.
+
 ## Milestone 13 — Real-time architecture decision room
 
 - [x] **M13.1 — Define and build the unmistakable collaborative decision-room journey** `DONE`
