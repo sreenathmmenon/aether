@@ -790,7 +790,11 @@ export function App() {
             <div>
               <span>Availability</span>
               <strong
-                className={evidence.availability < 99.9 ? "critical" : "safe"}
+                className={
+                  evidence.sloViolations.length || evidence.availability < 99.9
+                    ? "critical"
+                    : "safe"
+                }
               >
                 {evidence.availability.toFixed(2)}%
               </strong>

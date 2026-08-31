@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { createInitialState } from "./branch-engine";
 import { paymentPlatformBaseline } from "../fixtures/payment-platform/baseline";
 import { parsePersistedState } from "./persistence";
+import { simulationEngineVersion } from "@simulation/engine";
 
 describe("workspace persistence shape", () => {
   it("serializes a recoverable canonical state", () => {
@@ -31,5 +32,23 @@ describe("workspace persistence shape", () => {
     legacy.decisionNotes = [];
     const restored = parsePersistedState(JSON.stringify(legacy));
     expect(restored?.decisionNotes).toHaveLength(2);
+  });
+
+  it("drops simulation results produced by a superseded engine", () => {
+    const state = createInitialState(paymentPlatformBaseline);
+    const stale = {
+      ...state,
+      simulations: {
+        "branch-x": [
+          { engineVersion: "aether-sim-1", scenario: "regional_outage" },
+          { engineVersion: simulationEngineVersion, scenario: "traffic_spike" },
+        ],
+      },
+    };
+    const parsed = parsePersistedState(JSON.stringify(stale));
+    expect(parsed?.simulations["branch-x"]).toHaveLength(1);
+    expect(parsed?.simulations["branch-x"]?.[0]?.engineVersion).toBe(
+      simulationEngineVersion,
+    );
   });
 });

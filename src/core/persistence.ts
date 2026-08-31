@@ -1,4 +1,5 @@
 import type { AetherState } from "./branch-engine";
+import { simulationEngineVersion } from "@simulation/engine";
 
 export const storageKey = "aether.workspace.payment.v1";
 
@@ -61,6 +62,17 @@ export function parsePersistedState(
     if (!looksLikeAetherState(value)) return undefined;
     return {
       ...value,
+      // Results from a superseded engine describe a different model, so they
+      // are dropped rather than shown beside current evidence. The branches
+      // survive and recompute on their next run.
+      simulations: Object.fromEntries(
+        Object.entries(value.simulations ?? {}).map(([branchId, runs]) => [
+          branchId,
+          (Array.isArray(runs) ? runs : []).filter(
+            (run) => run?.engineVersion === simulationEngineVersion,
+          ),
+        ]),
+      ),
       decisionNotes:
         Array.isArray(value.decisionNotes) && value.decisionNotes.length > 0
           ? value.decisionNotes
