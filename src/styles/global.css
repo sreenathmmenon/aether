@@ -371,11 +371,13 @@ button {
   font-weight: 750;
   letter-spacing: 0.1em;
 }
+/* Region bands track the node grid: Mumbai holds the write path on the left,
+   Bengaluru holds the recovery path on the lower right. */
 .region-box-mumbai {
-  inset: 110px 31% 70px 8%;
+  inset: 12% 42% 44% 4%;
 }
 .region-box-blr {
-  inset: 245px 7% 45px 48%;
+  inset: 36% 4% 20% 58%;
   border-color: rgba(36, 135, 101, 0.3);
   background: rgba(36, 135, 101, 0.025);
 }
@@ -435,9 +437,46 @@ button {
 }
 .architecture-node.node-affected {
   border-color: var(--coral);
+  background: linear-gradient(180deg, #fff6f4 0%, var(--panel) 62%);
+  box-shadow:
+    0 0 0 1px rgba(217, 93, 79, 0.35),
+    0 10px 24px -14px rgba(217, 93, 79, 0.75);
+  animation: impact-arrive 0.5s cubic-bezier(0.22, 1.2, 0.36, 1);
 }
 .architecture-node.node-affected small {
   color: #a63b32;
+}
+/* The newest node in a running trace pulses so the eye follows propagation. */
+.architecture-node.node-propagating {
+  animation:
+    impact-arrive 0.5s cubic-bezier(0.22, 1.2, 0.36, 1),
+    impact-pulse 1.15s ease-out 0.5s infinite;
+  z-index: 3;
+}
+@keyframes impact-arrive {
+  0% {
+    transform: scale(0.94);
+    box-shadow: 0 0 0 0 rgba(217, 93, 79, 0);
+  }
+  55% {
+    transform: scale(1.045);
+    box-shadow: 0 0 0 12px rgba(217, 93, 79, 0.16);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@keyframes impact-pulse {
+  0% {
+    box-shadow:
+      0 0 0 1px rgba(217, 93, 79, 0.45),
+      0 0 0 0 rgba(217, 93, 79, 0.34);
+  }
+  100% {
+    box-shadow:
+      0 0 0 1px rgba(217, 93, 79, 0.28),
+      0 0 0 18px rgba(217, 93, 79, 0);
+  }
 }
 .architecture-node.queue {
   border-color: rgba(17, 167, 184, 0.65);
@@ -450,8 +489,8 @@ button {
 .failure-beacon {
   position: absolute;
   z-index: 3;
-  left: 11%;
-  bottom: 26px;
+  left: 22px;
+  top: 18px;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -461,13 +500,14 @@ button {
 }
 .causal-timeline {
   position: absolute;
-  right: 20px;
+  left: 20px;
   bottom: 18px;
   display: grid;
   gap: 6px;
-  width: min(360px, 58%);
+  width: min(330px, 44%);
   margin: 0;
   padding: 11px 13px;
+  backdrop-filter: blur(3px);
   border: 1px solid rgba(17, 36, 64, 0.14);
   list-style: none;
   color: var(--muted);
@@ -476,11 +516,28 @@ button {
 }
 .causal-timeline li {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 7px;
   transition:
     color 0.25s ease,
     transform 0.25s ease;
+}
+.causal-timeline li span {
+  display: grid;
+  gap: 1px;
+  line-height: 1.35;
+}
+.causal-timeline li small {
+  color: var(--muted);
+  font-size: 9px;
+  letter-spacing: 0.01em;
+}
+.causal-timeline .trace-active small {
+  color: #a63b32;
+}
+.causal-timeline i {
+  margin-top: 3px;
+  flex: none;
 }
 .causal-timeline i {
   width: 6px;

@@ -18,7 +18,7 @@ import {
   createAetherToolRegistry,
   type ToolRegistry,
 } from "@platform/webmcp/registry";
-import type { Scenario } from "@simulation/engine";
+import { runScenario, type Scenario } from "@simulation/engine";
 
 const humanActor = {
   id: "sreenath",
@@ -49,25 +49,10 @@ const scenarioCopy: Record<
   },
 };
 
-const causalTrace: Record<Scenario, string[]> = {
-  regional_outage: [
-    "Mumbai failure detected",
-    "Ledger write path interrupted",
-    "Queue reroute engages Bengaluru",
-    "Evidence recomputed for the future",
-  ],
-  traffic_spike: [
-    "Demand crosses 18,000 RPS",
-    "Authentication headroom is consumed",
-    "Queue capacity becomes the constraint",
-    "Affected evidence recomputed",
-  ],
-  database_failure: [
-    "Primary ledger becomes unavailable",
-    "Replication policy selects recovery path",
-    "Reconciliation waits for recovery",
-    "Recovery evidence recomputed",
-  ],
+const scenarioOnset: Record<Scenario, string> = {
+  regional_outage: "Mumbai region lost",
+  traffic_spike: "Demand burst crosses provisioned capacity",
+  database_failure: "Primary ledger becomes unavailable",
 };
 
 function display(value: string | number | boolean) {
@@ -126,25 +111,72 @@ export function App() {
     activeSimulation.branchVersion === activeBranch.version &&
     activeSimulation.sloViolations.length === 0,
   );
-  const evidence = activeSimulation ?? {
-    availability: 96.42,
-    rtoMinutes: 46,
-    latencyMs: 480,
-    monthlyCostUsd: 5200,
-    sloViolations: [
-      "Single regional ledger dependency",
-      "Capacity deficit: 2,400 RPS",
-      "Payment SLO breached",
-    ],
-    affectedEntityIds: ["ledger", "auth", "queue"],
-    rerunScope: "full" as const,
-    engineVersion: "aether-sim-1",
-    inputHash: "baseline-fixture",
-    outputHash: "baseline-fixture",
-  };
+  // With no stored run yet, show the live engine result for the branch the
+  // user is looking at rather than a hardcoded placeholder.
+  const previewEvidence = useMemo(
+    () =>
+      runScenario(
+        graph,
+        selectedScenario,
+        activeBranch.id,
+        activeBranch.version,
+        state.workspace.costCeilingUsd,
+      ),
+    [graph, selectedScenario, activeBranch, state.workspace.costCeilingUsd],
+  );
+  const evidence = activeSimulation ?? previewEvidence;
+  // The baseline card always reflects the unrepaired architecture.
+  const baselineEvidence = useMemo(
+    () =>
+      runScenario(
+        state.revisions["revision-baseline"]!.graph,
+        selectedScenario,
+        "branch-baseline",
+        1,
+        state.workspace.costCeilingUsd,
+      ),
+    [state.revisions, selectedScenario, state.workspace.costCeilingUsd],
+  );
   const selectedEntity =
     graph.entities[selectedEntityId] ?? graph.entities.ledger!;
   const diff = getBranchDiff(state, activeBranch);
+  // The trace is the engine's own causal chain, so playback walks the exact
+  // path the simulation derived rather than a hand-written storyboard.
+  const traceSteps = useMemo(() => {
+    const chain = evidence.causalChain ?? [];
+    return [
+      {
+        entityId: undefined as string | undefined,
+        label: scenarioOnset[selectedScenario],
+        detail: "Failure onset",
+      },
+      ...chain.map((step) => ({
+        entityId: step.entityId,
+        label: step.entityName,
+        detail: step.cause,
+      })),
+      {
+        entityId: undefined as string | undefined,
+        label: "Evidence recomputed",
+        detail: `${evidence.availability.toFixed(2)}% availability · ${evidence.rtoMinutes}m recovery`,
+      },
+    ];
+  }, [evidence, selectedScenario]);
+  const tracing = traceStep >= 0;
+  // While tracing, only the entities revealed so far are lit.
+  const tracedEntityIds = useMemo(() => {
+    if (!tracing) return undefined;
+    return new Set(
+      traceSteps
+        .slice(0, traceStep + 1)
+        .map((step) => step.entityId)
+        .filter((id): id is string => Boolean(id)),
+    );
+  }, [tracing, traceStep, traceSteps]);
+  const isLit = (entityId: string) =>
+    tracedEntityIds
+      ? tracedEntityIds.has(entityId)
+      : evidence.affectedEntityIds.includes(entityId);
   const futures = Object.values(state.branches).filter(
     (branch) => branch.id !== "branch-baseline",
   );
@@ -296,14 +328,18 @@ export function App() {
     };
   }, [writable]);
   useEffect(() => {
-    if (traceStep < 0 || traceStep >= causalTrace[selectedScenario].length - 1)
-      return;
-    const interval = window.setTimeout(
+    if (traceStep < 0) return;
+    if (traceStep >= traceSteps.length) {
+      // Hold the completed trace briefly, then release the canvas.
+      const settle = window.setTimeout(() => setTraceStep(-1), 2200);
+      return () => window.clearTimeout(settle);
+    }
+    const advance = window.setTimeout(
       () => setTraceStep((current) => current + 1),
-      800,
+      700,
     );
-    return () => window.clearTimeout(interval);
-  }, [selectedScenario, traceStep]);
+    return () => window.clearTimeout(advance);
+  }, [traceStep, traceSteps.length]);
 
   function apply(command: Parameters<typeof dispatch>[1]) {
     const outcome = dispatch(state, command, humanActor);
@@ -492,7 +528,13 @@ export function App() {
           >
             <span className="future-kicker">CURRENT</span>
             <strong>Baseline breach</strong>
-            <small>96.42% availability · 3 SLOs</small>
+            <small>
+              {baselineEvidence.availability.toFixed(2)}% availability ·{" "}
+              {baselineEvidence.sloViolations.length}{" "}
+              {baselineEvidence.sloViolations.length === 1
+                ? "violation"
+                : "violations"}
+            </small>
           </button>
           {branchCount === 0 ? (
             <button className="create-future-button" onClick={createFutures}>
@@ -571,7 +613,9 @@ export function App() {
               ))}
             </div>
             <button className="trace-control" onClick={playTrace}>
-              {traceStep >= 0 ? "Tracing causal path" : "Play causal trace"}
+              {tracing
+                ? `Tracing ${Math.min(traceStep + 1, traceSteps.length)}/${traceSteps.length}`
+                : "Play causal trace"}
             </button>
           </div>
           <div className="canvas-world" ref={canvasRef}>
@@ -596,9 +640,7 @@ export function App() {
                   target.kind === "region"
                 )
                   return null;
-                const affected =
-                  evidence.affectedEntityIds.includes(source.id) ||
-                  evidence.affectedEntityIds.includes(target.id);
+                const affected = isLit(source.id) && isLit(target.id);
                 const sourcePosition =
                   dragPreview?.id === source.id ? dragPreview : source.position;
                 const targetPosition =
@@ -616,10 +658,12 @@ export function App() {
               })}
             </svg>
             {entities.map((entity) => {
-              const affected = evidence.affectedEntityIds.includes(entity.id);
+              const affected = isLit(entity.id);
+              const propagating =
+                tracing && traceSteps[traceStep]?.entityId === entity.id;
               return (
                 <button
-                  className={`architecture-node ${entity.kind} ${affected ? "node-affected" : ""} ${entity.id === selectedEntity.id ? "node-selected" : ""}`}
+                  className={`architecture-node ${entity.kind} ${affected ? "node-affected" : ""} ${propagating ? "node-propagating" : ""} ${entity.id === selectedEntity.id ? "node-selected" : ""}`}
                   key={entity.id}
                   style={{
                     left: `${
@@ -674,18 +718,22 @@ export function App() {
               <i /> {scenarioCopy[selectedScenario].short}
             </div>
             <ol className="causal-timeline" aria-label="Causal failure trace">
-              {causalTrace[selectedScenario].map((step, index) => (
+              {traceSteps.map((step, index) => (
                 <li
                   className={
                     traceStep >= index
                       ? "trace-active"
-                      : traceStep >= 0
+                      : tracing
                         ? "trace-pending"
                         : ""
                   }
-                  key={step}
+                  key={`${step.label}-${index}`}
                 >
-                  <i /> {step}
+                  <i />
+                  <span>
+                    {step.label}
+                    <small>{step.detail}</small>
+                  </span>
                 </li>
               ))}
             </ol>
@@ -1082,7 +1130,11 @@ export function App() {
                         ? `${result.rtoMinutes}m recovery · $${result.monthlyCostUsd.toLocaleString()}/mo`
                         : "No evidence yet"}
                     </small>
-                    <b>{result?.sloViolations.length ?? "—"} violations</b>
+                    <b>
+                      {result
+                        ? `${result.sloViolations.length} ${result.sloViolations.length === 1 ? "violation" : "violations"}`
+                        : "— violations"}
+                    </b>
                   </button>
                 );
               })}

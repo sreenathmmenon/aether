@@ -8,7 +8,7 @@ export const paymentPlatformBaseline: ArchitectureGraph = {
       id: "region-mumbai",
       kind: "region",
       name: "Mumbai",
-      position: { x: 140, y: 110 },
+      position: { x: 110, y: 60 },
       properties: { city: "Mumbai", failureDomain: "ap-south-1" },
       version: 1,
       createdAt,
@@ -18,7 +18,7 @@ export const paymentPlatformBaseline: ArchitectureGraph = {
       id: "region-bengaluru",
       kind: "region",
       name: "Bengaluru",
-      position: { x: 630, y: 350 },
+      position: { x: 620, y: 360 },
       properties: { city: "Bengaluru", failureDomain: "dr" },
       version: 1,
       createdAt,
@@ -28,7 +28,7 @@ export const paymentPlatformBaseline: ArchitectureGraph = {
       id: "gateway",
       kind: "gateway",
       name: "API Gateway",
-      position: { x: 80, y: 280 },
+      position: { x: 90, y: 190 },
       properties: {
         regionId: "region-mumbai",
         peakRps: 12000,
@@ -42,7 +42,7 @@ export const paymentPlatformBaseline: ArchitectureGraph = {
       id: "auth",
       kind: "service",
       name: "Authentication",
-      position: { x: 270, y: 220 },
+      position: { x: 270, y: 190 },
       properties: {
         regionId: "region-mumbai",
         peakRps: 12000,
@@ -59,7 +59,7 @@ export const paymentPlatformBaseline: ArchitectureGraph = {
       id: "ledger",
       kind: "database",
       name: "Primary Ledger",
-      position: { x: 440, y: 220 },
+      position: { x: 450, y: 190 },
       properties: {
         regionId: "region-mumbai",
         peakRps: 12000,
@@ -76,7 +76,7 @@ export const paymentPlatformBaseline: ArchitectureGraph = {
       id: "queue",
       kind: "queue",
       name: "Bengaluru Queue",
-      position: { x: 610, y: 460 },
+      position: { x: 650, y: 360 },
       properties: {
         regionId: "region-bengaluru",
         peakRps: 8000,
@@ -92,7 +92,7 @@ export const paymentPlatformBaseline: ArchitectureGraph = {
       id: "reconciliation",
       kind: "service",
       name: "Reconciliation",
-      position: { x: 760, y: 400 },
+      position: { x: 830, y: 360 },
       properties: {
         regionId: "region-bengaluru",
         peakRps: 8000,
