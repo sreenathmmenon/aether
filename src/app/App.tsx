@@ -49,6 +49,27 @@ const scenarioCopy: Record<
   },
 };
 
+const causalTrace: Record<Scenario, string[]> = {
+  regional_outage: [
+    "Mumbai failure detected",
+    "Ledger write path interrupted",
+    "Queue reroute engages Bengaluru",
+    "Evidence recomputed for the future",
+  ],
+  traffic_spike: [
+    "Demand crosses 18,000 RPS",
+    "Authentication headroom is consumed",
+    "Queue capacity becomes the constraint",
+    "Affected evidence recomputed",
+  ],
+  database_failure: [
+    "Primary ledger becomes unavailable",
+    "Replication policy selects recovery path",
+    "Reconciliation waits for recovery",
+    "Recovery evidence recomputed",
+  ],
+};
+
 function display(value: string | number | boolean) {
   return typeof value === "number" ? value.toLocaleString() : String(value);
 }
@@ -66,6 +87,7 @@ export function App() {
   const [selectedScenario, setSelectedScenario] =
     useState<Scenario>("regional_outage");
   const [comparing, setComparing] = useState(false);
+  const [traceStep, setTraceStep] = useState(-1);
   const [dragPreview, setDragPreview] = useState<
     { id: string; x: number; y: number } | undefined
   >(undefined);
@@ -84,6 +106,7 @@ export function App() {
   >(undefined);
   const registryRef = useRef<ToolRegistry | undefined>(undefined);
   const remoteReadyRef = useRef(false);
+  const applyingRemoteRef = useRef(false);
   const remoteVersionRef = useRef(state.workspace.persistenceVersion ?? 0);
   const activeBranch = state.branches[state.workspace.activeBranchId]!;
   const graph = useMemo(
@@ -133,13 +156,23 @@ export function App() {
   }, [state]);
   useEffect(() => {
     persistState(state);
+    if (applyingRemoteRef.current) {
+      applyingRemoteRef.current = false;
+      return;
+    }
     if (!remoteReadyRef.current) return;
     void saveRemoteWorkspace(state, remoteVersionRef.current).then((result) => {
       if (typeof result === "number") remoteVersionRef.current = result;
       if (result === "conflict")
-        setMessage(
-          "A teammate updated this workspace. Refreshing shared state.",
-        );
+        void loadRemoteWorkspace().then((remote) => {
+          if (!remote) return;
+          applyingRemoteRef.current = true;
+          remoteVersionRef.current = remote.workspace.persistenceVersion ?? 0;
+          setState(remote);
+          setMessage(
+            "A teammate updated this workspace. Shared state refreshed.",
+          );
+        });
     });
   }, [state]);
   useEffect(() => {
@@ -149,10 +182,28 @@ export function App() {
         setState((current) => ({ ...current }));
         return;
       }
+      applyingRemoteRef.current = true;
       remoteVersionRef.current = remote.workspace.persistenceVersion ?? 0;
       setState(remote);
       setMessage("Production workspace restored from shared persistence.");
     });
+  }, []);
+  useEffect(() => {
+    const poll = () => {
+      if (document.hidden) return;
+      void loadRemoteWorkspace().then((remote) => {
+        const remoteVersion = remote?.workspace.persistenceVersion ?? 0;
+        if (!remote || remoteVersion <= remoteVersionRef.current) return;
+        applyingRemoteRef.current = true;
+        remoteVersionRef.current = remoteVersion;
+        setState(remote);
+        setMessage(
+          "A teammate changed the shared architecture. Evidence is live.",
+        );
+      });
+    };
+    const interval = window.setInterval(poll, 3000);
+    return () => window.clearInterval(interval);
   }, []);
   useEffect(() => {
     const sync = (event: StorageEvent) => {
@@ -228,6 +279,15 @@ export function App() {
       window.removeEventListener("pointerup", up);
     };
   }, [writable]);
+  useEffect(() => {
+    if (traceStep < 0 || traceStep >= causalTrace[selectedScenario].length - 1)
+      return;
+    const interval = window.setTimeout(
+      () => setTraceStep((current) => current + 1),
+      800,
+    );
+    return () => window.clearTimeout(interval);
+  }, [selectedScenario, traceStep]);
 
   function apply(command: Parameters<typeof dispatch>[1]) {
     const outcome = dispatch(state, command, humanActor);
@@ -283,6 +343,7 @@ export function App() {
   }
   function selectScenario(scenario: Scenario) {
     setSelectedScenario(scenario);
+    setTraceStep(-1);
     if (
       branchCount &&
       !(state.simulations[activeBranch.id] ?? []).some(
@@ -293,6 +354,12 @@ export function App() {
         type: "RUN_SCENARIO",
         input: { branchId: activeBranch.id, scenario },
       });
+  }
+  function playTrace() {
+    setTraceStep(0);
+    setMessage(
+      "Playing the causal failure trace across the active architecture future.",
+    );
   }
 
   return (
@@ -433,6 +500,9 @@ export function App() {
                 </button>
               ))}
             </div>
+            <button className="trace-control" onClick={playTrace}>
+              {traceStep >= 0 ? "Tracing causal path" : "Play causal trace"}
+            </button>
           </div>
           <div className="canvas-world" ref={canvasRef}>
             <div className="region-box region-box-mumbai">
@@ -533,6 +603,22 @@ export function App() {
             <div className="failure-beacon">
               <i /> {scenarioCopy[selectedScenario].short}
             </div>
+            <ol className="causal-timeline" aria-label="Causal failure trace">
+              {causalTrace[selectedScenario].map((step, index) => (
+                <li
+                  className={
+                    traceStep >= index
+                      ? "trace-active"
+                      : traceStep >= 0
+                        ? "trace-pending"
+                        : ""
+                  }
+                  key={step}
+                >
+                  <i /> {step}
+                </li>
+              ))}
+            </ol>
             <div className="canvas-hint">
               {writable
                 ? "Drag a component to record a human topology edit"
