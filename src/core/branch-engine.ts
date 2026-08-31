@@ -46,6 +46,7 @@ export function createInitialState(graph: ArchitectureGraph): AetherState {
       name: "Payment platform",
       domain: "architecture",
       activeBranchId: baseline.id,
+      persistenceVersion: 0,
       createdAt: timestamp,
       updatedAt: timestamp,
     },

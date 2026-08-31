@@ -9,6 +9,10 @@ import {
   storageKey,
 } from "@core/persistence";
 import { paymentPlatformBaseline } from "../fixtures/payment-platform/baseline";
+import {
+  loadRemoteWorkspace,
+  saveRemoteWorkspace,
+} from "@core/remote-workspace";
 import { getWebMcpAvailability } from "@platform/webmcp/feature-detection";
 import {
   createAetherToolRegistry,
@@ -79,6 +83,8 @@ export function App() {
     | undefined
   >(undefined);
   const registryRef = useRef<ToolRegistry | undefined>(undefined);
+  const remoteReadyRef = useRef(false);
+  const remoteVersionRef = useRef(state.workspace.persistenceVersion ?? 0);
   const activeBranch = state.branches[state.workspace.activeBranchId]!;
   const graph = useMemo(
     () => deriveGraph(state, activeBranch),
@@ -125,7 +131,29 @@ export function App() {
     void registryRef.current?.refresh(state);
     return () => registryRef.current?.dispose();
   }, [state]);
-  useEffect(() => persistState(state), [state]);
+  useEffect(() => {
+    persistState(state);
+    if (!remoteReadyRef.current) return;
+    void saveRemoteWorkspace(state, remoteVersionRef.current).then((result) => {
+      if (typeof result === "number") remoteVersionRef.current = result;
+      if (result === "conflict")
+        setMessage(
+          "A teammate updated this workspace. Refreshing shared state.",
+        );
+    });
+  }, [state]);
+  useEffect(() => {
+    void loadRemoteWorkspace().then((remote) => {
+      remoteReadyRef.current = true;
+      if (!remote) {
+        setState((current) => ({ ...current }));
+        return;
+      }
+      remoteVersionRef.current = remote.workspace.persistenceVersion ?? 0;
+      setState(remote);
+      setMessage("Production workspace restored from shared persistence.");
+    });
+  }, []);
   useEffect(() => {
     const sync = (event: StorageEvent) => {
       if (event.key !== storageKey || !event.newValue) return;
