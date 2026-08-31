@@ -1680,3 +1680,15 @@ button {
   border-radius: 50%;
   background: var(--orange);
 }
+
+/* The own-system capability is what separates Aether from a fixed demo, so
+   the opening screen names it. */
+.intro-own {
+  margin: -14px 0 30px;
+  padding: 11px 13px;
+  border-left: 2px solid var(--cyan);
+  background: rgba(17, 167, 184, 0.06);
+  color: #35485f;
+  font-size: 12.5px;
+  line-height: 1.5;
+}

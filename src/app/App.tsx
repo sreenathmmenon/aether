@@ -1689,6 +1689,10 @@ export function App() {
               and see the consequence before anyone commits it. The agent can
               never approve its own work.
             </p>
+            <p className="intro-own">
+              Describe your own system to an agent and it builds the model here
+              — then prove a repair on it.
+            </p>
             <div className="intro-foot">
               <button className="intro-start" onClick={dismissIntro}>
                 Enter the decision room →
