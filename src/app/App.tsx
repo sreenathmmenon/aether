@@ -145,7 +145,9 @@ export function App() {
   const [toolCount, setToolCount] = useState(0);
   const [toolCalls, setToolCalls] = useState<ToolCall[]>([]);
   const [registeredTools, setRegisteredTools] = useState<string[]>([]);
-  const [selectedEntityId, setSelectedEntityId] = useState("ledger");
+  // Empty until a graph is loaded; the selection then falls back to whichever
+  // component the engine considers most consequential.
+  const [selectedEntityId, setSelectedEntityId] = useState("");
   const [selectedScenario, setSelectedScenario] =
     useState<Scenario>("regional_outage");
   const [comparing, setComparing] = useState(false);
@@ -238,8 +240,11 @@ export function App() {
     [state.revisions, selectedScenario, state.workspace.costCeilingUsd],
   );
   // An unbuilt canvas has no components at all, so nothing may assume one.
+  // Default to the component the failure actually originates at, which is the
+  // one a reader should be looking at first.
   const selectedEntity =
     graph.entities[selectedEntityId] ??
+    graph.entities[evidence.causalChain?.[0]?.entityId ?? ""] ??
     Object.values(graph.entities).find((entity) => entity.kind !== "region");
   const diff = getBranchDiff(state, activeBranch);
 

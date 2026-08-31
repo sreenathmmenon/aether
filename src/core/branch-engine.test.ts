@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { createInitialState, deriveGraph, dispatch } from "./branch-engine";
 import { paymentPlatformBaseline } from "../fixtures/payment-platform/baseline";
 import { blankBaseline } from "../fixtures/blank/baseline";
+import { aiPlatformBaseline } from "../fixtures/ai-platform/baseline";
 import { runScenario } from "@simulation/engine";
 
 const human = {
@@ -648,5 +649,21 @@ describe("Aether command pipeline", () => {
       })
       .filter((run) => run.sloViolations.length === 0)[0]!;
     expect(budget).toBeLessThan(cleanest.monthlyCostUsd);
+  });
+
+  it("opens each system on its own causal origin", () => {
+    // The interface defaults its selection to the first causal step, so that
+    // step must name a component of whichever system is loaded.
+    for (const graph of [paymentPlatformBaseline, aiPlatformBaseline]) {
+      const opening = runScenario(
+        graph,
+        "regional_outage",
+        "branch-baseline",
+        1,
+      );
+      const origin = opening.causalChain[0]!.entityId;
+      expect(graph.entities[origin]).toBeDefined();
+      expect(graph.entities[origin]!.kind).not.toBe("region");
+    }
   });
 });

@@ -414,6 +414,10 @@ None. Production is deployed on Railway with durable PostgreSQL-backed per-visit
   - Acceptance: no headline, narrative, or seeded note describes an architecture that is not loaded.
   - Evidence: on the empty canvas — the flagship path — the hero still read "Mumbai is down", the agent narrative still described "the primary ledger", and the seeded note recommended "testing an isolated repair" beside 0.00% availability, all of a system with no components. A reviewer arriving through the own-system route met three statements about an architecture that did not exist. The hero and agent narrative now derive from the loaded graph, and an unbuilt canvas gets its own opening: the agent asks for the architecture and the human asks to see a regional outage once it is modelled. Verified across all three systems: "Mumbai is down", "N. Virginia is down", and "Describe your system".
 
+- [x] **M15.10 — Remove the last fixture name from the interface** `DONE`
+  - Acceptance: no component identifier from one shipped system appears as a default for another.
+  - Evidence: the selected component initialised to the literal `"ledger"`, which exists only on the payment platform, so every other system opened on a component chosen by a fallback rather than by meaning. A sweep for hardcoded domain nouns found it as the last such default outside the fixture definitions. Selection now starts empty and falls back to the first step of the engine's causal chain, so a system opens on the component its failure actually originates at: Primary Ledger on the payment platform, Vector Store on the inference platform, and nothing on an unbuilt canvas. Verified across all three in the browser.
+
 ## Milestone 13 — Real-time architecture decision room
 
 - [x] **M13.1 — Define and build the unmistakable collaborative decision-room journey** `DONE`
