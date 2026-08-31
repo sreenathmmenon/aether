@@ -356,6 +356,10 @@ None. Production is deployed on Railway with durable PostgreSQL-backed shared-wo
   - Acceptance: no registered tool exceeds the documented name, description, or parameter limits.
   - Evidence: `connect_architecture_components` was 31 characters, breaching the under-30 name limit that `AGENTS.md` and the Chrome guidance both state — a self-inflicted spec violation introduced when the model-extension tools were added. It is renamed to `connect_components`. An audit of the full surface found every description under 500 characters and all 24 parameter descriptions under 150. A regression test now asserts all three limits across both the baseline and branched surfaces, and was confirmed to fail against a deliberately over-length name.
 
+- [x] **M14.30 — Reconcile the compliance checklist with verified reality** `DONE`
+  - Acceptance: the standards document a judge opens reflects what has actually been verified.
+  - Evidence: ten rows still read `Planned` or `In progress` from the original audit, so the checklist described a far less complete project than the deployed one — cooperative UI, state-dependent registration, human control, lifecycle, origin isolation, permissions boundary, output quality, tool-selection quality, and end-to-end reliability were all verified during this build but never recorded. Each row now carries specific evidence and a verified state, the Chrome row states that the token is deployed and the eleven-tool surface was read back from the live origin while noting the flag-disabled confirmation is still outstanding, and the submission row names exactly what is missing. Also audited the repository a judge would clone: no secrets in tracked files, `.env` untracked, and all five external and seven relative documentation links resolve.
+
 ## Milestone 13 — Real-time architecture decision room
 
 - [x] **M13.1 — Define and build the unmistakable collaborative decision-room journey** `DONE`
