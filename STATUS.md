@@ -387,6 +387,10 @@ None. Production is deployed on Railway with durable PostgreSQL-backed per-visit
 - [x] **M15.2 — Make the build surface reachable through WebMCP** `DONE`
   - Evidence: the canvas shipped with its tools still gated behind an existing repair branch, so through WebMCP an agent met an empty canvas it could not touch — the capability existed only in the interface, inverting the point. Model editing and simulation now share one rule, a repair future is open or a user-built architecture is being assembled, and the capability key includes it so the surface re-registers when editability changes. Confirmed on production through `document.modelContext`: a committed architecture exposes five read and branch tools, an own-system canvas exposes nine including component creation, dependency creation, and simulation, and the seeded journey still completes approve, merge, and rollback with no errors.
 
+- [x] **M15.3 — Branch from the architecture as it stands** `DONE`
+  - Acceptance: a repair future inherits whatever the reviewer built, so a self-built system can reach approval.
+  - Evidence: a new branch based on `revision-baseline`, which on an own-system workspace is the empty canvas, because the reviewer's components live in the baseline branch's operations rather than in that revision. Branching a self-built architecture therefore produced an empty graph, every scenario returned zero availability with the no-components violation, and approval was unreachable — the decision journey worked only on the two shipped examples. Branch creation now freezes the derived graph into a revision when the baseline carries operations, keeping the base immutable while inheriting the built system. Verified end to end: a two-component system built from nothing branches with real repair operations, simulates to 96.83% and 99.99% with no violations, and completes approval and merge.
+
 ## Milestone 13 — Real-time architecture decision room
 
 - [x] **M13.1 — Define and build the unmistakable collaborative decision-room journey** `DONE`

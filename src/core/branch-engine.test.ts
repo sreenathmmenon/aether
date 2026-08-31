@@ -470,4 +470,95 @@ describe("Aether command pipeline", () => {
       ),
     ).toMatchObject({ ok: false, code: "NOT_AVAILABLE" });
   });
+
+  it("carries a self-built architecture through the whole decision journey", () => {
+    let state = createInitialState(blankBaseline, "blank");
+    const add = (name: string, kind: "service" | "database") => {
+      const result = dispatch(
+        state,
+        {
+          type: "ADD_COMPONENT",
+          input: {
+            branchId: "branch-baseline",
+            name,
+            kind,
+            regionId: "region-primary",
+            peakRps: 8000,
+            capacityRps: 20000,
+            monthlyCostUsd: 900,
+          },
+        },
+        human,
+      );
+      if (!result.ok) throw new Error(`${name} must be addable`);
+      state = result.value;
+    };
+    add("Api", "service");
+    add("Db", "database");
+    const linked = dispatch(
+      state,
+      {
+        type: "CONNECT_COMPONENTS",
+        input: {
+          branchId: "branch-baseline",
+          sourceId: "entity-api",
+          targetId: "entity-db",
+          kind: "writes_to",
+        },
+      },
+      human,
+    );
+    if (!linked.ok) throw new Error("components must connect");
+    state = linked.value;
+
+    const branched = dispatch(
+      state,
+      {
+        type: "CREATE_BRANCH",
+        input: { name: "Repair", intent: "highest_resilience" },
+      },
+      human,
+    );
+    if (!branched.ok) throw new Error("own system must be branchable");
+    state = branched.value;
+    const branchId = "branch-highest_resilience";
+
+    // The branch must inherit what the reviewer built, not the empty canvas.
+    expect(
+      Object.keys(deriveGraph(state, state.branches[branchId]!).entities),
+    ).toContain("entity-db");
+    expect(state.branches[branchId]!.operations.length).toBeGreaterThan(0);
+
+    for (const scenario of [
+      "regional_outage",
+      "traffic_spike",
+      "database_failure",
+    ] as const) {
+      const run = dispatch(
+        state,
+        { type: "RUN_SCENARIO", input: { branchId, scenario } },
+        human,
+      );
+      if (!run.ok) throw new Error("simulation must work");
+      state = run.value;
+    }
+    for (const run of state.simulations[branchId]!)
+      expect(run.availability).toBeGreaterThan(0);
+
+    const version = state.branches[branchId]!.version;
+    const approved = dispatch(
+      state,
+      { type: "APPROVE_BRANCH", input: { branchId, branchVersion: version } },
+      human,
+    );
+    expect(approved.ok).toBe(true);
+    if (!approved.ok) throw new Error("unreachable");
+    expect(
+      dispatch(
+        approved.value,
+        { type: "MERGE_BRANCH", input: { branchId, branchVersion: version } },
+        human,
+      ).ok,
+    ).toBe(true);
+  });
 });

@@ -331,11 +331,26 @@ export function dispatch(
       fastest_recovery: "Fastest recovery",
       highest_resilience: "Highest resilience",
     }[command.input.intent];
+    // A branch must start from the architecture as it stands, including
+    // anything the reviewer built on the baseline. Freezing the derived graph
+    // into a revision keeps the branch's base immutable.
+    const baselineBranch = next.branches["branch-baseline"]!;
+    let baseRevisionId = baselineBranch.baseRevisionId;
+    if (baselineBranch.operations.length > 0) {
+      baseRevisionId = `revision-${baselineBranch.id}-v${baselineBranch.version}`;
+      next.revisions[baseRevisionId] ??= {
+        id: baseRevisionId,
+        workspaceId: next.workspace.id,
+        parentRevisionId: baselineBranch.baseRevisionId,
+        graph,
+        createdAt: now,
+      };
+    }
     next.branches[id] = {
       id,
       workspaceId: next.workspace.id,
       parentBranchId: "branch-baseline",
-      baseRevisionId: "revision-baseline",
+      baseRevisionId,
       name: canonicalName,
       status: "draft",
       createdBy: actor,
