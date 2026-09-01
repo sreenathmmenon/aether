@@ -588,6 +588,10 @@ button {
   width: 100%;
   height: 100%;
   overflow: visible;
+  /* Above the region boxes, below the component cards, which sit at 2. The
+     edges are trimmed to the card boundaries so they never need to overlap
+     one, but an explicit layer keeps them off the region backgrounds. */
+  z-index: 1;
 }
 .architecture-lines line {
   stroke-width: 2.3;

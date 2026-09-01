@@ -16,6 +16,7 @@ import {
   regionRect,
   regionRectPercent,
 } from "./region-bounds";
+import { edgeBetween } from "./edge-geometry";
 import { scenarioNarrative } from "./scenario-copy";
 import { useModalDialog } from "./use-modal-dialog";
 import { syncExplanation, syncTone } from "./sync-status";
@@ -1621,10 +1622,14 @@ export function App() {
                   dragPreview?.id === source.id ? dragPreview : source.position;
                 const targetPosition =
                   dragPreview?.id === target.id ? dragPreview : target.position;
-                const x1 = sourcePosition.x + 75;
-                const y1 = sourcePosition.y + 35;
-                const x2 = targetPosition.x + 75;
-                const y2 = targetPosition.y + 35;
+                // Trimmed to the card boundaries: drawn centre to centre, all
+                // but a sliver of every edge sat underneath the component
+                // cards, which stack above this SVG.
+                const { x1, y1, x2, y2 } = edgeBetween(
+                  sourcePosition,
+                  targetPosition,
+                  nodeExtent,
+                );
                 return (
                   <g key={relation.id}>
                     <line
