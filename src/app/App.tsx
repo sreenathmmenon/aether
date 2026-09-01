@@ -162,6 +162,9 @@ export function App() {
   const [toolCount, setToolCount] = useState(0);
   const [toolCalls, setToolCalls] = useState<ToolCall[]>([]);
   const [registeredTools, setRegisteredTools] = useState<string[]>([]);
+  // Feedback has to appear beside the control that caused it; the shared
+  // activity strip sits far below the fold while this form is in use.
+  const [composerNotice, setComposerNotice] = useState("");
   const [syncStatus, setSyncStatus] = useState("Checking sync");
   const [systemBrief, setSystemBrief] = useState("");
   // Empty until a graph is loaded; the selection then falls back to whichever
@@ -747,9 +750,13 @@ export function App() {
     event.preventDefault();
     const name = componentDraft.name.trim();
     if (name.length < 2) {
+      setComposerNotice(
+        "Give the component a name of at least two characters.",
+      );
       setMessage("Name the component before adding it to the architecture.");
       return;
     }
+    setComposerNotice("");
     const regionId = componentDraft.regionId || regions[0]?.id || "";
     const added = dispatch(
       state,
@@ -769,6 +776,7 @@ export function App() {
       humanActor,
     );
     if (!added.ok) {
+      setComposerNotice(added.message);
       setMessage(added.message);
       return;
     }
@@ -797,6 +805,11 @@ export function App() {
     setMessage(
       connected?.ok && dependsOn
         ? `${name} added and wired to ${graph.entities[dependsOn]?.name ?? dependsOn}. Recalculate to see its consequence.`
+        : `${name} added. Add another component to connect it to.`,
+    );
+    setComposerNotice(
+      dependsOn
+        ? `${name} added and wired in.`
         : `${name} added. Add another component to connect it to.`,
     );
     setComponentDraft((draft) => ({ ...draft, name: "" }));
@@ -948,14 +961,23 @@ export function App() {
             </small>
           </button>
           {branchCount === 0 ? (
-            <button
-              className="create-future-button"
-              disabled={unbuilt}
-              onClick={createFutures}
-            >
-              <span>✦</span>{" "}
-              {unbuilt ? "Build system first" : "Create repair futures"}
-            </button>
+            <>
+              <button
+                className="create-future-button"
+                disabled={unbuilt}
+                onClick={createFutures}
+              >
+                <span>✦</span>{" "}
+                {unbuilt ? "Build system first" : "Create repair futures"}
+              </button>
+              {unbuilt && (
+                <p className="rail-hint">
+                  Add components under <strong>Build your system</strong> on the
+                  right, or ask a connected agent to model it, then repair
+                  futures unlock here.
+                </p>
+              )}
+            </>
           ) : (
             <div className="future-stack">
               {futures.map((branch) => {
@@ -1471,6 +1493,11 @@ export function App() {
                     Add
                   </button>
                 </div>
+                {composerNotice && (
+                  <p className="composer-notice" role="status">
+                    {composerNotice}
+                  </p>
+                )}
                 <select
                   aria-label="Depends on"
                   value={componentDraft.dependsOn || selectedEntity?.id || ""}

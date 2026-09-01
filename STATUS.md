@@ -477,6 +477,10 @@ The detailed plan is in `docs/V3_REVERSE_WINNER_PLAN.md`. V3 keeps the challenge
 - [x] **M15.17 — Verify the batch modelling tool on the deployed origin** `DONE`
   - Evidence: `document.modelContext.getTools()` on the live own-system canvas returns ten tools including `model_architecture`, matching the count asserted by the registry test and stated in the README, evaluation set, and compliance checklist. Driving the tool directly builds three components and two dependencies in a single call, returning per-component identifiers and the next action rather than aborting on a partial failure.
 
+- [x] **M15.18 — Put the composer's outcome where the reviewer is looking** `DONE`
+  - Acceptance: every add attempt reports its result beside the form.
+  - Evidence: an independent audit reported the Add control doing nothing on a first visit. Reproduced against production: Add works — a named component appears immediately — but the auditor was driving the field by assigning `value` directly, which React discards, so every submission carried an empty name and was refused. The refusal was real and so was their experience of nothing happening, because the only feedback rendered in the activity strip 994 pixels below the form, off screen. Success, refusal, and validation messages now appear inline at the composer. The disabled repair-futures control also said "Build system first" without saying where building happens; it now points to the panel that does it.
+
 ## Milestone 13 — Real-time architecture decision room
 
 - [x] **M13.1 — Define and build the unmistakable collaborative decision-room journey** `DONE`

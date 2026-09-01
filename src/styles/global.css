@@ -1762,3 +1762,25 @@ button {
 .decision-replay li.replay-system strong {
   color: var(--muted);
 }
+
+/* Outcome of an add lands beside the form, not in a strip below the fold. */
+.composer-notice {
+  margin: 0;
+  padding: 6px 8px;
+  border-left: 2px solid var(--cyan);
+  background: rgba(17, 167, 184, 0.08);
+  color: #35485f;
+  font-size: 10.5px;
+  line-height: 1.4;
+}
+
+/* A disabled control must say where the missing step happens. */
+.rail-hint {
+  margin: 9px 0 0;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.45;
+}
+.rail-hint strong {
+  color: var(--ink);
+}
