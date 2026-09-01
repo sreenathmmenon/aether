@@ -1435,4 +1435,75 @@ describe("Aether WebMCP registry", () => {
     expect(compared.humanGate.toLowerCase()).toContain("approve");
     registry?.dispose();
   });
+
+  it("gives a model the same metrics the interface shows a person", async () => {
+    // The evidence panel shows availability, recovery, latency and cost. The
+    // comparison tool returned three of the four, so a model weighing the
+    // same trade-off could not see latency. Withholding a metric the human
+    // has is an asymmetry with nothing behind it.
+    const tools: RegisteredTool[] = [];
+    const registry = createAetherToolRegistry(() => {}, undefined, {
+      registerTool: async (tool) => {
+        tools.push(tool as unknown as RegisteredTool);
+      },
+    });
+    const branched = dispatch(
+      createInitialState(paymentPlatformBaseline, "payment-platform"),
+      {
+        type: "CREATE_BRANCH",
+        input: { name: "Repair", intent: "highest_resilience" },
+      },
+    );
+    if (!branched.ok) throw new Error("fixture branch must be created");
+    const simulated = dispatch(branched.value, {
+      type: "RUN_SCENARIO",
+      input: {
+        branchId: "branch-highest_resilience",
+        scenario: "regional_outage",
+      },
+    });
+    if (!simulated.ok) throw new Error("scenario must run");
+    await registry?.refresh(simulated.value);
+
+    const compared = JSON.parse(
+      String(
+        await tools
+          .find((tool) => tool.name === "compare_architecture_futures")
+          ?.execute({}),
+      ),
+    ) as {
+      futures: {
+        evidence: Record<string, unknown>[];
+      }[];
+    };
+    const evidence = compared.futures[0]!.evidence[0]!;
+    for (const metric of [
+      "availability",
+      "rtoMinutes",
+      "latencyMs",
+      "monthlyCostUsd",
+    ])
+      expect(evidence[metric], `${metric} must reach a model`).toBeTypeOf(
+        "number",
+      );
+
+    // And the failure-domain read carries the same four.
+    const inspected = JSON.parse(
+      String(
+        await tools
+          .find((tool) => tool.name === "inspect_failure_domain")
+          ?.execute({ scenario: "regional_outage" }),
+      ),
+    ) as Record<string, unknown>;
+    for (const metric of [
+      "availability",
+      "rtoMinutes",
+      "latencyMs",
+      "monthlyCostUsd",
+    ])
+      expect(inspected[metric], `${metric} must reach a model`).toBeTypeOf(
+        "number",
+      );
+    registry?.dispose();
+  });
 });

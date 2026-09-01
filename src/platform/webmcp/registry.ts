@@ -561,6 +561,7 @@ export function createAetherToolRegistry(
             blastRadius: run.affectedEntityIds.map(named),
             availability: run.availability,
             rtoMinutes: run.rtoMinutes,
+            latencyMs: run.latencyMs,
             monthlyCostUsd: run.monthlyCostUsd,
             sloViolations: run.sloViolations,
             decisionVariables: [
@@ -1008,6 +1009,11 @@ export function createAetherToolRegistry(
                       scenario: run.scenario,
                       availability: run.availability,
                       rtoMinutes: run.rtoMinutes,
+                      // The interface shows latency beside the other three,
+                      // and a model weighing the same trade-off could not see
+                      // it. Withholding a metric the human has is an
+                      // asymmetry with no reason behind it.
+                      latencyMs: run.latencyMs,
                       monthlyCostUsd: run.monthlyCostUsd,
                       violations: run.sloViolations.length,
                     }),

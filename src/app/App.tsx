@@ -2378,8 +2378,16 @@ export function App() {
         )}
         <div className="review-actions">
           <span>
+            {/* This sits immediately above the commit control, so it has to
+                say what the evidence covers in words rather than echo an
+                internal enum. "Evidence scope: affected" told a reviewer
+                nothing they could act on. */}
             {activeSimulation
-              ? `Evidence scope: ${activeSimulation.rerunScope}`
+              ? `${
+                  activeSimulation.rerunScope === "affected"
+                    ? "Recomputed after your edits"
+                    : "First run on this future"
+                } · ${activeSimulation.affectedEntityIds.length} of ${entities.length} components affected`
               : "Run a scenario to make approval eligible."}
             {state.workspace.costCeilingUsd
               ? ` · human cost ceiling $${state.workspace.costCeilingUsd.toLocaleString()}`
