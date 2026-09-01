@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import { paymentPlatformBaseline } from "./payment-platform/baseline";
 import { aiPlatformBaseline } from "./ai-platform/baseline";
 import { rideHailingBaseline } from "./ride-hailing/baseline";
+import { blankBaseline } from "./blank/baseline";
+import { runScenario } from "@simulation/engine";
 import type { ArchitectureGraph } from "@domain/architecture/types";
 
 /**
@@ -91,4 +93,34 @@ describe("shipped architecture layouts", () => {
       }
     });
   }
+});
+
+describe("the unbuilt canvas", () => {
+  it("reports an absence of measurements rather than a total outage", () => {
+    // The interface renders these as dashes. A reviewer opening their own
+    // system must not be shown 0.00% availability in red, which reads as a
+    // catastrophic failure of an architecture that does not exist yet.
+    const run = runScenario(
+      blankBaseline,
+      "regional_outage",
+      "branch-baseline",
+      1,
+    );
+    expect(run.availability).toBe(0);
+    expect(run.rtoMinutes).toBe(0);
+    expect(run.monthlyCostUsd).toBe(0);
+    expect(run.affectedEntityIds).toHaveLength(0);
+    expect(run.causalChain).toHaveLength(0);
+    // The engine says plainly why, so the interface never has to guess.
+    expect(run.sloViolations).toEqual([
+      "The architecture has no components and serves no traffic",
+    ]);
+  });
+
+  it("has regions to build into but no components in them", () => {
+    const entities = Object.values(blankBaseline.entities);
+    expect(entities.every((entity) => entity.kind === "region")).toBe(true);
+    expect(entities.length).toBeGreaterThan(0);
+    expect(Object.keys(blankBaseline.relationships)).toHaveLength(0);
+  });
 });

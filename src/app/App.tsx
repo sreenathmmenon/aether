@@ -251,6 +251,7 @@ export function App() {
     { id: string; x: number; y: number } | undefined
   >(undefined);
   const canvasRef = useRef<HTMLDivElement>(null);
+  const briefRef = useRef<HTMLTextAreaElement>(null);
   const dragRef = useRef<
     | {
         id: string;
@@ -1571,9 +1572,12 @@ export function App() {
                 </button>
               );
             })}
-            <div className="failure-beacon">
-              <i /> {scenarioCopy[selectedScenario].short}
-            </div>
+            {/* An empty canvas has no failing region to announce. */}
+            {!unbuilt && (
+              <div className="failure-beacon">
+                <i /> {scenarioCopy[selectedScenario].short}
+              </div>
+            )}
             <ol className="causal-timeline" aria-label="Causal failure trace">
               {traceSteps.map((step, index) => (
                 <li
@@ -1594,6 +1598,44 @@ export function App() {
                 </li>
               ))}
             </ol>
+            {/* On an empty canvas the primary action lived below the fold, so
+                a reviewer arriving to model their own system saw a blank grid
+                and no way in. Put the entry point where they are looking. */}
+            {unbuilt && (
+              <div className="canvas-empty">
+                <p className="eyebrow">Start here</p>
+                <strong>Describe your architecture in a sentence.</strong>
+                <p>
+                  Name the services, stores, and queues and how they depend on
+                  each other. Aether models them, then proves what a failure
+                  costs.
+                </p>
+                <button
+                  type="button"
+                  className="canvas-empty-cta"
+                  onClick={() => {
+                    const brief = briefRef.current;
+                    if (!brief) return;
+                    // Scroll the window itself and only focus once it has
+                    // settled: focusing first cancels the smooth scroll and
+                    // leaves the reviewer typing into a field they cannot see.
+                    const target =
+                      brief.getBoundingClientRect().top +
+                      window.scrollY -
+                      window.innerHeight / 2 +
+                      brief.offsetHeight / 2;
+                    // The workspace re-renders on its sync poll, which
+                    // interrupts a smooth scroll and drops the reviewer back
+                    // at the top. Jump directly instead, then focus.
+                    window.scrollTo({ top: target });
+                    brief.focus({ preventScroll: true });
+                  }}
+                >
+                  Write the brief →
+                </button>
+                <small>Or let a connected agent build it through WebMCP.</small>
+              </div>
+            )}
             <div className="canvas-hint">
               {writable
                 ? "Drag a component to record a human topology edit"
@@ -1610,16 +1652,22 @@ export function App() {
                   "Baseline breach" made the heading contradict the numbers
                   directly beneath it. */}
               <h2>
-                {activeSimulation
-                  ? scenarioCopy[selectedScenario].label
-                  : activeBranch.id === "branch-baseline"
-                    ? "Baseline breach"
-                    : `${activeBranch.name} — projected`}
+                {unbuilt
+                  ? "Nothing to measure yet"
+                  : activeSimulation
+                    ? scenarioCopy[selectedScenario].label
+                    : activeBranch.id === "branch-baseline"
+                      ? "Baseline breach"
+                      : `${activeBranch.name} — projected`}
               </h2>
             </div>
             <span
               className={
-                evidence.sloViolations.length ? "risk-dot" : "safe-dot"
+                unbuilt
+                  ? "idle-dot"
+                  : evidence.sloViolations.length
+                    ? "risk-dot"
+                    : "safe-dot"
               }
             />
           </div>
@@ -1631,30 +1679,42 @@ export function App() {
                 ? "Nothing is modelled yet. Add the components of your system and I will show you what a regional failure costs."
                 : scenarioCopy[selectedScenario].agent}
           </p>
+          {/* An empty canvas has no measurements. Rendering 0.00% in red reads
+              as a total outage rather than as an absence of data, which is a
+              false claim on the first screen of the reviewer's own system. */}
           <div className="metric-grid">
             <div>
               <span>Availability</span>
               <strong
                 className={
-                  evidence.sloViolations.length || evidence.availability < 99.9
-                    ? "critical"
-                    : "safe"
+                  unbuilt
+                    ? "metric-empty"
+                    : evidence.sloViolations.length ||
+                        evidence.availability < 99.9
+                      ? "critical"
+                      : "safe"
                 }
               >
-                {evidence.availability.toFixed(2)}%
+                {unbuilt ? "—" : `${evidence.availability.toFixed(2)}%`}
               </strong>
             </div>
             <div>
               <span>Recovery</span>
-              <strong>{evidence.rtoMinutes}m</strong>
+              <strong className={unbuilt ? "metric-empty" : undefined}>
+                {unbuilt ? "—" : `${evidence.rtoMinutes}m`}
+              </strong>
             </div>
             <div>
               <span>Latency</span>
-              <strong>{evidence.latencyMs}ms</strong>
+              <strong className={unbuilt ? "metric-empty" : undefined}>
+                {unbuilt ? "—" : `${evidence.latencyMs}ms`}
+              </strong>
             </div>
             <div>
               <span>Monthly cost</span>
-              <strong>${evidence.monthlyCostUsd.toLocaleString()}</strong>
+              <strong className={unbuilt ? "metric-empty" : undefined}>
+                {unbuilt ? "—" : `$${evidence.monthlyCostUsd.toLocaleString()}`}
+              </strong>
             </div>
           </div>
           <div
@@ -1705,6 +1765,7 @@ export function App() {
                 </small>
               </div>
               <textarea
+                ref={briefRef}
                 value={systemBrief}
                 maxLength={420}
                 rows={4}
