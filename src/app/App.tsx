@@ -1986,6 +1986,27 @@ export function App() {
                   </button>
                 </>
               )}
+              {/* Removal was implemented, guarded and tested but unreachable:
+                  no interface control and no agent tool dispatched it, so the
+                  rule that an agent cannot dismantle a system was protecting a
+                  command nothing could issue. A person can remove a component
+                  from a future they are shaping; the agent still cannot. */}
+              {selectedEntity && writable && (
+                <button
+                  className="secondary-action"
+                  onClick={() =>
+                    apply({
+                      type: "REMOVE_COMPONENT",
+                      input: {
+                        branchId: activeBranch.id,
+                        entityId: selectedEntity.id,
+                      },
+                    })
+                  }
+                >
+                  Remove {selectedEntity.name} from this future
+                </button>
+              )}
               <form className="component-composer" onSubmit={addComponent}>
                 <label htmlFor="component-name">
                   Add a component to this future

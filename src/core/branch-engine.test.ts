@@ -837,4 +837,93 @@ describe("Aether command pipeline", () => {
       );
     }
   });
+
+  it("keeps removal a human action now that it is reachable", () => {
+    // Removal was implemented, guarded and tested but unreachable: no
+    // interface control and no agent tool dispatched it, so the rule that an
+    // agent cannot dismantle a system guarded a command nothing could issue.
+    // A person can now remove a component from a future they are shaping, so
+    // the guard has to hold against an agent that tries the same command.
+    const agent = { id: "probe", kind: "agent" as const, displayName: "Probe" };
+    const created = dispatch(createInitialState(paymentPlatformBaseline), {
+      type: "CREATE_BRANCH",
+      input: { name: "Repair", intent: "highest_resilience" },
+    });
+    if (!created.ok) throw new Error("fixture branch must be created");
+    const branchId = "branch-highest_resilience";
+    const state = created.value;
+    const graph = deriveGraph(state, state.branches[branchId]!);
+    const heavilyUsed = Object.values(graph.entities).find(
+      (entity) =>
+        entity.kind !== "region" &&
+        Object.values(graph.relationships).filter(
+          (relation) =>
+            relation.sourceId === entity.id || relation.targetId === entity.id,
+        ).length >= 3,
+    );
+
+    // A human may remove a component from a future they are shaping.
+    const byHuman = dispatch(
+      state,
+      {
+        type: "REMOVE_COMPONENT",
+        input: { branchId, entityId: "reconciliation" },
+      },
+      human,
+    );
+    expect(byHuman.ok, "a person may remove from their own future").toBe(true);
+
+    // An agent may not remove a component several dependencies rely on.
+    if (heavilyUsed) {
+      const byAgent = dispatch(
+        state,
+        {
+          type: "REMOVE_COMPONENT",
+          input: { branchId, entityId: heavilyUsed.id },
+        },
+        agent,
+      );
+      expect(byAgent).toMatchObject({ ok: false, code: "UNAUTHORIZED" });
+    }
+
+    // And an agent may never reduce the architecture below two components.
+    // The rule fires when a removal would leave fewer than two, so it is the
+    // third-from-last removal that is still allowed and the next that is not.
+    let stripped = state;
+    for (const id of ["reconciliation", "queue", "gateway"]) {
+      const step = dispatch(
+        stripped,
+        { type: "REMOVE_COMPONENT", input: { branchId, entityId: id } },
+        human,
+      );
+      if (step.ok) stripped = step.value;
+    }
+    const remaining = Object.values(
+      deriveGraph(stripped, stripped.branches[branchId]!).entities,
+    ).filter((entity) => entity.kind !== "region");
+    expect(remaining, "two components are left").toHaveLength(2);
+
+    const wouldLeaveOne = dispatch(
+      stripped,
+      {
+        type: "REMOVE_COMPONENT",
+        input: { branchId, entityId: remaining[0]!.id },
+      },
+      agent,
+    );
+    expect(wouldLeaveOne).toMatchObject({ ok: false, code: "UNAUTHORIZED" });
+
+    // A person may still do it: the limit is on agent authority, not on the
+    // model, and the reviewer owns their own architecture.
+    expect(
+      dispatch(
+        stripped,
+        {
+          type: "REMOVE_COMPONENT",
+          input: { branchId, entityId: remaining[0]!.id },
+        },
+        human,
+      ).ok,
+    ).toBe(true);
+  });
 });
