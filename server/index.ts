@@ -4,6 +4,7 @@ import { Hono } from "hono";
 import { Pool } from "pg";
 // The persistence rules live in src so the test suite covers them; the server
 // must not keep a second copy that drifts from the one under test.
+import { describeOriginTrialToken } from "../src/platform/webmcp/origin-trial.ts";
 import {
   isWorkspace,
   maxWorkspaceBytes,
@@ -152,4 +153,12 @@ const port = Number(process.env.PORT ?? 3000);
 
 serve({ fetch: app.fetch, port }, (info) => {
   console.log(`Aether listening on http://localhost:${info.port}`);
+  // An unreadable or expired origin-trial token does not fail loudly: Chrome
+  // simply declines the feature and the page looks as though it never had a
+  // WebMCP surface. Say so at startup rather than leaving it to be discovered
+  // in a reviewer's browser.
+  const trial = describeOriginTrialToken(webMcpOriginTrialToken);
+  console.log(
+    trial.ok ? trial.detail : `WebMCP origin trial — ${trial.detail}`,
+  );
 });

@@ -10,5 +10,10 @@
     "noEmit": true,
     "allowImportingTsExtensions": true
   },
-  "include": ["server", "vite.config.ts", "src/core/workspace-contract.ts"]
+  "include": [
+    "server",
+    "vite.config.ts",
+    "src/core/workspace-contract.ts",
+    "src/platform/webmcp/origin-trial.ts"
+  ]
 }
