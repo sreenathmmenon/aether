@@ -113,6 +113,16 @@ button {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+/* An empty live region must draw nothing but stay in the accessibility tree:
+   display:none would remove it, and a region that does not exist before its
+   content arrives is not announced. */
+.header-call-idle {
+  padding: 0;
+  border: 0;
+  background: none;
+  width: 0;
+  overflow: hidden;
+}
 .header-call-rejected {
   border-color: rgba(193, 74, 60, 0.32);
   background: rgba(193, 74, 60, 0.09);

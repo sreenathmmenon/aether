@@ -1168,14 +1168,19 @@ export function App() {
               ? `WebMCP live · ${toolCount} tools`
               : "WebMCP not detected"}
           </span>
-          {latestCall && (
-            <span
-              className={`header-call header-call-${latestCall.outcome}`}
-              aria-live="polite"
-            >
-              <code>{latestCall.name}</code>
-            </span>
-          )}
+          {/* The live region has to exist before the content arrives. Mounting
+              it together with the message means a screen reader sees a new
+              node rather than a changed region, and usually says nothing. */}
+          <span
+            className={
+              latestCall
+                ? `header-call header-call-${latestCall.outcome}`
+                : "header-call header-call-idle"
+            }
+            aria-live="polite"
+          >
+            {latestCall && <code>{latestCall.name}</code>}
+          </span>
           {/* A shared room changes who sees these decisions, so it must be
               visible rather than implied by a URL parameter nobody reads. */}
           {sharedRoom && (
