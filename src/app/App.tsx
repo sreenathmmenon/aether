@@ -759,9 +759,14 @@ export function App() {
       void loadRemoteWorkspace().then((remote) => {
         const remoteVersion = remote?.workspace.persistenceVersion ?? 0;
         if (!remote || remoteVersion <= remoteVersionRef.current) return;
+        // The candidate is the merge, not the incoming state, because the
+        // merge is what this path adopts. Testing `remote` refused whenever
+        // this page held a note or command the server had not seen yet —
+        // loss the merge does not cause — and a refusal here stops the poll
+        // reconciling at all.
         let discards = false;
         setState((current) => {
-          discards = wouldDiscardWork(current, remote);
+          discards = wouldDiscardWork(current, mergeEvidence(current, remote));
           return current;
         });
         // Refusing the incoming state keeps the reviewer's work, but it also
@@ -805,9 +810,11 @@ export function App() {
       if (event.key !== storageKey || !event.newValue) return;
       const incoming = parsePersistedState(event.newValue);
       if (!incoming) return;
+      // The merge is what is adopted here too, so it is what the guard has
+      // to be asked about.
       let discards = false;
       setState((current) => {
-        discards = wouldDiscardWork(current, incoming);
+        discards = wouldDiscardWork(current, mergeEvidence(current, incoming));
         return current;
       });
       // Same reasoning as the poll: keeping local work means the page and the

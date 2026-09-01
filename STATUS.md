@@ -1801,5 +1801,13 @@ was already underway again.
   - **First**, the badge alone was set to `Synced` after reconciling. That would have reported shared work that was still local — the inverse of the defect it was meant to fix. Reverted once the network showed no retry.
   - **Second**, the reconcile was made to write the merged state back. Correct and necessary, but still no PUT: the discard branch was firing before it.
   - **Third**, the real cause. `mergeEvidence` unioned simulations and took `...incoming` for everything else, so a merge genuinely dropped the local audit and notes — and `wouldDiscardWork` correctly refused it. The merge now unions audit entries and notes too, keyed on content and timestamp because ids are positional and two tabs mint `event-5` for different events.
-  - **And the last step**: the guard was asking about `remote` while the code adopts the _merge_. A concurrent write always fails that question, so every conflict took the refusal branch. Only this path merges, so only this path tests the merge; the two callers that adopt wholesale rightly test the incoming state.
+  - **And the last step**: the guard was asking about `remote` while the code adopts the _merge_. A concurrent write always fails that question, so every conflict took the refusal branch. Fixed here first, on the belief that the other two callers adopt the incoming state wholesale — which was wrong, and checking rather than trusting that sentence found the same mismatch in the poll and the storage listener. M130 corrects all three.
   - Verified against the deployed origin, end to end: the sequence is now `PUT 409 → GET 200 → PUT 409 → PUT 200`, the badge reads `Synced`, and the server holds **both** reviewers' notes across seven audit entries at version 7.
+
+## Milestone 130 — The same mismatch in the two paths I had excused
+
+- [x] **M130.1 — Check the sentence rather than trusting it** `DONE`
+  - Acceptance: every path that adopts shared state asks the guard about the state it actually adopts.
+  - Evidence: M129 ended with the claim that the other two guard callers "adopt `remote` wholesale and rightly test it". Checking that sentence instead of leaving it found it false: the poll and the `storage` listener both adopt `mergeEvidence(current, incoming)` too, and both were testing the raw incoming state. They carried the identical defect, and it would have refused a valid reconciliation whenever this page held a note or command the server had not seen — which in a shared room is most of the time.
+  - Both corrected. A test now holds all three call sites to the rule and asserts there are exactly three, so a fourth adoption path cannot quietly reintroduce it. Reverting either one fails.
+  - The M129 entry was corrected rather than left standing, because a status file that records a wrong conclusion is worse than one that records nothing.

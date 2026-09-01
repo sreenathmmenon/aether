@@ -104,6 +104,26 @@ describe("the interface honours the ARIA it declares", () => {
     expect(helper).toMatch(/Someone else changed this workspace/);
   });
 
+  it("asks the guard about the state each path actually adopts", () => {
+    // Three paths adopt incoming shared state, and every one of them adopts
+    // `mergeEvidence(current, incoming)` — but two asked the guard about the
+    // raw incoming state instead. That refuses whenever this page holds a
+    // note or command the server has not seen, which is loss the merge does
+    // not cause, so a valid reconciliation is rejected and the page stops
+    // syncing. Fixed in the conflict path first; the same mismatch was then
+    // found in the poll and the storage listener.
+    const calls = [
+      ...appSource.matchAll(/wouldDiscardWork\(([\s\S]{0,90}?)\)/g),
+    ];
+    // Three call sites, or this is checking something that moved.
+    expect(calls.length, "the guard call sites moved").toBe(3);
+    for (const [, argument] of calls)
+      expect(
+        argument.replace(/\s+/g, " "),
+        "a guard call tests something other than the merge it adopts",
+      ).toMatch(/current, mergeEvidence\(current, \w+/);
+  });
+
   it("writes the merged state back after a refused write", () => {
     // A refused write reloaded the shared state, merged it, and stopped.
     // The merge holds the local change, so that change never reached the
