@@ -1243,3 +1243,15 @@ was already underway again.
   - A card is centred on its coordinate by `transform: translate(-50%, -50%)`, so the position already is the centre. `edgeBetween` added half the extent on top, shifting every edge down and right by half a card. Removing that offset drops the measured error from a uniform 39 pixels to 6, 6 and -4 — the remaining variation is the deliberate trim toward each target.
   - `edge-geometry.test.ts` had encoded the same top-left assumption, computing card bounds as `x` to `x + width`, so it passed throughout. It now uses `x ± width/2` and additionally asserts a horizontal edge stays on the line between the two centres, which the old version could not have caught.
   - One change was made and reverted along the way: `preserveAspectRatio="none"` on the edge layer, on the theory that the viewBox was letterboxing. Measuring the SVG's own screen mapping showed it already spans its container exactly — origin 130, span 578, container height 578 — so the attribute was unnecessary and was taken back out rather than left in as a harmless-looking guess.
+
+## Milestone 81 — Selection a keyboard user can hear
+
+- [x] **M81.1 — The canvas announces which component is selected** `DONE`
+  - Acceptance: someone navigating the canvas without a mouse knows what they have selected.
+  - Evidence: the nodes are real buttons, all five keyboard-focusable with descriptive labels — "DATABASE Primary Ledger — direct failure". But selection was carried by a `node-selected` class alone, so a screen reader announced five identical-sounding buttons and no state, while selection drives the inspector panel and the whole property editor added in M68.
+  - They now carry `aria-pressed`. Verified against the deployed origin: the causal-break default reads `true` on Primary Ledger with the rest `false`, and selecting Reconciliation moves it, with exactly one pressed at a time.
+  - The future cards were checked for the same gap and found already correct — their accessible name ends in "Viewing" rather than "Inspect", so the selected one is distinguishable by name. That is a different valid pattern, so it was left alone; the canvas nodes were the outlier.
+
+- [x] **M81.2 — Audit the geometry class M80 exposed** `DONE`
+  - Evidence: M80's defect was code and test sharing one wrong assumption about where a card sits. `region-bounds.ts` does the same half-node arithmetic, so it was checked next — and is correct, documenting the `translate(-50%, -50%)` centring and reaching half a node in every direction. Confirmed live: all five components sit inside their own region band.
+  - The causal trace was checked too, since it positions overlays in the same space. It walks the engine's real chain in order — Primary Ledger, Authentication, API Gateway, Bengaluru Queue, Reconciliation — across seven steps and resets. No change was warranted in either.
