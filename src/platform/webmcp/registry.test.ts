@@ -1353,4 +1353,86 @@ describe("Aether WebMCP registry", () => {
     registry?.dispose();
     expect(live, "dispose leaves nothing registered").toBe(0);
   });
+
+  it("proposes a reversible change and compares futures on evidence", async () => {
+    // These two tools only appear once a repair future exists, and until now
+    // only their names were asserted — neither had ever been executed in a
+    // test. They are the pair a model uses to reason about a trade-off, so
+    // what they return, and what they refuse, matters.
+    const tools: RegisteredTool[] = [];
+    const registry = createAetherToolRegistry(() => {}, undefined, {
+      registerTool: async (tool) => {
+        tools.push(tool as unknown as RegisteredTool);
+      },
+    });
+    const branched = dispatch(
+      createInitialState(paymentPlatformBaseline, "payment-platform"),
+      {
+        type: "CREATE_BRANCH",
+        input: { name: "Repair", intent: "highest_resilience" },
+      },
+    );
+    if (!branched.ok) throw new Error("fixture branch must be created");
+    await registry?.refresh(branched.value);
+    const branchId = "branch-highest_resilience";
+    const propose = tools.find(
+      (tool) => tool.name === "propose_architecture_change",
+    )!;
+    const compare = tools.find(
+      (tool) => tool.name === "compare_architecture_futures",
+    )!;
+
+    // A proposal applies and advances the branch version.
+    const applied = JSON.parse(
+      String(
+        await propose.execute({
+          branchId,
+          entityId: "ledger",
+          property: "replicationMode",
+          value: "sync",
+        }),
+      ),
+    ) as { branchVersion?: number; error?: string; nextAction?: string };
+    expect(applied.error).toBeUndefined();
+    expect(applied.branchVersion).toBeGreaterThan(1);
+    expect(applied.nextAction).toBe("run_failure_scenario");
+
+    // A property outside the proposable set is refused rather than silently
+    // widening what an agent may change.
+    const widened = JSON.parse(
+      String(
+        await propose.execute({
+          branchId,
+          entityId: "ledger",
+          property: "peakRps",
+          value: 99,
+        }),
+      ),
+    ) as { error?: string };
+    expect(widened.error).toBe("INVALID_INPUT");
+
+    // And a committed architecture stays committed.
+    const onBaseline = JSON.parse(
+      String(
+        await propose.execute({
+          branchId: "branch-baseline",
+          entityId: "ledger",
+          property: "capacityRps",
+          value: 99999,
+        }),
+      ),
+    ) as { error?: string; nextAction?: string };
+    expect(onBaseline.error).toBe("NOT_AVAILABLE");
+    expect(onBaseline.nextAction).toBeTruthy();
+
+    // Comparison names the human gate and reports evidence per future.
+    const compared = JSON.parse(String(await compare.execute({}))) as {
+      futures: { name: string; status: string; evidence: unknown[] }[];
+      humanGate: string;
+    };
+    expect(compared.futures).toHaveLength(1);
+    expect(compared.futures[0]!.evidence).toEqual([]);
+    expect(compared.humanGate.toLowerCase()).toContain("approve");
+    registry?.dispose();
+  });
 });
