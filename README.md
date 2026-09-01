@@ -20,9 +20,20 @@ The opening decision room answers five questions immediately: **what is failing,
 
 An architect enters a Mumbai payment-path outage with the decision already visible. The agent traces the critical path, creates three repair futures, and records its evidence-bound recommendation. The architect adds the cost constraint directly on the affected component, Aether recomputes only the affected evidence, and the complete human-agent discussion and command history remain replayable beside the branch diff. The agent never self-approves or bypasses product rules.
 
-## V3 direction
+## Opening a specific system, or a shared room
 
-The next target is the reverse-winner version: a judge describes a system Aether has never seen, an agent builds it through WebMCP, Aether proves its hidden failure paths, and the human approves only after deterministic evidence clears. The plan is captured in [docs/V3_REVERSE_WINNER_PLAN.md](docs/V3_REVERSE_WINNER_PLAN.md).
+The live URL takes two optional parameters.
+
+- `?system=blank` opens an empty canvas for your own architecture. `payment-platform`, `ride-hailing`, and `ai-platform` open the shipped examples. Switching systems in the interface rewrites the address bar, so the current architecture is always shareable.
+- `?room=<name>` puts everyone holding that link into one shared workspace, reconciled every three seconds with optimistic versioning and stale-write rejection. Every change stays attributable to the human or the agent that made it. Without the parameter each visitor keeps their own private workspace.
+
+Both compose: `?system=ride-hailing&room=incident-42`.
+
+Workspaces are unauthenticated evaluation state — see the persistence note under Stack.
+
+## Bring your own system
+
+A reviewer describes a system Aether has never seen, an agent builds it through WebMCP or the brief parser builds it unassisted, Aether proves its hidden failure paths on the same deterministic engine the shipped examples use, and the human approves only after the evidence clears. The original plan is in [docs/V3_REVERSE_WINNER_PLAN.md](docs/V3_REVERSE_WINNER_PLAN.md).
 
 ## Product principles
 

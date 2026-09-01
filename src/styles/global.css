@@ -204,6 +204,25 @@ button {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.room-live-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.room-invite {
+  padding: 7px 13px;
+  border: 1px solid rgba(47, 106, 191, 0.32);
+  border-radius: 999px;
+  color: var(--blue);
+  background: rgba(47, 106, 191, 0.07);
+  font-size: 12px;
+  font-weight: 750;
+  cursor: pointer;
+}
+.room-invite:hover {
+  background: rgba(47, 106, 191, 0.13);
+}
 .shared-live {
   padding: 5px 8px;
   border: 1px solid rgba(36, 135, 101, 0.25);

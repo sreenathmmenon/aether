@@ -2066,9 +2066,47 @@ export function App() {
             <p className="eyebrow">Live decision record</p>
             <h2>Discussion attached to the architecture, not lost in chat.</h2>
           </div>
-          <span className="room-live">
-            <i /> Shared and durable
-          </span>
+          {/* This panel claimed the record was shared without offering any way
+              to share it. Hand over a link that puts someone else in this
+              workspace, rather than documenting a URL parameter nobody sees. */}
+          <div className="room-live-group">
+            <span className="room-live">
+              <i />{" "}
+              {sharedRoom
+                ? `Shared room · ${sharedRoom.replace(/^room-/, "")}`
+                : "Shared and durable"}
+            </span>
+            <button
+              type="button"
+              className="room-invite"
+              onClick={() => {
+                const url = new URL(window.location.href);
+                const joining = !sharedRoom;
+                if (joining)
+                  url.searchParams.set(
+                    "room",
+                    `review-${Math.random().toString(36).slice(2, 8)}`,
+                  );
+                const link = url.toString();
+                // Copy first, then reload. The workspace id is resolved once
+                // at load, so opening a room has to reload for this browser to
+                // join it too — otherwise the link works for whoever receives
+                // it while its author stays in their private workspace.
+                const done = () => {
+                  if (joining) window.location.href = link;
+                  else
+                    setMessage(
+                      "Review link copied. Anyone who opens it joins this workspace and sees these decisions live.",
+                    );
+                };
+                const clipboard = navigator.clipboard?.writeText(link);
+                if (clipboard) void clipboard.then(done, done);
+                else done();
+              }}
+            >
+              {sharedRoom ? "Copy review link" : "Open a shared review"}
+            </button>
+          </div>
         </div>
         <div className="decision-room-grid">
           <section
