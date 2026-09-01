@@ -859,3 +859,12 @@ was already underway again.
   - Exercised against the deployed origin first and found them correct: a proposal applies and advances the branch version, comparison reports evidence per future beside the human gate, a property outside the proposable set is refused, and a committed architecture stays committed. Nothing needed fixing, so nothing was changed; the coverage is what was missing. A test now drives all four paths, including that the proposable set stays narrow — replicas, capacity, cost, and replication mode, and nothing else.
   - That assertion took two attempts to verify. Widening the enum in the registry changed nothing because the enum lives in the command schema, so the probe was aimed at the wrong file and its silence meant nothing. Widening the real one fails the test, so the boundary is genuinely guarded.
   - Also checked and found correct: the tool-call activity feed survives the surface re-registering on every graph edit. Four calls across three re-registrations appear in order with the header badge live and the count accurate.
+
+## Milestone 47 — Removal reaches the guards that protect it
+
+- [x] **M47.1 — Make component removal reachable by a person** `DONE`
+  - Acceptance: the rule that an agent cannot dismantle a system guards a command that can actually be issued.
+  - Evidence: `REMOVE_COMPONENT` was implemented, guarded, tested and given an interface label, and nothing dispatched it — no control offered it and no agent tool exposed it. The documented safety rule was protecting a command nobody could send.
+  - A person can now remove a component from a future they are shaping, from the same panel as the other human controls. The agent still has no removal tool, so the asymmetry the submission describes is real in both directions rather than vacuous on one side.
+  - Verified in production: selecting a component offers "Remove Reconciliation from this future", removal takes the future from five components to four, the diff shows "Reconciliation · component removed · present → absent", the record reads "Sreenath removed a component", evidence recomputes, and `getTools()` exposes no removal tool to an agent.
+  - Writing the test found my own assumption wrong rather than a defect: I asserted an agent would be refused with three components left, but the rule refuses a removal that would leave fewer than two, so three-to-two is allowed and two-to-one is not. The test asserts the real boundary, and that a person may still make the removal an agent cannot — the limit is on agent authority, not on the model.
