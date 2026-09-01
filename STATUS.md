@@ -1411,3 +1411,13 @@ was already underway again.
 - [x] **M95.2 — Fix a test that passed on the weaker regression** `DONE`
   - Evidence: the first version of this assertion read a window ending at the first `{syncStatus}`, which falls inside the label's own template literal, so it matched the `title` line above and passed on a label carrying the status word alone — the likelier regression of the two. Scoping it to the label's own value fails both weakenings: a status-only name, and a hardcoded sentence that would drift from the helper.
   - Both were checked by breaking the code rather than assumed, which is the only reason the weak version was caught.
+
+## Milestone 96 — Sweep the hover-only information
+
+- [x] **M96.1 — Audit every `title` rather than wait for a fourth instance** `DONE`
+  - Acceptance: nothing a reviewer needs is reachable only by pointing at it.
+  - Evidence: three separate rounds had each found one explanation that was on screen and not programmatically attached — the approval gate reason in M69, canvas selection in M81, the sync badge in M95. Rather than wait for a fourth, every `title` in the interface was checked against whether its information exists anywhere else. Four uses, two real gaps.
+  - A node drew its load as a decorative `<i>` with the numbers in a title, so a screen reader heard "SERVICE Authentication — direct failure" and never that it runs at 12,000 of 14,000 RPS. Capacity is what produces the deficits that block approval, so this is decision-relevant rather than incidental. The node's own name now carries it, and the wording changes at the same 85 and 100 thresholds the bar changes colour at — checked against the class expression rather than assumed.
+  - The WebMCP chip kept the reason the surface is absent in a title, and that reason exists nowhere else on the page: a reviewer on a browser without WebMCP could not hear why. Its accessible name now carries it when absent.
+  - Two uses were left alone deliberately. The room chip's title repeats its own visible text, and the registered tool names are already listed in the agent-surface panel below, so neither adds anything a reviewer cannot already reach.
+  - Verified against the deployed origin: all five nodes announce their capacity alongside their failure state.
