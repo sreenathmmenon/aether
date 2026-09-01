@@ -416,6 +416,77 @@ export function App() {
   const regions = Object.values(graph.entities).filter(
     (entity) => entity.kind === "region",
   );
+  /**
+   * Region rectangles drawn around the components each region actually
+   * contains. These were fixed CSS percentages, so a region's outline did not
+   * enclose its own members — a component could render outside its failure
+   * domain and inside a neighbouring one, which is exactly the fact the
+   * canvas exists to communicate.
+   */
+  /**
+   * The node box grows with its content and the canvas rescales with the
+   * viewport, so the half-node reach is measured from a rendered node rather
+   * than assumed. A guessed constant left components sitting outside their
+   * own failure domain, which is precisely the fact this canvas exists to
+   * show.
+   */
+  const [nodeExtent, setNodeExtent] = useState({ width: 176, height: 104 });
+  useEffect(() => {
+    const measure = () => {
+      const world = canvasRef.current;
+      const node = world?.querySelector(".architecture-node");
+      if (!world || !node) return;
+      const worldBox = world.getBoundingClientRect();
+      const nodeBox = node.getBoundingClientRect();
+      if (!worldBox.width || !worldBox.height) return;
+      const width = (nodeBox.width / worldBox.width) * 1000;
+      const height = (nodeBox.height / worldBox.height) * 700;
+      setNodeExtent((current) =>
+        Math.abs(current.width - width) < 1 &&
+        Math.abs(current.height - height) < 1
+          ? current
+          : { width, height },
+      );
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [entities.length, graph]);
+
+  const regionBounds = useMemo(() => {
+    const bounds = new Map<
+      string,
+      { left: number; top: number; width: number; height: number }
+    >();
+    for (const region of regions) {
+      const members = entities.filter(
+        (entity) =>
+          (entity.properties as { regionId?: string }).regionId === region.id,
+      );
+      if (members.length === 0) continue;
+      // A node is centred on its position by `translate(-50%, -50%)`, so the
+      // rectangle reaches half a node beyond the outermost members in every
+      // direction, plus room above for the region's own label.
+      const padX = 26;
+      const padTop = 30;
+      const padBottom = 22;
+      const reachX = nodeExtent.width / 2;
+      const reachY = nodeExtent.height / 2;
+      const xs = members.map((member) => member.position.x);
+      const ys = members.map((member) => member.position.y);
+      const left = Math.max(0, Math.min(...xs) - reachX - padX);
+      const top = Math.max(0, Math.min(...ys) - reachY - padTop);
+      const right = Math.min(1000, Math.max(...xs) + reachX + padX);
+      const bottom = Math.min(700, Math.max(...ys) + reachY + padBottom);
+      bounds.set(region.id, {
+        left: (left / 1000) * 100,
+        top: (top / 700) * 100,
+        width: ((right - left) / 1000) * 100,
+        height: ((bottom - top) / 700) * 100,
+      });
+    }
+    return bounds;
+  }, [entities, regions, nodeExtent]);
   // A guardrail should force a trade-off, not create a dead end. Derive it
   // from the cheapest future that actually clears its own violations, so at
   // least one option remains approvable once the ceiling is locked.
@@ -1330,27 +1401,39 @@ export function App() {
             </button>
           </div>
           <div className="canvas-world" ref={canvasRef}>
-            {regions.slice(0, 2).map((region, index) => (
-              <div
-                className={`region-box ${index === 0 ? "region-box-mumbai" : "region-box-blr"}`}
-                key={region.id}
-              >
-                <span>
-                  {region.name.toUpperCase()}
-                  {(() => {
-                    const domain = (
-                      region.properties as { failureDomain?: string }
-                    ).failureDomain;
-                    // A generic canvas names its regions after themselves, so
-                    // only show the failure domain when it adds information.
-                    return domain &&
-                      domain.toLowerCase() !== region.name.toLowerCase()
-                      ? ` · ${domain.toUpperCase()}`
-                      : "";
-                  })()}
-                </span>
-              </div>
-            ))}
+            {regions.map((region, index) => {
+              const box = regionBounds.get(region.id);
+              // A region with no components has nothing to enclose.
+              if (!box) return null;
+              return (
+                <div
+                  className={`region-box ${index === 0 ? "region-box-mumbai" : "region-box-blr"}`}
+                  key={region.id}
+                  style={{
+                    left: `${box.left}%`,
+                    top: `${box.top}%`,
+                    width: `${box.width}%`,
+                    height: `${box.height}%`,
+                  }}
+                >
+                  <span>
+                    {region.name.toUpperCase()}
+                    {(() => {
+                      const domain = (
+                        region.properties as { failureDomain?: string }
+                      ).failureDomain;
+                      // A generic canvas names its regions after themselves,
+                      // so only show the failure domain when it adds
+                      // information.
+                      return domain &&
+                        domain.toLowerCase() !== region.name.toLowerCase()
+                        ? ` · ${domain.toUpperCase()}`
+                        : "";
+                    })()}
+                  </span>
+                </div>
+              );
+            })}
             <svg
               className="architecture-lines"
               viewBox="0 0 1000 700"

@@ -38,7 +38,7 @@ export const rideHailingBaseline: ArchitectureGraph = {
       id: "ingest",
       kind: "gateway",
       name: "Location Ingest",
-      position: { x: 90, y: 190 },
+      position: { x: 220, y: 220 },
       properties: {
         regionId: "region-core",
         peakRps: 46000,
@@ -52,7 +52,7 @@ export const rideHailingBaseline: ArchitectureGraph = {
       id: "matching",
       kind: "service",
       name: "Matching",
-      position: { x: 270, y: 190 },
+      position: { x: 400, y: 220 },
       properties: {
         regionId: "region-core",
         peakRps: 32000,
@@ -69,7 +69,7 @@ export const rideHailingBaseline: ArchitectureGraph = {
       id: "supply",
       kind: "database",
       name: "Driver Supply",
-      position: { x: 450, y: 190 },
+      position: { x: 580, y: 220 },
       properties: {
         regionId: "region-core",
         peakRps: 32000,
@@ -86,7 +86,7 @@ export const rideHailingBaseline: ArchitectureGraph = {
       id: "trips",
       kind: "database",
       name: "Trip State",
-      position: { x: 630, y: 190 },
+      position: { x: 760, y: 220 },
       properties: {
         regionId: "region-core",
         peakRps: 18000,
@@ -103,7 +103,7 @@ export const rideHailingBaseline: ArchitectureGraph = {
       id: "events",
       kind: "queue",
       name: "Trip Events",
-      position: { x: 630, y: 360 },
+      position: { x: 430, y: 430 },
       properties: {
         regionId: "region-analytics",
         peakRps: 18000,
@@ -119,7 +119,7 @@ export const rideHailingBaseline: ArchitectureGraph = {
       id: "pricing",
       kind: "service",
       name: "Surge Pricing",
-      position: { x: 830, y: 360 },
+      position: { x: 630, y: 430 },
       properties: {
         regionId: "region-analytics",
         peakRps: 12000,

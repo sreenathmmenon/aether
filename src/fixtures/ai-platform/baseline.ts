@@ -33,7 +33,7 @@ export const aiPlatformBaseline: ArchitectureGraph = {
       id: "edge",
       kind: "gateway",
       name: "Edge Router",
-      position: { x: 90, y: 190 },
+      position: { x: 220, y: 220 },
       properties: {
         regionId: "region-virginia",
         peakRps: 24000,
@@ -47,7 +47,7 @@ export const aiPlatformBaseline: ArchitectureGraph = {
       id: "orchestrator",
       kind: "service",
       name: "Orchestrator",
-      position: { x: 270, y: 190 },
+      position: { x: 400, y: 220 },
       properties: {
         regionId: "region-virginia",
         peakRps: 24000,
@@ -64,7 +64,7 @@ export const aiPlatformBaseline: ArchitectureGraph = {
       id: "vectors",
       kind: "database",
       name: "Vector Store",
-      position: { x: 450, y: 190 },
+      position: { x: 580, y: 220 },
       properties: {
         regionId: "region-virginia",
         peakRps: 21000,
@@ -81,7 +81,7 @@ export const aiPlatformBaseline: ArchitectureGraph = {
       id: "inference",
       kind: "service",
       name: "Inference Pool",
-      position: { x: 650, y: 190 },
+      position: { x: 430, y: 430 },
       properties: {
         regionId: "region-oregon",
         peakRps: 18000,
@@ -98,7 +98,7 @@ export const aiPlatformBaseline: ArchitectureGraph = {
       id: "evaluations",
       kind: "queue",
       name: "Eval Queue",
-      position: { x: 650, y: 360 },
+      position: { x: 630, y: 430 },
       properties: {
         regionId: "region-oregon",
         peakRps: 6000,
@@ -114,7 +114,7 @@ export const aiPlatformBaseline: ArchitectureGraph = {
       id: "analytics",
       kind: "service",
       name: "Analytics",
-      position: { x: 830, y: 360 },
+      position: { x: 830, y: 430 },
       properties: {
         regionId: "region-oregon",
         peakRps: 6000,
