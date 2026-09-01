@@ -1892,3 +1892,12 @@ was already underway again.
   - The 500 case used a body of `"boom"`. That is unparseable, so `response.json()` throws and the `catch` returns `offline` whether or not the status is ever checked. Deleting the status guard left it passing. Fixed by sending a **valid** JSON body carrying a version, which is the case the guard actually protects.
   - The failed-load case had the same shape twice over: a probe deleted the wrong line, and the body `{workspace:{id:"x"}}` is rejected by `parsePersistedState` regardless. Fixed by sending a body that would otherwise load successfully.
   - Every guard was then removed by line number and each break confirmed to fail the matching test. A break that produces no failure is the signal to check the probe _and_ the assertion, not to conclude the code is fine — that reading has now been wrong three times this session.
+
+## Milestone 139 — Mutation testing the guarantees
+
+- [x] **M139.1 — Stop grepping for weak tests and break the source instead** `DONE`
+  - Acceptance: the guarantees this submission rests on fail a test when removed.
+  - Evidence: three tests this session passed for the wrong reason, so rather than hunt for more by inspection, sixteen mutations were applied to the shipped source one at a time, each a behaviour change a reviewer would want caught, with the full suite run against each and the file restored afterwards.
+  - **Every one was killed.** Opening each of the five human-only commands to an agent actor individually — `APPROVE_BRANCH`, `MERGE_BRANCH`, `ROLLBACK_MERGE`, `REMOVE_COMPONENT`, `SET_COST_CEILING` — fails a test in each case, so the gate is enforced command by command rather than by one assertion that happens to cover the pair everyone tests.
+  - Also killed: letting approval ignore SLO violations, raising the agent removal dependency limit from three to three hundred, removing the removal floor, widening the capacity-deficit cap, removing the tool output budget, rounding simulation results to one decimal place instead of two, dropping the lost-runs check from the sync guard, accepting a workspace whose audit is not an array, and unbounding the edge trim.
+  - Two mutations were skipped rather than counted as passes, because their pattern was not unique in the file — `actor.kind !== "human"` appears five times. They were then applied per command block instead, which is how all five came to be verified separately.
