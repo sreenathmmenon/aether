@@ -221,13 +221,16 @@ export function createAetherToolRegistry(
   }
 
   /** Component IDs an agent may currently reference, including user-added ones. */
-  function componentIds() {
-    const state = snapshot();
+  /** The graph on the branch being worked on, not the immutable baseline. */
+  function activeGraph(state: AetherState = snapshot()) {
     const branch = state.branches[state.workspace.activeBranchId];
-    const graph = branch
+    return branch
       ? deriveGraph(state, branch)
       : state.revisions["revision-baseline"]!.graph;
-    return Object.values(graph.entities)
+  }
+
+  function componentIds(state: AetherState = snapshot()) {
+    return Object.values(activeGraph(state).entities)
       .filter((entity) => entity.kind !== "region")
       .map((entity) => entity.id);
   }
@@ -663,21 +666,19 @@ export function createAetherToolRegistry(
         annotations: { readOnlyHint: true, untrustedContentHint: false },
         execute: async (input: unknown) => {
           const entityId = (input as { entityId?: unknown })?.entityId;
-          if (
-            typeof entityId !== "string" ||
-            !snapshot().revisions["revision-baseline"]?.graph.entities[entityId]
-          )
+          // Both the check and the trace read the branch the agent is working
+          // on. They read the immutable baseline, while the schema enum was
+          // derived from the active branch, so every component an agent added
+          // was advertised as traceable and then refused as unknown — and a
+          // trace that did succeed described the original architecture rather
+          // than the one on the page.
+          const graph = activeGraph();
+          if (typeof entityId !== "string" || !graph.entities[entityId])
             return toolResult({
               error: "INVALID_INPUT",
               problems: ["entityId: unknown architecture component"],
-              nextAction: `Choose one of: ${Object.values(
-                snapshot().revisions["revision-baseline"]!.graph.entities,
-              )
-                .filter((entity) => entity.kind !== "region")
-                .map((entity) => entity.id)
-                .join(", ")}.`,
+              nextAction: `Choose one of: ${componentIds().join(", ")}.`,
             });
-          const graph = snapshot().revisions["revision-baseline"]!.graph;
           const dependencyPath = Object.values(graph.relationships)
             .filter(
               (relationship) =>
@@ -904,7 +905,10 @@ export function createAetherToolRegistry(
               keyToId.set(entityIdForName(component.name), entityId);
               created.push({ key: component.key, entityId });
             }
-            for (const id of componentIds()) keyToId.set(id, id);
+            // Read the graph this call has been building, not the one on the
+            // page when it started: a dependency may reference a component
+            // created moments ago in this same batch.
+            for (const id of componentIds(next)) keyToId.set(id, id);
             for (const [index, dependency] of (
               parsed.data.dependencies ?? []
             ).entries()) {
@@ -940,7 +944,7 @@ export function createAetherToolRegistry(
               }
               next = result.value;
             }
-            onState(next);
+            await commit(next);
             return toolResult({
               outcome: created.length ? "architecture_modelled" : "no_change",
               added: created,

@@ -968,3 +968,17 @@ was already underway again.
   - A test drives the real sequence with no refresh in between, and its stub drops registrations on abort the way the browser does — keeping them would have let an unregistered tool still look present. Reverting the fix fails it with the exact live symptom: `expected [ 'get_decision_record', …(4) ] to include 'run_failure_scenario'`.
   - Two existing tests changed because the behaviour genuinely changed, not to make them pass: one had cleared its captured tools and refreshed manually, which is now a no-op; the other created branches and components that now really persist, so its boundary probes had to vary intent and name or be refused for uniqueness rather than the boundary under test.
   - Worth recording: the full suite passed with the fix reverted before this test existed. The defect was reachable from the first action an agent takes and no test covered it.
+
+## Milestone 58 — An agent can use what it just built
+
+- [x] **M58.1 — Trace reads the branch, not the immutable baseline** `DONE`
+  - Acceptance: a component an agent creates is usable by the next tool call.
+  - Evidence: `trace_architecture_dependency` enumerated the active branch in its `entityId` schema — `entity-api-tier` appeared there — while its executor checked `revisions["revision-baseline"]`, the original graph. So every component an agent added was advertised as traceable and then refused: `{"error":"INVALID_INPUT","problems":["entityId: unknown architecture component"]}`, listing only the five seeded components. The same mismatch class this codebase has hit before: advertised is not enforced.
+  - It also meant a trace that did succeed described the original architecture rather than the one on the page, so an agent reasoning about its own work was reading someone else's graph.
+  - Both the check and the trace now read the active branch through one `activeGraph()` helper, which `componentIds()` also uses, so the schema and the executor cannot drift apart again. Verified: after modelling two components with a dependency, tracing returns `{"entity":"Api Tier","dependencyPath":[{"from":"entity-api-tier","relationship":"writes_to","to":"entity-db-tier"}]}`.
+
+- [x] **M58.2 — model_architecture rebuilds the surface too** `DONE`
+  - Acceptance: the fix in M57 covers every write, not the six that matched a search.
+  - Evidence: M57 routed writes through `commit`, but `model_architecture` accumulates into a local state and ended with a bare `onState(next)`, so it never got the change. It carried the identical defect — returning `nextAction: "run_failure_scenario"` without registering that tool.
+  - It also built its dependency key map from `componentIds()` reading the state on the page rather than the one it was accumulating, so a dependency naming a component created earlier in the same batch could not resolve. Both now read the batch's own state.
+  - One test covers both: it drives model-then-trace with no manual refresh, and fails independently when either fix is reverted.

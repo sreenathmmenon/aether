@@ -72,6 +72,79 @@ describe("Aether WebMCP registry", () => {
     expect(ran.error).toBeUndefined();
   });
 
+  it("lets an agent trace what it just built", async () => {
+    // trace_architecture_dependency enumerated the active branch in its
+    // schema but validated against the immutable baseline, so every
+    // component an agent added was advertised as traceable and then refused
+    // as unknown. A trace that did succeed described the original
+    // architecture rather than the one the agent had built.
+    const live = new Set<RegisteredTool>();
+    let state = createInitialState(paymentPlatformBaseline);
+    const registry = createAetherToolRegistry(
+      (next) => {
+        state = next;
+      },
+      undefined,
+      {
+        registerTool: async (tool, options) => {
+          const entry = tool as unknown as RegisteredTool;
+          live.add(entry);
+          options?.signal?.addEventListener("abort", () => live.delete(entry));
+        },
+      },
+    );
+    await registry?.refresh(state);
+    const get = (name: string) => [...live].find((tool) => tool.name === name);
+
+    await get("create_architecture_branch")?.execute({
+      name: "Trace probe",
+      intent: "highest_resilience",
+    });
+    await get("model_architecture")?.execute({
+      branchId: "branch-highest_resilience",
+      components: [
+        {
+          key: "api",
+          name: "Api Tier",
+          kind: "service",
+          regionId: "region-mumbai",
+        },
+        {
+          key: "db",
+          name: "Db Tier",
+          kind: "database",
+          regionId: "region-mumbai",
+        },
+      ],
+      dependencies: [{ sourceKey: "api", targetKey: "db", kind: "writes_to" }],
+    });
+
+    const trace = get("trace_architecture_dependency");
+    // What the schema advertises is what the executor accepts.
+    const advertised = (
+      trace as unknown as {
+        inputSchema: { properties: { entityId: { enum: string[] } } };
+      }
+    ).inputSchema.properties.entityId.enum;
+    expect(advertised).toContain("entity-api-tier");
+
+    const traced = JSON.parse(
+      String(await trace?.execute({ entityId: "entity-api-tier" })),
+    ) as {
+      error?: string;
+      entity?: string;
+      dependencyPath?: { from: string; to: string }[];
+    };
+    expect(traced.error).toBeUndefined();
+    expect(traced.entity).toBe("Api Tier");
+    // The dependency it just created, not one from the baseline.
+    expect(traced.dependencyPath).toContainEqual({
+      from: "entity-api-tier",
+      relationship: "writes_to",
+      to: "entity-db-tier",
+    });
+  });
+
   it("summarises the architecture and its evidence in one read", async () => {
     // The tool describes itself as returning the active branch and its
     // evidence. It returned a branch id, a count and a next action, so an
