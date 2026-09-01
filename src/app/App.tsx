@@ -23,6 +23,7 @@ import {
   type ToolRegistry,
 } from "@platform/webmcp/registry";
 import { runScenario, type Scenario } from "@simulation/engine";
+import type { AetherState } from "@core/branch-engine";
 import type { ArchitectureGraph } from "@domain/architecture/types";
 
 const humanActor = {
@@ -153,6 +154,32 @@ const commandLabels: Record<string, { label: string; impact: string }> = {
 function actorName(kind: "human" | "agent" | "system") {
   if (kind === "human") return "Sreenath";
   return kind === "agent" ? "Aether agent" : "Aether engine";
+}
+
+/**
+ * Incoming shared state must never destroy work that is already here. A tab
+ * sitting on an unbuilt canvas would otherwise overwrite a tab holding a
+ * modelled architecture, which reads to the reviewer as their work vanishing.
+ */
+function wouldDiscardWork(current: AetherState, incoming: AetherState) {
+  const built = (candidate: AetherState) => {
+    const baseline = candidate.branches["branch-baseline"];
+    const components = baseline
+      ? Object.values(deriveGraph(candidate, baseline).entities).filter(
+          (entity) => entity.kind !== "region",
+        ).length
+      : 0;
+    return {
+      components,
+      branches: Object.keys(candidate.branches).length,
+      audit: candidate.audit.length,
+    };
+  };
+  const here = built(current);
+  const there = built(incoming);
+  if (there.components < here.components) return true;
+  if (there.branches < here.branches) return true;
+  return there.audit < here.audit;
 }
 
 function display(value: string | number | boolean) {
@@ -497,6 +524,12 @@ export function App() {
       void loadRemoteWorkspace().then((remote) => {
         const remoteVersion = remote?.workspace.persistenceVersion ?? 0;
         if (!remote || remoteVersion <= remoteVersionRef.current) return;
+        let discards = false;
+        setState((current) => {
+          discards = wouldDiscardWork(current, remote);
+          return current;
+        });
+        if (discards) return;
         applyingRemoteRef.current = true;
         remoteVersionRef.current = remoteVersion;
         setSyncStatus("Synced");
@@ -512,6 +545,12 @@ export function App() {
       if (event.key !== storageKey || !event.newValue) return;
       const incoming = parsePersistedState(event.newValue);
       if (!incoming) return;
+      let discards = false;
+      setState((current) => {
+        discards = wouldDiscardWork(current, incoming);
+        return current;
+      });
+      if (discards) return;
       applyingRemoteRef.current = true;
       remoteVersionRef.current =
         incoming.workspace.persistenceVersion ?? remoteVersionRef.current;
@@ -1018,8 +1057,8 @@ export function App() {
             {entities.length === 0
               ? "No architecture is committed yet. Build the graph first."
               : ownSystem
-                ? "This is the system you modelled here, not a shipped fixture."
-                : `${currentTemplate.name} is loaded as a worked example.`}
+                ? "Your own architecture, modelled on this canvas."
+                : `${currentTemplate.name} — a worked example you can branch and test.`}
           </small>
         </div>
         <div className="brief-recommendation">
@@ -1483,8 +1522,8 @@ export function App() {
                   Describe any architecture. Let the agent model it.
                 </strong>
                 <small>
-                  This is the entry point that proves Aether is not a fixed
-                  payment demo.
+                  Name the services, stores, and queues in a sentence. Aether
+                  models them and shows what a failure would cost.
                 </small>
               </div>
               <textarea

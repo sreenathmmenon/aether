@@ -1891,3 +1891,35 @@ button {
   stroke: rgba(217, 93, 79, 0.95);
   animation-duration: 1s;
 }
+
+/* Each component type carries its own accent, so a reader can tell a database
+   from a queue without reading the label. */
+.architecture-node span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.architecture-node span::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  flex: none;
+  background: var(--muted);
+}
+.architecture-node.service span::before {
+  border-radius: 50%;
+  background: var(--blue);
+}
+.architecture-node.database span::before {
+  border-radius: 2px;
+  background: #7a4fd6;
+}
+.architecture-node.queue span::before {
+  border-radius: 1px;
+  background: var(--cyan);
+  transform: rotate(45deg);
+}
+.architecture-node.gateway span::before {
+  border-radius: 50% 50% 2px 2px;
+  background: var(--orange);
+}
