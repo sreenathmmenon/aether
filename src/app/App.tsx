@@ -1246,11 +1246,10 @@ export function App() {
           </div>
           <button
             className={`baseline-card ${activeBranch.id === "branch-baseline" ? "future-card-active" : ""}`}
-            aria-label={
-              unbuilt
-                ? "CURRENT Unbuilt baseline — waiting for architecture"
-                : `CURRENT Baseline breach — ${baselineEvidence.availability.toFixed(2)}% availability, ${baselineEvidence.sloViolations.length} ${baselineEvidence.sloViolations.length === 1 ? "violation" : "violations"}`
-            }
+            /* No aria-label: the card's visible text already reads as its
+               name, and an aria-label that omits that text replaces it for a
+               screen reader, so the announced name diverged from what is on
+               screen. */
             onClick={() =>
               setState({
                 ...state,
@@ -2282,7 +2281,14 @@ export function App() {
                         ? "compare-choice selected-choice"
                         : "compare-choice"
                     }
-                    aria-label={`${branch.name}${result ? ` — ${result.availability.toFixed(2)}% availability, ${result.sloViolations.length} ${result.sloViolations.length === 1 ? "violation" : "violations"}` : ""} — select this future`}
+                    /* The accessible name has to contain the visible text,
+                       or a screen reader announces something different from
+                       what is on screen. This omitted recovery and cost. */
+                    aria-label={`${branch.name} — ${
+                      result
+                        ? `${result.availability.toFixed(2)}%, ${result.rtoMinutes}m recovery · $${result.monthlyCostUsd.toLocaleString()}/mo, ${result.sloViolations.length} ${result.sloViolations.length === 1 ? "violation" : "violations"}`
+                        : "—%, No evidence yet, — violations"
+                    } — select this future`}
                     onClick={() => {
                       setState({
                         ...state,
