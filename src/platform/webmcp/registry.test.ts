@@ -491,6 +491,43 @@ describe("Aether WebMCP registry", () => {
     expect(adoptions.length).toBeGreaterThan(0);
   });
 
+  it("registers the branch-gated tools on a blank canvas too", async () => {
+    // Two tools appear only once a repair future exists. The capability key
+    // covered writability, template, components and regions but not the
+    // branch count, so on a seeded system creating a future happened to flip
+    // writability and the surface rebuilt, while on a blank canvas the
+    // baseline stays editable and nothing in the key moved. The page showed
+    // three futures and the agent could neither compare nor propose against
+    // them. Reproduced against the deployed origin.
+    const live = new Set<RegisteredTool>();
+    let state = createInitialState(blankBaseline, "blank");
+    const registry = createAetherToolRegistry(
+      (next) => {
+        state = next;
+      },
+      undefined,
+      {
+        registerTool: async (tool, options) => {
+          const entry = tool as unknown as RegisteredTool;
+          live.add(entry);
+          options?.signal?.addEventListener("abort", () => live.delete(entry));
+        },
+      },
+    );
+    await registry?.refresh(state);
+    const names = () => [...live].map((tool) => tool.name);
+    expect(names()).not.toContain("compare_architecture_futures");
+
+    await [...live]
+      .find((tool) => tool.name === "create_architecture_branch")
+      ?.execute({ name: "Blank probe", intent: "highest_resilience" });
+
+    // No manual refresh: the write rebuilds the surface, and the branch count
+    // is what tells it the surface has changed.
+    expect(names()).toContain("compare_architecture_futures");
+    expect(names()).toContain("propose_architecture_change");
+  });
+
   it("tells an agent what to do at the decision point", async () => {
     // Every other tool names a next action. This one, at the point a
     // decision is actually made, returned futures and a human gate and
@@ -1927,6 +1964,7 @@ describe("Aether WebMCP registry", () => {
     };
 
     let probed = 0;
+    let branchProbes = 0;
     for (const tool of described) {
       const base = baseFor[tool.name];
       if (!base) continue;
@@ -1961,21 +1999,30 @@ describe("Aether WebMCP registry", () => {
             "fastest_recovery",
             "lowest_cost",
           ];
-          const varied: Record<string, unknown> =
-            tool.name === "create_architecture_branch" && field !== "intent"
-              ? { intent: intents[probed % intents.length] }
-              : {};
-          // Likewise for components: the writes now persist, so a probe of
-          // any other field would reuse the base name and be refused as a
-          // duplicate. Only the field under test may carry the extreme.
-          if (
-            tool.name === "add_architecture_component" &&
-            field !== "name" &&
-            typeof base.name === "string"
-          )
-            varied.name = `${base.name} ${probed}`;
+          const varied: Record<string, unknown> = {};
+          if (tool.name === "create_architecture_branch" && field !== "intent")
+            varied.intent = intents[branchProbes % intents.length];
+          // Every write persists, so probing one workspace repeatedly
+          // eventually hits a uniqueness rule — one future per trade-off, one
+          // component per name — rather than the boundary under test. Each
+          // probe gets its own registry over its own fresh state, so what
+          // fails is the boundary and nothing else.
+          const fresh: RegisteredTool[] = [];
+          const isolated = createAetherToolRegistry(() => {}, undefined, {
+            registerTool: async (registered) => {
+              fresh.push(registered as unknown as RegisteredTool);
+            },
+          });
+          await isolated?.refresh(createInitialState(blankBaseline, "blank"));
+          isolated?.dispose();
+          const probe = fresh.find(
+            (candidate) => candidate.name === tool.name,
+          ) as unknown as typeof tool;
+          if (tool.name === "create_architecture_branch") branchProbes += 1;
           const result = JSON.parse(
-            String(await tool.execute({ ...base, ...varied, [field]: unique })),
+            String(
+              await probe.execute({ ...base, ...varied, [field]: unique }),
+            ),
           ) as { error?: string; problems?: string[] };
           expect(
             result.error,

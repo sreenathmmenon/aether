@@ -320,6 +320,14 @@ export function createAetherToolRegistry(
       const capabilityKey = [
         canEditModel(state) ? "editable" : "readonly",
         state.workspace.templateId === "blank" ? "own" : "seeded",
+        // Two tools register only once a repair future exists, so the count
+        // has to be part of the key. On a seeded system creating one also
+        // flips writability and the key changed anyway; on a blank canvas the
+        // baseline stays editable and nothing else moves, so the surface
+        // never rebuilt and compare_architecture_futures and
+        // propose_architecture_change were missing from a page that was
+        // visibly showing three futures.
+        String(Object.keys(state.branches).length),
         componentIds().join(","),
         regionIds().join(","),
       ].join(":");
