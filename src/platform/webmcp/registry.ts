@@ -366,7 +366,10 @@ export function createAetherToolRegistry(
       registrations.forEach((registration) => registration.abort());
       registrations = [];
       registeredNames = [];
-      onToolCount?.(0, []);
+      // Deliberately not reported. Teardown and re-registration are one
+      // operation from outside, and announcing the gap between them made a
+      // live region say "0 tools registered" before "12" — an emptiness the
+      // surface never has from an agent's point of view.
       await register({
         name: "get_decision_record",
         description:

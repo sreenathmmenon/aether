@@ -1011,6 +1011,35 @@ describe("Aether WebMCP registry", () => {
     ).toBeGreaterThanOrEqual(limit);
   });
 
+  it("never reports an empty surface it does not have", async () => {
+    // Rebuilding the surface aborts every registration and registers again,
+    // and the count was reported between those two steps. Invisible until a
+    // live region was added to the header chip, where it announced "0 tools
+    // registered" before "12" — an emptiness the surface never has from an
+    // agent's point of view, because the rebuild is one operation.
+    const counts: number[] = [];
+    const registry = createAetherToolRegistry(
+      () => {},
+      (count) => counts.push(count),
+      {
+        registerTool: async () => {},
+      },
+    );
+    const seeded = createInitialState(paymentPlatformBaseline);
+    await registry?.refresh(seeded);
+    const branched = dispatch(seeded, {
+      type: "CREATE_BRANCH",
+      input: { name: "Count probe", intent: "highest_resilience" },
+    });
+    if (!branched.ok) throw new Error("fixture branch must be created");
+    await registry?.refresh(branched.value);
+    registry?.dispose();
+
+    // Five then twelve, with nothing in between.
+    expect(counts).toEqual([5, 12]);
+    expect(counts).not.toContain(0);
+  });
+
   it("tells an agent what to do at the decision point", async () => {
     // Every other tool names a next action. This one, at the point a
     // decision is actually made, returned futures and a human gate and
