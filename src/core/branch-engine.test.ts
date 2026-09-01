@@ -1036,6 +1036,79 @@ describe("Aether command pipeline", () => {
   });
 });
 
+describe("a repair future always repairs something", () => {
+  it("offers a real trade-off on an already-healthy architecture", () => {
+    // A reviewer who models a system that is already replicated still gets
+    // three futures offered. `fastest_recovery` acted only on a store with no
+    // replication at all, so on that architecture it produced a branch with
+    // no operations — a repair future that repairs nothing, presented beside
+    // two that do.
+    let state = createInitialState(blankBaseline, "blank");
+    const add = (name: string, kind: string, extra: object) => {
+      const added = dispatch(
+        state,
+        {
+          type: "ADD_COMPONENT",
+          input: {
+            branchId: "branch-baseline",
+            name,
+            kind: kind as "service" | "database" | "queue" | "gateway",
+            regionId: "region-primary",
+            peakRps: 9000,
+            capacityRps: 15000,
+            monthlyCostUsd: 800,
+            ...extra,
+          },
+        },
+        human,
+      );
+      if (!added.ok) throw new Error(`${name}: ${added.message}`);
+      state = added.value;
+    };
+    add("Edge Api", "gateway", {});
+    add("Order Service", "service", { replicas: 3 });
+    add("Order Store", "database", {
+      replicationMode: "sync",
+      recoveryTimeMinutes: 40,
+    });
+
+    const outcomes = (
+      ["lowest_cost", "fastest_recovery", "highest_resilience"] as const
+    ).map((intent) => {
+      const branched = dispatch(
+        state,
+        { type: "CREATE_BRANCH", input: { name: `P ${intent}`, intent } },
+        human,
+      );
+      if (!branched.ok) throw new Error(`${intent}: ${branched.message}`);
+      const branch = branched.value.branches[`branch-${intent}`]!;
+      return {
+        intent,
+        operations: branch.operations.length,
+        run: runScenario(
+          deriveGraph(branched.value, branch),
+          "regional_outage",
+          branch.id,
+          branch.version,
+        ),
+      };
+    });
+
+    // Every future changes something.
+    for (const outcome of outcomes)
+      expect(outcome.operations, outcome.intent).toBeGreaterThan(0);
+
+    // And the choice is a real one: the recovery-focused future recovers
+    // faster than the cost-focused one, and costs more than it.
+    const cheapest = outcomes.find((o) => o.intent === "lowest_cost")!;
+    const fastest = outcomes.find((o) => o.intent === "fastest_recovery")!;
+    expect(fastest.run.rtoMinutes).toBeLessThan(cheapest.run.rtoMinutes);
+    expect(fastest.run.monthlyCostUsd).toBeGreaterThan(
+      cheapest.run.monthlyCostUsd,
+    );
+  });
+});
+
 describe("every shipped system can actually be approved", () => {
   // The human gate is what this product argues for, so a shipped system that
   // can never reach it is a demo that cannot be finished. Ride-hailing and

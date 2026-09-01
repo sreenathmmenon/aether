@@ -310,6 +310,17 @@ export function dispatch(
         ? (entity!.properties as { peakRps: number }).peakRps
         : 0;
 
+    const recoveryOf = (entity: { properties: unknown } | undefined) =>
+      typeof (entity?.properties as { recoveryTimeMinutes?: number })
+        ?.recoveryTimeMinutes === "number"
+        ? (entity!.properties as { recoveryTimeMinutes: number })
+            .recoveryTimeMinutes
+        : 30;
+    // The store that takes longest to come back is the one worth speeding up.
+    const slowestStore = components
+      .filter((entity) => entity.kind === "database")
+      .sort((left, right) => recoveryOf(right) - recoveryOf(left))[0];
+
     const set = (
       entityId: string,
       property: string,
@@ -327,7 +338,12 @@ export function dispatch(
             ),
           ]
         : [],
-      // Add asynchronous standby to the component that has none.
+      // Add asynchronous standby to the component that has none. On an
+      // architecture where every store is already replicated there is nothing
+      // to add, and this produced a branch with no operations at all — a
+      // repair future offered to a reviewer that repairs nothing. It falls
+      // back to shortening the declared restore time of the slowest store,
+      // which is the objective the intent is named for.
       fastest_recovery: unreplicated
         ? [
             set(unreplicated.id, "replicationMode", "async"),
@@ -337,7 +353,20 @@ export function dispatch(
               Math.round(costOf(unreplicated) * 1.26),
             ),
           ]
-        : [],
+        : slowestStore
+          ? [
+              set(
+                slowestStore.id,
+                "recoveryTimeMinutes",
+                Math.max(2, Math.round(recoveryOf(slowestStore) * 0.4)),
+              ),
+              set(
+                slowestStore.id,
+                "monthlyCostUsd",
+                Math.round(costOf(slowestStore) * 1.18),
+              ),
+            ]
+          : [],
       // Synchronous standby, more replicas, and capacity above peak demand.
       highest_resilience: [
         ...(atRisk.length
