@@ -910,3 +910,11 @@ was already underway again.
   - Evidence: the comparison tool exceeded its output budget and returned nothing at all, and that was found only by probing it. Any read that grows with the workspace can fail the same way, so all of them were measured against a workspace far past anything a review produces — three futures simulated across every scenario, and a hundred maximum-length decision notes.
   - Every read is bounded by design rather than by the workspace happening to stay small: the decision record holds at 1207 characters whether the workspace has ten notes or a hundred, because it takes the most recent few rather than all of them, and the architecture summary, failure-domain read and dependency trace all sit well under. Only the unfiltered comparison exceeds, which is the case the scenario filter exists for.
   - A test holds all five reads to the budget under that load. Confirmed it catches an unbounded read by removing the decision record's slice: it fails with "get_decision_record must stay inside its budget".
+
+## Milestone 53 — A workspace that is not saved does not look saved
+
+- [x] **M53.1 — Make the sync chip read its own state** `DONE`
+  - Acceptance: anything not durably saved looks different from something that is.
+  - Evidence: following the silent-failure thread into persistence. The header chip carried four states through one static green style, so "Offline draft" — meaning the work has reached no durable storage at all — looked exactly like "Synced". A reviewer whose changes were at risk had nothing to see.
+  - The chip now reads its state: durable stays green, held-locally is muted, unreachable storage is coral with a tooltip saying so. The mapping lives in one function rather than a chain of ternaries in the markup, and a test holds it — including that a status nobody has written yet does not default to reassuring, which is how the original defect would recur.
+  - Verified in the browser against a server with no database, and again with every save rejected: "Local draft" renders muted grey, "Offline draft" renders coral, and the two are distinct.
