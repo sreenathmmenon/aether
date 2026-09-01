@@ -582,3 +582,13 @@ fixed.
 - [x] **M19.4 — Lay the shipped systems out in separate tiers** `DONE`
   - Evidence: all three fixtures interleaved their regions horizontally, so honest rectangles necessarily overlapped. Each region now occupies its own tier with room for its rectangle inside the canvas. Verified in the browser on the payment platform, AI platform, and ride-hailing dispatch: no component outside its region, no region overlapping another, none clipped, and the timeline covering nothing. Six tests assert these invariants and were confirmed real by moving a component to overlap two domains and watching them fail.
   - Verified again on the deployed origin after release: every component inside its region, no region overlap, the timeline covering nothing, and every rendered node centre matching its stored coordinate exactly — which is the direct proof that the animation no longer displaces anything.
+
+## Milestone 20 — The reviewer's own system opens honestly
+
+- [x] **M20.1 — Stop the empty canvas claiming a failure that has not happened** `DONE`
+  - Acceptance: an unmodelled architecture reports absence, not catastrophe.
+  - Evidence: with nothing modelled, the evidence panel read "Baseline breach" above 0.00% availability in red, a "Primary unavailable" beacon sat on an empty grid, and the risk dot showed danger — three assertions of a total outage of an architecture that does not exist, on the first screen of the product's own headline capability. The engine was never wrong; it returns zeros with the violation "The architecture has no components and serves no traffic". Only the interface read absence as measurement. It now reads "Nothing to measure yet", renders each metric as a muted dash, drops the beacon, and shows a neutral dot. Two tests pin the empty-graph contract.
+- [x] **M20.2 — Give the empty canvas a way in** `DONE`
+  - Evidence: the system brief sat 996px down a page with a 758px fold, so a reviewer arriving to describe their own architecture met a blank grid and no visible action. The canvas now carries the entry point where they are already looking, with a control that moves the brief into view and focuses it ready to type.
+  - That control exposed a real defect: any smooth scroll on this page returns to the top. Isolated it in the browser — an instant scroll holds at 661px, the identical smooth scroll ends at 0 with no scroll events fired at all — so the control jumps directly rather than animating.
+  - Verified in production: all six changes are present in the deployed bundle and stylesheet, and the three seeded systems are untouched — real metrics, real beacon, risk dot, and no empty prompt.
