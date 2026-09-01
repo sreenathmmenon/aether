@@ -359,7 +359,7 @@ export function createAetherToolRegistry(
       await register({
         name: "create_architecture_branch",
         description:
-          "Create one isolated repair future from the architecture as it stands. The future is named for the trade-off it optimizes, and one future exists per trade-off.",
+          "Create one isolated repair future from the architecture as it stands. The future is named for the trade-off it optimizes, and one future exists per trade-off. Call this first to build or change anything: the tools that edit the architecture register only once a future exists, because edits are never made to the baseline directly.",
         inputSchema: {
           type: "object",
           properties: {

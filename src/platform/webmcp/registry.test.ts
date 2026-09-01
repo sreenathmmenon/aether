@@ -17,6 +17,32 @@ type RegisteredTool = {
 };
 
 describe("Aether WebMCP registry", () => {
+  it("explains the gate that keeps editing tools unregistered", async () => {
+    // On a freshly loaded page the baseline branch is merged, so nothing that
+    // writes is registered. An agent asked to build something then sees no
+    // tool for it. The tool that opens that path must say so itself, because
+    // an agent that never calls the summary has nothing else to read.
+    const tools: { name: string; description?: string }[] = [];
+    const state = createInitialState(paymentPlatformBaseline);
+    const registry = createAetherToolRegistry(() => {}, undefined, {
+      registerTool: async (tool) => {
+        tools.push(tool as unknown as { name: string; description?: string });
+      },
+    });
+    await registry?.refresh(state);
+
+    expect(tools.map((tool) => tool.name)).not.toContain(
+      "add_architecture_component",
+    );
+    const gate = tools.find(
+      (tool) => tool.name === "create_architecture_branch",
+    );
+    // Not a copy of the sentence — the property it has to carry: this call is
+    // named as the prerequisite, and the tools it unlocks are named as such.
+    expect(gate?.description).toMatch(/first/i);
+    expect(gate?.description).toMatch(/register/i);
+  });
+
   it("registers state-aware tools and returns concise structured results", async () => {
     const tools: RegisteredTool[] = [];
     let state = createInitialState(paymentPlatformBaseline);

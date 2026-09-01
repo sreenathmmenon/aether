@@ -937,3 +937,9 @@ was already underway again.
   - The "lost writes" were calls to `add_architecture_component` on a freshly loaded page, where it is deliberately not registered: the baseline branch is merged, so only the five read tools exist until an agent creates a future. Registration went 5 → 12 the moment `create_architecture_branch` succeeded, which is the state-dependent surface working exactly as intended.
   - The remaining `UnknownError` reproduces only when a write is awaited inside the extension's own `javascript_exec` wrapper, which spans a React re-render. Dispatching the same call and reading the settled promise returns `{"addedEntityId":"entity-detach-one"}` and the component is on the canvas — the tool resolves correctly to a real caller.
   - No source changed. Every hypothesis dissolved against the deployed origin, and inventing a fix for a defect that does not exist would have been the worse outcome.
+
+- [x] **M55.2 — Name the gate that hides the editing tools** `DONE`
+  - Acceptance: an agent asked to build something on a freshly loaded page can find the path, without having to call the summary first.
+  - Evidence: on load only five read tools register, because the baseline branch is merged and nothing may write to it directly. An agent told "add a payment service" therefore sees no tool that adds one. `get_architecture_summary` already returns `nextAction: create_architecture_branch`, but an agent that goes straight for the write tool never reads it.
+  - `create_architecture_branch` now states in its own description that it must be called first and that the editing tools register only once a future exists. The description is the one surface such an agent is guaranteed to see.
+  - A test holds the property rather than the sentence: that no editing tool is registered against a merged baseline, and that the gate tool names itself as the prerequisite. Reverting the description fails it.
