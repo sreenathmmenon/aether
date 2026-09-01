@@ -18,6 +18,7 @@ import {
   regionRectPercent,
 } from "./region-bounds";
 import { edgeBetween } from "./edge-geometry";
+import { mergeEvidence } from "@core/evidence-merge";
 import { scenarioNarrative } from "./scenario-copy";
 import { useModalDialog } from "./use-modal-dialog";
 import { syncExplanation, syncTone } from "./sync-status";
@@ -574,10 +575,17 @@ export function App() {
         // Return the state the page settles on. A tool's write is composed
         // here rather than in the registry's own copy, which the reconcile
         // poll can replace between a write and the effect below.
+        //
+        // Evidence is merged rather than replaced. The registry dispatches
+        // from a copy taken before the poll, so handing that copy straight to
+        // setState erased runs the page already held: a merged future
+        // reported no evidence, and localStorage was then written with none,
+        // pinning the loss across a reload.
         (next) => {
-          stateRef.current = next;
-          setState(next);
-          return next;
+          const settled = mergeEvidence(stateRef.current, next);
+          stateRef.current = settled;
+          setState(settled);
+          return settled;
         },
         (count, names) => {
           setToolCount(count);
