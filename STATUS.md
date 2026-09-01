@@ -1681,3 +1681,16 @@ was already underway again.
   - Engine moves to `aether-sim-5`; all four fingerprints move, because the output hash covers the version and the traffic-spike evidence changed shape. `docs/ARCHITECTURE.md` moves with it.
   - Verified against the deployed origin on a cleared workspace: the future card now reads `92.88% availability · 4 violations` over four breach lines with the disclosure below them, and `inspect_failure_domain` returns `sloViolations` of length four alongside `deficitsNotListed: 2` at `aether-sim-5`.
   - Recorded plainly: this defect was mine, shipped two milestones ago, and was found by looking at the running product rather than by any test in the suite. The suite is now one assertion stronger for it.
+
+## Milestone 120 — The server nothing was testing
+
+- [x] **M120.1 — Probe it where it actually runs** `DONE`
+  - Acceptance: the code holding every reviewer's decisions has assertions on the guarantees it makes.
+  - Evidence: the server is 180 lines with no test of its own — it cannot be imported without binding a port, so only its route ordering was covered, by one source-reading file about static assets. Everything else about it was assumed.
+  - Rather than restructure a running server for testability, it was probed the way it runs, against the deployed origin. Every rejection behaves correctly: a malformed id is 400 `INVALID_WORKSPACE` on both endpoints, a non-JSON body and a body whose `state` is not a workspace are both 400 `INVALID_INPUT`, and an unknown workspace is `{"state":null}` with 200 rather than an error, which is right — a first-time visitor has no stored workspace and that is the normal opening state.
+  - One result needed a second look rather than a conclusion: `/api/workspaces/../etc` returned 200 and HTML. That is `curl` normalising the path to `/api/etc` before sending, so the request never reaches the workspace route; the encoded form `%2e%2e%2fetc` is correctly refused with 400. Reported as no finding rather than as a traversal bug.
+
+- [x] **M120.2 — Pin the order, which is the part that breaks quietly** `DONE`
+  - Evidence: each verified behaviour is now asserted, and the assertions are about _ordering_ because that is what regresses invisibly — a validation moved below the database call returns the same status while doing the work it was meant to prevent. The id check precedes the body read; the declared `content-length` precedes it too, while the actual read length is checked after, since `content-length` is a claim rather than a fact; the shape check precedes any query.
+  - The optimistic write is covered as the concurrency story it is: two reviewers in one room must not silently overwrite each other, and losing the `WHERE version = $3` turns every conflict into last-write-wins while the endpoint still answers 200. Removing that clause fails the test; moving the id check below the body read fails a different one.
+  - It also holds both sides to one contract: the server imports the client's `workspace-contract` rather than keeping a second pattern, so a room name the client will mint is one the server accepts.
