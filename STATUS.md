@@ -1112,3 +1112,15 @@ was already underway again.
 - [x] **M68.2 — A parity test for the change surface** `DONE`
   - Evidence: written as the mirror of the creation-parity test, and it immediately named `monthlyCostUsd` as advertised to agents but unreachable to people — a control I had not thought to add. It reads the propose tool's own enum and the shipped `App.tsx`, so a sixth proposable property added later and forgotten in the interface fails immediately. Removing the region control fails it by name.
   - A verification worth recording: the first live check set replication to `sync` and saw availability unchanged, which looked like the control doing nothing. It was a genuine no-op — the `highest_resilience` future already seeds `sync` on the unreplicated store, the same trap that produced a wrong conclusion in M61. Setting `none` moved the number, which is the real proof.
+
+## Milestone 69 — Evidence survives the reconcile
+
+- [x] **M69.1 — The sync guard weighs evidence too** `DONE`
+  - Acceptance: recorded simulation runs are work, and shared state must not destroy them.
+  - Evidence: found by walking the human gate in production. A future approved on one scenario showed a card reading `approved · Highest resilience · Awaiting evidence` — self-contradictory, since the reducer refuses approval without current evidence. Probing the server, the branch was approved with `evidence: []`, and running a second scenario replaced the first rather than adding to it: `traffic_spike` then `database_failure`, never both, with the loss visible on the server within 300ms of a write.
+  - The reducer was correct and accumulated both runs in isolation. `wouldDiscardWork` weighed components, branches and audit length but not stored runs, so incoming state holding fewer of them passed the check and the three-second reconcile adopted it. It now counts runs, and the registry composes a write onto the state the page settles on rather than its own copy.
+  - Verified against the deployed origin: two scenarios run four seconds apart now both persist — `["regional_outage","traffic_spike"]` — where the second previously erased the first, and the future card reads `97.11% availability` instead of `Awaiting evidence`.
+  - Several wrong hypotheses were discarded on evidence along the way: that approval bumped the branch version and orphaned its runs, that the future card's scenario-scoped lookup was the cause, and that the registry's early return left `currentState` stale. Each was checked against the code or the live page and none held.
+
+- [x] **M69.2 — Say why the gate is closed, to everyone** `DONE`
+  - Evidence: the approval control is disabled with a reason stated in an adjacent span — "Run a scenario to make approval eligible" — but nothing linked the two, so a screen reader announced a disabled button and no explanation. The button now carries `aria-describedby` pointing at that reason. Verified live, where it reads "First run on this future · 5 of 5 components affected" beside a correctly blocked approval.
