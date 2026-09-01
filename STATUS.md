@@ -1561,3 +1561,12 @@ was already underway again.
   - Evidence: a Chrome user without the surface was told "this page is not enrolled for it". Nothing in the page can know that. The trial token arrives as a response header, so client code cannot see whether it is absent, expired, or issued for a different origin — and this one does expire. After 2026-11-17 that message would send a reviewer to enrol a page that is already enrolled, which is a dead end with nothing to find.
   - It now names the three possibilities and points at the DevTools console, where Chrome states the actual reason. The distinction the message exists for is preserved: a non-Chromium browser still gets different advice from a Chromium one, which is what the original design got right.
   - Verified in the shipped bundle rather than only in source, because this branch cannot be reached from an enrolled browser: the corrected wording is present, the old claim is gone, and the live surface still registers its five tools.
+
+## Milestone 110 — Two checks for one fact, disagreeing
+
+- [x] **M110.1 — Detect the surface the way the registry does** `DONE`
+  - Acceptance: the page never reports a surface the registry could not obtain.
+  - Evidence: feature detection asked whether `"modelContext" in document`; the registry reads `document.modelContext` and gives up when it is undefined. Those are not the same question. Confirmed reachable in the browser rather than argued from the source: masking the getter to return undefined leaves the property present, so `in` says available and the value says nothing is there.
+  - In that state the page announces "WebMCP live · 0 state-aware tools" over a surface that registered nothing — the worst of the three states to be wrong about, because the other two tell a reviewer something is missing and this one tells them it works. A Chrome that ships the interface and declines the feature is exactly the browser a judge without the trial is using.
+  - Detection now reads the value. A test covers both halves: an exposed-but-undefined context reports unavailable with the origin-trial reason, and a real context still reports available. Restoring the `in` check fails it.
+  - Verified against the deployed origin that the working path is untouched — five tools, live chip — and that the shipped bundle no longer contains the `in` form. That first check mattered most: a stricter test is the kind of change that breaks the thing it was meant to protect.
