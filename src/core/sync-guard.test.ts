@@ -1,31 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { createInitialState, deriveGraph, dispatch } from "./branch-engine";
+import { createInitialState, dispatch } from "./branch-engine";
 import { blankBaseline } from "../fixtures/blank/baseline";
-import type { AetherState } from "./branch-engine";
+import { wouldDiscardWork } from "./sync-guard";
 
 const human = { id: "s", kind: "human" as const, displayName: "S" };
-
-/** Mirrors the guard the interface applies to incoming shared state. */
-function wouldDiscardWork(current: AetherState, incoming: AetherState) {
-  const built = (candidate: AetherState) => {
-    const baseline = candidate.branches["branch-baseline"];
-    const components = baseline
-      ? Object.values(deriveGraph(candidate, baseline).entities).filter(
-          (entity) => entity.kind !== "region",
-        ).length
-      : 0;
-    return {
-      components,
-      branches: Object.keys(candidate.branches).length,
-      audit: candidate.audit.length,
-    };
-  };
-  const here = built(current);
-  const there = built(incoming);
-  if (there.components < here.components) return true;
-  if (there.branches < here.branches) return true;
-  return there.audit < here.audit;
-}
 
 describe("shared state never destroys local work", () => {
   it("refuses an emptier workspace from another tab", () => {
@@ -68,5 +46,61 @@ describe("shared state never destroys local work", () => {
     );
     if (!branched.ok) throw new Error("branch must be created");
     expect(wouldDiscardWork(state, branched.value)).toBe(false);
+  });
+
+  it("refuses a refused-write refresh that would erase the architecture", () => {
+    // The path a shared room actually takes. Two people write, one is refused
+    // with 409, and the loser reloads the authoritative state. If that state
+    // is emptier than what they have open, adopting it deletes their work in
+    // front of them — and this was the one remote-apply path that did not
+    // check, while the reconcile and the storage event both did.
+    let mine = createInitialState(blankBaseline, "blank");
+    for (const name of ["Api", "Store", "Queue"]) {
+      const added = dispatch(
+        mine,
+        {
+          type: "ADD_COMPONENT",
+          input: {
+            branchId: "branch-baseline",
+            name,
+            kind: "service",
+            regionId: "region-primary",
+            peakRps: 100,
+            capacityRps: 200,
+            monthlyCostUsd: 10,
+          },
+        },
+        human,
+      );
+      if (!added.ok) throw new Error(`${name} must be addable`);
+      mine = added.value;
+    }
+    const theirs = createInitialState(blankBaseline, "blank");
+    expect(wouldDiscardWork(mine, theirs)).toBe(true);
+
+    // And once their state is the richer one, adopting it is correct.
+    const richer = dispatch(
+      theirs,
+      {
+        type: "ADD_COMPONENT",
+        input: {
+          branchId: "branch-baseline",
+          name: "Api",
+          kind: "service",
+          regionId: "region-primary",
+          peakRps: 100,
+          capacityRps: 200,
+          monthlyCostUsd: 10,
+        },
+      },
+      human,
+    );
+    if (!richer.ok) throw new Error("their component must be addable");
+    expect(
+      wouldDiscardWork(
+        createInitialState(blankBaseline, "blank"),
+        richer.value,
+      ),
+    ).toBe(false);
   });
 });

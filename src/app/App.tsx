@@ -8,6 +8,7 @@ import {
 } from "react";
 import { createInitialState, deriveGraph, dispatch } from "@core/branch-engine";
 import { getBranchDiff } from "@core/branch-diff";
+import { wouldDiscardWork } from "@core/sync-guard";
 import { scenarioNarrative } from "./scenario-copy";
 import { useModalDialog } from "./use-modal-dialog";
 import { offlineToolSurface } from "@platform/webmcp/offline-surface";
@@ -40,7 +41,6 @@ import {
   type ToolRegistry,
 } from "@platform/webmcp/registry";
 import { runScenario, type Scenario } from "@simulation/engine";
-import type { AetherState } from "@core/branch-engine";
 
 /**
  * Every scenario the interface offers, in tab order. Anything that iterates
@@ -145,32 +145,6 @@ const commandLabels: Record<string, { label: string; impact: string }> = {
 function actorName(kind: "human" | "agent" | "system") {
   if (kind === "human") return "Sreenath";
   return kind === "agent" ? "Aether agent" : "Aether engine";
-}
-
-/**
- * Incoming shared state must never destroy work that is already here. A tab
- * sitting on an unbuilt canvas would otherwise overwrite a tab holding a
- * modelled architecture, which reads to the reviewer as their work vanishing.
- */
-function wouldDiscardWork(current: AetherState, incoming: AetherState) {
-  const built = (candidate: AetherState) => {
-    const baseline = candidate.branches["branch-baseline"];
-    const components = baseline
-      ? Object.values(deriveGraph(candidate, baseline).entities).filter(
-          (entity) => entity.kind !== "region",
-        ).length
-      : 0;
-    return {
-      components,
-      branches: Object.keys(candidate.branches).length,
-      audit: candidate.audit.length,
-    };
-  };
-  const here = built(current);
-  const there = built(incoming);
-  if (there.components < here.components) return true;
-  if (there.branches < here.branches) return true;
-  return there.audit < here.audit;
 }
 
 function display(value: string | number | boolean) {
@@ -600,13 +574,34 @@ export function App() {
       if (result === "conflict")
         void loadRemoteWorkspace().then((remote) => {
           if (!remote) return;
+          // A refused write means someone else got there first, so the
+          // authoritative state has to be adopted. It must still not be
+          // adopted over work it would destroy — the poll and the storage
+          // event both check this, and this path did not, which is the path a
+          // shared room actually takes.
+          let discards = false;
+          setState((current) => {
+            discards = wouldDiscardWork(current, remote);
+            return current;
+          });
+          if (discards) {
+            setSyncStatus("Local draft");
+            setMessage(
+              "Someone else changed this workspace while you were working. Your architecture is kept; reload to take theirs.",
+            );
+            return;
+          }
           applyingRemoteRef.current = true;
           remoteVersionRef.current = remote.workspace.persistenceVersion ?? 0;
           setState(remote);
-          setMessage("Another tab updated this workspace. State refreshed.");
+          setMessage(
+            sharedRoom
+              ? "Someone else in this room updated the architecture. Evidence is live."
+              : "Another tab updated this workspace. State refreshed.",
+          );
         });
     });
-  }, [state]);
+  }, [state, sharedRoom]);
   useEffect(() => {
     void loadRemoteWorkspace().then((remote) => {
       remoteReadyRef.current = true;
@@ -642,12 +637,16 @@ export function App() {
         remoteVersionRef.current = remoteVersion;
         setSyncStatus("Synced");
         setState(remote);
-        setMessage("Another tab changed this architecture. Evidence is live.");
+        setMessage(
+          sharedRoom
+            ? "Someone else in this room changed the architecture. Evidence is live."
+            : "Another tab changed this architecture. Evidence is live.",
+        );
       });
     };
     const interval = window.setInterval(poll, 3000);
     return () => window.clearInterval(interval);
-  }, []);
+  }, [sharedRoom]);
   useEffect(() => {
     const sync = (event: StorageEvent) => {
       if (event.key !== storageKey || !event.newValue) return;
