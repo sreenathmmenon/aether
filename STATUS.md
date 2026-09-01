@@ -982,3 +982,18 @@ was already underway again.
   - Evidence: M57 routed writes through `commit`, but `model_architecture` accumulates into a local state and ended with a bare `onState(next)`, so it never got the change. It carried the identical defect — returning `nextAction: "run_failure_scenario"` without registering that tool.
   - It also built its dependency key map from `componentIds()` reading the state on the page rather than the one it was accumulating, so a dependency naming a component created earlier in the same batch could not resolve. Both now read the batch's own state.
   - One test covers both: it drives model-then-trace with no manual refresh, and fails independently when either fix is reverted.
+
+## Milestone 59 — Guidance at the point the decision is made
+
+- [x] **M59.1 — The comparison tool names a next action** `DONE`
+  - Acceptance: an agent that compares futures knows what to do with the answer.
+  - Evidence: `compare_architecture_futures` was the only tool returning no `nextAction`. An agent that compared before simulating got `"evidence":[]` and nothing else — a dead end, when the answer was to run a scenario first. This is the tool that produces the recommendation a human acts on, so it was the worst place to leave a gap.
+  - It now answers `create_architecture_branch` when no future exists, `run_failure_scenario` when one lacks evidence, and — once evidence exists — `"Report the trade-off. Only a human approves a future."` That last one is deliberately not a tool name: there is no approval tool, and inventing one would tell an agent something false about this page. A test asserts it is not in the registered surface.
+
+- [x] **M59.2 — Give the output budget real headroom** `DONE`
+  - Acceptance: the tool with the most to say does not fail because it has the most to say.
+  - Evidence: adding the next action pushed the three-future comparison to 1528 characters against a 1500 budget, and exceeding it returns `RESULT_TOO_LARGE` — nothing at all. Measured rather than guessed: the tool was already sitting 28 characters from silently returning no answer.
+  - Trimming the result was tried before and reverted for making it harder to read, so the budget itself moved to 2000. The constant is now exported and the test imports it instead of holding its own copy of `1500`, which is the duplicated-value drift this codebase has been bitten by before.
+
+- [x] **M59.3 — Collapse the duplicated graph derivations** `DONE`
+  - Evidence: three tools each rebuilt "active branch, else baseline" by hand. That duplication is exactly how the schema and the executor drifted apart in M58, so all of them now read the one `activeGraph()` helper. Audited the remaining baseline readers: `regionIds()` reads the baseline deliberately and correctly, because no command can create a region — the component kind enum excludes it.

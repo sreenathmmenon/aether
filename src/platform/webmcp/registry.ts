@@ -41,7 +41,14 @@ function modelContext(): ModelContext | undefined {
   return document.modelContext;
 }
 
-const maxToolResultLength = 1500;
+/**
+ * Output budget for one tool result.
+ *
+ * Exported so the test that enforces it cannot hold a copy that drifts. The
+ * three-future comparison sits close to this line, and exceeding it returns
+ * an error instead of a shorter answer, so the headroom is deliberate.
+ */
+export const maxToolResultLength = 2000;
 /** Components named in one summary before it degrades to a count. */
 const summaryComponentLimit = 24;
 
@@ -313,9 +320,7 @@ export function createAetherToolRegistry(
           // region and a domain that had nothing to do with it.
           const state = snapshot();
           const branch = state.branches[state.workspace.activeBranchId];
-          const graph = branch
-            ? deriveGraph(state, branch)
-            : state.revisions["revision-baseline"]!.graph;
+          const graph = activeGraph(state);
           const components = Object.values(graph.entities).filter(
             (entity) => entity.kind !== "region",
           );
@@ -371,10 +376,7 @@ export function createAetherToolRegistry(
           const state = snapshot();
           const branchId = state.workspace.activeBranchId;
           const futures = Object.keys(state.branches).length - 1;
-          const branch = state.branches[branchId];
-          const graph = branch
-            ? deriveGraph(state, branch)
-            : state.revisions["revision-baseline"]!.graph;
+          const graph = activeGraph(state);
           const entities = Object.values(graph.entities);
           // The description promises the architecture and its evidence. It
           // returned neither, so an agent could not tell a seeded platform
@@ -613,9 +615,7 @@ export function createAetherToolRegistry(
           // with the engine the interface shows.
           const state = snapshot();
           const branch = state.branches[state.workspace.activeBranchId];
-          const graph = branch
-            ? deriveGraph(state, branch)
-            : state.revisions["revision-baseline"]!.graph;
+          const graph = activeGraph(state);
           const run = runScenario(
             graph,
             parsed.data.scenario,
@@ -1075,37 +1075,61 @@ export function createAetherToolRegistry(
           execute: async (input: unknown) => {
             const wanted = (input as { scenario?: string } | undefined)
               ?.scenario;
+            const comparable = Object.values(snapshot().branches).filter(
+              (branch) => branch.id !== "branch-baseline",
+            );
+            const unevidenced = comparable
+              .filter(
+                (branch) =>
+                  !(snapshot().simulations[branch.id] ?? []).some(
+                    (run) => !wanted || run.scenario === wanted,
+                  ),
+              )
+              .map((branch) => branch.id);
             return toolResult({
-              futures: Object.values(snapshot().branches)
-                .filter((branch) => branch.id !== "branch-baseline")
-                .map((branch) => ({
-                  branchId: branch.id,
-                  name: branch.name,
-                  status: branch.status,
-                  // The newest run per scenario, not every run recorded: a
-                  // future re-simulated after each edit accumulates history
-                  // no model is comparing against, and enough of it pushed
-                  // this past the output budget so the tool returned nothing
-                  // at all — failing exactly when there is most to compare.
-                  evidence: Array.from(
-                    (snapshot().simulations[branch.id] ?? [])
-                      .filter((run) => !wanted || run.scenario === wanted)
-                      .reduce(
-                        (latest, run) => latest.set(run.scenario, run),
-                        new Map<string, ScenarioResult>(),
-                      )
-                      .values(),
-                  ).map((run) => ({
-                    scenario: run.scenario,
-                    availability: run.availability,
-                    rtoMinutes: run.rtoMinutes,
-                    // The interface shows latency beside the other three, and
-                    // a model weighing the same trade-off could not see it.
-                    latencyMs: run.latencyMs,
-                    monthlyCostUsd: run.monthlyCostUsd,
-                    violations: run.sloViolations.length,
-                  })),
+              futures: comparable.map((branch) => ({
+                branchId: branch.id,
+                name: branch.name,
+                status: branch.status,
+                // The newest run per scenario, not every run recorded: a
+                // future re-simulated after each edit accumulates history
+                // no model is comparing against, and enough of it pushed
+                // this past the output budget so the tool returned nothing
+                // at all — failing exactly when there is most to compare.
+                evidence: Array.from(
+                  (snapshot().simulations[branch.id] ?? [])
+                    .filter((run) => !wanted || run.scenario === wanted)
+                    .reduce(
+                      (latest, run) => latest.set(run.scenario, run),
+                      new Map<string, ScenarioResult>(),
+                    )
+                    .values(),
+                ).map((run) => ({
+                  scenario: run.scenario,
+                  availability: run.availability,
+                  rtoMinutes: run.rtoMinutes,
+                  // The interface shows latency beside the other three, and
+                  // a model weighing the same trade-off could not see it.
+                  latencyMs: run.latencyMs,
+                  monthlyCostUsd: run.monthlyCostUsd,
+                  violations: run.sloViolations.length,
                 })),
+              })),
+              // Every other tool names what to do next; this one, at the
+              // point a decision is actually made, did not. An agent that
+              // compared futures with no evidence yet saw an empty array and
+              // no way forward, when the answer was to simulate them first.
+              // Kept short on purpose: naming every unevidenced branch here
+              // pushed the three-future comparison past the output budget,
+              // which returns nothing at all — failing exactly when there is
+              // most to compare.
+              nextAction: !comparable.length
+                ? "create_architecture_branch"
+                : unevidenced.length
+                  ? "run_failure_scenario"
+                  : // Not a tool name: there deliberately is none. The chain
+                    // ends at the human, and saying so is the honest answer.
+                    "Report the trade-off. Only a human approves a future.",
               humanGate:
                 "Only Sreenath can approve and merge a branch in the visible Aether UI.",
             });

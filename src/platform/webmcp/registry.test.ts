@@ -5,7 +5,7 @@ import type { AetherState } from "@core/branch-engine";
 import { paymentPlatformBaseline } from "../../fixtures/payment-platform/baseline";
 import { blankBaseline } from "../../fixtures/blank/baseline";
 import { rideHailingBaseline } from "../../fixtures/ride-hailing/baseline";
-import { createAetherToolRegistry } from "./registry";
+import { createAetherToolRegistry, maxToolResultLength } from "./registry";
 import { offlineToolSurface } from "./offline-surface";
 
 type RegisteredTool = {
@@ -70,6 +70,51 @@ describe("Aether WebMCP registry", () => {
       ),
     ) as { error?: string };
     expect(ran.error).toBeUndefined();
+  });
+
+  it("tells an agent what to do at the decision point", async () => {
+    // Every other tool names a next action. This one, at the point a
+    // decision is actually made, returned futures and a human gate and
+    // nothing else — so an agent that compared before simulating saw an
+    // empty evidence array and no way forward.
+    const live = new Set<RegisteredTool>();
+    let state = createInitialState(paymentPlatformBaseline);
+    const registry = createAetherToolRegistry(
+      (next) => {
+        state = next;
+      },
+      undefined,
+      {
+        registerTool: async (tool, options) => {
+          const entry = tool as unknown as RegisteredTool;
+          live.add(entry);
+          options?.signal?.addEventListener("abort", () => live.delete(entry));
+        },
+      },
+    );
+    await registry?.refresh(state);
+    const get = (name: string) => [...live].find((tool) => tool.name === name);
+    const compare = async () =>
+      JSON.parse(String(await get("compare_architecture_futures")?.execute({})))
+        .nextAction as string;
+
+    await get("create_architecture_branch")?.execute({
+      name: "Decision probe",
+      intent: "highest_resilience",
+    });
+    // A future with no evidence: simulate it, do not ask a human to judge it.
+    expect(await compare()).toBe("run_failure_scenario");
+
+    await get("run_failure_scenario")?.execute({
+      branchId: "branch-highest_resilience",
+      scenario: "regional_outage",
+    });
+    // Evidence exists, so the chain ends at the human. Deliberately not a
+    // tool name: there is no approval tool, and inventing one would tell an
+    // agent something false about this page.
+    const ended = await compare();
+    expect(ended).toMatch(/human/i);
+    expect([...live].map((tool) => tool.name)).not.toContain(ended);
   });
 
   it("lets an agent trace what it just built", async () => {
@@ -558,7 +603,7 @@ describe("Aether WebMCP registry", () => {
     ]) {
       const tool = tools.find((candidate) => candidate.name === name);
       const output = String(await tool?.execute({}));
-      expect(output.length).toBeLessThanOrEqual(1500);
+      expect(output.length).toBeLessThanOrEqual(maxToolResultLength);
       expect(() => JSON.parse(output) as unknown).not.toThrow();
       expect(output).not.toContain("RESULT_TOO_LARGE");
     }
@@ -1802,7 +1847,7 @@ describe("Aether WebMCP registry", () => {
 
   it("stays inside its output budget with every future simulated", async () => {
     // Adding latency to the comparison pushed three futures across four
-    // scenarios past the 1500-character budget, and the tool returned
+    // scenarios past the output budget, and the tool returned
     // RESULT_TOO_LARGE — failing exactly when there is most to compare. It
     // returns the newest run per scenario rather than every run ever
     // recorded, because a future re-simulated after each edit accumulates
