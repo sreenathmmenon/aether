@@ -552,6 +552,32 @@ export function App() {
     const basis = clean ?? evidence.monthlyCostUsd * 0.85;
     return Math.max(1000, Math.ceil(basis / 100) * 100);
   }, [futures, state.simulations, selectedScenario, evidence.monthlyCostUsd]);
+  /**
+   * The evidence that stood behind a recorded decision. A change history that
+   * names the action but not the numbers asks a reviewer to take an approval
+   * on trust, which is the opposite of what this product claims to do.
+   */
+  const eventEvidence = (event: (typeof state.audit)[number]) => {
+    const runs = state.simulations[event.branchId] ?? [];
+    if (event.commandName === "RUN_SCENARIO") {
+      const scenario = (event.input as { scenario?: string }).scenario;
+      const run = runs.filter((entry) => entry.scenario === scenario).at(-1);
+      return run
+        ? `${run.availability.toFixed(2)}% · ${run.rtoMinutes}m · ${run.outputHash}`
+        : undefined;
+    }
+    if (
+      event.commandName === "APPROVE_BRANCH" ||
+      event.commandName === "MERGE_BRANCH"
+    ) {
+      const version = (event.input as { branchVersion?: number }).branchVersion;
+      const backing = runs.filter((entry) => entry.branchVersion === version);
+      if (!backing.length) return undefined;
+      const worst = Math.min(...backing.map((entry) => entry.availability));
+      return `${backing.length} clean ${backing.length === 1 ? "scenario" : "scenarios"} · worst ${worst.toFixed(2)}%`;
+    }
+    return undefined;
+  };
   const decisionNotes = state.decisionNotes ?? [];
   const activeNotes = decisionNotes
     .filter(
@@ -2111,6 +2137,22 @@ export function App() {
                         </div>
                         <small>
                           {String(event.result.nextState).replaceAll("_", " ")}
+                          {/* A decision record has to say when, and what
+                              evidence stood behind the decision. Without the
+                              numbers, a reviewer auditing an approval has to
+                              take the outcome on trust. */}
+                          {eventEvidence(event) && (
+                            <b className="replay-evidence">
+                              {eventEvidence(event)}
+                            </b>
+                          )}
+                          <time dateTime={event.timestamp}>
+                            {new Date(event.timestamp).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                              second: "2-digit",
+                            })}
+                          </time>
                         </small>
                       </li>
                     );

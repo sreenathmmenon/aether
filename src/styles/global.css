@@ -176,6 +176,20 @@ button {
 .canvas-empty-cta:hover {
   background: #1d3557;
 }
+/* The evidence and the moment behind a recorded decision. */
+.replay-evidence {
+  display: block;
+  margin-top: 2px;
+  color: var(--blue);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.replay-evidence + time {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
 .shared-live {
   padding: 5px 8px;
   border: 1px solid rgba(36, 135, 101, 0.25);
