@@ -1214,3 +1214,12 @@ was already underway again.
   - Evidence: a lone queue carries neither replicas nor a declared restore time, so no fallback can apply. Rather than chain a third one, the engine now refuses the branch: "This architecture offers nothing for that trade-off to change. Add a component it can act on, or choose another intent."
   - Scoped deliberately. The same architecture still creates a `lowest_cost` future, verified against the deployed origin, so the refusal blocks the empty intent and not the architecture. The interface already disables future creation on an unbuilt canvas, so this changes nothing a reviewer can reach — it closes the path an agent can.
   - Three existing tests failed on this change because they created futures against an empty blank canvas, which is now correctly refused. Each was fixed by giving it an architecture to repair rather than by weakening the guard, which is what the interface requires of a reviewer anyway.
+
+## Milestone 78 — The description matches the refusal
+
+- [x] **M78.1 — Stop promising what the engine now refuses** `DONE`
+  - Acceptance: an agent that reads only a tool's description is not walked into a rejection.
+  - Evidence: M77 made a future with nothing to repair a refusal, which left `create_architecture_branch` describing itself as "call this first to build or change anything". That was true of a seeded architecture and false of an empty canvas, where the call is now rejected until components exist. `get_architecture_summary` already answered `add_architecture_component` there, so the page told an agent two different things depending on which surface it read.
+  - The description now separates the two cases: call it first on a seeded architecture, build components first on an empty canvas because an intent with nothing to act on is refused. 442 characters against the 500 the metadata test enforces.
+  - The existing test asserted the description names itself as prerequisite and names the tools it unlocks. It now also asserts the empty-canvas precondition, so the text cannot drift back to the version that misleads; removing that clause fails it.
+  - Verified against the deployed origin on both paths: on a blank canvas the description and the summary's `nextAction` agree that components come first, and on a seeded system the branch still creates and the next action advances to `run_failure_scenario`.
