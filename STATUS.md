@@ -1505,3 +1505,15 @@ was already underway again.
 - [x] **M104.2 — The feed was re-reading itself** `DONE`
   - Evidence: it had no `aria-atomic="false"`, so a change anywhere inside re-announced the whole region. The fourth agent call would have replayed the three before it, which gets worse exactly as an agent does more work.
   - Scoped to the arriving entry. A test holds both properties, and each fails on its own: restoring the header's live region fails it, and removing the atomic attribute fails it separately.
+
+## Milestone 105 — The link before the page
+
+- [x] **M105.1 — Re-run the whole demo after this many changes** `DONE`
+  - Evidence: the judge's sequence walked end to end against the deployed origin. Intro dialog, five tools, "Mumbai is down", 93.96% availability, three futures from one click, twelve tools, scale, approve, commit — the merged future carrying four scenarios at zero violations, rollback offered, and the surface back to seven. Nothing regressed across the accessibility and budget work, so nothing was changed.
+
+- [x] **M105.2 — The page said nothing about itself when shared** `DONE`
+  - Acceptance: a submission link carries its own explanation, because it is shared before it is opened.
+  - Evidence: reading the served HTML rather than the rendered page — somewhere this project had never looked — found no Open Graph metadata at all. A Devpost entry, a chat message or a bookmark showed a bare URL. The meta description was also thinner than the product's own one-liner: "Aether is a counterfactual architecture laboratory" names a category rather than saying what it does.
+  - Both fixed, and verified live: five tags served, titled "Aether — branch it, break it, commit with confidence" with a description naming the agent, the engine and the human gate.
+  - Deliberately no `og:image`. This repository ships no share image, and the favicon route returns the SPA fallback rather than a file — a card pointing at a missing image renders worse than one with no image. A test asserts the tags exist, that the description says what the product does, and that no image is referenced until one exists.
+  - Worth recording: a probe that renamed `<meta property="og:url"` appeared to show the test passing on a missing tag. Prettier had wrapped the attribute onto its own line, so the probe matched nothing and removed nothing. Re-run against the real formatting, the assertion fails correctly.
