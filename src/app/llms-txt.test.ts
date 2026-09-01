@@ -27,13 +27,22 @@ describe("the file an agent reads about this page", () => {
       );
   });
 
-  it("is served from the file, not a second copy in the server", () => {
+  it("serves every static text file from the file itself", () => {
     // The server answered /llms.txt from an inline string that shadowed the
     // built file, so editing `public/llms.txt` changed nothing that shipped —
-    // which is how the misspelled account survived. One copy, one place to
-    // keep right.
-    expect(serverSource).not.toMatch(/# Aether\\n/);
-    expect(serverSource).toContain('readFileSync("./dist/llms.txt"');
+    // which is how the misspelled account survived. `robots.txt` had the same
+    // shape, agreeing by luck rather than by construction.
+    const routed = [
+      ...serverSource.matchAll(/app\.get\("\/([a-z.]+\.txt)"/g),
+    ].map((match) => match[1]!);
+    expect(routed.length).toBeGreaterThan(0);
+    for (const file of routed)
+      expect(
+        serverSource,
+        `/${file} is answered from something other than dist/${file}`,
+      ).toContain(`readFileSync("./dist/${file}"`);
+    // And no inline body that would shadow one.
+    expect(serverSource).not.toMatch(/context\.text\("[A-Za-z#]/);
   });
 
   it("describes the surface an agent can actually use", () => {

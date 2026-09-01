@@ -133,8 +133,13 @@ app.put("/api/workspaces/:id", async (context) => {
   return context.json({ version: saved.rows[0].version });
 });
 
+// The same shadowing that hid the llms.txt typo: an inline copy here means
+// editing `public/robots.txt` changes nothing that ships. The contents agree
+// today, which is exactly when the duplication is cheapest to remove.
+const robotsTxt = readFileSync("./dist/robots.txt", "utf8");
+
 app.get("/robots.txt", (context) =>
-  context.text("User-agent: *\nAllow: /\n", 200, {
+  context.text(robotsTxt, 200, {
     "Content-Type": "text/plain; charset=utf-8",
   }),
 );
