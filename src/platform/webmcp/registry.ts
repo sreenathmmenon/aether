@@ -886,12 +886,20 @@ export function createAetherToolRegistry(
                 items: {
                   type: "object",
                   properties: {
+                    // The runtime enforces all of these; the schema stated
+                    // none of them, so an agent filling the schema it was
+                    // handed was rejected by limits it was never told about.
                     key: {
                       type: "string",
+                      minLength: 2,
+                      maxLength: 24,
+                      pattern: "^[A-Za-z0-9][A-Za-z0-9_-]*$",
                       description: "Temporary key used by dependencies.",
                     },
                     name: {
                       type: "string",
+                      minLength: 2,
+                      maxLength: 32,
                       description: "Short plain-text component name.",
                     },
                     kind: {
@@ -903,8 +911,12 @@ export function createAetherToolRegistry(
                       enum: regionIds(),
                       description: "Region this component runs in.",
                     },
-                    peakRps: { type: "number" },
-                    capacityRps: { type: "number" },
+                    peakRps: { type: "number", minimum: 0, maximum: 1000000 },
+                    capacityRps: {
+                      type: "number",
+                      minimum: 0,
+                      maximum: 1000000,
+                    },
                     monthlyCostUsd: {
                       type: "number",
                       minimum: 0,

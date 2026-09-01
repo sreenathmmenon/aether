@@ -701,6 +701,72 @@ describe("Aether WebMCP registry", () => {
     }
   });
 
+  it("states the batch tool's limits and accepts every one it states", async () => {
+    // The single-component tool declared bounds on every field. The batch
+    // tool, validating the same properties through the same rules, declared
+    // none for key, name, peakRps or capacityRps — so an agent filling the
+    // schema it was handed was rejected by limits it was never told about.
+    const live: RegisteredTool[] = [];
+    const registry = createAetherToolRegistry(() => {}, undefined, {
+      registerTool: async (tool) => {
+        live.push(tool as unknown as RegisteredTool);
+      },
+    });
+    await registry?.refresh(createInitialState(blankBaseline, "blank"));
+    const batch = live.find((tool) => tool.name === "model_architecture") as
+      | (RegisteredTool & {
+          inputSchema: {
+            properties: {
+              components: {
+                items: {
+                  properties: Record<
+                    string,
+                    { minLength?: number; maxLength?: number; maximum?: number }
+                  >;
+                };
+              };
+            };
+          };
+        })
+      | undefined;
+    const fields = batch!.inputSchema.properties.components.items.properties;
+
+    // Every bounded field says so.
+    expect(fields.key!.minLength).toBe(2);
+    expect(fields.key!.maxLength).toBe(24);
+    expect(fields.name!.minLength).toBe(2);
+    expect(fields.name!.maxLength).toBe(32);
+    expect(fields.peakRps!.maximum).toBe(1000000);
+    expect(fields.capacityRps!.maximum).toBe(1000000);
+
+    // And a call sitting exactly on each stated limit is accepted, or the
+    // schema is advertising a value the runtime would refuse — the worse
+    // half of the same mismatch.
+    const extremes: Record<string, unknown>[] = [
+      { key: "ab", name: "Probe One", kind: "service" },
+      { key: "a".repeat(24), name: "Probe Two", kind: "service" },
+      { key: "k3", name: "ab", kind: "service" },
+      { key: "k4", name: "A".repeat(32), kind: "service" },
+      { key: "k5", name: "Probe Five", kind: "service", peakRps: 1000000 },
+      { key: "k6", name: "Probe Six", kind: "service", capacityRps: 1000000 },
+    ];
+    for (const component of extremes) {
+      const result = JSON.parse(
+        String(
+          await batch!.execute({
+            branchId: "branch-baseline",
+            components: [{ ...component, regionId: "region-primary" }],
+          }),
+        ),
+      ) as { error?: string; problems?: string[] };
+      expect(
+        result.error,
+        `${JSON.stringify(component)}: ${JSON.stringify(result.problems)}`,
+      ).toBeUndefined();
+    }
+    registry?.dispose();
+  });
+
   it("tells an agent what to do at the decision point", async () => {
     // Every other tool names a next action. This one, at the point a
     // decision is actually made, returned futures and a human gate and
