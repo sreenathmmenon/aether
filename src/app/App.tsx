@@ -1,7 +1,12 @@
 import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { createInitialState, deriveGraph, dispatch } from "@core/branch-engine";
 import { getBranchDiff } from "@core/branch-diff";
-import { clausesOf, parseBrief } from "@core/brief-parser";
+import {
+  clausesOf,
+  kindFor as briefKindFor,
+  parseBrief,
+  resolveAlias,
+} from "@core/brief-parser";
 import {
   clearPersistedState,
   loadPersistedState,
@@ -802,40 +807,94 @@ export function App() {
     let next = state;
     const created: string[] = [];
     const unmeasured: string[] = [];
-    parsed.components.forEach((component, index) => {
+
+    const operational = () =>
+      Object.values(
+        deriveGraph(next, next.branches[activeBranch.id]!).entities,
+      ).filter((entity) => entity.kind !== "region");
+
+    /**
+     * Find the component a name refers to, allowing for the way prose names
+     * things: a brief says "the API gateway" once and "the gateway" after,
+     * and both mean one node.
+     */
+    const locate = (name?: string) => {
+      if (!name) return undefined;
+      const nodes = operational();
+      const resolved = resolveAlias(
+        name,
+        nodes.map((entity) => entity.name),
+      );
+      return nodes.find((entity) => entity.name === (resolved ?? name))?.id;
+    };
+
+    /** Add a component, or return the existing one the name refers to. */
+    const ensure = (
+      name: string,
+      kind: ReturnType<typeof briefKindFor>,
+      metrics: { peakRps: number; capacityRps: number; monthlyCostUsd: number },
+      measured: boolean,
+    ) => {
+      const existing = locate(name);
+      if (existing) return existing;
       const outcome = dispatch(
         next,
         {
           type: "ADD_COMPONENT",
           input: {
             branchId: activeBranch.id,
-            name: component.name,
-            kind: component.kind,
+            name,
+            kind,
             regionId: regions[0]?.id ?? "",
-            peakRps: component.peakRps,
-            capacityRps: component.capacityRps,
-            monthlyCostUsd: component.monthlyCostUsd,
+            ...metrics,
           },
         },
         humanActor,
       );
-      if (!outcome.ok) return;
+      if (!outcome.ok) return undefined;
       next = outcome.value;
-      const entityId = outcome.affectedEntityIds[0]!;
-      created.push(entityId);
-      if (component.unmeasured) unmeasured.push(component.name);
-      // Wire each new component to the one before it using the verb the
-      // reviewer wrote, so failure propagates the way their prose describes.
-      const previous = created[created.length - 2];
-      if (!previous || index === 0) return;
+      if (!measured) unmeasured.push(name);
+      return outcome.affectedEntityIds[0]!;
+    };
+
+    parsed.components.forEach((component, index) => {
+      const targetId = ensure(
+        component.name,
+        component.kind,
+        {
+          peakRps: component.peakRps,
+          capacityRps: component.capacityRps,
+          monthlyCostUsd: component.monthlyCostUsd,
+        },
+        !component.unmeasured,
+      );
+      if (!targetId) return;
+      const previous = created[created.length - 1];
+      created.push(targetId);
+
+      // Draw the edge from the component the clause names as its subject.
+      // "orders publishes to Kafka" tells us orders exists even if no earlier
+      // clause introduced it, so it is created unmeasured rather than having
+      // its edge silently reattached to whatever came before.
+      const sourceId = component.sourceName
+        ? ensure(
+            component.sourceName,
+            briefKindFor(component.sourceName),
+            { peakRps: 0, capacityRps: 0, monthlyCostUsd: 0 },
+            false,
+          )
+        : previous;
+      if (!sourceId || sourceId === targetId) return;
+      if (!component.sourceName && index === 0) return;
+
       const linked = dispatch(
         next,
         {
           type: "CONNECT_COMPONENTS",
           input: {
             branchId: activeBranch.id,
-            sourceId: previous,
-            targetId: entityId,
+            sourceId,
+            targetId,
             kind: component.edgeKind,
           },
         },
@@ -843,6 +902,7 @@ export function App() {
       );
       if (linked.ok) next = linked.value;
     });
+
     if (created.length === 0) {
       setComposerNotice("Those components already exist on this canvas.");
       return;
@@ -852,6 +912,7 @@ export function App() {
     setComposerNotice("");
     // Say plainly what was read and what still has no real numbers, so nobody
     // mistakes an unmeasured component for a measured one.
+    const modelled = operational().length;
     const overflowNote =
       parsed.overflow > 0
         ? ` ${parsed.overflow} later clause${parsed.overflow === 1 ? "" : "s"} were not modelled — add them below.`
@@ -860,7 +921,7 @@ export function App() {
       ? ` ${unmeasured.length} component${unmeasured.length === 1 ? " has" : "s have"} no traffic figures yet: set peak and capacity on ${unmeasured.slice(0, 3).join(", ")}${unmeasured.length > 3 ? "…" : ""} before trusting the evidence.`
       : "";
     setMessage(
-      `Modelled ${created.length} component${created.length === 1 ? "" : "s"} from your brief.${unmeasuredNote}${overflowNote}`,
+      `Modelled ${modelled} component${modelled === 1 ? "" : "s"} from your brief.${unmeasuredNote}${overflowNote}`,
     );
   }
   function addComponent(event: FormEvent<HTMLFormElement>) {

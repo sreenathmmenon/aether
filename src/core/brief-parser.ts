@@ -28,8 +28,14 @@ export type BriefComponent = {
   monthlyCostUsd: number;
   /** True when the brief stated no traffic figures for this component. */
   unmeasured: boolean;
-  /** How this clause connects back to the component before it. */
+  /** How this clause connects back to its source component. */
   edgeKind: BriefEdgeKind;
+  /**
+   * The component this clause names as the source of the dependency, when it
+   * states one. "orders publishes to Kafka" makes orders the source; a clause
+   * with no subject of its own continues from the previous component.
+   */
+  sourceName?: string;
 };
 
 export type ParsedBrief = {
@@ -51,8 +57,29 @@ export function clausesOf(brief: string) {
     .filter((part) => part.length > 2);
 }
 
+/**
+ * Strip the figures a reviewer stated so they name nothing. "billing reads
+ * from Postgres costing 2400 usd monthly" describes Postgres, not a component
+ * called "2400 usd monthly".
+ */
+export function withoutMeasurements(clause: string) {
+  return clause
+    .replace(
+      /\b(?:at|around|about|roughly|handling|serving|costing|peaking at|up to)?\s*[0-9][0-9,.]*\s*(?:k|m)?\s*(?:rps|qps|requests?\/s|req\/s|usd|dollars?|\/mo|per month|monthly|capacity|headroom|ceiling)\b/gi,
+      " ",
+    )
+    // Any measurement word left stranded once its figure is gone names nothing.
+    .replace(
+      /\b(?:usd|dollars?|monthly|per month|rps|qps|capacity|headroom|ceiling|costing|handling|serving|peaking)\b/gi,
+      " ",
+    )
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 /** Prefer the trailing noun phrase: "fraud writes to Postgres" -> Postgres. */
-export function componentNameFrom(clause: string) {
+export function componentNameFrom(rawClause: string) {
+  const clause = withoutMeasurements(rawClause) || rawClause;
   const words = clause
     .replace(/[^A-Za-z0-9 -]/g, " ")
     .split(/\s+/)
@@ -109,6 +136,50 @@ export function numberNear(clause: string, unit: RegExp) {
   return Math.min(1_000_000, Math.round(magnitude * scale));
 }
 
+const verbPattern =
+  /\b(writes?|persists?|stores?|reads?|queries|publishes?|emits?|produces?|consumes?|subscribes?|routes?|proxies|forwards?|calls?|invokes?|hits?|depends?)\b/i;
+
+/**
+ * The noun before the verb, when the clause names one. "orders publishes to
+ * Kafka" must draw its edge from orders, not from whatever the previous
+ * clause happened to mention.
+ */
+export function subjectNameFrom(rawClause: string) {
+  const clause = withoutMeasurements(rawClause) || rawClause;
+  const match = clause.match(verbPattern);
+  if (!match || match.index === undefined) return undefined;
+  const before = clause
+    .slice(0, match.index)
+    .replace(/[^A-Za-z0-9 -]/g, " ")
+    .split(/\s+/)
+    .filter(Boolean)
+    .filter((word) => !noise.test(word));
+  if (before.length === 0) return undefined;
+  return before.slice(-3).join(" ").slice(0, 32);
+}
+
+/**
+ * Match a subject against components already on the canvas before creating a
+ * new one. A brief says "the API gateway" once and "the gateway" thereafter,
+ * and "fraud scoring" then "fraud" — those are the same component, and adding
+ * an alias for each would split one node into several.
+ */
+export function resolveAlias(subject: string, existingNames: string[]) {
+  const wanted = subject.toLowerCase().trim();
+  const exact = existingNames.find((name) => name.toLowerCase() === wanted);
+  if (exact) return exact;
+  const words = wanted.split(/\s+/).filter(Boolean);
+  return existingNames.find((name) => {
+    const candidate = name.toLowerCase();
+    const candidateWords = candidate.split(/\s+/).filter(Boolean);
+    // "gateway" matches "API gateway"; "fraud" matches "fraud scoring".
+    return (
+      words.every((word) => candidateWords.includes(word)) ||
+      candidateWords.every((word) => words.includes(word))
+    );
+  });
+}
+
 export function parseBrief(brief: string): ParsedBrief {
   const all = clausesOf(brief);
   const clauses = all.slice(0, briefComponentLimit);
@@ -123,12 +194,15 @@ export function parseBrief(brief: string): ParsedBrief {
         numberNear(clause, /(?:usd|dollars?|\/mo|per month|monthly)/) ?? 0;
       return {
         name,
-        kind: kindFor(clause),
+        // Classify the component this clause names, not every noun mentioned
+        // in it: "the gateway routes to checkout" introduces checkout.
+        kind: kindFor(name),
         peakRps,
         capacityRps,
         monthlyCostUsd,
         unmeasured: !peakRps && !capacityRps,
         edgeKind: edgeKindFor(clause),
+        sourceName: subjectNameFrom(clause),
       };
     }),
   };

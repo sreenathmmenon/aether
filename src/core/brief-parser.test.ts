@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { createInitialState, deriveGraph, dispatch } from "./branch-engine";
 import { blankBaseline } from "../fixtures/blank/baseline";
-import { briefComponentLimit, parseBrief } from "./brief-parser";
+import {
+  briefComponentLimit,
+  parseBrief,
+  resolveAlias,
+} from "./brief-parser";
 import { runScenario } from "@simulation/engine";
 
 const human = { id: "sreenath", kind: "human" as const, displayName: "S" };
@@ -54,6 +58,71 @@ describe("system brief parser", () => {
       "reads_from",
       "publishes_to",
     ]);
+  });
+
+  it("never turns a stated figure into a component name", () => {
+    // "billing reads from Postgres costing 2400 usd monthly" describes
+    // Postgres, not a component called "2400 usd monthly".
+    const parsed = parseBrief(
+      "Users hit an API gateway at 40k rps, billing reads from Postgres costing 2400 usd monthly",
+    );
+    expect(parsed.components.map((c) => c.name)).toEqual([
+      "API gateway",
+      "Postgres",
+    ]);
+    expect(parsed.components[0]!.peakRps).toBe(40000);
+    expect(parsed.components[1]!.monthlyCostUsd).toBe(2400);
+  });
+
+  it("classifies the component the clause names, not every noun in it", () => {
+    // A clause introduces the component it ends on: "the gateway routes to
+    // checkout" adds checkout, a service, even though it says "gateway".
+    const parsed = parseBrief(
+      "users hit the API gateway, the gateway routes to checkout",
+    );
+    expect(parsed.components.map((c) => [c.name, c.kind])).toEqual([
+      ["API gateway", "gateway"],
+      ["checkout", "service"],
+    ]);
+  });
+
+  it("treats a repeated component as one node with two edges", () => {
+    // A brief mentions the same store twice when two things use it. That is
+    // one component and two dependencies, not a duplicate to discard.
+    const parsed = parseBrief(
+      "orders publishes to Kafka, analytics consumes from Kafka",
+    );
+    expect(parsed.components.map((c) => c.name)).toEqual([
+      "Kafka",
+      "Kafka",
+    ]);
+    expect(parsed.components.map((c) => c.edgeKind)).toEqual([
+      "publishes_to",
+      "consumes_from",
+    ]);
+  });
+
+  it("names the subject a clause draws its edge from", () => {
+    // "orders publishes to Kafka" must draw from orders, not from whatever
+    // the previous clause happened to mention.
+    const parsed = parseBrief(
+      "checkout calls fraud scoring, orders publishes to Kafka, analytics consumes from Kafka",
+    );
+    expect(parsed.components.map((c) => c.sourceName)).toEqual([
+      "checkout",
+      "orders",
+      "analytics",
+    ]);
+  });
+
+  it("treats a shortened repeat mention as the same component", () => {
+    // Prose introduces "the API gateway" and then calls it "the gateway".
+    // Two nodes for one component would split the graph and the evidence.
+    const existing = ["API gateway", "fraud scoring", "Postgres"];
+    expect(resolveAlias("gateway", existing)).toBe("API gateway");
+    expect(resolveAlias("fraud", existing)).toBe("fraud scoring");
+    expect(resolveAlias("Postgres", existing)).toBe("Postgres");
+    expect(resolveAlias("warehouse", existing)).toBeUndefined();
   });
 
   it("turns a plain description into a simulable graph without an agent", () => {
