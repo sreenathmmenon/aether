@@ -17,6 +17,61 @@ type RegisteredTool = {
 };
 
 describe("Aether WebMCP registry", () => {
+  it("has the tool its nextAction names registered when that call returns", async () => {
+    // An agent follows the nextAction it was just handed. It does not wait
+    // for the host to re-render first. create_architecture_branch answers
+    // "run_failure_scenario", and that tool is registered only once a future
+    // exists — so if the surface is rebuilt later, from an effect, the agent
+    // reads the list in between and finds the tool missing. Reproduced live
+    // against the deployed origin before this test existed.
+    // Registration is torn down by aborting its signal, so a realistic stub
+    // has to drop those the way the browser does. Keeping them would let a
+    // tool that had been unregistered still look present.
+    const live = new Set<RegisteredTool>();
+    let state = createInitialState(paymentPlatformBaseline);
+    const registry = createAetherToolRegistry(
+      (next) => {
+        state = next;
+      },
+      undefined,
+      {
+        registerTool: async (tool, options) => {
+          const entry = tool as unknown as RegisteredTool;
+          live.add(entry);
+          options?.signal?.addEventListener("abort", () => live.delete(entry));
+        },
+      },
+    );
+    await registry?.refresh(state);
+    const tools = () => [...live];
+
+    const created = JSON.parse(
+      String(
+        await tools()
+          .find((tool) => tool.name === "create_architecture_branch")
+          ?.execute({ name: "Race probe", intent: "highest_resilience" }),
+      ),
+    ) as { nextAction: string };
+
+    // No refresh here on purpose: this is exactly what the agent sees.
+    expect(created.nextAction).toBe("run_failure_scenario");
+    expect(tools().map((tool) => tool.name)).toContain(created.nextAction);
+
+    // And it is callable, not merely listed.
+    const ran = JSON.parse(
+      String(
+        await tools()
+          .filter((tool) => tool.name === created.nextAction)
+          .at(-1)
+          ?.execute({
+            branchId: "branch-highest_resilience",
+            scenario: "regional_outage",
+          }),
+      ),
+    ) as { error?: string };
+    expect(ran.error).toBeUndefined();
+  });
+
   it("summarises the architecture and its evidence in one read", async () => {
     // The tool describes itself as returning the active branch and its
     // evidence. It returned a branch id, a count and a next action, so an
@@ -277,9 +332,11 @@ describe("Aether WebMCP registry", () => {
       ),
     ).toContain("nextAction");
 
-    tools.length = 0;
+    // The surface is rebuilt by the write itself, so the tools the returned
+    // nextAction names are already registered when the agent reads them. No
+    // further refresh is needed, and asking for one changes nothing.
     await registry?.refresh(state);
-    expect(tools.map((tool) => tool.name)).toEqual([
+    expect(tools.map((tool) => tool.name).slice(-12)).toEqual([
       "get_decision_record",
       "get_architecture_summary",
       "create_architecture_branch",
@@ -1359,8 +1416,29 @@ describe("Aether WebMCP registry", () => {
             value.length > suffix.length
               ? value.slice(0, value.length - suffix.length) + suffix
               : value;
+          // One future exists per trade-off, and each probe now really
+          // creates one, so the intent has to vary too or a later probe is
+          // refused for a reason that has nothing to do with the boundary.
+          const intents = [
+            "highest_resilience",
+            "fastest_recovery",
+            "lowest_cost",
+          ];
+          const varied: Record<string, unknown> =
+            tool.name === "create_architecture_branch" && field !== "intent"
+              ? { intent: intents[probed % intents.length] }
+              : {};
+          // Likewise for components: the writes now persist, so a probe of
+          // any other field would reuse the base name and be refused as a
+          // duplicate. Only the field under test may carry the extreme.
+          if (
+            tool.name === "add_architecture_component" &&
+            field !== "name" &&
+            typeof base.name === "string"
+          )
+            varied.name = `${base.name} ${probed}`;
           const result = JSON.parse(
-            String(await tool.execute({ ...base, [field]: unique })),
+            String(await tool.execute({ ...base, ...varied, [field]: unique })),
           ) as { error?: string; problems?: string[] };
           expect(
             result.error,

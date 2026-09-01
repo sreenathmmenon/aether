@@ -179,6 +179,22 @@ export function createAetherToolRegistry(
     return currentState;
   }
 
+  /**
+   * Commit a write and bring the tool surface up to date before the calling
+   * tool returns.
+   *
+   * `onState` only hands the new state to React, so the surface was rebuilt
+   * later, from an effect. An agent that followed the `nextAction` it had just
+   * been given — `create_architecture_branch` says `run_failure_scenario` —
+   * read the tool list in that window and found the tool missing. The
+   * instruction was correct and the surface had not caught up with it yet.
+   */
+  async function commit(next: AetherState) {
+    currentState = next;
+    onState(next);
+    await refreshSurface(next);
+  }
+
   let callSequence = 0;
 
   function regionIds() {
@@ -252,8 +268,8 @@ export function createAetherToolRegistry(
     registeredNames.push(tool.name);
   }
 
-  return {
-    async refresh(state) {
+  async function refreshSurface(state: AetherState) {
+    {
       currentState = state;
       // The key must change whenever the registered surface would change, or
       // the early return below leaves a stale set of tools on the page. That
@@ -435,7 +451,7 @@ export function createAetherToolRegistry(
             agent,
           );
           if (!result.ok) return rejected(result);
-          onState(result.value);
+          await commit(result.value);
           return toolResult({
             branchId: result.value.workspace.activeBranchId,
             revisionId: result.revisionId,
@@ -495,7 +511,7 @@ export function createAetherToolRegistry(
               agent,
             );
             if (!result.ok) return rejected(result);
-            onState(result.value);
+            await commit(result.value);
             return toolResult({
               branchId: parsed.data.branchId,
               entityId: parsed.data.entityId,
@@ -547,7 +563,7 @@ export function createAetherToolRegistry(
               agent,
             );
             if (!result.ok) return rejected(result);
-            onState(result.value);
+            await commit(result.value);
             return toolResult(
               result.value.simulations[parsed.data.branchId]?.find(
                 (run) => run.scenario === parsed.data.scenario,
@@ -754,7 +770,7 @@ export function createAetherToolRegistry(
               agent,
             );
             if (!result.ok) return rejected(result);
-            onState(result.value);
+            await commit(result.value);
             return toolResult({
               branchId: parsed.data.branchId,
               addedEntityId: result.affectedEntityIds[0],
@@ -977,7 +993,7 @@ export function createAetherToolRegistry(
               agent,
             );
             if (!result.ok) return rejected(result);
-            onState(result.value);
+            await commit(result.value);
             return toolResult({
               connected: `${parsed.data.sourceId} -> ${parsed.data.targetId}`,
               nextAction: "run_failure_scenario",
@@ -1026,7 +1042,7 @@ export function createAetherToolRegistry(
               agent,
             );
             if (!result.ok) return rejected(result);
-            onState(result.value);
+            await commit(result.value);
             return toolResult({
               branchId: parsed.data.branchId,
               branchVersion:
@@ -1093,7 +1109,11 @@ export function createAetherToolRegistry(
         });
       }
       onToolCount?.(registrations.length, registeredNames);
-    },
+    }
+  }
+
+  return {
+    refresh: refreshSurface,
     dispose() {
       registrations.forEach((registration) => registration.abort());
       registrations = [];

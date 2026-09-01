@@ -957,3 +957,14 @@ was already underway again.
   - Acceptance: a large architecture still gets a summary.
   - Evidence: a graph an agent builds up is unbounded, and exceeding the 1500-character budget replaces the entire summary with `RESULT_TOO_LARGE` — the agent loses the answer rather than receiving a shorter one. With 40 components the payload would have passed that limit.
   - The summary now names at most 24 components and reports `componentsNotListed` for the remainder: 973 characters at 40 components, no truncation error. Removing the cap fails the test that holds this.
+
+## Milestone 57 — The next action is true the moment it is given
+
+- [x] **M57.1 — Rebuild the tool surface before the write returns** `DONE`
+  - Acceptance: an agent that follows the `nextAction` it was just handed finds that tool registered.
+  - Evidence: reproduced against the deployed origin. `create_architecture_branch` returns `nextAction: "run_failure_scenario"`, and an agent that immediately called it got `{"missing":"run_failure_scenario"}` — as did the two calls after it. Polling showed the tool present shortly afterwards, which identified it as a race rather than a missing capability.
+  - The cause was structural. A tool committed its write through `onState`, which only hands the new state to React; the surface was then rebuilt later, from an effect. Between those two points the agent read the tool list and found tools that the returned instruction had just promised it. `run_failure_scenario` registers only once a future exists, so the very first thing an agent is told to do was the thing most likely to fail.
+  - Writes now commit through one `commit` helper that updates the registry's own state and rebuilds the surface before the tool returns. All six commit points route through it, so a tool added later cannot forget.
+  - A test drives the real sequence with no refresh in between, and its stub drops registrations on abort the way the browser does — keeping them would have let an unregistered tool still look present. Reverting the fix fails it with the exact live symptom: `expected [ 'get_decision_record', …(4) ] to include 'run_failure_scenario'`.
+  - Two existing tests changed because the behaviour genuinely changed, not to make them pass: one had cleared its captured tools and refreshed manually, which is now a no-op; the other created branches and components that now really persist, so its boundary probes had to vary intent and name or be refused for uniqueness rather than the boundary under test.
+  - Worth recording: the full suite passed with the fix reverted before this test existed. The defect was reachable from the first action an agent takes and no test covered it.
