@@ -1452,3 +1452,15 @@ was already underway again.
   - Evidence: measured against the deployed origin. Three futures with all four scenarios simulated produce 1,898 characters against a 2,000 budget — five per cent of headroom. One more scenario, one longer violation string, or one more future and `toolResult` would have replaced the entire comparison with `RESULT_TOO_LARGE`. That is the failure mode M59 already fixed once by raising the budget; raising it again would only move the cliff.
   - It now narrows in steps rather than falling off. The first attempt dropped latency per run and was not enough on its own — verified by tightening the budget, where the narrow form still overflowed and the tool returned a 109-character error instead of a comparison. The last step keeps the worst scenario per future, which is what a trade-off actually turns on, and holds at 813 characters.
   - Verified at three budget levels: 1,600 and 900 both return a real comparison rather than an error, and 500 honestly cannot fit. Live behaviour is unchanged — 1,898 bytes with latency intact — so the degradation is dormant until it is needed.
+
+## Milestone 100 — Every read tool measured under load
+
+- [x] **M100.1 — Sweep the whole read surface, not the one that failed** `DONE`
+  - Acceptance: no tool is one field away from replacing its answer with an error.
+  - Evidence: M99 found the comparison tool at 95 per cent of budget. Rather than stop there, every read tool was measured on a fully built workspace — three futures, all four scenarios each, and the longest notes the schema allows. `trace_architecture_dependency` sits at 9 per cent, `get_architecture_summary` at 22, `inspect_failure_domain` at 40, `run_failure_scenario` at 43. `get_decision_record` was the next closest at 88.
+  - It bounds itself to three notes and four commands, so its size has a ceiling rather than a growth curve — but nothing capped the evidence reference each note carries, and the schema allows 120 characters of it. Trimming that to 60 brings the ceiling to 79 per cent with all three notes still returned. A test asserts the record stays under 85 per cent rather than merely fitting, because a result at the line breaks on whatever is added next.
+  - Verified against the deployed origin: 32 per cent on the seeded state, with real evidence references well inside the cap, so nothing is truncated in ordinary use.
+
+- [x] **M100.2 — Three probes that measured themselves** `DONE`
+  - Evidence: worth recording, because each looked like a finding. The first passed a no-op `onState` and read a registry that had never seen the notes. The second refreshed before the writes rather than after. The third — the one that took longest — anchored notes to `entityId: "reconciliation"` on the ride-hailing graph, where no such component exists, so every note was correctly refused and the tool honestly reported the two seeded ones.
+  - Each time the number moved, and each time the tool was right. Reading the reducer's own guard is what settled it: an unknown component is refused by design, which is the M86 validation working rather than a tool dropping data.
