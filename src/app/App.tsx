@@ -229,6 +229,9 @@ export function App() {
   );
   const [toolCount, setToolCount] = useState(0);
   const [toolCalls, setToolCalls] = useState<ToolCall[]>([]);
+  // The newest call, held briefly in the header so agent activity is visible
+  // in the opening viewport rather than only in the panel a screen below.
+  const [latestCall, setLatestCall] = useState<ToolCall | undefined>();
   const [registeredTools, setRegisteredTools] = useState<string[]>([]);
   // Feedback has to appear beside the control that caused it; the shared
   // activity strip sits far below the fold while this form is in use.
@@ -501,11 +504,19 @@ export function App() {
           if (names.length) setRegisteredTools(names);
         },
         undefined,
-        (call) => setToolCalls((current) => [call, ...current].slice(0, 6)),
+        (call) => {
+          setToolCalls((current) => [call, ...current].slice(0, 6));
+          setLatestCall(call);
+        },
       ) ?? undefined;
     void registryRef.current?.refresh(state);
   }, [state]);
   useEffect(() => () => registryRef.current?.dispose(), []);
+  useEffect(() => {
+    if (!latestCall) return;
+    const timer = window.setTimeout(() => setLatestCall(undefined), 6000);
+    return () => window.clearTimeout(timer);
+  }, [latestCall]);
   useEffect(() => {
     persistState(state);
     if (applyingRemoteRef.current) {
@@ -1066,11 +1077,30 @@ export function App() {
           {ownSystem ? "Agent-modeled proof room" : "Counterfactual review"}
         </div>
         <div className="header-status">
+          {/* The agent surface is this product's whole premise, so the opening
+              viewport has to show it rather than leaving it a screen down. The
+              count is the live registration count, and the most recent call
+              names itself here as it happens. */}
           <span
             className={`connection ${webMcp.available ? "connection-live" : ""}`}
+            title={
+              registeredTools.length
+                ? `Registered right now: ${registeredTools.join(", ")}`
+                : undefined
+            }
           >
-            {webMcp.available ? "WebMCP live" : "WebMCP not detected"}
+            {webMcp.available
+              ? `WebMCP live · ${toolCount} tools`
+              : "WebMCP not detected"}
           </span>
+          {latestCall && (
+            <span
+              className={`header-call header-call-${latestCall.outcome}`}
+              aria-live="polite"
+            >
+              <code>{latestCall.name}</code>
+            </span>
+          )}
           <span className="shared-live">{syncStatus}</span>
           <span
             className="human-chip"

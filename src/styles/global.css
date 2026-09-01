@@ -81,6 +81,49 @@ button {
   background: var(--green);
   box-shadow: 0 0 0 4px rgba(36, 135, 101, 0.12);
 }
+/* The newest agent tool call, surfaced in the header so WebMCP activity is
+   visible in the opening viewport rather than only in the panel below it. */
+.header-call {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(47, 106, 191, 0.3);
+  background: rgba(47, 106, 191, 0.09);
+  animation: header-call-in 260ms ease-out;
+  max-width: 240px;
+}
+.header-call code {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--blue);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.header-call-rejected {
+  border-color: rgba(193, 74, 60, 0.32);
+  background: rgba(193, 74, 60, 0.09);
+}
+.header-call-rejected code {
+  color: var(--coral);
+}
+@keyframes header-call-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .header-call {
+    animation: none;
+  }
+}
 .shared-live {
   padding: 5px 8px;
   border: 1px solid rgba(36, 135, 101, 0.25);
