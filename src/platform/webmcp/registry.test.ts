@@ -17,6 +17,118 @@ type RegisteredTool = {
 };
 
 describe("Aether WebMCP registry", () => {
+  it("summarises the architecture and its evidence in one read", async () => {
+    // The tool describes itself as returning the active branch and its
+    // evidence. It returned a branch id, a count and a next action, so an
+    // agent could not tell a seeded platform from an empty canvas, nor see
+    // any simulation result, without spending further calls to find out.
+    const tools: RegisteredTool[] = [];
+    let state = createInitialState(rideHailingBaseline);
+    const registry = createAetherToolRegistry(
+      (next) => {
+        state = next;
+      },
+      undefined,
+      {
+        registerTool: async (tool) => {
+          tools.push(tool as unknown as RegisteredTool);
+        },
+      },
+    );
+    await registry?.refresh(state);
+    const summary = () =>
+      tools.filter((tool) => tool.name === "get_architecture_summary").at(-1);
+
+    const empty = JSON.parse(String(await summary()?.execute({}))) as {
+      components: string[];
+      regions: string[];
+      dependencies: number;
+      evidence: unknown;
+    };
+    // The graph on the page, named — not a fixed list.
+    expect(empty.components).toContain("Matching (service)");
+    expect(empty.regions).toContain("Core");
+    expect(empty.dependencies).toBe(
+      Object.keys(rideHailingBaseline.relationships).length,
+    );
+    expect(empty.evidence).toBeNull();
+
+    await tools
+      .find((tool) => tool.name === "create_architecture_branch")
+      ?.execute({ name: "Evidence probe", intent: "highest_resilience" });
+    await registry?.refresh(state);
+    await tools
+      .filter((tool) => tool.name === "run_failure_scenario")
+      .at(-1)
+      ?.execute({
+        branchId: "branch-highest_resilience",
+        scenario: "regional_outage",
+      });
+    await registry?.refresh(state);
+
+    const withEvidence = JSON.parse(String(await summary()?.execute({}))) as {
+      evidence: { availability: number; outputHash: string } | null;
+    };
+    // The evidence is the run the interface shows, carrying the same
+    // reproducible fingerprint rather than a number recomputed here.
+    const run = state.simulations["branch-highest_resilience"]?.at(-1);
+    expect(withEvidence.evidence?.availability).toBe(run?.availability);
+    expect(withEvidence.evidence?.outputHash).toBe(run?.outputHash);
+  });
+
+  it("keeps a large architecture inside the tool output budget", async () => {
+    // Exceeding the budget replaces the whole summary with an error, so an
+    // agent that built a big system would lose the answer entirely rather
+    // than get a shorter one.
+    const tools: RegisteredTool[] = [];
+    // The blank template is the one an agent builds into directly, so the
+    // unbounded graph is reachable there.
+    let state = createInitialState(blankBaseline, "blank");
+    const registry = createAetherToolRegistry(
+      (next) => {
+        state = next;
+      },
+      undefined,
+      {
+        registerTool: async (tool) => {
+          tools.push(tool as unknown as RegisteredTool);
+        },
+      },
+    );
+    await registry?.refresh(state);
+    for (let index = 0; index < 40; index += 1) {
+      await tools
+        .filter((tool) => tool.name === "add_architecture_component")
+        .at(-1)
+        ?.execute({
+          branchId: "branch-baseline",
+          name: `Component Number ${index}`,
+          kind: "database",
+          regionId: "region-primary",
+          peakRps: 100,
+          capacityRps: 500,
+          monthlyCostUsd: 10,
+        });
+      await registry?.refresh(state);
+    }
+    const out = String(
+      await tools
+        .filter((tool) => tool.name === "get_architecture_summary")
+        .at(-1)
+        ?.execute({}),
+    );
+    expect(out).not.toContain("RESULT_TOO_LARGE");
+    const parsed = JSON.parse(out) as {
+      components: string[];
+      componentsNotListed: number;
+    };
+    // It degrades by naming fewer, and says how many it left out.
+    expect(parsed.components.length).toBeLessThan(40);
+    expect(
+      parsed.components.length + parsed.componentsNotListed,
+    ).toBeGreaterThanOrEqual(40);
+  });
+
   it("explains the gate that keeps editing tools unregistered", async () => {
     // On a freshly loaded page the baseline branch is merged, so nothing that
     // writes is registered. An agent asked to build something then sees no

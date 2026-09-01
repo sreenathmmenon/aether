@@ -943,3 +943,17 @@ was already underway again.
   - Evidence: on load only five read tools register, because the baseline branch is merged and nothing may write to it directly. An agent told "add a payment service" therefore sees no tool that adds one. `get_architecture_summary` already returns `nextAction: create_architecture_branch`, but an agent that goes straight for the write tool never reads it.
   - `create_architecture_branch` now states in its own description that it must be called first and that the editing tools register only once a future exists. The description is the one surface such an agent is guaranteed to see.
   - A test holds the property rather than the sentence: that no editing tool is registered against a merged baseline, and that the gate tool names itself as the prerequisite. Reverting the description fails it.
+
+## Milestone 56 — The summary tool summarises the architecture
+
+- [x] **M56.1 — Return the system and its evidence in one read** `DONE`
+  - Acceptance: an agent's first read tells it what the system is and what has been proven about it.
+  - Evidence: `get_architecture_summary` describes itself as returning "the active branch, its evidence, and the next allowed action", and adds that "an empty architecture means the user has not described their system yet". It returned `{branchId, branches, nextAction}` — no components, no evidence, and no way to distinguish a seeded five-component platform from an empty canvas. An agent had to spend further calls discovering what the page already knew.
+  - The result now names the components and regions on the active branch, counts dependencies, and carries the latest simulation's availability, RTO, cost, SLO-violation count and reproducible `outputHash`. Verified against the ride-hailing baseline: 448 characters, availability 97.11, `fnv1a-eb1a0f5c`.
+  - `nextAction` stays coherent in every state: `add_architecture_component` on an empty canvas (where it is registered, because the blank template's baseline is editable), `create_architecture_branch` on a seeded one, `run_failure_scenario` once a future exists.
+  - A test holds the property against the shipped graph rather than a local copy: it asserts the fixture's own component names and relationship count, and that the evidence matches the run in state by fingerprint. Removing the evidence fails it.
+
+- [x] **M56.2 — Degrade instead of losing the answer** `DONE`
+  - Acceptance: a large architecture still gets a summary.
+  - Evidence: a graph an agent builds up is unbounded, and exceeding the 1500-character budget replaces the entire summary with `RESULT_TOO_LARGE` — the agent loses the answer rather than receiving a shorter one. With 40 components the payload would have passed that limit.
+  - The summary now names at most 24 components and reports `componentsNotListed` for the remainder: 973 characters at 40 components, no truncation error. Removing the cap fails the test that holds this.

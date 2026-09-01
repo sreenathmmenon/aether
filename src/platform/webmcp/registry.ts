@@ -42,6 +42,8 @@ function modelContext(): ModelContext | undefined {
 }
 
 const maxToolResultLength = 1500;
+/** Components named in one summary before it degrades to a count. */
+const summaryComponentLimit = 24;
 
 /** Every scenario the engine accepts, for the schemas that offer a choice. */
 const scenarioNames = [
@@ -346,15 +348,54 @@ export function createAetherToolRegistry(
           additionalProperties: false,
         },
         annotations: { readOnlyHint: true, untrustedContentHint: false },
-        execute: async () =>
-          toolResult({
-            branchId: snapshot().workspace.activeBranchId,
-            branches: Object.keys(snapshot().branches).length - 1,
+        execute: async () => {
+          const state = snapshot();
+          const branchId = state.workspace.activeBranchId;
+          const futures = Object.keys(state.branches).length - 1;
+          const branch = state.branches[branchId];
+          const graph = branch
+            ? deriveGraph(state, branch)
+            : state.revisions["revision-baseline"]!.graph;
+          const entities = Object.values(graph.entities);
+          // The description promises the architecture and its evidence. It
+          // returned neither, so an agent could not tell a seeded platform
+          // from an empty canvas without calling a second tool to find out.
+          const allComponents = entities
+            .filter((entity) => entity.kind !== "region")
+            .map((entity) => `${entity.name} (${entity.kind})`);
+          // A graph an agent has built up over many calls is unbounded, and
+          // exceeding the output budget replaces the whole summary with an
+          // error rather than a shorter answer. Degrade by naming fewer.
+          const components = allComponents.slice(0, summaryComponentLimit);
+          const omitted = allComponents.length - components.length;
+          const latest = (state.simulations[branchId] ?? []).at(-1);
+          return toolResult({
+            branchId,
+            futures,
+            components,
+            regions: entities
+              .filter((entity) => entity.kind === "region")
+              .map((entity) => entity.name),
+            dependencies: Object.keys(graph.relationships).length,
+            evidence: latest
+              ? {
+                  scenario: latest.scenario,
+                  availability: latest.availability,
+                  rtoMinutes: latest.rtoMinutes,
+                  monthlyCostUsd: latest.monthlyCostUsd,
+                  sloViolations: latest.sloViolations.length,
+                  outputHash: latest.outputHash,
+                }
+              : null,
+            ...(omitted > 0 ? { componentsNotListed: omitted } : {}),
             nextAction:
-              Object.keys(snapshot().branches).length > 1
-                ? "run_failure_scenario"
-                : "create_architecture_branch",
-          }),
+              allComponents.length === 0
+                ? "add_architecture_component"
+                : futures > 0
+                  ? "run_failure_scenario"
+                  : "create_architecture_branch",
+          });
+        },
       });
       await register({
         name: "create_architecture_branch",
