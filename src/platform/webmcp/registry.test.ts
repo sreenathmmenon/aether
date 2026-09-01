@@ -1,11 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { createInitialState } from "@core/branch-engine";
+import { createInitialState, deriveGraph } from "@core/branch-engine";
 import { dispatch } from "@core/branch-engine";
 import type { AetherState } from "@core/branch-engine";
 import { paymentPlatformBaseline } from "../../fixtures/payment-platform/baseline";
 import { blankBaseline } from "../../fixtures/blank/baseline";
 import { rideHailingBaseline } from "../../fixtures/ride-hailing/baseline";
 import { createAetherToolRegistry, maxToolResultLength } from "./registry";
+import { runScenario } from "@simulation/engine";
 import { offlineToolSurface } from "./offline-surface";
 import webmcpDoc from "../../../docs/WEBMCP.md?raw";
 import complianceDoc from "../../../docs/WEBMCP_COMPLIANCE.md?raw";
@@ -161,6 +162,82 @@ describe("Aether WebMCP registry", () => {
         ).toBe(true);
       }
     }
+  });
+
+  it("lets an agent build a store that is not a single point of failure", async () => {
+    // Creation accepted no replication mode, so an agent asked for a
+    // replicated standby could only build an unreplicated one, watch the
+    // engine report "has no standby replica", and repair it with a second
+    // call. The property that decides the violation was unreachable at the
+    // only moment the component was being described.
+    const live = new Set<RegisteredTool>();
+    let state = createInitialState(blankBaseline, "blank");
+    const registry = createAetherToolRegistry(
+      (next) => {
+        state = next;
+      },
+      undefined,
+      {
+        registerTool: async (tool, options) => {
+          const entry = tool as unknown as RegisteredTool;
+          live.add(entry);
+          options?.signal?.addEventListener("abort", () => live.delete(entry));
+        },
+      },
+    );
+    await registry?.refresh(state);
+    const get = (name: string) => [...live].find((tool) => tool.name === name);
+
+    const simulate = () => {
+      const branch = state.branches["branch-baseline"]!;
+      return runScenario(
+        deriveGraph(state, branch),
+        "regional_outage",
+        branch.id,
+        branch.version,
+      );
+    };
+
+    await get("model_architecture")?.execute({
+      branchId: "branch-baseline",
+      components: [
+        {
+          key: "api",
+          name: "Api Tier",
+          kind: "service",
+          regionId: "region-primary",
+        },
+        {
+          key: "db",
+          name: "Main Store",
+          kind: "database",
+          regionId: "region-primary",
+          replicationMode: "sync",
+        },
+      ],
+      dependencies: [{ sourceKey: "api", targetKey: "db", kind: "writes_to" }],
+    });
+
+    // The engine reads the property the agent set, so the store it described
+    // as replicated is not scored as a single point of failure.
+    expect(simulate().sloViolations).not.toContain(
+      "Main Store has no standby replica",
+    );
+
+    // And the default is unchanged: a store described without the property
+    // is still unreplicated, so existing callers keep their behaviour.
+    await get("add_architecture_component")?.execute({
+      branchId: "branch-baseline",
+      name: "Second Store",
+      kind: "database",
+      regionId: "region-primary",
+      peakRps: 100,
+      capacityRps: 500,
+      monthlyCostUsd: 10,
+    });
+    expect(simulate().sloViolations).toContain(
+      "Second Store has no standby replica",
+    );
   });
 
   it("tells an agent what to do at the decision point", async () => {

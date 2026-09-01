@@ -1018,3 +1018,16 @@ was already underway again.
   - Evidence: `docs/V3_REVERSE_WINNER_PLAN.md` said "nine tools while modeling, eleven tools once a future exists" long after the registry published ten and twelve — two wrong numbers in one sentence, in a document written to describe the winning surface. `WEBMCP_COMPLIANCE.md` was already correct at five, ten and twelve.
   - A test now derives all three sizes from the registry itself and rejects any other written number appearing beside "tools" in the three documents that quote them. Reintroducing the stale sentence fails with `docs/V3_REVERSE_WINNER_PLAN.md claims "nine tools"; the registry publishes 5, 10, 12`.
   - A first attempt at this assertion was deleted rather than kept: it compared a claim to itself and would have passed whatever the documents said. A test that cannot fail is worse than none, which this codebase has now had to relearn twice.
+
+## Milestone 61 — Build a store that is not a single point of failure
+
+- [x] **M61.1 — Replication is settable at creation** `DONE`
+  - Acceptance: an agent asked for a replicated standby can build one.
+  - Evidence: found by testing the claim in `docs/ARCHITECTURE.md` that topology is load-bearing. It is — adding a component moved availability, cost and the output hash. But `add_architecture_component` accepted no `replicationMode`, and that single property is what the engine uses to decide whether a datastore is a single point of failure. An agent building a system on a blank canvas got `"Main Store has no standby replica"` at 93.4% availability with no way to avoid it, because the property was unreachable at the only moment the component was being described. Repairing it meant a second `propose_architecture_change` call, and nothing said so.
+  - Creation now accepts it, threaded through the command schema, the operation type, the reducer and `deriveGraph`. Optional throughout: a component described without it is still unreplicated, so every existing caller keeps its behaviour. Verified: the same build with `replicationMode: "sync"` returns no violation at 96.55%.
+  - Exposed on both `add_architecture_component` and `model_architecture`, with the Zod validator widened to match the advertised JSON schema — a validator that rejects what the schema offers is the advertised-versus-enforced mismatch this codebase has now fixed three times.
+  - The property description was written to 151 characters and the metadata-limit test caught it against a 150 limit. Shortened rather than the limit raised.
+
+- [x] **M61.2 — People can set it too** `DONE`
+  - Evidence: the human component form had no replication control, so this change would have given the agent a capability a person did not have — the inverse of the bounded-authority story this project makes. The form now offers no standby, async, or sync, shown only for databases where it applies, and sends a value only when it is a deliberate choice.
+  - A correction worth recording: an earlier probe concluded setting the ledger to `sync` changed nothing. It changed nothing because `create_architecture_branch` with `highest_resilience` already seeds that exact repair, so the probe measured a no-op. The engine was right and the probe was wrong.

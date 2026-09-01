@@ -191,7 +191,10 @@ export function deriveGraph(
             ? { replicas: 1, latencyTargetMs: 150 }
             : {}),
           ...(operation.entityKind === "database"
-            ? { replicationMode: "none", recoveryTimeMinutes: 30 }
+            ? {
+                replicationMode: operation.replicationMode ?? "none",
+                recoveryTimeMinutes: 30,
+              }
             : {}),
           ...(operation.entityKind === "queue" ? { durable: true } : {}),
         } as ArchitectureEntity["properties"],
@@ -502,6 +505,9 @@ export function dispatch(
       peakRps: command.input.peakRps,
       capacityRps: command.input.capacityRps,
       monthlyCostUsd: command.input.monthlyCostUsd,
+      ...(command.input.replicationMode
+        ? { replicationMode: command.input.replicationMode }
+        : {}),
     });
     branch.version += 1;
     branch.status = "proposed";

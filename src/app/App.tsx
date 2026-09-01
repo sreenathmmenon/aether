@@ -232,6 +232,7 @@ export function App() {
     kind: "service" as "service" | "database" | "queue" | "gateway",
     regionId: "",
     dependsOn: "",
+    replicationMode: "none" as "none" | "async" | "sync",
   });
   const [dragPreview, setDragPreview] = useState<
     { id: string; x: number; y: number } | undefined
@@ -1100,6 +1101,12 @@ export function App() {
           peakRps: 8000,
           capacityRps: 10000,
           monthlyCostUsd: 800,
+          // Only datastores carry replication, and only a deliberate choice
+          // is sent: the reducer's default stays the unreplicated one.
+          ...(componentDraft.kind === "database" &&
+          componentDraft.replicationMode !== "none"
+            ? { replicationMode: componentDraft.replicationMode }
+            : {}),
         },
       },
       humanActor,
@@ -2100,6 +2107,28 @@ export function App() {
                       </option>
                     ))}
                   </select>
+                  {/* Replication is what decides whether a store is scored as
+                      a single point of failure, so a person building one must
+                      be able to say — the agent can. Shown only where it
+                      applies, since it is a datastore property. */}
+                  {componentDraft.kind === "database" && (
+                    <select
+                      aria-label="Replication"
+                      value={componentDraft.replicationMode}
+                      disabled={!writable}
+                      onChange={(event) =>
+                        setComponentDraft((draft) => ({
+                          ...draft,
+                          replicationMode: event.target
+                            .value as typeof componentDraft.replicationMode,
+                        }))
+                      }
+                    >
+                      <option value="none">No standby</option>
+                      <option value="async">Async standby</option>
+                      <option value="sync">Sync standby</option>
+                    </select>
+                  )}
                   <button type="submit" disabled={!writable}>
                     Add
                   </button>

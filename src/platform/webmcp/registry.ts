@@ -86,6 +86,10 @@ const modelArchitectureInput = z.object({
           .nonnegative()
           .max(1_000_000)
           .optional(),
+        // Advertised in the JSON schema above, so the runtime has to accept
+        // it: a validator that rejects what the schema offers teaches an
+        // agent something false about this page.
+        replicationMode: z.enum(["none", "async", "sync"]).optional(),
       }),
     )
     .min(1)
@@ -745,6 +749,12 @@ export function createAetherToolRegistry(
                 maximum: 1000000,
                 description: "Monthly run cost of this component in USD.",
               },
+              replicationMode: {
+                type: "string",
+                enum: ["none", "async", "sync"],
+                description:
+                  "Databases only. An unreplicated store scores as a single point of failure; sync gives it a standby that survives losing its region.",
+              },
             },
             required: [
               "branchId",
@@ -821,6 +831,12 @@ export function createAetherToolRegistry(
                       maximum: 1000000,
                       description: "Monthly run cost of this component in USD.",
                     },
+                    replicationMode: {
+                      type: "string",
+                      enum: ["none", "async", "sync"],
+                      description:
+                        "Databases only. An unreplicated store scores as a single point of failure; sync gives it a regional standby.",
+                    },
                   },
                   required: ["key", "name", "kind", "regionId"],
                   additionalProperties: false,
@@ -887,6 +903,9 @@ export function createAetherToolRegistry(
                     peakRps: component.peakRps ?? 8000,
                     capacityRps: component.capacityRps ?? 10000,
                     monthlyCostUsd: component.monthlyCostUsd ?? 800,
+                    ...(component.replicationMode
+                      ? { replicationMode: component.replicationMode }
+                      : {}),
                   },
                 },
                 agent,

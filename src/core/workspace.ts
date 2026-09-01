@@ -74,6 +74,8 @@ export type BranchOperation =
       peakRps: number;
       capacityRps: number;
       monthlyCostUsd: number;
+      /** Datastores only; absent keeps the unreplicated default. */
+      replicationMode?: "none" | "async" | "sync";
     }
   | { kind: "remove_entity"; entityId: EntityId };
 

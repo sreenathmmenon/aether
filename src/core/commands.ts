@@ -53,6 +53,12 @@ export const addComponentInput = z.object({
   peakRps: z.number().finite().nonnegative().max(1_000_000),
   capacityRps: z.number().finite().nonnegative().max(1_000_000),
   monthlyCostUsd: z.number().finite().nonnegative().max(1_000_000),
+  // A datastore's replication is the property that decides whether it is a
+  // single point of failure. Without it here, an agent asked for a replicated
+  // standby could only build an unreplicated one, watch the engine report the
+  // violation, and repair it with a second call. Optional, so every existing
+  // caller keeps the previous default of no replication.
+  replicationMode: z.enum(["none", "async", "sync"]).optional(),
 });
 
 export const connectComponentsInput = z.object({
