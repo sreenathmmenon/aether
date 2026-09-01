@@ -49,5 +49,15 @@ it("separates a browser that cannot from one that will not here", () => {
   expect(chromium.reason).toContain("origin trial");
   expect(chromium.reason).not.toBe(other.reason);
 
+  // It must not claim the page is unenrolled. The trial token arrives as a
+  // response header, so nothing here can read whether it is absent, expired,
+  // or issued for another origin — and the deployed origin's token does
+  // expire, after which telling a reviewer to enrol an enrolled page sends
+  // them somewhere there is nothing to fix.
+  expect(chromium.reason).not.toMatch(/not enrolled/i);
+  // It says where the actual reason is, since Chrome names it in the console.
+  expect(chromium.reason).toMatch(/console/i);
+  expect(chromium.reason).toMatch(/expired/i);
+
   vi.unstubAllGlobals();
 });

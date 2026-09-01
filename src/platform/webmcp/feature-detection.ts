@@ -32,7 +32,12 @@ export function getWebMcpAvailability(): WebMcpAvailability {
   return {
     available: false,
     reason: chromium
-      ? "This Chrome build has WebMCP behind the origin trial, and this page is not enrolled for it"
+      ? // Deliberately does not claim the page is unenrolled. The token is
+        // sent as a response header, so nothing here can read whether it is
+        // absent, expired, or issued for another origin — and telling a
+        // reviewer to enrol a page that is enrolled sends them somewhere
+        // there is nothing to fix. Chrome's own console names the reason.
+        "This Chrome build keeps WebMCP behind the origin trial and did not accept it for this page. The DevTools console names the reason: an absent, expired, or mismatched trial token."
       : "This browser does not expose WebMCP",
   };
 }
