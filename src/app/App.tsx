@@ -60,6 +60,9 @@ const replayWindow = 12;
 /** How many recent notes the discussion panel shows before scrolling. */
 const noteWindow = 8;
 
+/** How many changes the review diff shows before scrolling. */
+const diffWindow = 10;
+
 const scenarioOrder = [
   "regional_outage",
   "traffic_spike",
@@ -2288,11 +2291,17 @@ export function App() {
               {activeBranch.name} <span>v{activeBranch.version}</span>
             </h2>
           </div>
-          <span>{diff.length} semantic changes</span>
+          <span>
+            {diff.length}{" "}
+            {diff.length === 1 ? "semantic change" : "semantic changes"}
+          </span>
         </div>
+        {/* This is what a human reads immediately before approving. Showing
+            four of nine hid five changes at the moment of the decision the
+            product exists to protect, so it scrolls rather than truncates. */}
         <div className="diff-list">
           {diff.length ? (
-            diff.slice(-4).map((change, index) => (
+            diff.slice(-diffWindow).map((change, index) => (
               <div className="diff-item" key={`${change.entityId}-${index}`}>
                 <b className={`impact-${change.impact}`}>{change.impact}</b>
                 <span>{change.entityName}</span>
@@ -2309,6 +2318,13 @@ export function App() {
             </p>
           )}
         </div>
+        {diff.length > diffWindow && (
+          <p className="replay-earlier">
+            {diff.length - diffWindow} earlier{" "}
+            {diff.length - diffWindow === 1 ? "change is" : "changes are"} in
+            this future and included in the evidence above.
+          </p>
+        )}
         <div className="review-actions">
           <span>
             {activeSimulation

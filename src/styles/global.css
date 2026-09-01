@@ -244,7 +244,11 @@ button {
 .room-invite:hover {
   background: rgba(47, 106, 191, 0.13);
 }
-/* Both records scroll rather than hiding what they cannot fit. */
+/* Every record scrolls rather than hiding what it cannot fit. */
+.diff-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
 .thread-notes {
   max-height: 340px;
   overflow-y: auto;
