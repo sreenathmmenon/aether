@@ -1249,7 +1249,7 @@ export function createAetherToolRegistry(
                   ),
               )
               .map((branch) => branch.id);
-            return toolResult({
+            const build = (detailed: boolean) => ({
               futures: comparable.map((branch) => ({
                 branchId: branch.id,
                 name: branch.name,
@@ -1267,16 +1267,30 @@ export function createAetherToolRegistry(
                       new Map<string, ScenarioResult>(),
                     )
                     .values(),
-                ).map((run) => ({
-                  scenario: run.scenario,
-                  availability: run.availability,
-                  rtoMinutes: run.rtoMinutes,
-                  // The interface shows latency beside the other three, and
-                  // a model weighing the same trade-off could not see it.
-                  latencyMs: run.latencyMs,
-                  monthlyCostUsd: run.monthlyCostUsd,
-                  violations: run.sloViolations.length,
-                })),
+                ).map((run) =>
+                  detailed
+                    ? {
+                        scenario: run.scenario,
+                        availability: run.availability,
+                        rtoMinutes: run.rtoMinutes,
+                        // The interface shows latency beside the other three,
+                        // and a model weighing the same trade-off could not
+                        // see it.
+                        latencyMs: run.latencyMs,
+                        monthlyCostUsd: run.monthlyCostUsd,
+                        violations: run.sloViolations.length,
+                      }
+                    : {
+                        // The narrow form keeps what a trade-off is actually
+                        // decided on. Dropping the whole answer to an error
+                        // fails exactly when there is most to compare.
+                        scenario: run.scenario,
+                        availability: run.availability,
+                        rtoMinutes: run.rtoMinutes,
+                        monthlyCostUsd: run.monthlyCostUsd,
+                        violations: run.sloViolations.length,
+                      },
+                ),
               })),
               // Every other tool names what to do next; this one, at the
               // point a decision is actually made, did not. An agent that
@@ -1295,6 +1309,54 @@ export function createAetherToolRegistry(
                     "Report the trade-off. Only a human approves a future.",
               humanGate:
                 "Only Sreenath can approve and merge a branch in the visible Aether UI.",
+            });
+            // Three fully simulated futures reached 1,898 characters of a
+            // 2,000 budget, so one more scenario or a longer violation string
+            // would have replaced the entire comparison with an error. Try
+            // the full shape, and narrow it rather than lose it.
+            const full = JSON.stringify(build(true));
+            if (full.length <= maxToolResultLength) return full;
+            // Dropping one field per run was not enough on its own: the
+            // narrow form still exceeded the budget and the tool returned an
+            // error instead of a comparison. Narrow the runs too, keeping the
+            // worst scenario per future — the one a trade-off turns on.
+            const narrow = JSON.stringify(build(false));
+            if (narrow.length <= maxToolResultLength) return narrow;
+            return toolResult({
+              ...build(false),
+              futures: comparable.map((branch) => {
+                const runs = Array.from(
+                  (snapshot().simulations[branch.id] ?? [])
+                    .filter((run) => !wanted || run.scenario === wanted)
+                    .reduce(
+                      (latest, run) => latest.set(run.scenario, run),
+                      new Map<string, ScenarioResult>(),
+                    )
+                    .values(),
+                );
+                const worst = runs.reduce<ScenarioResult | undefined>(
+                  (lowest, run) =>
+                    !lowest || run.availability < lowest.availability
+                      ? run
+                      : lowest,
+                  undefined,
+                );
+                return {
+                  branchId: branch.id,
+                  name: branch.name,
+                  status: branch.status,
+                  worstScenario: worst
+                    ? {
+                        scenario: worst.scenario,
+                        availability: worst.availability,
+                        rtoMinutes: worst.rtoMinutes,
+                        monthlyCostUsd: worst.monthlyCostUsd,
+                        violations: worst.sloViolations.length,
+                      }
+                    : null,
+                  scenariosRun: runs.length,
+                };
+              }),
             });
           },
         });

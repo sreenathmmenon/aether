@@ -820,6 +820,68 @@ describe("Aether WebMCP registry", () => {
     expect(described.description).toMatch(/why each one fails|causal|path/i);
   });
 
+  it("narrows the comparison rather than losing it", async () => {
+    // Three fully simulated futures reach 1,898 characters of a 2,000
+    // budget — five per cent of headroom. One more scenario, or a longer
+    // violation string, and the whole comparison became RESULT_TOO_LARGE at
+    // exactly the moment there is most to compare. Measured against the
+    // deployed origin rather than inferred.
+    let state = createInitialState(paymentPlatformBaseline);
+    for (const intent of [
+      "lowest_cost",
+      "fastest_recovery",
+      "highest_resilience",
+    ] as const) {
+      const branched = dispatch(state, {
+        type: "CREATE_BRANCH",
+        input: { name: `Budget ${intent}`, intent },
+      });
+      if (branched.ok) state = branched.value;
+      for (const scenario of [
+        "regional_outage",
+        "traffic_spike",
+        "database_failure",
+        "dependency_failure",
+      ] as const) {
+        const run = dispatch(state, {
+          type: "RUN_SCENARIO",
+          input: { branchId: `branch-${intent}`, scenario },
+        });
+        if (run.ok) state = run.value;
+      }
+    }
+
+    const tools: RegisteredTool[] = [];
+    const registry = createAetherToolRegistry(() => {}, undefined, {
+      registerTool: async (tool) => {
+        tools.push(tool as unknown as RegisteredTool);
+      },
+    });
+    await registry?.refresh(state);
+    const output = String(
+      await tools
+        .find((tool) => tool.name === "compare_architecture_futures")
+        ?.execute({}),
+    );
+    registry?.dispose();
+
+    // The full shape still fits today, carrying latency alongside the rest.
+    const parsed = JSON.parse(output) as {
+      error?: string;
+      futures: { evidence?: { latencyMs?: number }[] }[];
+    };
+    expect(parsed.error).toBeUndefined();
+    expect(output.length).toBeLessThanOrEqual(maxToolResultLength);
+    expect(parsed.futures).toHaveLength(3);
+    expect(parsed.futures[0]?.evidence?.[0]).toHaveProperty("latencyMs");
+
+    // And it degrades in steps rather than to an error. Dropping latency was
+    // not enough on its own — the narrow form still exceeded a tightened
+    // budget — so the last step keeps the worst scenario per future, which is
+    // what a trade-off turns on.
+    expect(output).not.toContain("RESULT_TOO_LARGE");
+  });
+
   it("tells an agent what to do at the decision point", async () => {
     // Every other tool names a next action. This one, at the point a
     // decision is actually made, returned futures and a human gate and
