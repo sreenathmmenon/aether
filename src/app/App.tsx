@@ -1737,6 +1737,11 @@ export function App() {
                     }%`,
                   }}
                   aria-label={`${entity.kind.toUpperCase()} ${entity.name} — ${affected ? (downstream ? "degraded downstream" : "direct failure") : "nominal"}`}
+                  // Selecting a component drives the inspector and the
+                  // property editor, but it was conveyed by a class alone, so
+                  // someone navigating by keyboard could not tell which
+                  // component they had selected.
+                  aria-pressed={entity.id === selectedEntity?.id}
                   onClick={() => setSelectedEntityId(entity.id)}
                   onPointerDown={(event) => {
                     if (!writable) return;
