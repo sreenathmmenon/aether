@@ -729,7 +729,19 @@ export function App() {
       });
     };
     const interval = window.setInterval(poll, 3000);
-    return () => window.clearInterval(interval);
+    // A hidden tab does not poll, and browsers throttle its timers anyway, so
+    // returning to the page could show evidence from before the reviewer
+    // switched away — for the next interval at best, and longer if the timer
+    // was throttled. Reconciling the moment the tab is visible again means
+    // what they come back to is current.
+    const onVisible = () => {
+      if (!document.hidden) poll();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, [sharedRoom, keepLocalWork]);
   useEffect(() => {
     const sync = (event: StorageEvent) => {

@@ -104,6 +104,23 @@ describe("the interface honours the ARIA it declares", () => {
     expect(helper).toMatch(/Someone else changed this workspace/);
   });
 
+  it("reconciles when a hidden tab becomes visible again", () => {
+    // The poll skips while `document.hidden`, and browsers throttle a
+    // background tab's timers regardless, so without this a reviewer
+    // returning to the page sees evidence from before they switched away.
+    // Measured during the shared-room work: a background tab issued zero
+    // requests in seven seconds.
+    const poll = appSource.slice(
+      appSource.indexOf("if (document.hidden) return;"),
+      appSource.indexOf("}, [sharedRoom, keepLocalWork]);"),
+    );
+    expect(poll).toContain('addEventListener("visibilitychange"');
+    // And the listener has to actually poll, not merely exist.
+    expect(poll).toMatch(/if \(!document\.hidden\) poll\(\)/);
+    // Removed on teardown, or every remount leaves another one behind.
+    expect(poll).toContain('removeEventListener("visibilitychange"');
+  });
+
   it("keeps the tab panel bound to the tab that opens it", () => {
     // A tabpanel labelled by a tab that is not the selected one describes the
     // wrong scenario, which is worse than being unlabelled.
