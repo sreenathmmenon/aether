@@ -1895,6 +1895,16 @@ button {
   min-height: 34px;
   margin-top: 2px;
 }
+/* The dependency names another component, so it needs the full row rather
+   than half of one that clips the name it is naming. */
+.component-composer-wide {
+  grid-column: 1 / -1;
+}
+/* A select narrower than its longest option clipped "Recovery: default". */
+.component-composer select {
+  min-width: 0;
+  text-overflow: ellipsis;
+}
 .component-composer button {
   padding: 0 14px;
   border: 0;

@@ -2182,7 +2182,7 @@ export function App() {
                         }))
                       }
                     >
-                      <option value="">Recovery: default</option>
+                      <option value="">Recovery: auto</option>
                       <option value="10">Recovers in 10m</option>
                       <option value="30">Recovers in 30m</option>
                       <option value="120">Recovers in 2h</option>
@@ -2200,7 +2200,7 @@ export function App() {
                         }))
                       }
                     >
-                      <option value="">Replicas: default</option>
+                      <option value="">Replicas: auto</option>
                       <option value="1">1 instance</option>
                       <option value="3">3 instances</option>
                       <option value="6">6 instances</option>
@@ -2218,7 +2218,7 @@ export function App() {
                         }))
                       }
                     >
-                      <option value="">Latency: default</option>
+                      <option value="">Latency: auto</option>
                       <option value="40">40ms target</option>
                       <option value="150">150ms target</option>
                       <option value="400">400ms target</option>
@@ -2269,6 +2269,24 @@ export function App() {
                       }))
                     }
                   />
+                  <select
+                    aria-label="Depends on"
+                    className="component-composer-wide"
+                    value={componentDraft.dependsOn || selectedEntity?.id || ""}
+                    disabled={!writable}
+                    onChange={(event) =>
+                      setComponentDraft((draft) => ({
+                        ...draft,
+                        dependsOn: event.target.value,
+                      }))
+                    }
+                  >
+                    {entities.map((entity) => (
+                      <option key={entity.id} value={entity.id}>
+                        depends on {entity.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <button
                   className="component-composer-submit"
@@ -2282,23 +2300,6 @@ export function App() {
                     {composerNotice}
                   </p>
                 )}
-                <select
-                  aria-label="Depends on"
-                  value={componentDraft.dependsOn || selectedEntity?.id || ""}
-                  disabled={!writable}
-                  onChange={(event) =>
-                    setComponentDraft((draft) => ({
-                      ...draft,
-                      dependsOn: event.target.value,
-                    }))
-                  }
-                >
-                  {entities.map((entity) => (
-                    <option key={entity.id} value={entity.id}>
-                      depends on {entity.name}
-                    </option>
-                  ))}
-                </select>
               </form>
             </div>
           )}
