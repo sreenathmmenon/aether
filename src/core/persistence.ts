@@ -28,7 +28,19 @@ function looksLikeAetherState(value: unknown): value is AetherState {
   return Object.values(branches).every((branch) => {
     if (!branch || !Array.isArray(branch.operations)) return false;
     const revision = revisions[branch.baseRevisionId];
-    return Boolean(revision?.graph?.entities);
+    const entities = revision?.graph?.entities;
+    if (!entities || typeof entities !== "object") return false;
+    // And every entity in it must be one the engine can read. Checking only
+    // that the map exists let a component with no properties through, which
+    // loaded and then threw the moment a scenario ran — the reviewer sees a
+    // blank page rather than a refusal to load stale state.
+    return Object.values(entities).every(
+      (entity) =>
+        Boolean(entity) &&
+        typeof entity === "object" &&
+        Boolean((entity as { properties?: unknown }).properties) &&
+        typeof (entity as { kind?: unknown }).kind === "string",
+    );
   });
 }
 

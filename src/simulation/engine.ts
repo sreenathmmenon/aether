@@ -89,8 +89,16 @@ const round = (value: number, places = 2) => {
   return Math.round(value * factor) / factor;
 };
 
+/**
+ * A component's properties, or an empty set.
+ *
+ * Every read of a property goes through here, so a component that arrives
+ * without them — from state written by an older build, say — produces zeroes
+ * rather than throwing partway through a simulation and blanking the page.
+ * Persistence refuses such state on load; this is the second line.
+ */
 function propertiesOf(entity: ArchitectureEntity): Properties {
-  return entity.properties as Properties;
+  return (entity.properties ?? {}) as Properties;
 }
 
 function operationalEntities(graph: ArchitectureGraph) {

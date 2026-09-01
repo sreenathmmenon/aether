@@ -88,4 +88,51 @@ describe("workspace persistence shape", () => {
     const kept = parsePersistedState(JSON.stringify(state));
     expect(kept?.decisionNotes).toHaveLength(state.decisionNotes.length);
   });
+
+  it("refuses state carrying a component the engine cannot read", () => {
+    // A component with no properties passed the shape check, loaded, and then
+    // threw the moment a scenario ran — so a reviewer returning to a stale
+    // workspace got a blank page rather than a clean refusal. State written
+    // by an older build has to be rejected on load, not partway through.
+    const state = JSON.parse(
+      JSON.stringify(createInitialState(paymentPlatformBaseline)),
+    ) as Record<string, never>;
+    const entities = (
+      state as unknown as {
+        revisions: Record<
+          string,
+          { graph: { entities: Record<string, { kind: string }> } }
+        >;
+      }
+    ).revisions["revision-baseline"]!.graph.entities;
+    const component = Object.keys(entities).find(
+      (id) => entities[id]!.kind !== "region",
+    )!;
+    expect(parsePersistedState(JSON.stringify(state))).toBeDefined();
+
+    delete (entities[component] as { properties?: unknown }).properties;
+    expect(parsePersistedState(JSON.stringify(state))).toBeUndefined();
+  });
+
+  it("drops results from a superseded engine but keeps the branch", () => {
+    // A stale run describes a different model, so showing it beside current
+    // evidence would be a false comparison. The branch survives and
+    // recomputes on its next run.
+    const state = JSON.parse(
+      JSON.stringify(createInitialState(paymentPlatformBaseline)),
+    ) as { simulations: Record<string, unknown[]> };
+    state.simulations = {
+      "branch-baseline": [
+        {
+          engineVersion: "aether-sim-1",
+          scenario: "regional_outage",
+          availability: 99,
+        },
+      ],
+    };
+    const parsed = parsePersistedState(JSON.stringify(state));
+    expect(parsed).toBeDefined();
+    expect(Object.keys(parsed!.simulations)).toContain("branch-baseline");
+    expect(parsed!.simulations["branch-baseline"]).toHaveLength(0);
+  });
 });
