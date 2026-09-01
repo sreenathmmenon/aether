@@ -324,4 +324,125 @@ describe("dependency-graph simulation", () => {
       expected.length,
     );
   });
+
+  it("survives graph shapes a reviewer can actually build", () => {
+    // A reviewer describing their own system can produce a cycle, an island,
+    // an orphan, or a dependency pointing at something they later removed.
+    // A traversal that assumed a tree would loop forever or throw on any of
+    // these, and the reviewer would see a blank page rather than evidence.
+    const stamp = "2026-01-01T00:00:00.000Z";
+    const entity = (id: string, kind: string, regionId?: string) => ({
+      id,
+      kind,
+      name: id,
+      position: { x: 100, y: 100 },
+      properties: {
+        ...(regionId ? { regionId } : {}),
+        peakRps: 1000,
+        capacityRps: 2000,
+        monthlyCostUsd: 100,
+      },
+      version: 1,
+      createdAt: stamp,
+      updatedAt: stamp,
+    });
+    const edge = (id: string, source: string, target: string) => ({
+      id,
+      kind: "calls",
+      sourceId: source,
+      targetId: target,
+      version: 1,
+      createdAt: stamp,
+      updatedAt: stamp,
+    });
+    const build = (
+      entities: ReturnType<typeof entity>[],
+      edges: ReturnType<typeof edge>[],
+    ) =>
+      ({
+        entities: Object.fromEntries(entities.map((e) => [e.id, e])),
+        relationships: Object.fromEntries(edges.map((r) => [r.id, r])),
+      }) as unknown as ArchitectureGraph;
+
+    const region = entity("r1", "region");
+    const shapes: [string, ArchitectureGraph][] = [
+      [
+        "a cycle",
+        build(
+          [
+            region,
+            entity("a", "service", "r1"),
+            entity("b", "service", "r1"),
+            entity("c", "database", "r1"),
+          ],
+          [edge("1", "a", "b"), edge("2", "b", "c"), edge("3", "c", "a")],
+        ),
+      ],
+      [
+        "a two-node cycle",
+        build(
+          [region, entity("a", "service", "r1"), entity("b", "database", "r1")],
+          [edge("1", "a", "b"), edge("2", "b", "a")],
+        ),
+      ],
+      [
+        "disconnected islands",
+        build(
+          [
+            region,
+            entity("a", "service", "r1"),
+            entity("b", "database", "r1"),
+            entity("c", "service", "r1"),
+            entity("d", "queue", "r1"),
+          ],
+          [edge("1", "a", "b"), edge("2", "c", "d")],
+        ),
+      ],
+      [
+        "orphans with no dependencies",
+        build(
+          [region, entity("a", "service", "r1"), entity("b", "database", "r1")],
+          [],
+        ),
+      ],
+      [
+        "a dependency pointing at a component that is gone",
+        build(
+          [region, entity("a", "service", "r1")],
+          [edge("1", "a", "ghost")],
+        ),
+      ],
+      [
+        "a component naming a region that does not exist",
+        build(
+          [
+            region,
+            entity("a", "service", "missing-region"),
+            entity("b", "database", "r1"),
+          ],
+          [edge("1", "a", "b")],
+        ),
+      ],
+    ];
+
+    for (const [label, graph] of shapes)
+      for (const scenario of [
+        "regional_outage",
+        "traffic_spike",
+        "database_failure",
+        "dependency_failure",
+      ] as const) {
+        const run = runScenario(graph, scenario, "branch-baseline", 1);
+        expect(run.availability, `${label} / ${scenario}`).toBeGreaterThan(0);
+        expect(run.availability, `${label} / ${scenario}`).toBeLessThanOrEqual(
+          99.99,
+        );
+        expect(Number.isFinite(run.monthlyCostUsd), label).toBe(true);
+        // A cycle must terminate rather than revisiting a component forever.
+        expect(
+          new Set(run.affectedEntityIds).size,
+          `${label} / ${scenario} must not repeat a component`,
+        ).toBe(run.affectedEntityIds.length);
+      }
+  });
 });
