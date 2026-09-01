@@ -2289,12 +2289,36 @@ export function App() {
             </h2>
             <p className="intro-lede">
               Branch the architecture, run a deterministic failure simulation,
-              and see the consequence before anyone commits it. The agent can
-              never approve its own work.
+              and see the consequence before anyone commits it.
             </p>
+            {/* The loop is the product. Showing its three steps as steps beats
+                describing them in prose a reviewer has to parse. */}
+            <ol className="intro-steps">
+              <li>
+                <b>Agent proposes</b>
+                <span>
+                  It branches a repair future through WebMCP. It cannot touch
+                  the committed architecture.
+                </span>
+              </li>
+              <li>
+                <b>Engine proves</b>
+                <span>
+                  A deterministic simulation over the real dependency graph
+                  returns the same result every time.
+                </span>
+              </li>
+              <li>
+                <b>Only you commit</b>
+                <span>
+                  No approve or merge tool is registered for an agent, in any
+                  state.
+                </span>
+              </li>
+            </ol>
             <p className="intro-own">
-              Describe your own system to an agent and it builds the model here
-              — then prove a repair on it.
+              Bring your own system: describe it in a sentence and prove a
+              repair on it.
             </p>
             <div className="intro-foot">
               <button className="intro-start" onClick={dismissIntro}>
