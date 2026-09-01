@@ -1,4 +1,5 @@
 import { useEffect, type RefObject } from "react";
+import { trapFocus } from "./focus-trap";
 
 /**
  * Make a dialog behave the way `aria-modal="true"` promises.
@@ -48,16 +49,18 @@ export function useModalDialog(
       if (event.key !== "Tab") return;
       const targets = focusable();
       if (targets.length === 0) return;
-      const first = targets[0]!;
-      const last = targets[targets.length - 1]!;
-      const active = document.activeElement;
-      if (event.shiftKey && (active === first || !dialog.contains(active))) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && active === last) {
-        event.preventDefault();
-        first.focus();
-      }
+      // The wrapping rules live in `trapFocus`, which is tested directly:
+      // this hook needs a DOM and the rules do not, and a copy of them here
+      // would drift from the copy under test.
+      const decision = trapFocus({
+        count: targets.length,
+        activeIndex: targets.indexOf(document.activeElement as HTMLElement),
+        shiftKey: event.shiftKey,
+      });
+      if (decision.move === "none") return;
+      event.preventDefault();
+      if (decision.move === "first") targets[0]!.focus();
+      else targets[targets.length - 1]!.focus();
     };
 
     document.addEventListener("keydown", onKeyDown);
