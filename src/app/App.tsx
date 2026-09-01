@@ -1413,6 +1413,8 @@ export function App() {
                   }
                   onClick={() => selectScenario(scenario)}
                   role="tab"
+                  id={`scenario-tab-${scenario}`}
+                  aria-controls="scenario-evidence"
                   aria-selected={scenario === selectedScenario}
                   tabIndex={scenario === selectedScenario ? 0 : -1}
                   onKeyDown={(event) => {
@@ -1691,7 +1693,16 @@ export function App() {
             </div>
           </div>
         </section>
-        <aside className="intelligence-panel">
+        {/* The evidence panel is what the scenario tabs switch, so it is the
+            tabpanel they control. Without the link a screen reader announces
+            a tab and cannot reach what it selects. */}
+        <aside
+          className="intelligence-panel"
+          id="scenario-evidence"
+          role="tabpanel"
+          aria-labelledby={`scenario-tab-${selectedScenario}`}
+          tabIndex={-1}
+        >
           <div className="evidence-heading">
             <div>
               <p className="eyebrow">Live evidence</p>
