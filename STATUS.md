@@ -1223,3 +1223,14 @@ was already underway again.
   - The description now separates the two cases: call it first on a seeded architecture, build components first on an empty canvas because an intent with nothing to act on is refused. 442 characters against the 500 the metadata test enforces.
   - The existing test asserted the description names itself as prerequisite and names the tools it unlocks. It now also asserts the empty-canvas precondition, so the text cannot drift back to the version that misleads; removing that clause fails it.
   - Verified against the deployed origin on both paths: on a blank canvas the description and the summary's `nextAction` agree that components come first, and on a seeded system the branch still creates and the next action advances to `run_failure_scenario`.
+
+## Milestone 79 — A declined future says so
+
+- [x] **M79.1 — Report the intent the engine refused** `DONE`
+  - Acceptance: a reviewer who asks for three futures and gets two is told why.
+  - Evidence: M77 made an intent with nothing to act on a refusal, and `createFutures` dropped those with a bare `if (!created.ok) return`. A reviewer clicked "Create repair futures", got two cards, and was told only that two futures were live — the count silently disagreeing with what they asked for.
+  - The message now names the declined intent and what it means: verified against the deployed origin on a queue-only architecture, "2 futures are live. Select one to inspect causality, cost, and recovery trade-offs. Fastest recovery has nothing to change on this architecture." A total refusal now also reads in the refused tone rather than the neutral one, which M54 established as the difference between a confirmation and a rejection.
+  - The wording moved into `futures-message.ts` with its own tests rather than staying inline in a 2,800-line component, because the singular and plural agreements are the part that breaks quietly. Four tests cover the declined, complete, single and total-refusal cases; removing the note fails three of them.
+
+- [x] **M79.2 — Check the documented claim still holds** `DONE`
+  - Evidence: `docs/V3_REVERSE_WINNER_PLAN.md` claims the product can compare at least three futures for a reviewer-built system, which M77's refusal could have invalidated. Measured across six architecture shapes: three futures on a typical system, on a service-and-store pair, on a lone database, and on a lone service. Only a single gateway or a single queue yields two, and neither is an architecture anyone compares repair futures for. The claim stands, so the document was left alone rather than softened.
