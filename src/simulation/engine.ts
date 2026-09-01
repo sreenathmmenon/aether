@@ -37,7 +37,7 @@ export const availabilityModel = {
   ceiling: 99.99,
 } as const;
 
-export const simulationEngineVersion = "aether-sim-4";
+export const simulationEngineVersion = "aether-sim-5";
 
 /**
  * The part of a graph a simulation actually depends on.
@@ -114,6 +114,10 @@ export type ScenarioResult = {
   latencyMs: number;
   monthlyCostUsd: number;
   sloViolations: string[];
+  // Capacity deficits found beyond the two the evidence names, and the
+  // sentence disclosing them. Absent when nothing was left out.
+  deficitsNotListed?: number;
+  deficitNote?: string;
   affectedEntityIds: string[];
   causalChain: CausalStep[];
   rerunScope: "full" | "affected";
@@ -552,11 +556,12 @@ export function runScenario(
     violations.push(
       `${row.entity.name} capacity deficit: ${row.deficit.toLocaleString()} RPS`,
     );
+  // Kept out of `violations` deliberately. It was pushed in at first, and
+  // every count of that array — the future cards, the comparison an agent
+  // reads — then counted the disclosure as a breach, so a future with four
+  // reported five and one hiding a deficit looked worse than one that was
+  // not. The sentence belongs beside the list, not in it.
   const furtherDeficits = deficits.length - shownDeficits.length;
-  if (furtherDeficits > 0)
-    violations.push(
-      `${furtherDeficits} further ${furtherDeficits === 1 ? "component is" : "components are"} over capacity in this scenario`,
-    );
   if (scenario === "traffic_spike" && deficits.length > 0)
     violations.push("Traffic spike SLO breached");
 
@@ -594,6 +599,12 @@ export function runScenario(
     latencyMs,
     monthlyCostUsd,
     sloViolations: [...new Set(violations)],
+    ...(furtherDeficits > 0
+      ? {
+          deficitsNotListed: furtherDeficits,
+          deficitNote: `${furtherDeficits} further ${furtherDeficits === 1 ? "component is" : "components are"} over capacity in this scenario`,
+        }
+      : {}),
     affectedEntityIds: causalChain.map((step) => step.entityId),
     causalChain,
     rerunScope: branchVersion > 1 ? ("affected" as const) : ("full" as const),

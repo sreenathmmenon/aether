@@ -741,6 +741,12 @@ export function createAetherToolRegistry(
             latencyMs: run.latencyMs,
             monthlyCostUsd: run.monthlyCostUsd,
             sloViolations: run.sloViolations,
+            // Deficits beyond the two the evidence names. Sent as its own
+            // field so the agent's count of sloViolations is a count of
+            // breaches, while still learning that more exist.
+            ...(run.deficitsNotListed
+              ? { deficitsNotListed: run.deficitsNotListed }
+              : {}),
             decisionVariables: [
               "replicationMode",
               "capacityRps",

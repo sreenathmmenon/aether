@@ -1667,3 +1667,16 @@ was already underway again.
   - Scope corrected mid-way: a first version restated the agent-approval refusal and the human path that `branch-engine.test.ts` already covers. Duplicated assertions were dropped rather than left in, so this file holds only what nothing else does.
   - Verified against the deployed origin: the live surface enumerates twelve tools at its richest state and not one of them names a human-only action, so the claim is checked on the deployed product rather than only in test.
   - Probe faults recorded: the first attempt matched `case "COMMAND"` when the reducer uses `if (command.type === ...)`, extracting zero commands — caught by the vacuity guard rather than passing silently. The second assumed `dispatch` returns `{ state }` when it returns `{ ok, value }`, and assumed the seeded workspace already held the three futures when the initial state holds only the baseline.
+
+## Milestone 119 — A disclosure that was counted as a breach
+
+- [x] **M119.1 — Read the page, not the diff** `DONE`
+  - Acceptance: a violation count counts violations.
+  - Evidence: looking at the deployed first screen for onboarding reasons instead found a defect M116 had introduced. The future card read `92.88% availability · 5 violations` over a list of five lines, and the fifth was the disclosure — four breaches reported as five. The engine had gained a sentence _about_ the list by pushing it _into_ the list, so every consumer counting `sloViolations.length` counted the meta-text as a breach.
+  - Ten call sites count that array, including `compare_architecture_futures`. The consequence is worse there than on the card: a future hiding a deficit compared **worse** than one that was not, in the comparison a decision is made on. Disclosing more made a future look more broken, which inverts the incentive the disclosure exists to serve.
+  - The fix is the shape, not the wording: the count and the sentence move to `deficitsNotListed` and `deficitNote`, absent entirely when nothing was left out. The interface renders the note beside the list, and `inspect_failure_domain` sends the count to an agent as its own field, so both readers still learn deficits were withheld while every count stays a count of breaches.
+
+- [x] **M119.2 — Pin the distinction** `DONE`
+  - Evidence: a new test asserts no entry in `sloViolations` is meta-text about the list, and that the disclosure still reaches the reader through its own field. Putting the sentence back into the array fails three tests. This is the assertion that would have caught M116 on the day it shipped, and it did not exist because M116 tested that the disclosure was _present_ without testing what it was present _in_.
+  - Engine moves to `aether-sim-5`; all four fingerprints move, because the output hash covers the version and the traffic-spike evidence changed shape. `docs/ARCHITECTURE.md` moves with it.
+  - Recorded plainly: this defect was mine, shipped two milestones ago, and was found by looking at the running product rather than by any test in the suite. The suite is now one assertion stronger for it.

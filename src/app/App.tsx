@@ -2077,6 +2077,12 @@ export function App() {
                 {furtherViolations(evidence.sloViolations.length)}
               </p>
             )}
+            {/* Deficits the engine found beyond the two it names. Read from
+                its own field rather than the violation list, so the count
+                beside this panel stays a count of breaches. */}
+            {evidence.deficitNote && (
+              <p className="replay-earlier">{evidence.deficitNote}</p>
+            )}
             {blockingRuns
               .filter((run) => run.scenario !== selectedScenario)
               .map((run) => (

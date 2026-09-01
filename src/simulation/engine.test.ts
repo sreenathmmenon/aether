@@ -367,10 +367,10 @@ describe("dependency-graph simulation", () => {
     // only scenario reaching more components than the cap reports, which is
     // the check that the change touched what it should and nothing else.
     const expected: [Scenario, string][] = [
-      ["regional_outage", "fnv1a-9bcdc363"],
-      ["traffic_spike", "fnv1a-5831bf59"],
-      ["database_failure", "fnv1a-d13263ad"],
-      ["dependency_failure", "fnv1a-b062f914"],
+      ["regional_outage", "fnv1a-19f3a4ff"],
+      ["traffic_spike", "fnv1a-385a1298"],
+      ["database_failure", "fnv1a-1f2e5f47"],
+      ["dependency_failure", "fnv1a-20cb21dd"],
     ];
     for (const [scenario, hash] of expected) {
       const run = runScenario(
@@ -570,28 +570,57 @@ describe("dependency-graph simulation", () => {
       v.includes("capacity deficit"),
     );
     expect(named).toHaveLength(deficitLimit);
+    expect(result.deficitsNotListed).toBeGreaterThan(0);
+    expect(result.deficitNote).toContain(String(result.deficitsNotListed));
+    expect(result.deficitNote).toMatch(
+      result.deficitsNotListed === 1 ? /component is/ : /components are/,
+    );
 
-    const note = result.sloViolations.find((v) => v.includes("over capacity"));
-    expect(note, "truncated deficits are not disclosed").toBeDefined();
-    const hidden = Number(note!.match(/^(\d+) further/)![1]);
-    expect(hidden).toBeGreaterThan(0);
-    expect(note).toMatch(hidden === 1 ? /component is/ : /components are/);
+    // The disclosure is not itself a violation. Pushing it into the list was
+    // the first shape of this, and every count of that array then counted it
+    // as a breach — the future cards read "5 violations" for four, and a
+    // future hiding a deficit compared worse than one that was not, in the
+    // comparison a decision is made on.
+    for (const violation of result.sloViolations)
+      expect(violation).not.toContain("over capacity");
 
     // The two it names are the worst two, so a reviewer reading the summary
     // is not shown a milder pair with the severe ones hidden behind a count.
-    // Reconstructing the deficits from raw peakRps here compared the wrong
-    // numbers — a spike multiplies demand — so read the reported figures.
     const reported = named.map((v) =>
       Number(v.match(/: ([\d,]+) RPS/)![1].replace(/,/g, "")),
     );
     expect(reported[0]).toBeGreaterThanOrEqual(reported[1]!);
 
-    // And every component the disclosure counts is one the scenario reached,
-    // so the total can never exceed the blast radius it was derived from.
+    // And every component the disclosure counts is one the scenario reached.
     const impacted = result.affectedEntityIds.filter(
       (id) => paymentPlatformBaseline.entities[id]?.kind !== "region",
     ).length;
-    expect(named.length + hidden).toBeLessThanOrEqual(impacted);
+    expect(named.length + result.deficitsNotListed!).toBeLessThanOrEqual(
+      impacted,
+    );
+  });
+
+  it("counts violations, not the sentence about them", () => {
+    // Found by reading the deployed page rather than the code: the future
+    // card said "5 violations" over a list of five lines, one of which was
+    // the disclosure. Four breaches were reported as five, and the same
+    // count reaches an agent through compare_architecture_futures, where a
+    // future hiding a deficit would compare worse than one that was not.
+    const result = runScenario(
+      paymentPlatformBaseline,
+      "traffic_spike",
+      "branch-baseline",
+      1,
+    );
+    expect(result.deficitsNotListed).toBeGreaterThan(0);
+    // Every entry is a breach a reviewer can act on, and none is meta-text
+    // about the list itself.
+    for (const violation of result.sloViolations) {
+      expect(violation).not.toMatch(/not listed|over capacity|further/i);
+      expect(violation.length).toBeGreaterThan(0);
+    }
+    // The disclosure still reaches the reader, just not as a violation.
+    expect(result.deficitNote).toMatch(/over capacity/);
   });
 
   it("stays silent when nothing was left out", () => {
@@ -608,8 +637,7 @@ describe("dependency-graph simulation", () => {
     expect(
       result.sloViolations.filter((v) => v.includes("capacity deficit")),
     ).toHaveLength(0);
-    expect(
-      result.sloViolations.filter((v) => v.includes("over capacity")),
-    ).toHaveLength(0);
+    expect(result.deficitsNotListed).toBeUndefined();
+    expect(result.deficitNote).toBeUndefined();
   });
 });
