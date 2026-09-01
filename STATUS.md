@@ -1343,3 +1343,14 @@ was already underway again.
 - [x] **M89.2 — Check the worse direction too** `DONE`
   - Evidence: a schema that understates the runtime wastes a call; one that overstates it promises something that will always fail. Every advertised extreme was driven through the batch tool — key at 2 and 24, name at 2 and 32, both rates at a million — and all six were accepted, so nothing is advertised that the runtime would refuse.
   - The test holds both halves, and each was verified to fail on its own: removing the declared key bounds fails it, and tightening the runtime's name limit below the schema's fails it too. The existing boundary-probe test covers three tools and skips this one, because its flat-field loop cannot express a nested array — which is why the gap survived there.
+
+## Milestone 90 — The sweep can now see what it was missing
+
+- [x] **M90.1 — A skipped tool is no longer indistinguishable from a covered one** `DONE`
+  - Acceptance: a tool with bounded fields cannot go unprobed without the suite saying so.
+  - Evidence: the boundary sweep began `if (!base) continue`, so any tool without a hand-written base input was skipped in silence. That is why M89 had to find the batch tool's four undeclared bounds by a separate sweep — this test could not tell "nothing to probe here" from "someone added a tool and forgot". It now asserts that every tool carrying a bounded field is either probed or explicitly delegated to a dedicated test, and emptying that allow-list fails it naming three tools.
+
+- [x] **M90.2 — The sweep was running against the smaller surface** `DONE`
+  - Evidence: it refreshed a blank canvas with no repair future, so `propose_architecture_change` and `compare_architecture_futures` were never in the swept set. A bounded field added to either was invisible — confirmed by adding one and watching nothing fail.
+  - The fix needed two steps, not one: a repair future needs something to repair, so the canvas gets a component before it gets a branch. A first attempt created the branch directly and fell back silently when M77's guard refused it, which left the sweep on exactly the surface it was meant to leave. Both steps now throw with the engine's own message rather than degrading quietly.
+  - Verified the same way the gap was found: adding a bounded field to `propose_architecture_change` now fails the sweep naming that tool. Worth recording that the first two verification attempts both came back green — once because other tests caught a new tool first, and once because the tool under test was not on the surface being swept. Neither was evidence the assertion worked.
