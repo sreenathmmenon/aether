@@ -481,6 +481,10 @@ The detailed plan is in `docs/V3_REVERSE_WINNER_PLAN.md`. V3 keeps the challenge
   - Acceptance: every add attempt reports its result beside the form.
   - Evidence: an independent audit reported the Add control doing nothing on a first visit. Reproduced against production: Add works — a named component appears immediately — but the auditor was driving the field by assigning `value` directly, which React discards, so every submission carried an empty name and was refused. The refusal was real and so was their experience of nothing happening, because the only feedback rendered in the activity strip 994 pixels below the form, off screen. Success, refusal, and validation messages now appear inline at the composer. The disabled repair-futures control also said "Build system first" without saying where building happens; it now points to the panel that does it.
 
+- [x] **M15.19 — Give the canvas something to read at a glance** `DONE`
+  - Acceptance: the canvas conveys system state visually, not only as text labels.
+  - Evidence: an independent audit called the canvas "closer to a wireframe than a product surface" and the page "a vertical stack of near-identical cream sections". Each component now carries a load bar showing peak demand against provisioned capacity, coloured cyan with headroom, amber when tight, and coral when over — so pressure is legible before any number is read. On the payment platform three of five components show as tight, which is the condition the traffic-spike scenario later proves. The canvas also sits on its own ground rather than repeating the surrounding cream, giving the stage visual primacy in the stack, and the account chip that the audit called dead chrome now states who it is and that only they can approve or merge.
+
 ## Milestone 13 — Real-time architecture decision room
 
 - [x] **M13.1 — Define and build the unmistakable collaborative decision-room journey** `DONE`

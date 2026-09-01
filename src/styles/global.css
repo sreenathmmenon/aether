@@ -292,7 +292,7 @@ button {
 }
 .canvas-stage {
   overflow: hidden;
-  background: #f7f5f0;
+  background: #eef1f4;
 }
 .canvas-toolbar {
   display: flex;
@@ -351,7 +351,9 @@ button {
   min-height: 578px;
   overflow: hidden;
   touch-action: none;
-  background-color: #f7f5f0;
+  /* The canvas is the stage, so it sits on its own ground rather than
+     repeating the cream of every surrounding panel. */
+  background-color: #eef1f4;
   background-image:
     linear-gradient(rgba(17, 36, 64, 0.055) 1px, transparent 1px),
     linear-gradient(90deg, rgba(17, 36, 64, 0.055) 1px, transparent 1px);
@@ -1783,4 +1785,31 @@ button {
 }
 .rail-hint strong {
   color: var(--ink);
+}
+
+/* Load bar: utilisation of a component against its provisioned capacity, so
+   a reader sees where a system is tight before reading any number. */
+.node-load {
+  display: block;
+  height: 3px;
+  margin-top: 2px;
+  background: rgba(17, 36, 64, 0.1);
+  overflow: hidden;
+}
+.node-load b {
+  display: block;
+  height: 100%;
+  background: var(--cyan);
+  transition: width 0.35s ease;
+}
+.node-load.load-tight b {
+  background: var(--orange);
+}
+.node-load.load-over b {
+  background: var(--coral);
+}
+@media (prefers-reduced-motion: reduce) {
+  .node-load b {
+    transition: none;
+  }
 }

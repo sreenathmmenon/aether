@@ -855,7 +855,13 @@ export function App() {
             {webMcp.available ? "WebMCP live" : "WebMCP not detected"}
           </span>
           <span className="shared-live">{syncStatus}</span>
-          <span className="human-chip">S</span>
+          <span
+            className="human-chip"
+            title="Sreenath — the only actor who can approve or merge"
+            aria-label="Signed in as Sreenath, the only actor who can approve or merge"
+          >
+            S
+          </span>
         </div>
       </header>
       <section className="hero-bar">
@@ -1213,6 +1219,32 @@ export function App() {
                         : "Direct failure"
                       : "Nominal"}
                   </small>
+                  {(() => {
+                    // Utilisation read straight off the component, so load is
+                    // legible on the canvas rather than only in the panel.
+                    const props = entity.properties as {
+                      peakRps?: number;
+                      capacityRps?: number;
+                    };
+                    if (
+                      typeof props.peakRps !== "number" ||
+                      typeof props.capacityRps !== "number" ||
+                      props.capacityRps <= 0
+                    )
+                      return null;
+                    const used = Math.min(
+                      140,
+                      Math.round((props.peakRps / props.capacityRps) * 100),
+                    );
+                    return (
+                      <i
+                        className={`node-load ${used > 100 ? "load-over" : used > 85 ? "load-tight" : ""}`}
+                        title={`${props.peakRps.toLocaleString()} of ${props.capacityRps.toLocaleString()} RPS`}
+                      >
+                        <b style={{ width: `${Math.min(100, used)}%` }} />
+                      </i>
+                    );
+                  })()}
                 </button>
               );
             })}
