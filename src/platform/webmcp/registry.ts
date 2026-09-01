@@ -153,14 +153,19 @@ export function createAetherToolRegistry(
   }
 
   /**
-   * The model is editable while a repair future is open, and also while a
-   * user-built architecture is still being assembled on its baseline.
+   * Mirrors the reducer's own write guard on the branch an agent would edit.
+   * A tool that `dispatch` would refuse must not be registered at all: a
+   * surface that advertises a capability the engine rejects teaches an agent
+   * something false about the page. Asking only whether a branch exists kept
+   * every editing tool registered after a future was committed, so this reads
+   * the active branch's status exactly as ADD_COMPONENT does.
    */
-  function canEditModel() {
-    const state = snapshot();
-    if (Object.keys(state.branches).length > 1) return true;
+  function canEditModel(state: AetherState = snapshot()) {
     const branch = state.branches[state.workspace.activeBranchId];
-    return Boolean(branch && state.workspace.templateId === "blank");
+    if (!branch || branch.status === "discarded") return false;
+    if (branch.status === "merged")
+      return state.workspace.templateId === "blank";
+    return true;
   }
 
   /** Component IDs an agent may currently reference, including user-added ones. */
@@ -214,9 +219,11 @@ export function createAetherToolRegistry(
   return {
     async refresh(state) {
       currentState = state;
-      const capabilityKey = `${
-        Object.keys(state.branches).length > 1 ? "branched" : "baseline"
-      }:${state.workspace.templateId === "blank" ? "own" : "seeded"}`;
+      // The key must change whenever the registered surface would change, or
+      // the early return below leaves a stale set of tools on the page.
+      const capabilityKey = `${canEditModel(state) ? "editable" : "readonly"}:${
+        state.workspace.templateId === "blank" ? "own" : "seeded"
+      }`;
       if (capabilityKey === registeredCapabilityKey) return;
       registeredCapabilityKey = capabilityKey;
       registrations.forEach((registration) => registration.abort());
@@ -432,6 +439,8 @@ export function createAetherToolRegistry(
             scenario: {
               type: "string",
               enum: ["regional_outage", "traffic_spike", "database_failure"],
+              description:
+                "Which failure to simulate against this architecture.",
             },
           },
           required: ["scenario"],
@@ -482,7 +491,11 @@ export function createAetherToolRegistry(
         inputSchema: {
           type: "object",
           properties: {
-            entityId: { type: "string", enum: componentIds() },
+            entityId: {
+              type: "string",
+              enum: componentIds(),
+              description: "Component whose dependency path you want to read.",
+            },
           },
           required: ["entityId"],
           additionalProperties: false,
@@ -537,22 +550,40 @@ export function createAetherToolRegistry(
               },
               name: {
                 type: "string",
+                minLength: 2,
+                maxLength: 32,
+                pattern: "^[A-Za-z0-9][A-Za-z0-9 .-]*$",
                 description: "Short plain-text component name.",
               },
               kind: {
                 type: "string",
                 enum: ["service", "database", "queue", "gateway"],
+                description:
+                  "What the component is; databases and queues carry state.",
               },
-              regionId: { type: "string", enum: regionIds() },
+              regionId: {
+                type: "string",
+                enum: regionIds(),
+                description: "Region this component runs in.",
+              },
               peakRps: {
                 type: "number",
+                minimum: 0,
+                maximum: 1000000,
                 description: "Expected peak requests per second.",
               },
               capacityRps: {
                 type: "number",
+                minimum: 0,
+                maximum: 1000000,
                 description: "Provisioned requests per second.",
               },
-              monthlyCostUsd: { type: "number" },
+              monthlyCostUsd: {
+                type: "number",
+                minimum: 0,
+                maximum: 1000000,
+                description: "Monthly run cost of this component in USD.",
+              },
             },
             required: [
               "branchId",
@@ -614,10 +645,19 @@ export function createAetherToolRegistry(
                       type: "string",
                       enum: ["service", "database", "queue", "gateway"],
                     },
-                    regionId: { type: "string", enum: regionIds() },
+                    regionId: {
+                type: "string",
+                enum: regionIds(),
+                description: "Region this component runs in.",
+              },
                     peakRps: { type: "number" },
                     capacityRps: { type: "number" },
-                    monthlyCostUsd: { type: "number" },
+                    monthlyCostUsd: {
+                type: "number",
+                minimum: 0,
+                maximum: 1000000,
+                description: "Monthly run cost of this component in USD.",
+              },
                   },
                   required: ["key", "name", "kind", "regionId"],
                   additionalProperties: false,

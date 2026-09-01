@@ -1,6 +1,7 @@
 import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { createInitialState, deriveGraph, dispatch } from "@core/branch-engine";
 import { getBranchDiff } from "@core/branch-diff";
+import { clausesOf, parseBrief } from "@core/brief-parser";
 import {
   clearPersistedState,
   loadPersistedState,
@@ -438,15 +439,9 @@ export function App() {
     )
     .slice(-5)
     .reverse();
-  const briefSeeds = useMemo(
-    () =>
-      systemBrief
-        .split(/[\n,.]+/)
-        .map((part) => part.trim())
-        .filter((part) => part.length > 2)
-        .slice(0, 4),
-    [systemBrief],
-  );
+  // Keep every clause the reviewer wrote. The parser reports what it could
+  // not model instead of silently truncating the brief.
+  const briefSeeds = useMemo(() => clausesOf(systemBrief), [systemBrief]);
   const briefPlan = useMemo(() => {
     if (!systemBrief.trim())
       return [
@@ -799,89 +794,55 @@ export function App() {
    * description; otherwise the entry point depends on narration.
    */
   function buildFromBrief() {
-    const noise =
-      /^(the|a|an|our|we|they|users?|user|and|then|which|that|it|is|are|hits?|hit|calls?|call|writes?|write|reads?|read|flows?|flow|through|to|from|into|via|by|with|on|in|of|for)$/i;
-    const componentNameFrom = (clause: string) => {
-      const words = clause
-        .replace(/[^A-Za-z0-9 -]/g, " ")
-        .split(/\s+/)
-        .filter(Boolean);
-      // Prefer the trailing noun phrase: "fraud writes to Postgres" -> Postgres.
-      const kept: string[] = [];
-      for (
-        let index = words.length - 1;
-        index >= 0 && kept.length < 3;
-        index -= 1
-      ) {
-        const word = words[index]!;
-        if (noise.test(word)) {
-          if (kept.length > 0) break;
-          continue;
-        }
-        kept.unshift(word);
-      }
-      const name = (kept.length ? kept : words.slice(0, 3)).join(" ").trim();
-      return (name || clause).slice(0, 32);
-    };
-    if (briefSeeds.length === 0) {
+    const parsed = parseBrief(systemBrief);
+    if (parsed.components.length === 0) {
       setComposerNotice("Describe at least one component in the brief first.");
       return;
     }
-    const kindFor = (label: string) => {
-      const text = label.toLowerCase();
-      if (/postgres|mysql|database|db|store|warehouse|ledger/.test(text))
-        return "database" as const;
-      if (/kafka|queue|topic|stream|events?/.test(text))
-        return "queue" as const;
-      if (/gateway|ingress|router|edge|cdn|load ?balancer/.test(text))
-        return "gateway" as const;
-      return "service" as const;
-    };
     let next = state;
     const created: string[] = [];
-    for (const seed of briefSeeds) {
-      // A brief is prose. Keep the noun that names the component and drop the
-      // surrounding clause, so the canvas reads as an architecture rather than
-      // as somebody's sentence.
-      const name = componentNameFrom(seed);
+    const unmeasured: string[] = [];
+    parsed.components.forEach((component, index) => {
       const outcome = dispatch(
         next,
         {
           type: "ADD_COMPONENT",
           input: {
             branchId: activeBranch.id,
-            name,
-            kind: kindFor(name),
+            name: component.name,
+            kind: component.kind,
             regionId: regions[0]?.id ?? "",
-            peakRps: 8000,
-            capacityRps: 10000,
-            monthlyCostUsd: 800,
+            peakRps: component.peakRps,
+            capacityRps: component.capacityRps,
+            monthlyCostUsd: component.monthlyCostUsd,
           },
         },
         humanActor,
       );
-      if (outcome.ok) {
-        next = outcome.value;
-        created.push(outcome.affectedEntityIds[0]!);
-      }
-    }
-    // Chain them so the graph has real dependencies to propagate along.
-    for (let index = 1; index < created.length; index += 1) {
-      const outcome = dispatch(
+      if (!outcome.ok) return;
+      next = outcome.value;
+      const entityId = outcome.affectedEntityIds[0]!;
+      created.push(entityId);
+      if (component.unmeasured) unmeasured.push(component.name);
+      // Wire each new component to the one before it using the verb the
+      // reviewer wrote, so failure propagates the way their prose describes.
+      const previous = created[created.length - 2];
+      if (!previous || index === 0) return;
+      const linked = dispatch(
         next,
         {
           type: "CONNECT_COMPONENTS",
           input: {
             branchId: activeBranch.id,
-            sourceId: created[index - 1]!,
-            targetId: created[index]!,
-            kind: "depends_on",
+            sourceId: previous,
+            targetId: entityId,
+            kind: component.edgeKind,
           },
         },
         humanActor,
       );
-      if (outcome.ok) next = outcome.value;
-    }
+      if (linked.ok) next = linked.value;
+    });
     if (created.length === 0) {
       setComposerNotice("Those components already exist on this canvas.");
       return;
@@ -889,8 +850,17 @@ export function App() {
     setState(next);
     setSelectedEntityId(created[0]!);
     setComposerNotice("");
+    // Say plainly what was read and what still has no real numbers, so nobody
+    // mistakes an unmeasured component for a measured one.
+    const overflowNote =
+      parsed.overflow > 0
+        ? ` ${parsed.overflow} later clause${parsed.overflow === 1 ? "" : "s"} were not modelled — add them below.`
+        : "";
+    const unmeasuredNote = unmeasured.length
+      ? ` ${unmeasured.length} component${unmeasured.length === 1 ? " has" : "s have"} no traffic figures yet: set peak and capacity on ${unmeasured.slice(0, 3).join(", ")}${unmeasured.length > 3 ? "…" : ""} before trusting the evidence.`
+      : "";
     setMessage(
-      `Modelled ${created.length} component${created.length === 1 ? "" : "s"} from your brief. Adjust anything, then create repair futures.`,
+      `Modelled ${created.length} component${created.length === 1 ? "" : "s"} from your brief.${unmeasuredNote}${overflowNote}`,
     );
   }
   function addComponent(event: FormEvent<HTMLFormElement>) {
@@ -1886,8 +1856,9 @@ export function App() {
             ))
           ) : (
             <p>
-              Baseline is immutable. Branch a repair future to make the
-              architecture reviewable.
+              {state.workspace.templateId === "blank"
+                ? "Build your architecture on this canvas, then branch a repair future to make changes reviewable."
+                : "This committed architecture is locked. Branch a repair future to make changes reviewable."}
             </p>
           )}
         </div>

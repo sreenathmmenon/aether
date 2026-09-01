@@ -628,5 +628,120 @@ describe("Aether WebMCP registry", () => {
     expect(await surfaceFor(createInitialState(blankBaseline, "blank"))).toBe(
       10,
     );
+
+    // Once a future is committed the architecture is read-only again, and the
+    // editing tools must actually leave the page. Keying the surface on "does
+    // a branch exist" kept all 12 registered after a merge, so an agent could
+    // enumerate tools that `dispatch` would then refuse.
+    const human = { id: "s", kind: "human" as const, displayName: "S" };
+    const branchId = "branch-highest_resilience";
+    let committed = branched.value;
+    // Approval is only reachable once the branch actually repairs the
+    // single-point-of-failure the baseline ships with, so this walks the real
+    // journey rather than forcing a status.
+    const repaired = dispatch(
+      committed,
+      {
+        type: "SET_PROPERTY",
+        input: {
+          branchId,
+          entityId: "ledger",
+          property: "replicationMode",
+          value: "sync",
+        },
+      },
+      human,
+    );
+    if (!repaired.ok) throw new Error("ledger must be repairable");
+    committed = repaired.value;
+    // A traffic spike also exposes real capacity deficits, so the future has
+    // to raise headroom before its evidence is clean.
+    for (const [entityId, capacityRps] of [
+      ["ledger", 26000],
+      ["auth", 22000],
+      ["reconciliation", 18000],
+    ] as const) {
+      const scaled = dispatch(
+        committed,
+        {
+          type: "SET_PROPERTY",
+          input: {
+            branchId,
+            entityId,
+            property: "capacityRps",
+            value: capacityRps,
+          },
+        },
+        human,
+      );
+      if (!scaled.ok) throw new Error(`${entityId} must be scalable`);
+      committed = scaled.value;
+    }
+    for (const scenario of [
+      "regional_outage",
+      "traffic_spike",
+      "database_failure",
+    ] as const) {
+      const run = dispatch(
+        committed,
+        { type: "RUN_SCENARIO", input: { branchId, scenario } },
+        human,
+      );
+      if (run.ok) committed = run.value;
+    }
+    const branchVersion = committed.branches[branchId]!.version;
+    const approved = dispatch(
+      committed,
+      { type: "APPROVE_BRANCH", input: { branchId, branchVersion } },
+      human,
+    );
+    if (!approved.ok)
+      throw new Error(
+        "APPROVE " +
+          JSON.stringify(approved) +
+          " VIOL " +
+          JSON.stringify(
+            (committed.simulations[branchId] ?? []).map((r) => [
+              r.scenario,
+              r.branchVersion,
+              r.sloViolations,
+            ]),
+          ) +
+          " V=" + branchVersion,
+      );
+    const merged = dispatch(
+      approved.value,
+      { type: "MERGE_BRANCH", input: { branchId, branchVersion } },
+      human,
+    );
+    if (!merged.ok) throw new Error("fixture branch must be mergeable");
+    expect(merged.value.branches[branchId]!.status).toBe("merged");
+    const mergedNames: string[] = [];
+    {
+      const registered: RegisteredTool[] = [];
+      const readOnly = createAetherToolRegistry(() => {}, undefined, {
+        registerTool: async (tool) => {
+          registered.push(tool as unknown as RegisteredTool);
+        },
+      });
+      await readOnly?.refresh(merged.value);
+      readOnly?.dispose();
+      mergedNames.push(...registered.map((tool) => tool.name));
+    }
+    // Every tool that mutates the model must be gone, because `dispatch` now
+    // refuses those commands. Reading, branching again, comparing futures and
+    // proposing a reviewable change all stay available.
+    for (const editing of [
+      "model_architecture",
+      "add_architecture_component",
+      "connect_components",
+      "set_component_property",
+      "remove_architecture_component",
+      "run_failure_scenario",
+      "add_decision_note",
+    ])
+      expect(mergedNames).not.toContain(editing);
+    expect(mergedNames).toContain("get_architecture_summary");
+    expect(mergedNames).toContain("create_architecture_branch");
   });
 });

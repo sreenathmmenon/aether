@@ -472,6 +472,92 @@ describe("Aether command pipeline", () => {
     ).toMatchObject({ ok: false, code: "NOT_AVAILABLE" });
   });
 
+  it("refuses every agent mutation against a committed baseline", () => {
+    // A reviewer with raw tool access will call the mutation tools directly
+    // against `branch-baseline` rather than going through the branch flow.
+    // The refusal has to live in the reducer, not in interface copy, so it
+    // holds for an agent that never reads the interface at all.
+    const agent = { id: "probe", kind: "agent" as const, displayName: "Probe" };
+    const seeded = createInitialState(paymentPlatformBaseline);
+    const entityIds = Object.values(
+      deriveGraph(seeded, seeded.branches["branch-baseline"]!).entities,
+    )
+      .filter((entity) => entity.kind !== "region")
+      .map((entity) => entity.id);
+
+    expect(
+      dispatch(
+        seeded,
+        {
+          type: "ADD_COMPONENT",
+          input: {
+            branchId: "branch-baseline",
+            name: "Rogue Service",
+            kind: "service",
+            regionId: "region-mumbai",
+            peakRps: 1,
+            capacityRps: 2,
+            monthlyCostUsd: 1,
+          },
+        },
+        agent,
+      ),
+    ).toMatchObject({ ok: false, code: "NOT_AVAILABLE" });
+
+    expect(
+      dispatch(
+        seeded,
+        {
+          type: "CONNECT_COMPONENTS",
+          input: {
+            branchId: "branch-baseline",
+            sourceId: entityIds[0]!,
+            targetId: entityIds[2]!,
+            kind: "calls",
+          },
+        },
+        agent,
+      ),
+    ).toMatchObject({ ok: false, code: "NOT_AVAILABLE" });
+
+    expect(
+      dispatch(
+        seeded,
+        {
+          type: "REMOVE_COMPONENT",
+          input: { branchId: "branch-baseline", entityId: entityIds[0]! },
+        },
+        agent,
+      ),
+    ).toMatchObject({ ok: false, code: "NOT_AVAILABLE" });
+
+    expect(
+      dispatch(
+        seeded,
+        {
+          type: "SET_PROPERTY",
+          input: {
+            branchId: "branch-baseline",
+            entityId: entityIds[0]!,
+            property: "capacityRps",
+            value: 999999,
+          },
+        },
+        agent,
+      ),
+    ).toMatchObject({ ok: false, code: "NOT_AVAILABLE" });
+
+    // And the refusals leave the committed architecture byte-identical.
+    expect(deriveGraph(seeded, seeded.branches["branch-baseline"]!)).toEqual(
+      deriveGraph(
+        createInitialState(paymentPlatformBaseline),
+        createInitialState(paymentPlatformBaseline).branches[
+          "branch-baseline"
+        ]!,
+      ),
+    );
+  });
+
   it("carries a self-built architecture through the whole decision journey", () => {
     let state = createInitialState(blankBaseline, "blank");
     const add = (name: string, kind: "service" | "database") => {
@@ -707,112 +793,7 @@ describe("Aether command pipeline", () => {
     expect(evidence.monthlyCostUsd).toBe(1600);
   });
 
-  it("turns a plain description into a simulable graph without an agent", () => {
-    // A reviewer in a plain browser must reach a modelled system from their
-    // own words; otherwise the entry point depends on narration.
-    const brief =
-      "Users hit an API gateway, checkout calls fraud scoring, fraud writes to Postgres, events flow through Kafka";
-    // A brief is prose; the canvas must show component names, not clauses.
-    const noise =
-      /^(the|a|an|our|we|they|users?|user|and|then|which|that|it|is|are|hits?|hit|calls?|call|writes?|write|reads?|read|flows?|flow|through|to|from|into|via|by|with|on|in|of|for)$/i;
-    const componentNameFrom = (clause: string) => {
-      const words = clause
-        .replace(/[^A-Za-z0-9 -]/g, " ")
-        .split(/\s+/)
-        .filter(Boolean);
-      const kept: string[] = [];
-      for (
-        let index = words.length - 1;
-        index >= 0 && kept.length < 3;
-        index -= 1
-      ) {
-        const word = words[index]!;
-        if (noise.test(word)) {
-          if (kept.length > 0) break;
-          continue;
-        }
-        kept.unshift(word);
-      }
-      const name = (kept.length ? kept : words.slice(0, 3)).join(" ").trim();
-      return (name || clause).slice(0, 32);
-    };
-    const seeds = brief
-      .split(/[\n,.]+/)
-      .map((part) => part.trim())
-      .filter((part) => part.length > 2)
-      .slice(0, 4);
-    expect(seeds).toHaveLength(4);
-
-    const kindFor = (label: string) => {
-      const text = label.toLowerCase();
-      if (/postgres|mysql|database|db|store|warehouse|ledger/.test(text))
-        return "database" as const;
-      if (/kafka|queue|topic|stream|events?/.test(text))
-        return "queue" as const;
-      if (/gateway|ingress|router|edge|cdn|load ?balancer/.test(text))
-        return "gateway" as const;
-      return "service" as const;
-    };
-
-    let state = createInitialState(blankBaseline, "blank");
-    const created: string[] = [];
-    for (const seed of seeds) {
-      const added = dispatch(
-        state,
-        {
-          type: "ADD_COMPONENT",
-          input: {
-            branchId: "branch-baseline",
-            name: componentNameFrom(seed),
-            kind: kindFor(seed),
-            regionId: "region-primary",
-            peakRps: 8000,
-            capacityRps: 10000,
-            monthlyCostUsd: 800,
-          },
-        },
-        human,
-      );
-      if (!added.ok) throw new Error("brief component must be addable");
-      state = added.value;
-      created.push(added.affectedEntityIds[0]!);
-    }
-    for (let index = 1; index < created.length; index += 1) {
-      const linked = dispatch(
-        state,
-        {
-          type: "CONNECT_COMPONENTS",
-          input: {
-            branchId: "branch-baseline",
-            sourceId: created[index - 1]!,
-            targetId: created[index]!,
-            kind: "depends_on",
-          },
-        },
-        human,
-      );
-      if (!linked.ok) throw new Error("brief components must connect");
-      state = linked.value;
-    }
-
-    const graph = deriveGraph(state, state.branches["branch-baseline"]!);
-    const names = Object.values(graph.entities)
-      .filter((entity) => entity.kind !== "region")
-      .map((entity) => entity.name);
-    expect(names).toContain("Postgres");
-    expect(names).toContain("Kafka");
-    expect(names.every((name) => name.split(" ").length <= 3)).toBe(true);
-    // Kinds are inferred from the words, not defaulted to one type.
-    const kinds = Object.values(graph.entities)
-      .filter((entity) => entity.kind !== "region")
-      .map((entity) => entity.kind);
-    expect(kinds).toContain("gateway");
-    expect(kinds).toContain("database");
-    expect(kinds).toContain("queue");
-    expect(Object.keys(graph.relationships)).toHaveLength(3);
-
-    const run = runScenario(graph, "regional_outage", "branch-baseline", 1);
-    expect(run.availability).toBeGreaterThan(0);
-    expect(run.monthlyCostUsd).toBe(3200);
-  });
+  // The brief parser now lives in `@core/brief-parser`, and
+  // `brief-parser.test.ts` exercises the shipped implementation rather than
+  // a hand-synced copy of it, which is how its truncation bug survived here.
 });
