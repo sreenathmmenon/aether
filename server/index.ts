@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { serve } from "@hono/node-server";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { Hono } from "hono";
@@ -138,12 +139,17 @@ app.get("/robots.txt", (context) =>
   }),
 );
 
+// Served from the built file rather than an inline copy. Two copies of the
+// same content is how one of them kept a misspelled GitHub account for long
+// enough to ship: editing `public/llms.txt` changed nothing, because this
+// route shadowed it. Read once, and let a missing file be a startup error
+// rather than a request that quietly returns the SPA shell.
+const llmsTxt = readFileSync("./dist/llms.txt", "utf8");
+
 app.get("/llms.txt", (context) =>
-  context.text(
-    "# Aether\n\nEvidence-first counterfactual architecture laboratory.\n\n- [Product overview](https://github.com/sreenathmmmenon/aether)\n",
-    200,
-    { "Content-Type": "text/plain; charset=utf-8" },
-  ),
+  context.text(llmsTxt, 200, {
+    "Content-Type": "text/plain; charset=utf-8",
+  }),
 );
 
 app.use("/assets/*", serveStatic({ root: "./dist" }));

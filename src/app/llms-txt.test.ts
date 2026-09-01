@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import llmsTxt from "../../public/llms.txt?raw";
 import submission from "../../docs/SUBMISSION.md?raw";
+import serverSource from "../../server/index.ts?raw";
 
 /**
  * `llms.txt` is what an agent fetches to learn what this page is before it
@@ -24,6 +25,15 @@ describe("the file an agent reads about this page", () => {
       expect(submission, `${url} appears only in llms.txt`).toContain(
         url.replace(/\)$/, ""),
       );
+  });
+
+  it("is served from the file, not a second copy in the server", () => {
+    // The server answered /llms.txt from an inline string that shadowed the
+    // built file, so editing `public/llms.txt` changed nothing that shipped —
+    // which is how the misspelled account survived. One copy, one place to
+    // keep right.
+    expect(serverSource).not.toMatch(/# Aether\\n/);
+    expect(serverSource).toContain('readFileSync("./dist/llms.txt"');
   });
 
   it("describes the surface an agent can actually use", () => {
