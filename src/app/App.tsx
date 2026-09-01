@@ -1198,15 +1198,39 @@ export function App() {
         <div>
           <p className="eyebrow">Live architecture decision room</p>
           <h1>
+            {/* The headline is the reviewer's current question, not a fixed
+                banner. Leaving it on "choose the repair" after they had
+                already created three futures left the largest text on the
+                page describing a step they had finished. */}
             {entities.length === 0 ? (
               <>
                 Describe your system. <em>Aether proves</em> what a failure does
                 to it.
               </>
-            ) : (
+            ) : branchCount === 0 ? (
               <>
                 {regions[0]?.name ?? "The primary region"} is down.{" "}
                 <em>Choose</em> the repair before traffic peaks.
+              </>
+            ) : activeBranch.status === "merged" &&
+              activeBranch.id !== "branch-baseline" ? (
+              <>
+                {activeBranch.name} is <em>committed</em>. The record shows who
+                decided, and on what evidence.
+              </>
+            ) : approvalEligible ? (
+              <>
+                The evidence is clean. <em>Only you</em> can commit this future.
+              </>
+            ) : blockingRuns.length ? (
+              <>
+                <em>Evidence blocks</em> approval. Resolve it before anyone
+                commits.
+              </>
+            ) : (
+              <>
+                {branchCount === 1 ? "One future" : `${branchCount} futures`},
+                one decision. <em>Compare</em> the evidence before committing.
               </>
             )}
           </h1>
