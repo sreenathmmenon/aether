@@ -1401,7 +1401,11 @@ export function App() {
               role="tablist"
               aria-label="Failure scenarios"
             >
-              {scenarioOrder.map((scenario) => (
+              {/* A tablist has to answer arrow keys and expose one tab stop,
+                  or a screen reader announces tabs whose documented keys do
+                  nothing. Left and Right move between scenarios; Home and End
+                  jump to the ends. */}
+              {scenarioOrder.map((scenario, index) => (
                 <button
                   key={scenario}
                   className={
@@ -1410,6 +1414,30 @@ export function App() {
                   onClick={() => selectScenario(scenario)}
                   role="tab"
                   aria-selected={scenario === selectedScenario}
+                  tabIndex={scenario === selectedScenario ? 0 : -1}
+                  onKeyDown={(event) => {
+                    const step =
+                      event.key === "ArrowRight"
+                        ? 1
+                        : event.key === "ArrowLeft"
+                          ? -1
+                          : 0;
+                    let next = -1;
+                    if (step !== 0)
+                      next =
+                        (index + step + scenarioOrder.length) %
+                        scenarioOrder.length;
+                    if (event.key === "Home") next = 0;
+                    if (event.key === "End") next = scenarioOrder.length - 1;
+                    if (next < 0) return;
+                    event.preventDefault();
+                    selectScenario(scenarioOrder[next]!);
+                    const tabs =
+                      event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>(
+                        '[role="tab"]',
+                      );
+                    tabs?.[next]?.focus();
+                  }}
                 >
                   {scenarioCopy[scenario].label}
                 </button>
