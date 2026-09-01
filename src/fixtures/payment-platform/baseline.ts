@@ -18,7 +18,7 @@ export const paymentPlatformBaseline: ArchitectureGraph = {
       id: "region-bengaluru",
       kind: "region",
       name: "Bengaluru",
-      position: { x: 620, y: 360 },
+      position: { x: 700, y: 360 },
       properties: { city: "Bengaluru", failureDomain: "dr" },
       version: 1,
       createdAt,
@@ -42,7 +42,7 @@ export const paymentPlatformBaseline: ArchitectureGraph = {
       id: "auth",
       kind: "service",
       name: "Authentication",
-      position: { x: 400, y: 220 },
+      position: { x: 470, y: 220 },
       properties: {
         regionId: "region-mumbai",
         peakRps: 12000,
@@ -59,7 +59,7 @@ export const paymentPlatformBaseline: ArchitectureGraph = {
       id: "ledger",
       kind: "database",
       name: "Primary Ledger",
-      position: { x: 580, y: 220 },
+      position: { x: 740, y: 220 },
       properties: {
         regionId: "region-mumbai",
         peakRps: 12000,
@@ -76,7 +76,7 @@ export const paymentPlatformBaseline: ArchitectureGraph = {
       id: "queue",
       kind: "queue",
       name: "Bengaluru Queue",
-      position: { x: 430, y: 430 },
+      position: { x: 470, y: 430 },
       properties: {
         regionId: "region-bengaluru",
         peakRps: 8000,
@@ -92,7 +92,7 @@ export const paymentPlatformBaseline: ArchitectureGraph = {
       id: "reconciliation",
       kind: "service",
       name: "Reconciliation",
-      position: { x: 630, y: 430 },
+      position: { x: 740, y: 430 },
       properties: {
         regionId: "region-bengaluru",
         peakRps: 8000,

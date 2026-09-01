@@ -47,7 +47,7 @@ export const aiPlatformBaseline: ArchitectureGraph = {
       id: "orchestrator",
       kind: "service",
       name: "Orchestrator",
-      position: { x: 400, y: 220 },
+      position: { x: 470, y: 220 },
       properties: {
         regionId: "region-virginia",
         peakRps: 24000,
@@ -64,7 +64,7 @@ export const aiPlatformBaseline: ArchitectureGraph = {
       id: "vectors",
       kind: "database",
       name: "Vector Store",
-      position: { x: 580, y: 220 },
+      position: { x: 740, y: 220 },
       properties: {
         regionId: "region-virginia",
         peakRps: 21000,
@@ -98,7 +98,7 @@ export const aiPlatformBaseline: ArchitectureGraph = {
       id: "evaluations",
       kind: "queue",
       name: "Eval Queue",
-      position: { x: 630, y: 430 },
+      position: { x: 700, y: 430 },
       properties: {
         regionId: "region-oregon",
         peakRps: 6000,

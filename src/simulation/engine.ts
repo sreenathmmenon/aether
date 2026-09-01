@@ -37,7 +37,44 @@ export const availabilityModel = {
   ceiling: 99.99,
 } as const;
 
-export const simulationEngineVersion = "aether-sim-2";
+export const simulationEngineVersion = "aether-sim-3";
+
+/**
+ * The part of a graph a simulation actually depends on.
+ *
+ * The fingerprint covered the whole graph, so dragging a component across the
+ * canvas — which this engine never reads — produced a different input hash and,
+ * through it, a different output hash for a run that returned identical
+ * availability, recovery, latency, cost and violations. A fingerprint that
+ * moves when the result does not cannot be used to tell two runs apart, which
+ * is the only thing it is for.
+ */
+function simulationInputs(graph: ArchitectureGraph) {
+  return {
+    entities: Object.fromEntries(
+      Object.entries(graph.entities).map(([id, entity]) => [
+        id,
+        {
+          id: entity.id,
+          kind: entity.kind,
+          name: entity.name,
+          properties: entity.properties ?? {},
+        },
+      ]),
+    ),
+    relationships: Object.fromEntries(
+      Object.entries(graph.relationships).map(([id, relationship]) => [
+        id,
+        {
+          id: relationship.id,
+          kind: relationship.kind,
+          sourceId: relationship.sourceId,
+          targetId: relationship.targetId,
+        },
+      ]),
+    ),
+  };
+}
 
 function stableJson(value: unknown): string {
   if (value === null || typeof value !== "object") return JSON.stringify(value);
@@ -304,7 +341,7 @@ export function runScenario(
 ): ScenarioResult {
   const inputHash = fingerprint({
     engineVersion: simulationEngineVersion,
-    graph,
+    graph: simulationInputs(graph),
     scenario,
     branchId,
     branchVersion,

@@ -667,7 +667,7 @@ describe("Aether WebMCP registry", () => {
     expect(inspected.availability).toBeGreaterThan(0);
     expect(inspected.availability).toBeLessThan(100);
     expect(inspected.sloViolations.length).toBeGreaterThan(0);
-    expect(inspected.engineVersion).toBe("aether-sim-2");
+    expect(inspected.engineVersion).toBe("aether-sim-3");
     expect(inspected.outputHash).toMatch(/^fnv1a-[0-9a-f]+$/);
 
     // A different scenario must produce a different answer, or the tool is
@@ -1047,7 +1047,7 @@ describe("Aether WebMCP registry", () => {
         branchId: "branch-highest_resilience",
         scenario: "regional_outage",
       }),
-    ).toMatchObject({ engineVersion: "aether-sim-2" });
+    ).toMatchObject({ engineVersion: "aether-sim-3" });
     expect(
       await call("add_architecture_component", {
         branchId: "branch-highest_resilience",
@@ -1261,7 +1261,7 @@ describe("Aether WebMCP registry", () => {
         branchId: "branch-baseline",
         scenario: "regional_outage",
       }),
-    ).toMatchObject({ engineVersion: "aether-sim-2" });
+    ).toMatchObject({ engineVersion: "aether-sim-3" });
     registry?.dispose();
   });
 

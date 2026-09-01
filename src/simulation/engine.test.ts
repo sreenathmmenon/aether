@@ -183,7 +183,7 @@ describe("dependency-graph simulation", () => {
       5000,
     );
     expect(first).toMatchObject({
-      engineVersion: "aether-sim-2",
+      engineVersion: "aether-sim-3",
       inputHash: expect.stringMatching(/^fnv1a-[0-9a-f]{8}$/),
       outputHash: expect.stringMatching(/^fnv1a-[0-9a-f]{8}$/),
     });
@@ -297,17 +297,71 @@ describe("dependency-graph simulation", () => {
     expect(second).toEqual(first);
   });
 
+  it("does not change its fingerprint when a component is only moved", () => {
+    // The fingerprint covered the whole graph, so dragging a component across
+    // the canvas produced a different input hash — and through it a different
+    // output hash — for a run returning identical availability, recovery,
+    // latency, cost and violations. A fingerprint that moves when the result
+    // does not cannot tell two runs apart, which is the only thing it is for.
+    const moved = {
+      ...paymentPlatformBaseline,
+      entities: Object.fromEntries(
+        Object.entries(paymentPlatformBaseline.entities).map(([id, entity]) => [
+          id,
+          {
+            ...entity,
+            position: { x: entity.position.x + 40, y: entity.position.y + 7 },
+          },
+        ]),
+      ),
+    };
+    const before = runScenario(
+      paymentPlatformBaseline,
+      "regional_outage",
+      "branch-baseline",
+      1,
+    );
+    const after = runScenario(moved, "regional_outage", "branch-baseline", 1);
+
+    // Same run, so the same identity.
+    expect(after.inputHash).toBe(before.inputHash);
+    expect(after.outputHash).toBe(before.outputHash);
+    expect(after.availability).toBe(before.availability);
+
+    // But a change the engine does read still moves it, or the fingerprint
+    // would identify nothing at all.
+    const reconfigured = {
+      ...paymentPlatformBaseline,
+      entities: {
+        ...paymentPlatformBaseline.entities,
+        ledger: {
+          ...paymentPlatformBaseline.entities.ledger!,
+          properties: {
+            ...paymentPlatformBaseline.entities.ledger!.properties,
+            replicationMode: "sync",
+          },
+        },
+      },
+    };
+    expect(
+      runScenario(reconfigured, "regional_outage", "branch-baseline", 1)
+        .inputHash,
+    ).not.toBe(before.inputHash);
+  });
+
   it("produces the exact fingerprints the deployed product reports", () => {
     // The interface calls these a reproducible run, and a reviewer can quote
-    // one. These values were read from the deployed origin in a browser, so
-    // this pins the claim across runtimes rather than only within one: if the
-    // engine changes what it computes, this fails and the version must move
-    // with it rather than the same tag silently meaning something new.
+    // one. These values are confirmed against the deployed origin in a
+    // browser, so this pins the claim across runtimes rather than only within
+    // one: if the engine changes what it computes, this fails and the version
+    // must move with it rather than the same tag silently meaning something
+    // new. They changed at aether-sim-3, when the fingerprint stopped
+    // covering canvas position, which the engine never reads.
     const expected: [Scenario, string][] = [
-      ["regional_outage", "fnv1a-f504d77f"],
-      ["traffic_spike", "fnv1a-ab223002"],
-      ["database_failure", "fnv1a-aa22e8bc"],
-      ["dependency_failure", "fnv1a-78f3f80e"],
+      ["regional_outage", "fnv1a-19a1b57c"],
+      ["traffic_spike", "fnv1a-ff4f9601"],
+      ["database_failure", "fnv1a-0c5c3ac6"],
+      ["dependency_failure", "fnv1a-a1a0e520"],
     ];
     for (const [scenario, hash] of expected) {
       const run = runScenario(

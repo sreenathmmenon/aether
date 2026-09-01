@@ -41,7 +41,7 @@ Each simulation must be reproducible from `snapshotHash + scenario + engineVersi
 
 ## Simulation model
 
-`aether-sim-2` derives every result from the branch graph rather than from per-entity special cases, so the topology is load-bearing: adding, moving, or reconfiguring a component changes the outcome.
+`aether-sim-3` derives every result from the branch graph rather than from per-entity special cases, so the topology is load-bearing: adding, connecting, or reconfiguring a component changes the outcome. Canvas position is not part of it — the fingerprint covers only what the engine reads, so dragging a component leaves both hashes untouched.
 
 - A scenario seeds a failure from the graph itself: the region carrying the most stateful load, the primary database, or the components whose demand exceeds provisioned capacity.
 - Impact propagates breadth-first along real edges, respecting relationship semantics. `calls`, `reads_from`, `writes_to`, and `depends_on` carry impact backwards from a lost dependency to whatever needed it; `publishes_to`, `routes_to`, and `consumes_from` carry it forwards to whatever it fed. The result is an ordered causal chain with a cause and depth for every reached component.
