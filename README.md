@@ -20,6 +20,10 @@ The opening decision room answers five questions immediately: **what is failing,
 
 An architect enters a Mumbai payment-path outage with the decision already visible. The agent traces the critical path, creates three repair futures, and records its evidence-bound recommendation. The architect adds the cost constraint directly on the affected component, Aether recomputes only the affected evidence, and the complete human-agent discussion and command history remain replayable beside the branch diff. The agent never self-approves or bypasses product rules.
 
+## V3 direction
+
+The next target is the reverse-winner version: a judge describes a system Aether has never seen, an agent builds it through WebMCP, Aether proves its hidden failure paths, and the human approves only after deterministic evidence clears. The plan is captured in [docs/V3_REVERSE_WINNER_PLAN.md](docs/V3_REVERSE_WINNER_PLAN.md).
+
 ## Product principles
 
 - **The model may propose. Aether must prove.** Language models interpret intent and suggest options; deterministic code owns state changes, validation, metrics, approval eligibility, merge, and audit.

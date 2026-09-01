@@ -240,6 +240,34 @@ All other previously open rows below have been reconciled against the deployed i
 
 None. Production is deployed on Railway with durable PostgreSQL-backed per-visitor workspace persistence. The only remaining release artifacts are the public demo video and its Devpost publication, tracked in M11.1 and M11.6.
 
+## V3 target — reverse-winner product direction
+
+V3 is the build direction from the imagined first-prize outcome. The goal is to make WebMCP feel indispensable: a judge describes a system Aether has never seen, an agent builds the typed architecture directly in the page, Aether computes proof packs, humans and agents collaborate in a live decision room, and only the human can approve an evidence-clean future.
+
+The detailed plan is in `docs/V3_REVERSE_WINNER_PLAN.md`. V3 keeps the challenge build inside Architecture Lab, but expands the perceived use-case surface through reviewer-owned systems, proof packs, and a stronger human-agent live workflow.
+
+## Milestone 16 — V3 first-prize reverse plan
+
+- [x] **M16.1 — Define the reverse-winner V3 product plan** `DONE`
+  - Acceptance: the repository states what would make Aether feel first-prize-caliber across WebMCP leverage, execution, impact, creativity, real-time human-agent collaboration, and generalization beyond shipped fixtures.
+  - Evidence: `docs/V3_REVERSE_WINNER_PLAN.md` added with the winning thesis, mouth-watering demo, use-case map, product pillars, WebMCP surface, acceptance gates, and implementation order. README now links the plan.
+- [ ] **M16.2 — Make the self-built system the flagship first screen path** `TODO`
+  - Acceptance: a first-time reviewer understands that Aether can model their system, not only inspect a seeded outage.
+- [ ] **M16.3 — Add a guided system-brief panel** `TODO`
+  - Acceptance: the UI invites the reviewer to describe a system, shows the draft plan, and keeps all page text truthful for empty, partial, and complete graphs.
+- [ ] **M16.4 — Add a batch WebMCP architecture modeling tool** `TODO`
+  - Acceptance: an agent can safely create multiple components and dependencies from a brief through schema-validated commands, with partial failures reported field-by-field.
+- [ ] **M16.5 — Add proof packs beyond resilience** `TODO`
+  - Acceptance: cost shock and security/data-boundary scenarios run on the same graph and can block approval alongside reliability evidence.
+- [ ] **M16.6 — Add a third shipped example outside payments and AI infrastructure** `TODO`
+  - Acceptance: the product demonstrates at least three materially different system domains without fixture-specific copy or logic.
+- [ ] **M16.7 — Upgrade replay into a decision timeline** `TODO`
+  - Acceptance: the reviewer can scrub through human actions, agent tool calls, engine-generated evidence, blocked approvals, approvals, commits, and rollback.
+- [ ] **M16.8 — Add optional live room collaboration** `TODO`
+  - Acceptance: private workspaces remain default, but an explicit room can synchronize two browsers with presence and attributable changes.
+- [ ] **M16.9 — Validate the V3 journey end to end** `TODO`
+  - Acceptance: ChatGPT browser, Chrome, Railway production, tests, docs, and submission copy all prove the self-built-system V3 demo path.
+
 ## Milestone 12 — First-prize product transformation
 
 - [x] **M12.1 — Replace the fixed diagram shell with branch-derived architecture state** `DONE`
