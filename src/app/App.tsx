@@ -140,6 +140,29 @@ const systemTemplates = [
   },
 ] as const;
 
+/**
+ * The system named by a `?system=` query parameter, when it names one we ship.
+ * Links are how a reviewer shares a specific architecture.
+ */
+function requestedTemplate() {
+  if (typeof window === "undefined") return undefined;
+  try {
+    const requested = new URLSearchParams(window.location.search)
+      .get("system")
+      ?.trim()
+      .toLowerCase();
+    if (!requested) return undefined;
+    return systemTemplates.find(
+      (template) =>
+        template.id === requested ||
+        template.name.toLowerCase() === requested,
+    );
+  } catch {
+    // A malformed URL must never keep the product from opening.
+    return undefined;
+  }
+}
+
 /** Plain-language labels so the replay reads as decisions, not opcodes. */
 const commandLabels: Record<string, { label: string; impact: string }> = {
   CREATE_BRANCH: { label: "branched a repair future", impact: "branch" },
@@ -194,9 +217,14 @@ function display(value: string | number | boolean) {
 
 export function App() {
   const webMcp = getWebMcpAvailability();
-  const [state, setState] = useState(
-    () => loadPersistedState() ?? createInitialState(blankBaseline, "blank"),
-  );
+  const [state, setState] = useState(() => {
+    // A ?system= link must open that system. Reviewers and demos share links,
+    // and silently landing on somebody's previous workspace makes the link
+    // useless and the product look like it ignored the request.
+    const requested = requestedTemplate();
+    if (requested) return createInitialState(requested.graph, requested.id);
+    return loadPersistedState() ?? createInitialState(blankBaseline, "blank");
+  });
   const [message, setMessage] = useState(
     "Describe your architecture. The agent can build it here, and Aether will prove the consequences.",
   );
@@ -662,6 +690,14 @@ export function App() {
     clearPersistedState();
     const fresh = createInitialState(template.graph, template.id);
     setState(fresh);
+    // Keep the address bar honest so the current system is always shareable.
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.set("system", template.id);
+      window.history.replaceState({}, "", url);
+    } catch {
+      // Failing to rewrite the URL must never block loading the system.
+    }
     // Select whatever the engine says is most consequential in this system.
     const opening = runScenario(
       template.graph,
