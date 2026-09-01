@@ -1530,3 +1530,12 @@ was already underway again.
   - Evidence: after deploying, the served file was unchanged. The server answered `/llms.txt` from an inline string that shadowed the built file, so editing `public/llms.txt` changed nothing that ships — and the misspelled account lived in the copy nobody edits. Worth noticing rather than assuming the deploy was slow: two checks a minute apart both returned the old content.
   - The route now reads the built file once at startup, so a missing file is a startup error rather than a request quietly returning the SPA shell. A test refuses any inline copy in the server.
   - Verified against the deployed origin: the served file carries the new content, and its GitHub link returns 200.
+
+## Milestone 107 — The other copy of the same mistake
+
+- [x] **M107.1 — Remove the shadowing before it drifts** `DONE`
+  - Acceptance: no file the server routes has a second copy that ships instead of it.
+  - Evidence: M106 found `/llms.txt` answered from an inline string that shadowed `public/llms.txt`, which is how a misspelled GitHub account reached production while the repository looked correct. `robots.txt` had exactly the same shape. Its two copies agreed today — which is when duplication is cheapest to remove, rather than after they disagree and someone has to work out which one ships.
+  - Both routes now read their built file once at startup. A missing file becomes a startup error rather than a request quietly returning the SPA shell, and the app was verified healthy in production afterwards rather than assumed.
+  - The test derives the routed filenames from the server source itself, so a third static route added later is covered without anyone remembering to extend it, and it refuses any inline text body that could shadow a file. Reinstating the `robots.txt` string fails it.
+  - Verified against the deployed origin: `robots.txt` and `llms.txt` both serve their file contents, and the application still returns 200.
