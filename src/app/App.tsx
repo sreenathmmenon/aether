@@ -21,6 +21,7 @@ import { edgeBetween } from "./edge-geometry";
 import { futuresMessage } from "./futures-message";
 import { gateReason } from "./gate-reason";
 import { outcomeMessage } from "./outcome-message";
+import { earlierDecisions, replayWindow } from "./replay-window";
 import { loadSummary } from "./load-summary";
 import { reconcileMessage } from "./reconcile-message";
 import { mergeEvidence } from "@core/evidence-merge";
@@ -64,7 +65,6 @@ import { runScenario, type Scenario } from "@simulation/engine";
  * missed showing a future with no evidence.
  */
 /** How many recent decisions the replay panel shows before scrolling. */
-const replayWindow = 12;
 
 /** How many recent notes the discussion panel shows before scrolling. */
 const noteWindow = 8;
@@ -2788,13 +2788,9 @@ export function App() {
                 </li>
               )}
             </ol>
-            {state.audit.length > replayWindow && (
+            {earlierDecisions(state.audit.length) && (
               <p className="replay-earlier">
-                {state.audit.length - replayWindow} earlier{" "}
-                {state.audit.length - replayWindow === 1
-                  ? "decision is"
-                  : "decisions are"}{" "}
-                held in this record and persisted with the workspace.
+                {earlierDecisions(state.audit.length)}
               </p>
             )}
           </section>
