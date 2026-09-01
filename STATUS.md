@@ -1160,3 +1160,15 @@ was already underway again.
   - Verified against the deployed origin, walking create → scale → approve → commit: writes now read 12, 12, 16, 16, 16, 16 with no zero, every future card shows real availability, and the merged future returns all four scenarios with zero violations — `regional_outage` 97.11%, `traffic_spike` 99.99%, `database_failure` 97.11%, `dependency_failure` 97.11%.
   - A test asserts the property rather than the four call sites: no `setState` may adopt an outside state without unioning evidence. Reintroducing the wholesale swap fails it by name.
   - Worth recording why this took three rounds. Every component tested correct in isolation — reducer, persistence round trip, engine-version filter, sync guard, merge helper, and all three known adoption paths — because the defect was in a path none of those tests covered. What found it was measuring the writes themselves rather than reasoning about which component could be wrong.
+
+## Milestone 73 — Rollback keeps the record it reverses
+
+- [x] **M73.1 — Walk the last unexercised gate step** `DONE`
+  - Acceptance: a committed future can be reversed, and the reversal is auditable.
+  - Evidence: rollback verified against the deployed origin for the first time. The future becomes `discarded`, the workspace returns to the committed baseline, and the tool surface stays at seven — correct, because the baseline is merged and therefore read-only, so editing tools must not return.
+  - The property worth having is that the evidence survives: all three futures still report four runs each after the rollback, and the rolled-back one still shows 97.11%. A record naming an approval and a reversal but not what was proven at the time asks a reviewer to take both on trust.
+  - The existing test covered that the architecture reverts and that a discarded future cannot be rolled back twice, but not that the evidence outlives it. It now asserts both that and the actor of every gate action. Deleting the runs on rollback fails it.
+
+- [x] **M73.2 — Confirm the audit trail reads back correctly** `DONE`
+  - Evidence: `get_decision_record` returns the gate in order with `APPROVE_BRANCH`, `MERGE_BRANCH` and `ROLLBACK_MERGE` all attributed to `human` and the simulations to `system` — the bounded-authority claim, readable by an agent off the live page rather than only asserted in documentation.
+  - The interface's replay shows the same history with its evidence attached: "approved the exact plan · 4 clean scenarios · worst 97.11%", and each simulation carrying its own fingerprint. No change was warranted.

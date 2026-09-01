@@ -1008,6 +1008,26 @@ describe("Aether command pipeline", () => {
       (ledger!.properties as { replicationMode?: string }).replicationMode,
     ).toBe("none");
 
+    // The evidence that justified the commit outlives the rollback. A record
+    // showing an approval and a reversal but not what was proven at the time
+    // asks a reviewer to take both on trust, which is the opposite of what
+    // this product claims. Verified in the browser: a rolled-back future
+    // still reports its four scenarios.
+    expect(state.simulations[branchId]?.length).toBe(
+      merged.value.simulations[branchId]?.length,
+    );
+    expect(state.simulations[branchId]?.length).toBeGreaterThan(0);
+    // And the audit names the human for every gate action, which is the
+    // bounded-authority claim an agent can read back off the page.
+    const gateActors = state.audit
+      .filter((event) =>
+        ["APPROVE_BRANCH", "MERGE_BRANCH", "ROLLBACK_MERGE"].includes(
+          event.commandName,
+        ),
+      )
+      .map((event) => event.actor.kind);
+    expect(gateActors).toEqual(["human", "human", "human"]);
+
     // And a discarded future cannot be rolled back again.
     expect(
       dispatch(state, { type: "ROLLBACK_MERGE", input: { branchId } }, human),
