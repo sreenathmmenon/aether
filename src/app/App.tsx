@@ -682,23 +682,31 @@ export function App() {
             keepLocalWork();
             return;
           }
-          applyingRemoteRef.current = true;
           remoteVersionRef.current = remote.workspace.persistenceVersion ?? 0;
           // Union the evidence rather than swapping wholesale. Remote and local
           // can each hold runs the other has not seen — the writer that produced
           // one may not have observed the other — and adopting either direction
           // wholesale drops the difference. Runs are keyed on branch, version and
           // scenario, so a union is safe and no evidence is lost either way.
-          setState((current) => mergeEvidence(current, remote));
-          // Reconciled, so the badge must say so. Without this a single
-          // conflict left it reading "Local draft" for the rest of the
-          // session while every later write reached the server — reproduced
-          // in a real shared room with two tabs writing at once, where both
-          // ended up claiming their work had not been shared while each was
-          // reading the other's notes. It is the same defect as the badge
-          // that used to read "Synced" after a refusal, in the other
-          // direction: a status that stops tracking what is true.
-          setSyncStatus("Synced");
+          //
+          // The merged result then has to be written back. This path set
+          // `applyingRemoteRef` first, which suppresses the save effect, so
+          // the local half of the merge never reached the server: a refused
+          // write reloaded, merged, and stopped. Observed in a real shared
+          // room as PUT 409 → GET 200 → nothing, with the badge stuck on
+          // "Local draft" for the rest of the session — accurately, because
+          // the change really had not persisted.
+          setState((current) => {
+            const merged = mergeEvidence(current, remote);
+            void saveRemoteWorkspace(merged, remoteVersionRef.current).then(
+              (retry) => {
+                if (typeof retry !== "number") return;
+                remoteVersionRef.current = retry;
+                setSyncStatus("Synced");
+              },
+            );
+            return merged;
+          });
           setMessage(reconcileMessage(Boolean(sharedRoom)));
         });
     });

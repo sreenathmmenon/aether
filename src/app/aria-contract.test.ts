@@ -104,14 +104,12 @@ describe("the interface honours the ARIA it declares", () => {
     expect(helper).toMatch(/Someone else changed this workspace/);
   });
 
-  it("says it is shared again once a conflict has reconciled", () => {
-    // The refusal path sets "Local draft" and nothing cleared it, so one
-    // conflict left the badge claiming the work had not reached shared
-    // storage for the rest of the session while every later write did.
-    // Reproduced in a real shared room: two tabs wrote at once, both settled
-    // on "Local draft", and each was reading the other's notes at the time.
-    // It is the mirror of the badge that used to read "Synced" after a
-    // refusal — a status that stops tracking what is true.
+  it("writes the merged state back after a refused write", () => {
+    // A refused write reloaded the shared state, merged it, and stopped.
+    // The merge holds the local change, so that change never reached the
+    // server and the badge stayed on "Local draft" for the rest of the
+    // session — accurately, which is what made it hard to see. Observed in a
+    // real shared room as PUT 409 → GET 200 → nothing.
     const conflict = appSource.slice(
       appSource.indexOf('if (result === "conflict")'),
       appSource.indexOf("}, [state, sharedRoom, keepLocalWork]);"),
@@ -119,9 +117,14 @@ describe("the interface honours the ARIA it declares", () => {
     expect(conflict, "the conflict path is not where it was").toContain(
       "mergeEvidence",
     );
-    // Reconciling adopts the remote state, so the badge has to follow it.
+    // The retry is what makes the reconciliation durable rather than local.
+    expect(conflict).toContain("saveRemoteWorkspace");
+    // And it must not set the applying flag, which suppresses the save
+    // effect — that is precisely how the write was lost.
+    expect(conflict).not.toContain("applyingRemoteRef.current = true");
+    // Only a successful retry may claim the work is shared, and only after
+    // the discard check, or a refusal would report success.
     expect(conflict).toContain('setSyncStatus("Synced")');
-    // And only after the discard check, or a refusal would claim success.
     expect(conflict.indexOf("keepLocalWork()")).toBeLessThan(
       conflict.indexOf('setSyncStatus("Synced")'),
     );
