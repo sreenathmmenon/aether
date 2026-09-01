@@ -1881,3 +1881,14 @@ was already underway again.
   - Restoring `fetch` and writing once more returned the badge to `Synced`, and the server was then checked directly rather than trusting the badge: the workspace holds **both** notes at version 8, including the one written while the server was unreachable. Work survives an outage and flushes on recovery.
   - A judge on unreliable wifi gets a working demo that tells them exactly where their work is, which is the same honesty standard the sync badge has been held to all session.
   - Probe fault recorded: the first persistence check queried a room workspace while the tab was on its private one and reported both notes missing. Reading the workspace id from `localStorage` and querying that found them. A "not persisted" result is worth re-checking before it becomes a finding.
+
+## Milestone 138 — Offline paths tested, after two tests that could not fail
+
+- [x] **M138.1 — Cover what M137 verified by hand** `DONE`
+  - Evidence: the offline behaviour was exemplary when driven manually and had **no automated coverage at all**. Three tests now hold it: a thrown `fetch` reports `offline` rather than a version, an error status is not treated as a successful save, and a failed load returns no workspace rather than rejecting — the opening load runs before anything is on screen, so a rejection there breaks the first render instead of degrading to a draft.
+
+- [x] **M138.2 — Two of the three passed for the wrong reason** `DONE`
+  - Evidence recorded because the tests looked right and proved nothing:
+  - The 500 case used a body of `"boom"`. That is unparseable, so `response.json()` throws and the `catch` returns `offline` whether or not the status is ever checked. Deleting the status guard left it passing. Fixed by sending a **valid** JSON body carrying a version, which is the case the guard actually protects.
+  - The failed-load case had the same shape twice over: a probe deleted the wrong line, and the body `{workspace:{id:"x"}}` is rejected by `parsePersistedState` regardless. Fixed by sending a body that would otherwise load successfully.
+  - Every guard was then removed by line number and each break confirmed to fail the matching test. A break that produces no failure is the signal to check the probe _and_ the assertion, not to conclude the code is fine — that reading has now been wrong three times this session.
