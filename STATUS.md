@@ -1482,3 +1482,15 @@ was already underway again.
   - Measured rather than assumed: the panel that explains the surface sits at 910 pixels against a 623 pixel viewport, so it is below the fold on the opening view. The intro dialog already said "state-aware tools" and the chip did not, so the word doing the work was missing from the one place a reviewer reads first.
   - The chip now carries it, and its accessible name says what the phrase means rather than leaving a bare count to imply it. Verified against the deployed origin, where the chip demonstrates the claim by changing: "WebMCP live · 5 state-aware tools" before a repair future, "12 state-aware tools" after, with the explanation intact in both.
   - A test holds both halves and the shared source of the count: dropping the qualifier fails it, and replacing the explanation with a bare count fails it separately.
+
+## Milestone 103 — Announcing the claim, and what that exposed
+
+- [x] **M103.1 — The surface changing is worth hearing** `DONE`
+  - Acceptance: the moment the state-dependent registration proves itself is not silent.
+  - Evidence: the header already carried a live region for the latest tool call, and none for the count. Five tools becoming twelve when a repair future exists is the thing a judge is asked to look for, and it passed without announcement unless someone happened to be watching that corner of the page.
+  - Measured before adding one rather than after: running a scenario and adding a decision note both left the count untouched, so a live region here announces the transition and not churn. Polite rather than assertive, because a surface change is worth hearing at the next pause and not worth interrupting a reviewer for.
+
+- [x] **M103.2 — The announcement exposed a leak** `DONE`
+  - Evidence: the first live verification announced "0 tools registered for the current state" and then "12". Rebuilding the surface aborts every registration and registers again, and the count was reported between those two steps — a real defect that had been invisible because nothing announced it.
+  - The surface is never empty from an agent's point of view: the rebuild is one operation, and `getTools` outside it never observes the gap. The intermediate report is gone, and a test pins the sequence to `[5, 12]` exactly; reinstating the zero fails it with `[0, 5, 0, 12]`.
+  - Verified against the deployed origin: one announcement of twelve, no zero, which is what a screen reader now hears when an agent creates a repair future.
