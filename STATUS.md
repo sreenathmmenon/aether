@@ -2,9 +2,13 @@
 
 This is the source of truth for build progress. Status values: `TODO`, `IN_PROGRESS`, `BLOCKED`, `DONE`. Every completed task needs reproducible evidence below it. Do not change a task to `DONE` based on intention or a build that does not cover its acceptance criteria.
 
-## Release status — reconciled 2026-08-31
+## Release status — V3 loop active 2026-09-01
 
-The deployable Aether product, its WebMCP integration, production persistence, browser validation, public repository, and submission copy are complete, and the full decision journey has been verified end to end on the deployed origin for both seeded systems. Two items remain deliberately open:
+The deployable Aether product, its WebMCP integration, production persistence, browser validation, public repository, and submission copy are complete, and the full decision journey has been verified end to end on the deployed origin for both seeded systems and for a self-built architecture. V3 is now the active direction: make the self-built, agent-modeled system path the first-prize demo rather than a secondary feature.
+
+Latest live release: Railway deployment `db1a1ca6-e110-4dc8-acfe-55e48a9f5387`, commit `39542b7`, verified on 2026-09-01 with PostgreSQL `/health`, origin-isolation headers, WebMCP origin-trial header, and a first-time browser smoke test showing "Your own system", "Build the model first", WebMCP live, durable sync, and the nine-tool editable WebMCP surface.
+
+Two external/submission items remain deliberately open:
 
 - `M10.4b` is verified on the server side: the issued Chrome origin-trial token is configured on Railway and the live origin emits the `Origin-Trial` header. Confirming `document.modelContext` in a Chrome profile with no experimental flag enabled is still outstanding.
 - `M11.1` and `M11.6` are external submission artifacts: recording the required public three-minute demo video, then publishing the completed Devpost entry before the 2026-09-03 deadline.
@@ -253,7 +257,7 @@ The detailed plan is in `docs/V3_REVERSE_WINNER_PLAN.md`. V3 keeps the challenge
   - Evidence: `docs/V3_REVERSE_WINNER_PLAN.md` added with the winning thesis, mouth-watering demo, use-case map, product pillars, WebMCP surface, acceptance gates, and implementation order. README now links the plan.
 - [x] **M16.2 — Make the self-built system the flagship first screen path** `DONE`
   - Acceptance: a first-time reviewer understands that Aether can model their system, not only inspect a seeded outage.
-  - Evidence: the app now opens fresh visitors on "Your own system" instead of the payment fixture, with a truthful blank-canvas message, derived header breadcrumb, unbuilt-baseline card, disabled "Build system first" repair action, and worked examples preserved in the system switcher. Reset now resets the current system rather than forcing the payment fixture. Local fallback persistence no longer emits 503 errors and is labelled as a local draft instead of falsely claiming durable sync. Browser validation confirmed the first screen reads as a self-built architecture path. `npm run test -- --run`, `npm run lint`, `npm run typecheck`, and `npm run build` passed with 54 tests.
+  - Evidence: the app now opens fresh visitors on "Your own system" instead of the payment fixture, with a truthful blank-canvas message, derived header breadcrumb, unbuilt-baseline card, disabled "Build system first" repair action, and worked examples preserved in the system switcher. Reset now resets the current system rather than forcing the payment fixture. Local fallback persistence no longer emits 503 errors and is labelled as a local draft instead of falsely claiming durable sync. Browser validation confirmed the first screen reads as a self-built architecture path locally and on live Railway deployment `db1a1ca6-e110-4dc8-acfe-55e48a9f5387`; the live page reports WebMCP live with nine editable-state tools. `npm run test -- --run`, `npm run lint`, `npm run typecheck`, and `npm run build` passed with 54 tests.
 - [ ] **M16.3 — Add a guided system-brief panel** `TODO`
   - Acceptance: the UI invites the reviewer to describe a system, shows the draft plan, and keeps all page text truthful for empty, partial, and complete graphs.
 - [ ] **M16.4 — Add a batch WebMCP architecture modeling tool** `TODO`
