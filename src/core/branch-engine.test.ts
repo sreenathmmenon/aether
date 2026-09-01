@@ -1036,6 +1036,66 @@ describe("Aether command pipeline", () => {
   });
 });
 
+describe("a dependency joins two components", () => {
+  it("refuses an edge to a region and names what it can connect", () => {
+    // A region is a failure domain, not a participant. The engine filters it
+    // out of every blast radius and the canvas refuses to draw the edge, so
+    // accepting one recorded a dependency that means nothing — and reported
+    // success for it: "connected: gateway -> region-bengaluru".
+    let state = createInitialState(paymentPlatformBaseline);
+    const branched = dispatch(
+      state,
+      {
+        type: "CREATE_BRANCH",
+        input: { name: "Edge probe", intent: "highest_resilience" },
+      },
+      human,
+    );
+    if (!branched.ok) throw new Error("branch must be created");
+    state = branched.value;
+
+    for (const [sourceId, targetId] of [
+      ["gateway", "region-bengaluru"],
+      ["region-mumbai", "gateway"],
+    ] as const) {
+      const refused = dispatch(
+        state,
+        {
+          type: "CONNECT_COMPONENTS",
+          input: {
+            branchId: "branch-highest_resilience",
+            sourceId,
+            targetId,
+            kind: "depends_on",
+          },
+        },
+        human,
+      );
+      expect(refused).toMatchObject({ ok: false, code: "INVALID_INPUT" });
+      // And it names components that would work, not just the rejection.
+      if (!refused.ok) expect(refused.message).toContain("ledger");
+    }
+
+    // A dependency between two real components is still accepted, so this
+    // refuses the meaningless edge and not the feature.
+    expect(
+      dispatch(
+        state,
+        {
+          type: "CONNECT_COMPONENTS",
+          input: {
+            branchId: "branch-highest_resilience",
+            sourceId: "gateway",
+            targetId: "reconciliation",
+            kind: "depends_on",
+          },
+        },
+        human,
+      ).ok,
+    ).toBe(true);
+  });
+});
+
 describe("a repair future always repairs something", () => {
   it("offers a real trade-off on an already-healthy architecture", () => {
     // A reviewer who models a system that is already replicated still gets

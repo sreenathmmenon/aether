@@ -1067,8 +1067,12 @@ export function createAetherToolRegistry(
             type: "object",
             properties: {
               branchId: { type: "string" },
-              sourceId: { type: "string" },
-              targetId: { type: "string" },
+              // Enumerated from the live graph, as every other entity
+              // reference on this surface is. A bare string let an agent
+              // wire a component to a region, which the engine ignores and
+              // the canvas refuses to draw.
+              sourceId: { type: "string", enum: componentIds() },
+              targetId: { type: "string", enum: componentIds() },
               kind: {
                 type: "string",
                 enum: [

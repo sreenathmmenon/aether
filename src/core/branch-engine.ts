@@ -635,11 +635,28 @@ export function dispatch(
     // committed architecture.
     if (branch.status === "merged" && next.workspace.templateId !== "blank")
       return commandFailure("NOT_AVAILABLE", "This branch cannot be changed.");
+    // Both ends must be components. A region is a failure domain, not
+    // something that can depend on anything or be depended on: the engine
+    // filters it out of every blast radius and the canvas refuses to draw
+    // the edge, so accepting it recorded a dependency that means nothing and
+    // reported success for it.
+    const source = graph.entities[command.input.sourceId];
+    const target = graph.entities[command.input.targetId];
     if (
-      !graph.entities[command.input.sourceId] ||
-      !graph.entities[command.input.targetId]
+      !source ||
+      !target ||
+      source.kind === "region" ||
+      target.kind === "region"
     )
-      return commandFailure("INVALID_INPUT", "Unknown architecture component.");
+      return commandFailure(
+        "INVALID_INPUT",
+        `Both ends must be components. Choose from: ${Object.values(
+          graph.entities,
+        )
+          .filter((entity) => entity.kind !== "region")
+          .map((entity) => entity.id)
+          .join(", ")}.`,
+      );
     if (command.input.sourceId === command.input.targetId)
       return commandFailure(
         "INVALID_INPUT",
