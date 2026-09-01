@@ -2271,7 +2271,14 @@ export function App() {
               ×
             </button>
             <p className="eyebrow">Evidence comparison</p>
-            <h2>Three possible futures. One human decision.</h2>
+            {/* The grid renders whatever futures exist, so a fixed "Three"
+                contradicted the panel whenever a reviewer had made one or
+                two. */}
+            <h2>
+              {futures.length === 1
+                ? "One possible future. One human decision."
+                : `${futures.length} possible futures. One human decision.`}
+            </h2>
             <div className="compare-grid">
               {futures.map((branch) => {
                 const result = state.simulations[branch.id]?.find(
