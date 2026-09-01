@@ -1591,4 +1591,75 @@ describe("Aether WebMCP registry", () => {
       expect(future.evidence).toHaveLength(1);
     registry?.dispose();
   });
+
+  it("keeps every read inside the output budget as a workspace grows", async () => {
+    // The comparison tool exceeded the budget silently and returned nothing
+    // at all, which was only found by probing it. A read that grows with the
+    // workspace has to be bounded by design, not by the workspace happening
+    // to stay small.
+    const human = { id: "s", kind: "human" as const, displayName: "S" };
+    const tools: RegisteredTool[] = [];
+    const registry = createAetherToolRegistry(() => {}, undefined, {
+      registerTool: async (tool) => {
+        tools.push(tool as unknown as RegisteredTool);
+      },
+    });
+
+    let state = createInitialState(paymentPlatformBaseline, "payment-platform");
+    for (const intent of [
+      "lowest_cost",
+      "fastest_recovery",
+      "highest_resilience",
+    ] as const) {
+      const made = dispatch(state, {
+        type: "CREATE_BRANCH",
+        input: { name: `Future ${intent}`, intent },
+      });
+      if (made.ok) state = made.value;
+    }
+    for (const branchId of Object.keys(state.branches))
+      for (const scenario of [
+        "regional_outage",
+        "traffic_spike",
+        "database_failure",
+        "dependency_failure",
+      ] as const) {
+        const run = dispatch(state, {
+          type: "RUN_SCENARIO",
+          input: { branchId, scenario },
+        });
+        if (run.ok) state = run.value;
+      }
+    // A hundred maximum-length notes: far past anything a review produces.
+    for (let index = 0; index < 100; index += 1) {
+      const noted = dispatch(
+        state,
+        {
+          type: "ADD_DECISION_NOTE",
+          input: { branchId: "branch-baseline", body: "A".repeat(280) },
+        },
+        human,
+      );
+      if (noted.ok) state = noted.value;
+    }
+    await registry?.refresh(state);
+
+    const calls: [string, Record<string, unknown>][] = [
+      ["get_decision_record", {}],
+      ["get_architecture_summary", {}],
+      ["inspect_failure_domain", { scenario: "regional_outage" }],
+      ["trace_architecture_dependency", { entityId: "ledger" }],
+      // The comparison is bounded by asking the narrower question it offers.
+      ["compare_architecture_futures", { scenario: "regional_outage" }],
+    ];
+    for (const [name, args] of calls) {
+      const tool = tools.find((candidate) => candidate.name === name);
+      if (!tool) continue;
+      const raw = String(await tool.execute(args));
+      expect(raw, `${name} must stay inside its budget`).not.toContain(
+        "RESULT_TOO_LARGE",
+      );
+    }
+    registry?.dispose();
+  });
 });
