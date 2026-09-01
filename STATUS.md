@@ -796,3 +796,13 @@ was already underway again.
 - [x] **M39.2 — Store timestamps, not entity ids** `DONE`
   - Evidence: checking whether the engine shared the diff's blind spot — it does not — turned up a different bug in the same path. Every added component carried its entity id in both timestamp fields, so `createdAt` read "entity-standby-ledger", and that persisted to the database. Nothing reads those fields today, and `IsoTimestamp` is a plain string alias, so neither the compiler nor a reviewer would notice. The branch's own timestamps are now used, and a test asserts both fields parse as dates and contain no entity id.
   - Verified correct and left alone: an agent's edits do reach the engine — a $3,200 database moved monthly cost by exactly that, grew the blast radius, and changed the fingerprint — and a new database defaults to no replication, so naming one "Standby Ledger" and wiring the primary to it correctly lowers availability. The engine reads the graph, not the name.
+
+## Milestone 40 — The store holds only what a client can load
+
+- [x] **M40.1 — Confirm persistence round-trip fidelity** `DONE`
+  - Evidence: wrote a workspace carrying Unicode ("Alpha Ω é 中"), a float, a zero, a cost ceiling, and a note body with quotes and backslashes, then read it back from the deployed origin. Every value survived unchanged — the zero stayed a zero rather than becoming null, and the float kept its precision. The data path is sound.
+- [x] **M40.2 — Refuse to store a workspace no client will load** `DONE`
+  - Acceptance: the write check matches what the client requires before it will load a workspace.
+  - Evidence: the server checked only that the fields were truthy, so a payload with `branches` set to a string was accepted and written. The client refuses to load that, which is right on read but leaves a shared room poisoned for everyone in it by whichever client sent it: the store held something no reader would accept, and the room would come back empty.
+  - The write check now requires maps where maps belong, an array for the audit, and every branch carrying a replayable operation list and resolving to a revision that holds a graph. Eight rejection cases are covered by name, including a branch with no operation list and a branch pointing at a revision that does not exist. Confirmed by restoring the truthiness check and watching it fail with "branches as a string: expected true to be false".
+  - Verified in production across the full matrix: branches as a string, branches as an array, audit as an object, a missing revision, and a branch with no operation list all return 400, while a valid workspace returns 200.
