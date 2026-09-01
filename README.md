@@ -64,7 +64,7 @@ write that workspace, so it is evaluation and demonstration state rather than a
 store for confidential architecture.
 
 - Top-level WebMCP Imperative API, using the official `webmcp-types` definitions
-- Deterministic dependency-graph simulation of regional outage, traffic spike, and database failure
+- Deterministic dependency-graph simulation of regional outage, traffic spike, database failure, and shared-dependency failure
 
 The production server supplies origin-isolation and `Permissions-Policy: tools=(self)` headers required for WebMCP. In ChatGPT’s in-app browser, Aether begins with five state-aware tools—decision record, summary, failure-domain inspection, dependency trace, and isolated branch creation. Component creation, batch architecture modeling, dependency creation, deterministic simulation, and a bounded component-anchored decision note appear whenever the model is editable, which includes an empty canvas a reviewer is filling with their own system. Reversible proposal and comparison require a repair future, bringing the surface to twelve. Tools that mutate the auditable workspace never claim to be read-only. It deliberately exposes no agent approval or merge tool. The server also forwards an optional `WEBMCP_ORIGIN_TRIAL_TOKEN` as the `Origin-Trial` header, which is required for the public Chrome origin while the API remains experimental.
 
