@@ -34,6 +34,18 @@ import {
 import { runScenario, type Scenario } from "@simulation/engine";
 import type { AetherState } from "@core/branch-engine";
 
+/**
+ * Every scenario the interface offers, in tab order. Anything that iterates
+ * scenarios reads this: a hardcoded list that omitted one left the tab it
+ * missed showing a future with no evidence.
+ */
+const scenarioOrder = [
+  "regional_outage",
+  "traffic_spike",
+  "database_failure",
+  "dependency_failure",
+] as const satisfies readonly Scenario[];
+
 const humanActor = {
   id: "sreenath",
   kind: "human" as const,
@@ -801,11 +813,10 @@ export function App() {
       );
       if (outcome.ok) next = outcome.value;
     }
-    for (const scenario of [
-      "regional_outage",
-      "traffic_spike",
-      "database_failure",
-    ] as const) {
+    // Approval requires every scenario on this branch version to be clean, so
+    // this has to re-run all of them. Omitting one left approval eligibility
+    // computed from evidence for a version that no longer exists.
+    for (const scenario of scenarioOrder) {
       const outcome = dispatch(
         next,
         {
@@ -826,6 +837,7 @@ export function App() {
   }
   function createFutures() {
     let next = state;
+    let live = 0;
     (
       [
         ["Lowest cost", "lowest_cost"],
@@ -839,14 +851,13 @@ export function App() {
         humanActor,
       );
       if (!created.ok) return;
+      live += 1;
       // Simulate every scenario up front so switching tabs compares
-      // like for like instead of showing a future with no evidence.
+      // like for like instead of showing a future with no evidence. This
+      // list has to be every scenario the interface offers, or the tab it
+      // omits shows exactly the empty evidence this exists to prevent.
       next = created.value;
-      for (const scenario of [
-        "regional_outage",
-        "traffic_spike",
-        "database_failure",
-      ] as const) {
+      for (const scenario of scenarioOrder) {
         const simulated = dispatch(
           next,
           {
@@ -863,7 +874,9 @@ export function App() {
     });
     setState(next);
     setMessage(
-      "Three futures are live. Select one to inspect causality, cost, and recovery trade-offs.",
+      live === 0
+        ? "No repair futures could be created from this architecture."
+        : `${live === 1 ? "One future is" : `${live} futures are`} live. Select one to inspect causality, cost, and recovery trade-offs.`,
     );
   }
   function selectScenario(scenario: Scenario) {
@@ -1369,7 +1382,7 @@ export function App() {
               role="tablist"
               aria-label="Failure scenarios"
             >
-              {(Object.keys(scenarioCopy) as Scenario[]).map((scenario) => (
+              {scenarioOrder.map((scenario) => (
                 <button
                   key={scenario}
                   className={

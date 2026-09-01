@@ -5,6 +5,7 @@ import { aiPlatformBaseline } from "../fixtures/ai-platform/baseline";
 import { rideHailingBaseline } from "../fixtures/ride-hailing/baseline";
 import { blankBaseline } from "../fixtures/blank/baseline";
 import type { ArchitectureGraph } from "@domain/architecture/types";
+import type { Scenario } from "@simulation/engine";
 
 const systems: [string, ArchitectureGraph][] = [
   ["payment platform", paymentPlatformBaseline],
@@ -56,5 +57,20 @@ describe("scenario copy", () => {
     // case that produced two identical tabs.
     const copy = scenarioNarrative(paymentPlatformBaseline, {});
     expect(copy.database_failure.label).not.toBe(copy.dependency_failure.label);
+  });
+
+  it("covers every scenario the engine accepts", () => {
+    // The tabs, the pre-simulation on future creation, and the re-run after a
+    // capacity repair all iterate scenarios. A list that omitted one left that
+    // tab showing a future with no evidence and approval eligibility computed
+    // from a version that no longer existed.
+    const engineScenarios: Scenario[] = [
+      "regional_outage",
+      "traffic_spike",
+      "database_failure",
+      "dependency_failure",
+    ];
+    const copy = scenarioNarrative(paymentPlatformBaseline, {});
+    expect(Object.keys(copy).sort()).toEqual([...engineScenarios].sort());
   });
 });
