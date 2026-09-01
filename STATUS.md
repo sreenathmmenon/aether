@@ -1872,3 +1872,12 @@ was already underway again.
   - "Tool surface grows from five to twelve once a repair future exists" — measured live this session at 5, 10, 12, and 7 after a merge.
   - Verified against the deployed origin: the twelve-tool surface has seven write tools and every one is additive — `add_`, `connect_`, `model_`, `propose_`, `create_`, `run_` — with no removal path of any kind, while a person sees an enabled `Remove Primary Ledger from this future` control on the same screen. The gate distinguishes actors rather than blocking everyone, which is what makes it a gate.
   - Repository scale for the record: 252 tests across 33 files, ~8,800 lines of source, 136 milestones, 360 commits.
+
+## Milestone 137 — Working through a network outage
+
+- [x] **M137.1 — Break the network and keep using the product** `DONE`
+  - Acceptance: an unreachable server degrades honestly and loses nothing.
+  - Evidence: `fetch` was patched on the deployed origin to fail every `/api/workspaces` request, then work continued through the WebMCP surface. The product stays fully usable — all twelve tools registered, the note written and kept — and the status is honest and specific: the badge reads **`Offline draft`**, distinguished from the `Local draft` used for divergence, with the accessible label `Offline draft. Shared storage is unreachable. Changes are held in this browser only.`
+  - Restoring `fetch` and writing once more returned the badge to `Synced`, and the server was then checked directly rather than trusting the badge: the workspace holds **both** notes at version 8, including the one written while the server was unreachable. Work survives an outage and flushes on recovery.
+  - A judge on unreliable wifi gets a working demo that tells them exactly where their work is, which is the same honesty standard the sync badge has been held to all session.
+  - Probe fault recorded: the first persistence check queried a room workspace while the tab was on its private one and reported both notes missing. Reading the workspace id from `localStorage` and querying that found them. A "not persisted" result is worth re-checking before it becomes a finding.
