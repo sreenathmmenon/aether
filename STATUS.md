@@ -418,6 +418,10 @@ None. Production is deployed on Railway with durable PostgreSQL-backed per-visit
   - Acceptance: no component identifier from one shipped system appears as a default for another.
   - Evidence: the selected component initialised to the literal `"ledger"`, which exists only on the payment platform, so every other system opened on a component chosen by a fallback rather than by meaning. A sweep for hardcoded domain nouns found it as the last such default outside the fixture definitions. Selection now starts empty and falls back to the first step of the engine's causal chain, so a system opens on the component its failure actually originates at: Primary Ledger on the payment platform, Vector Store on the inference platform, and nothing on an unbuilt canvas. Verified across all three in the browser.
 
+- [x] **M15.11 — Assert the tool counts the documentation quotes** `DONE`
+  - Acceptance: the surface sizes named in the README, submission, and compliance checklist are verified rather than remembered.
+  - Evidence: all three documents described the surface as growing "from five tools to eleven", which was true of the seeded path but omitted the nine-tool state an own-system canvas exposes — the state the product now leads with. Measured against the registry: five on a committed architecture, nine once the model is editable, eleven when a repair future also exists. Each document now states all three, and a regression test asserts them; regressing the gating to require a branch drops the own-system surface to seven and the test fails on it.
+
 ## Milestone 13 — Real-time architecture decision room
 
 - [x] **M13.1 — Define and build the unmistakable collaborative decision-room journey** `DONE`

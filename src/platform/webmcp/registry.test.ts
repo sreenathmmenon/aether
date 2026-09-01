@@ -510,4 +510,41 @@ describe("Aether WebMCP registry", () => {
     expect(tools.map((tool) => tool.name)).not.toContain("connect_components");
     registry?.dispose();
   });
+
+  it("registers the documented surface in each state", async () => {
+    const surfaceFor = async (
+      state: Parameters<
+        NonNullable<ReturnType<typeof createAetherToolRegistry>>["refresh"]
+      >[0],
+    ) => {
+      const tools: RegisteredTool[] = [];
+      const registry = createAetherToolRegistry(() => undefined, undefined, {
+        registerTool: async (tool) => {
+          tools.push(tool as RegisteredTool);
+        },
+      });
+      await registry?.refresh(state);
+      registry?.dispose();
+      return tools.length;
+    };
+
+    // These three counts are quoted in the README, the submission, and the
+    // compliance checklist, so they must be asserted rather than remembered.
+    const seeded = createInitialState(
+      paymentPlatformBaseline,
+      "payment-platform",
+    );
+    expect(await surfaceFor(seeded)).toBe(5);
+
+    const branched = dispatch(seeded, {
+      type: "CREATE_BRANCH",
+      input: { name: "Repair", intent: "highest_resilience" },
+    });
+    if (!branched.ok) throw new Error("fixture branch must be created");
+    expect(await surfaceFor(branched.value)).toBe(11);
+
+    expect(await surfaceFor(createInitialState(blankBaseline, "blank"))).toBe(
+      9,
+    );
+  });
 });

@@ -52,7 +52,7 @@ Agent authority is bounded at both ends. No approve or merge tool is registered 
 - COOP, COEP, and `Permissions-Policy: tools=(self)` on the live app.
 - PostgreSQL-backed persistence with a private workspace per visitor, optimistic expected-version writes, `409` stale-write rejection, and live synchronisation across tabs of the same browser.
 - ChatGPT Site Tools live discovery/calls recorded in `docs/WEBMCP_EVALS.md`; the Chrome origin-trial token is configured on the deployed origin, which serves the `Origin-Trial` header alongside the isolation headers.
-- State-dependent registration: the surface grows from five tools to eleven when a repair future exists, and component enums are enumerated from the live graph rather than a fixed list.
+- State-dependent registration: five read and branch tools on a committed architecture, nine once the model is editable — a repair future is open or the reviewer is building their own system — and eleven when both hold. Component and region enums are enumerated from the live graph rather than a fixed list.
 - Bounded agent authority: no approve or merge tool is registered, destructive removal is refused, and every rejection names the failed fields and the values that would succeed.
 - The interface names its own capability surface, so a reviewer can verify what is published and that no approval tool exists without connecting an agent.
 - 45 unit tests covering the command pipeline, the dependency-graph engine, tool registration, bounded output, and persistence migration.
