@@ -651,6 +651,56 @@ describe("Aether WebMCP registry", () => {
     }
   });
 
+  it("enumerates the branches a write tool will accept", async () => {
+    // Every write tool requires a branchId, and it was the one field that
+    // advertised a bare string while every other id on this surface
+    // enumerates from the live graph. An agent had to guess the id of the
+    // branch it had just created.
+    const surfaceFor = async (state: AetherState) => {
+      const registered: RegisteredTool[] = [];
+      const registry = createAetherToolRegistry(() => {}, undefined, {
+        registerTool: async (tool) => {
+          registered.push(tool as unknown as RegisteredTool);
+        },
+      });
+      await registry?.refresh(state);
+      registry?.dispose();
+      return registered as unknown as {
+        name: string;
+        inputSchema: { properties: Record<string, { enum?: string[] }> };
+      }[];
+    };
+
+    const seeded = createInitialState(paymentPlatformBaseline);
+    const branched = dispatch(seeded, {
+      type: "CREATE_BRANCH",
+      input: { name: "Enum probe", intent: "highest_resilience" },
+    });
+    if (!branched.ok) throw new Error("fixture branch must be created");
+
+    // Both surfaces that register write tools: a repair future on a seeded
+    // architecture, and a blank canvas whose merged baseline stays editable.
+    for (const state of [
+      branched.value,
+      createInitialState(blankBaseline, "blank"),
+    ]) {
+      const carriers = (await surfaceFor(state)).filter(
+        (tool) => tool.inputSchema.properties.branchId,
+      );
+      expect(carriers.length).toBeGreaterThan(0);
+      for (const tool of carriers) {
+        const advertised = tool.inputSchema.properties.branchId!.enum;
+        expect(advertised, `${tool.name} advertises no branch`).toBeDefined();
+        // An empty enum offers no valid value, which is worse than a bare
+        // string: it tells an agent nothing will be accepted.
+        expect(
+          advertised!.length,
+          `${tool.name} enum is empty`,
+        ).toBeGreaterThan(0);
+      }
+    }
+  });
+
   it("tells an agent what to do at the decision point", async () => {
     // Every other tool names a next action. This one, at the point a
     // decision is actually made, returned futures and a human gate and

@@ -266,6 +266,28 @@ export function createAetherToolRegistry(
       : state.revisions["revision-baseline"]!.graph;
   }
 
+  /**
+   * The branches a write tool will accept, newest first.
+   *
+   * Advertised as a bare string on six tools, so an agent had to guess the id
+   * of the branch it had just created — the one field every write tool
+   * requires was the one it got no help with.
+   */
+  function writableBranchIds(state: AetherState = snapshot()) {
+    return Object.values(state.branches)
+      .filter((branch) => {
+        if (branch.status === "discarded") return false;
+        // A blank canvas has nothing committed, so its merged baseline is
+        // still editable — the same exception the reducer makes. Excluding it
+        // left the enum empty on the one surface where an agent builds from
+        // nothing, which advertises no valid value at all.
+        if (branch.status === "merged")
+          return state.workspace.templateId === "blank";
+        return true;
+      })
+      .map((branch) => branch.id);
+  }
+
   function componentIds(state: AetherState = snapshot()) {
     return Object.values(activeGraph(state).entities)
       .filter((entity) => entity.kind !== "region")
@@ -512,6 +534,7 @@ export function createAetherToolRegistry(
             properties: {
               branchId: {
                 type: "string",
+                enum: writableBranchIds(),
                 description: "Existing architecture branch ID.",
               },
               entityId: {
@@ -572,6 +595,7 @@ export function createAetherToolRegistry(
             properties: {
               branchId: {
                 type: "string",
+                enum: writableBranchIds(),
                 description: "Existing Aether branch ID.",
               },
               scenario: {
@@ -745,6 +769,7 @@ export function createAetherToolRegistry(
             properties: {
               branchId: {
                 type: "string",
+                enum: writableBranchIds(),
                 description: "Branch to build into.",
               },
               name: {
@@ -851,7 +876,7 @@ export function createAetherToolRegistry(
           inputSchema: {
             type: "object",
             properties: {
-              branchId: { type: "string" },
+              branchId: { type: "string", enum: writableBranchIds() },
               components: {
                 type: "array",
                 minItems: 1,
@@ -1066,7 +1091,7 @@ export function createAetherToolRegistry(
           inputSchema: {
             type: "object",
             properties: {
-              branchId: { type: "string" },
+              branchId: { type: "string", enum: writableBranchIds() },
               // Enumerated from the live graph, as every other entity
               // reference on this surface is. A bare string let an agent
               // wire a component to a region, which the engine ignores and
@@ -1123,6 +1148,7 @@ export function createAetherToolRegistry(
             properties: {
               branchId: {
                 type: "string",
+                enum: writableBranchIds(),
                 description: "Existing non-merged branch ID.",
               },
               entityId: { type: "string", enum: componentIds() },
