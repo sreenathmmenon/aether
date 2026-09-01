@@ -1375,3 +1375,15 @@ was already underway again.
 - [x] **M92.2 — Say who changed it** `DONE`
   - Evidence: watching the first tab receive that update showed it reporting "Live workspace update received" — the storage-event wording, which is about a second tab of the same browser. Two of the three reconcile paths already branched on `sharedRoom`; the storage-event path had no room-aware branch at all, and its effect closed over `sharedRoom` with an empty dependency array so it would have captured a stale value regardless.
   - All three paths now share one `reconcileMessage` helper with its own tests, which also settled three near-duplicate wordings into one. Verified against the deployed origin with a fresh room and two tabs: the receiving tab reports "Someone else in this room changed the architecture." and shows the future the other participant made.
+
+## Milestone 93 — Stale writes, and what the loser is told
+
+- [x] **M93.1 — Prove the optimistic-write claim** `DONE`
+  - Acceptance: the README's "reconciled every three seconds with optimistic versioning and stale-write rejection" is demonstrable.
+  - Evidence: two concurrent writes issued against `room-verify-92` at persistence version 2. One returned `200 {"version":3}`, the other `409 {"error":"STALE_WORKSPACE"}`. Exactly one survives and nothing is silently overwritten — the conditional update in `server/index.ts` does what the claim says.
+
+- [x] **M93.2 — A refused adoption must not still read as Synced** `DONE`
+  - Evidence: with three repair futures held locally, a colleague's write reduced the shared room to its baseline. `wouldDiscardWork` correctly refused it and the three futures survived — but the poll and the storage event both did `if (discards) return`, leaving the badge on "Synced" while the page held four branches and the server held one. The conflict path already reported this properly; the other two did not. That is the sync-status defect class M53 closed for offline and local drafts, on the divergence case.
+  - All three now call one `keepLocalWork` helper, and a test asserts no `if (discards)` branch can return without it. Both halves were verified against a deliberate break: a silent return fails it, and a helper that claims "Synced" fails it differently.
+  - Lint caught the helper being referenced before its declaration once it was shared, which is a real hoisting hazard rather than style. It moved above the effects as a `useCallback`, and the three dependency arrays now name it.
+  - Honest limit on the live verification: a background tab reports `document.hidden: true`, so its poll is suspended by design and never reaches the branch. Measuring fetches confirmed zero requests in seven seconds, which is the visibility guard working rather than the fix failing. The change is held by the unit test instead; confirming it in a foreground tab needs a human at the keyboard.
