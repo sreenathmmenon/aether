@@ -121,6 +121,24 @@ describe("the interface honours the ARIA it declares", () => {
     expect(poll).toContain('removeEventListener("visibilitychange"');
   });
 
+  it("announces the sync explanation, not only the status word", () => {
+    // The badge carried its explanation in a `title`, which appears on hover
+    // and nowhere else, so a keyboard or screen reader user heard "Offline
+    // draft" and never the sentence saying the work has reached no durable
+    // storage. That is the third time an explanation in this interface was
+    // on screen and not programmatically attached.
+    // Read the aria-label's own value. A window ending at the first
+    // `{syncStatus}` stopped inside the label's template literal, so the
+    // assertion matched the `title` line above it and passed on a label that
+    // carried the status word alone.
+    const start = appSource.indexOf("aria-label={`${syncStatus}");
+    expect(start, "the sync badge has no accessible name").toBeGreaterThan(0);
+    const label = appSource.slice(start, appSource.indexOf("}", start + 30));
+    // Built from the same helper the tooltip uses, not a second copy of the
+    // sentence that would drift from it.
+    expect(label).toContain("syncExplanation(syncStatus)");
+  });
+
   it("keeps the tab panel bound to the tab that opens it", () => {
     // A tabpanel labelled by a tab that is not the selected one describes the
     // wrong scenario, which is worse than being unlabelled.

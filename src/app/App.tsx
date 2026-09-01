@@ -1360,6 +1360,11 @@ export function App() {
               }[syncTone(syncStatus)]
             }`}
             title={syncExplanation(syncStatus)}
+            /* A title only appears on hover, so a keyboard or screen reader
+               user heard "Offline draft" and never the sentence saying their
+               work has reached no durable storage. The accessible name
+               carries both. */
+            aria-label={`${syncStatus}. ${syncExplanation(syncStatus)}`}
           >
             {syncStatus}
           </span>
