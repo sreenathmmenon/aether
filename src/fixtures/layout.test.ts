@@ -113,3 +113,30 @@ describe("the unbuilt canvas", () => {
     expect(Object.keys(blankBaseline.relationships)).toHaveLength(0);
   });
 });
+describe("the system a first arrival sees", () => {
+  it("opens on a worked incident with evidence, not an empty grid", () => {
+    // The submission says the product opens on a payment platform losing a
+    // region. A bare URL opened the blank canvas instead, so the strongest
+    // first impression — a live failure with real numbers — sat behind a URL
+    // parameter no reviewer would type.
+    const run = runScenario(
+      paymentPlatformBaseline,
+      "regional_outage",
+      "branch-baseline",
+      1,
+    );
+    expect(run.availability).toBeGreaterThan(0);
+    expect(run.availability).toBeLessThan(100);
+    expect(run.monthlyCostUsd).toBeGreaterThan(0);
+    expect(run.causalChain.length).toBeGreaterThan(0);
+    // And the incident has to name a real region of that graph.
+    const regions = Object.values(paymentPlatformBaseline.entities)
+      .filter((entity) => entity.kind === "region")
+      .map((entity) => entity.name);
+    expect(
+      regions.some((region) =>
+        String(run.causalChain[0]?.cause).includes(region),
+      ),
+    ).toBe(true);
+  });
+});

@@ -166,7 +166,15 @@ export function App() {
     // useless and the product look like it ignored the request.
     const requested = requestedTemplate();
     if (requested) return createInitialState(requested.graph, requested.id);
-    return loadPersistedState() ?? createInitialState(blankBaseline, "blank");
+    // A returning visitor keeps their own work. A first arrival opens on a
+    // worked incident rather than an empty grid: the submission says the
+    // product opens on a payment platform losing a region, and the strongest
+    // first impression — a live failure with real evidence — should not be
+    // behind a URL parameter nobody will type.
+    return (
+      loadPersistedState() ??
+      createInitialState(paymentPlatformBaseline, "payment-platform")
+    );
   });
   const [message, setMessage] = useState(
     "Describe your architecture. The agent can build it here, and Aether will prove the consequences.",
