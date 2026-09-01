@@ -214,12 +214,12 @@ All other previously open rows below have been reconciled against the deployed i
   - Partial browser evidence: public Chrome 151 on the live URL reports `document.modelContext` as an object with a `registerTool` function, the interface shows “WebMCP live”, and the registry reports eleven state-aware tools with no origin-trial `<meta>` present in the document. This measurement is **not** conclusive, because the same browser also exposes `document.modelContext` on `https://example.com`, which serves no token; the WebMCP testing flag is therefore enabled in that profile and masks the trial path.
   - Remaining: repeat the check in a Chrome profile with `chrome://flags/#enable-webmcp-testing` set to Default, confirming `document.modelContext` is defined on the public URL and absent on an unrelated origin. The first two acceptance clauses are verified; the third is not yet.
 - [x] **M10.5 — Deploy and inspect logs for a healthy release** `DONE`
-  - Evidence: Railway terminal deployment `9c447a67-2f92-40e2-9df9-71bd7ee45f48` is `SUCCESS`.
+  - Evidence: Railway terminal deployment `a3cf102d-95b0-4057-8fd9-a865a7ca3ef5` is `SUCCESS`.
 - [x] **M10.6 — Run live health, persistence, WebMCP discovery, and canonical-journey smoke tests** `DONE`
   - Evidence: live `/health` headers, ChatGPT Site Tool discovery/calls, and persisted-branch reload completed on 2026-08-31.
 - [x] **M10.7 — Record live URL, release ID, and verification evidence here** `DONE`
   - URL: `https://webmcp-production-38e5.up.railway.app`
-  - Release: `9c447a67-2f92-40e2-9df9-71bd7ee45f48`
+  - Release: `a3cf102d-95b0-4057-8fd9-a865a7ca3ef5`
 
 ## Milestone 11 — Submission and release
 
@@ -377,7 +377,7 @@ None. Production is deployed on Railway with durable PostgreSQL-backed per-visit
   - Evidence: the previous cycle changed every branch, node, and comparison label and altered the workspace GET contract, both on paths the demo depends on. A fresh run on the deployed origin from a cleared browser completed the whole journey — private workspace, five named tools, three futures, the blocked approval with its named cross-scenario reason, one action to resolve it, then approve, commit, and rollback to a discarded branch and the baseline — with no JavaScript errors. The accessibility tree confirms each control now leads with its visible text while still carrying live evidence, so the label-content rule holds and the names remain useful.
 
 - [x] **M14.35 — Keep a user-built blank system editable until its first branch** `DONE`
-  - Evidence: the custom-system path previously let the first component be added but then treated the baseline as committed, making the user fight the product while assembling their own architecture. Blank workspaces now keep their baseline editable until the user branches from it, while seeded payment and inference systems remain immutable once committed. The interface also avoids component-specific controls when the graph has no operational components. `npm run test -- --run`, `npm run typecheck`, and `npm run lint` passed with 45 tests.
+  - Evidence: the custom-system path previously let the first component be added but then treated the baseline as committed, making the user fight the product while assembling their own architecture. Blank workspaces now keep their baseline editable until the user branches from it, while seeded payment and inference systems remain immutable once committed. The interface also avoids component-specific controls when the graph has no operational components. `npm run test -- --run`, `npm run typecheck`, and `npm run lint` passed.
 
 ## Milestone 15 — The agent as the way in
 

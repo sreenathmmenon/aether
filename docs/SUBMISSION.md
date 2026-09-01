@@ -55,4 +55,4 @@ Agent authority is bounded at both ends. No approve or merge tool is registered 
 - State-dependent registration: five read and branch tools on a committed architecture, nine once the model is editable — a repair future is open or the reviewer is building their own system — and eleven when both hold. Component and region enums are enumerated from the live graph rather than a fixed list.
 - Bounded agent authority: no approve or merge tool is registered, destructive removal is refused, and every rejection names the failed fields and the values that would succeed.
 - The interface names its own capability surface, so a reviewer can verify what is published and that no approval tool exists without connecting an agent.
-- 45 unit tests covering the command pipeline, the dependency-graph engine, tool registration, bounded output, and persistence migration.
+- 53 unit tests covering the command pipeline, the dependency-graph engine, tool registration, bounded output, and persistence migration.
