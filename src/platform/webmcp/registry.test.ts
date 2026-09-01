@@ -7,6 +7,7 @@ import { blankBaseline } from "../../fixtures/blank/baseline";
 import { rideHailingBaseline } from "../../fixtures/ride-hailing/baseline";
 import { createAetherToolRegistry, maxToolResultLength } from "./registry";
 import { offlineToolSurface } from "./offline-surface";
+import webmcpDoc from "../../../docs/WEBMCP.md?raw";
 
 type RegisteredTool = {
   name: string;
@@ -70,6 +71,37 @@ describe("Aether WebMCP registry", () => {
       ),
     ) as { error?: string };
     expect(ran.error).toBeUndefined();
+  });
+
+  it("documents every tool it publishes", async () => {
+    // docs/WEBMCP.md is the capability table a reviewer reads before opening
+    // the page. model_architecture shipped without appearing there, so the
+    // document understated the surface by one — and the tool it omitted is
+    // the one that builds a whole system from a single brief. Read the file
+    // rather than keep a second list here, which would drift the same way.
+    const registered: RegisteredTool[] = [];
+    const registry = createAetherToolRegistry(() => {}, undefined, {
+      registerTool: async (tool) => {
+        registered.push(tool as unknown as RegisteredTool);
+      },
+    });
+    // The fullest surface: an open repair future publishes everything.
+    const seeded = createInitialState(paymentPlatformBaseline);
+    const branched = dispatch(seeded, {
+      type: "CREATE_BRANCH",
+      input: { name: "Doc probe", intent: "highest_resilience" },
+    });
+    if (!branched.ok) throw new Error("fixture branch must be created");
+    await registry?.refresh(branched.value);
+    registry?.dispose();
+
+    // Imported as raw text so this reads the shipped document itself, with
+    // no Node type dependency in a browser-targeted config.
+    const doc = webmcpDoc;
+    const undocumented = registered
+      .map((tool) => tool.name)
+      .filter((name) => !doc.includes(`\`${name}\``));
+    expect(undocumented).toEqual([]);
   });
 
   it("tells an agent what to do at the decision point", async () => {

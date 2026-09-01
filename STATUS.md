@@ -997,3 +997,18 @@ was already underway again.
 
 - [x] **M59.3 — Collapse the duplicated graph derivations** `DONE`
   - Evidence: three tools each rebuilt "active branch, else baseline" by hand. That duplication is exactly how the schema and the executor drifted apart in M58, so all of them now read the one `activeGraph()` helper. Audited the remaining baseline readers: `regionIds()` reads the baseline deliberately and correctly, because no command can create a region — the component kind enum excludes it.
+
+## Milestone 60 — The capability table matches the surface
+
+- [x] **M60.1 — Document the tool that was missing** `DONE`
+  - Acceptance: every tool the page publishes appears in the document a reviewer reads before opening it.
+  - Evidence: `docs/WEBMCP.md` listed 11 tools; the registry publishes 12. The omission was `model_architecture` — the tool that builds a whole system from one brief, which is the most compelling capability on the surface for anyone evaluating what an agent can do here. A reviewer reading the table would have concluded the page could only add components one at a time.
+  - It now appears in the Build family, stating what it actually does: one brief through the same validated commands, returning partial failures per item rather than refusing the batch.
+
+- [x] **M60.2 — Hold the document to the registry** `DONE`
+  - Acceptance: this cannot drift again silently.
+  - Evidence: the offline surface was already asserted against the real registry for exactly this reason, but nothing checked the document. A test now registers the fullest surface — an open repair future, all 12 tools — and fails naming any tool the document does not mention. Removing the entry fails it with `expected [ 'model_architecture' ] to deeply equal []`.
+  - It reads `docs/WEBMCP.md` as raw text rather than keeping a second list, because a copy in the test would drift the same way the document did. The first attempt used `node:fs`, which the browser-targeted tsconfig has no types for; a Vite raw import reads the shipped file with no new dependency.
+
+- [x] **M60.3 — Audit the judge-facing surface** `DONE`
+  - Evidence: verified against the deployed origin rather than assumed. The intro dialog carries `aria-modal`, a resolving `aria-labelledby`, focus landing inside it, and a working Escape. The header's tool count is live, not decorative: it moved 5 → 12 as a branch was created, matching `getTools()` exactly. The canvas renders five components, eight edges and two regions with the incident headline above them. No change was warranted in any of it.
