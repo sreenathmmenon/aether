@@ -2,14 +2,14 @@ import { serve } from "@hono/node-server";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { Hono } from "hono";
 import { Pool } from "pg";
-
-type PersistedWorkspace = {
-  workspace?: { id?: string; persistenceVersion?: number };
-  branches?: unknown;
-  revisions?: unknown;
-  audit?: unknown;
-  simulations?: unknown;
-};
+// The persistence rules live in src so the test suite covers them; the server
+// must not keep a second copy that drifts from the one under test.
+import {
+  isWorkspace,
+  maxWorkspaceBytes,
+  workspaceIdPattern,
+  type PersistedWorkspace,
+} from "../src/core/workspace-contract.ts";
 
 const databaseUrl = process.env.DATABASE_URL;
 const webMcpOriginTrialToken = process.env.WEBMCP_ORIGIN_TRIAL_TOKEN;
@@ -34,18 +34,6 @@ async function ensureStorage() {
     .then(() => undefined);
   await storageReady;
   return true;
-}
-
-function isWorkspace(value: unknown): value is PersistedWorkspace {
-  if (!value || typeof value !== "object") return false;
-  const candidate = value as PersistedWorkspace;
-  return Boolean(
-    candidate.workspace?.id &&
-    candidate.branches &&
-    candidate.revisions &&
-    candidate.audit &&
-    candidate.simulations,
-  );
 }
 
 const app = new Hono();
@@ -79,6 +67,8 @@ app.get("/health", async (context) => {
 });
 
 app.get("/api/workspaces/:id", async (context) => {
+  if (!workspaceIdPattern.test(context.req.param("id")))
+    return context.json({ error: "INVALID_WORKSPACE" }, 400);
   if (!(await ensureStorage()))
     return context.json({ state: null, persistence: "local-fallback" });
   const result = await pool!.query<{
@@ -101,16 +91,25 @@ app.get("/api/workspaces/:id", async (context) => {
 });
 
 app.put("/api/workspaces/:id", async (context) => {
-  const body = (await context.req.json()) as {
-    state?: unknown;
-    expectedVersion?: unknown;
-  };
+  // Check the cheap things first: a bad id or an oversized body must be
+  // refused before the payload is parsed into memory.
+  const id = context.req.param("id");
+  if (!workspaceIdPattern.test(id))
+    return context.json({ error: "INVALID_WORKSPACE" }, 400);
+  const declaredLength = Number(context.req.header("content-length") ?? 0);
+  if (declaredLength > maxWorkspaceBytes)
+    return context.json({ error: "WORKSPACE_TOO_LARGE" }, 413);
+  const raw = await context.req.text();
+  if (raw.length > maxWorkspaceBytes)
+    return context.json({ error: "WORKSPACE_TOO_LARGE" }, 413);
+  let body: { state?: unknown; expectedVersion?: unknown };
+  try {
+    body = JSON.parse(raw) as typeof body;
+  } catch {
+    return context.json({ error: "INVALID_INPUT" }, 400);
+  }
   if (!isWorkspace(body.state) || !Number.isInteger(body.expectedVersion))
     return context.json({ error: "INVALID_INPUT" }, 400);
-  const id = context.req.param("id");
-  // Each visitor owns a workspace keyed by their own session id.
-  if (!/^[A-Za-z0-9-]{4,48}$/.test(id))
-    return context.json({ error: "INVALID_WORKSPACE" }, 400);
   if (!body.state.workspace?.id)
     return context.json({ error: "INVALID_WORKSPACE" }, 400);
   if (!(await ensureStorage()))
