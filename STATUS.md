@@ -1441,3 +1441,14 @@ was already underway again.
   - Evidence: adding the chain left `inspect_failure_domain` describing itself as "the deterministic blast radius and decision variables" — the tool it used to be. An agent choosing between tools reads the description, not a result it has not called yet, so the propagation path was available and unadvertised. The same failure as M78, one round after it.
   - It now names what it returns: which components are affected, why each one fails, how far each sits from the origin, and the metrics and properties worth changing. 250 characters against the 500 the metadata test enforces.
   - A test holds the description to the result, so the next field added here cannot be advertised as the previous version. Reverting the wording fails it.
+
+## Milestone 99 — Five per cent of headroom is not a margin
+
+- [x] **M99.1 — Audit the descriptions for staleness** `DONE`
+  - Evidence: having left a description behind twice, all twelve were read against what their tools do. Eleven were accurate. `compare_architecture_futures` still warned that omitting a scenario "may exceed the output budget once several futures are fully simulated" — which turned out to be true rather than stale, and worth measuring rather than trusting either way.
+
+- [x] **M99.2 — Degrade the comparison instead of losing it** `DONE`
+  - Acceptance: the tool at the decision point does not fail hardest when there is most to compare.
+  - Evidence: measured against the deployed origin. Three futures with all four scenarios simulated produce 1,898 characters against a 2,000 budget — five per cent of headroom. One more scenario, one longer violation string, or one more future and `toolResult` would have replaced the entire comparison with `RESULT_TOO_LARGE`. That is the failure mode M59 already fixed once by raising the budget; raising it again would only move the cliff.
+  - It now narrows in steps rather than falling off. The first attempt dropped latency per run and was not enough on its own — verified by tightening the budget, where the narrow form still overflowed and the tool returned a 109-character error instead of a comparison. The last step keeps the worst scenario per future, which is what a trade-off actually turns on, and holds at 813 characters.
+  - Verified at three budget levels: 1,600 and 900 both return a real comparison rather than an error, and 500 honestly cannot fit. Live behaviour is unchanged — 1,898 bytes with latency intact — so the degradation is dormant until it is needed.
