@@ -918,3 +918,12 @@ was already underway again.
   - Evidence: following the silent-failure thread into persistence. The header chip carried four states through one static green style, so "Offline draft" — meaning the work has reached no durable storage at all — looked exactly like "Synced". A reviewer whose changes were at risk had nothing to see.
   - The chip now reads its state: durable stays green, held-locally is muted, unreachable storage is coral with a tooltip saying so. The mapping lives in one function rather than a chain of ternaries in the markup, and a test holds it — including that a status nobody has written yet does not default to reassuring, which is how the original defect would recur.
   - Verified in the browser against a server with no database, and again with every save rejected: "Local draft" renders muted grey, "Offline draft" renders coral, and the two are distinct.
+
+## Milestone 54 — A refusal does not read like a confirmation
+
+- [x] **M54.1 — Give refusals their own tone** `DONE`
+  - Acceptance: a reviewer can tell whether what they asked for happened.
+  - Evidence: "A component with that name already exists" rendered in exactly the same colour, in the same strip, as "Probe Service added and wired to Primary Ledger". The message and its tone are now one value rather than two states that can drift apart, so a refusal cannot leave its colour behind on the next message.
+  - Fixing the shared dispatch wrapper was not enough, which the browser showed: the duplicate-component refusal comes from the component form, which sets its message directly and bypassed it. Three further refusal paths in that form now carry the refused tone, and its inline notice — which only ever carries a refusal — no longer uses the cyan that reads as information, so the success path stops writing into it.
+  - Verified in the browser: adding a component reports in the neutral tone, adding it again renders coral with the refused class, and the two differ.
+  - A test written for this was removed rather than kept. It asserted a local copy of the mapping rather than the shipped behaviour, which is the duplicated-test-logic pattern this codebase has already been bitten by four times; a test that cannot fail for the right reason is worse than none.
