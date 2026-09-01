@@ -1365,3 +1365,13 @@ was already underway again.
   - Evidence: the comparison overlay reads well and its modal mechanics are correct — named, `aria-modal`, focus inside, siblings hidden, four focusable controls. Each future is a button whose accessible name carries every metric: "Lowest cost — 93.96%, 46m recovery · $5,920/mo, 1 violation — select this future", matching the visible text including singular and plural.
   - A first check flagged the rows as non-semantic, looking for a table. That was the wrong test: these are selectable options, not tabular data, and a button with a complete label is the right pattern. Recorded because the check was mine and it was wrong, not the markup.
   - What was genuinely missing is a test. The numbers are rendered in spans a screen reader will not announce separately, so the label is the only thing it gets, and this label has already lost recovery and cost once. A test now asserts it is assembled from the same `result` fields the card displays rather than its own literals; dropping either from the label fails it by name.
+
+## Milestone 92 — The shared room, verified with two participants
+
+- [x] **M92.1 — Prove the collaboration claim** `DONE`
+  - Acceptance: the README's "everyone holding that link into one shared workspace" is demonstrable, not asserted.
+  - Evidence: exercised end to end with two real browser tabs on `?room=verify-91`. One created three repair futures; the server held them under `room-verify-91` at persistence version 2. A second tab opened cold on the same link and rendered all three with their evidence — 93.96%, 96.36%, 97.11%. The second tab then recorded a decision note through WebMCP, and the first picked it up through the three-second reconcile with its actor attribution intact. Genuine collaboration, including an agent's contribution crossing between participants.
+
+- [x] **M92.2 — Say who changed it** `DONE`
+  - Evidence: watching the first tab receive that update showed it reporting "Live workspace update received" — the storage-event wording, which is about a second tab of the same browser. Two of the three reconcile paths already branched on `sharedRoom`; the storage-event path had no room-aware branch at all, and its effect closed over `sharedRoom` with an empty dependency array so it would have captured a stale value regardless.
+  - All three paths now share one `reconcileMessage` helper with its own tests, which also settled three near-duplicate wordings into one. Verified against the deployed origin with a fresh room and two tabs: the receiving tab reports "Someone else in this room changed the architecture." and shows the future the other participant made.
