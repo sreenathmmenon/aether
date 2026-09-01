@@ -752,6 +752,30 @@ export function App() {
    * description; otherwise the entry point depends on narration.
    */
   function buildFromBrief() {
+    const noise =
+      /^(the|a|an|our|we|they|users?|user|and|then|which|that|it|is|are|hits?|hit|calls?|call|writes?|write|reads?|read|flows?|flow|through|to|from|into|via|by|with|on|in|of|for)$/i;
+    const componentNameFrom = (clause: string) => {
+      const words = clause
+        .replace(/[^A-Za-z0-9 -]/g, " ")
+        .split(/\s+/)
+        .filter(Boolean);
+      // Prefer the trailing noun phrase: "fraud writes to Postgres" -> Postgres.
+      const kept: string[] = [];
+      for (
+        let index = words.length - 1;
+        index >= 0 && kept.length < 3;
+        index -= 1
+      ) {
+        const word = words[index]!;
+        if (noise.test(word)) {
+          if (kept.length > 0) break;
+          continue;
+        }
+        kept.unshift(word);
+      }
+      const name = (kept.length ? kept : words.slice(0, 3)).join(" ").trim();
+      return (name || clause).slice(0, 32);
+    };
     if (briefSeeds.length === 0) {
       setComposerNotice("Describe at least one component in the brief first.");
       return;
@@ -769,7 +793,10 @@ export function App() {
     let next = state;
     const created: string[] = [];
     for (const seed of briefSeeds) {
-      const name = seed.slice(0, 32);
+      // A brief is prose. Keep the noun that names the component and drop the
+      // surrounding clause, so the canvas reads as an architecture rather than
+      // as somebody's sentence.
+      const name = componentNameFrom(seed);
       const outcome = dispatch(
         next,
         {

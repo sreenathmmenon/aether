@@ -489,6 +489,12 @@ The detailed plan is in `docs/V3_REVERSE_WINNER_PLAN.md`. V3 keeps the challenge
   - Acceptance: a reviewer with no agent attached can reach a modelled, simulated system from their own description.
   - Evidence: an independent audit found that describing your own system was "a complete dead end" without a live agent — the brief panel parsed candidate components and then told the reader an agent should do the work. That made the product's headline entry point depend on hackathon-day narration rather than the deployed artifact. A "Build this architecture" action now turns the parsed brief into a real graph through the same validated commands an agent uses, inferring component kind from the words: a four-clause brief mentioning a gateway, a service, Postgres, and Kafka produces a gateway, a service, a database, and a queue, chained by three dependencies and simulating to 93.4% availability at $3,200. Staging the brief as decision context remains available as the secondary action.
 
+- [x] **M15.21 — Name components, not sentences** `DONE`
+  - Acceptance: a graph built from prose reads as an architecture.
+  - Evidence: verified the brief path on the deployed origin and the components were named after whole clauses — "Users hit an API gateway", "fraud writes to Postgres" — so the canvas read as somebody's notes rather than a system. Names are now taken from the trailing noun phrase of each clause, dropping articles, pronouns, and verbs: the same brief now produces "API gateway", "fraud scoring", "Postgres", and "Kafka". The kind inference is unchanged and still yields a gateway, a service, a database, and a queue.
+- [x] **M15.22 — Recover from a full disk without losing work** `DONE`
+  - Evidence: the workstation filled during the previous session, which emptied `node_modules` and made every shell command fail before it ran. No work was lost: the tree was clean at `9a4da82`, everything was pushed, and the deployed origin was unaffected because it runs on Railway. After `npm ci` the full gate passes and the live bundle still matches the local build.
+
 ## Milestone 13 — Real-time architecture decision room
 
 - [x] **M13.1 — Define and build the unmistakable collaborative decision-room journey** `DONE`

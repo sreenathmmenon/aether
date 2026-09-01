@@ -712,6 +712,30 @@ describe("Aether command pipeline", () => {
     // own words; otherwise the entry point depends on narration.
     const brief =
       "Users hit an API gateway, checkout calls fraud scoring, fraud writes to Postgres, events flow through Kafka";
+    // A brief is prose; the canvas must show component names, not clauses.
+    const noise =
+      /^(the|a|an|our|we|they|users?|user|and|then|which|that|it|is|are|hits?|hit|calls?|call|writes?|write|reads?|read|flows?|flow|through|to|from|into|via|by|with|on|in|of|for)$/i;
+    const componentNameFrom = (clause: string) => {
+      const words = clause
+        .replace(/[^A-Za-z0-9 -]/g, " ")
+        .split(/\s+/)
+        .filter(Boolean);
+      const kept: string[] = [];
+      for (
+        let index = words.length - 1;
+        index >= 0 && kept.length < 3;
+        index -= 1
+      ) {
+        const word = words[index]!;
+        if (noise.test(word)) {
+          if (kept.length > 0) break;
+          continue;
+        }
+        kept.unshift(word);
+      }
+      const name = (kept.length ? kept : words.slice(0, 3)).join(" ").trim();
+      return (name || clause).slice(0, 32);
+    };
     const seeds = brief
       .split(/[\n,.]+/)
       .map((part) => part.trim())
@@ -739,7 +763,7 @@ describe("Aether command pipeline", () => {
           type: "ADD_COMPONENT",
           input: {
             branchId: "branch-baseline",
-            name: seed.slice(0, 32),
+            name: componentNameFrom(seed),
             kind: kindFor(seed),
             regionId: "region-primary",
             peakRps: 8000,
@@ -772,6 +796,12 @@ describe("Aether command pipeline", () => {
     }
 
     const graph = deriveGraph(state, state.branches["branch-baseline"]!);
+    const names = Object.values(graph.entities)
+      .filter((entity) => entity.kind !== "region")
+      .map((entity) => entity.name);
+    expect(names).toContain("Postgres");
+    expect(names).toContain("Kafka");
+    expect(names.every((name) => name.split(" ").length <= 3)).toBe(true);
     // Kinds are inferred from the words, not defaulted to one type.
     const kinds = Object.values(graph.entities)
       .filter((entity) => entity.kind !== "region")
