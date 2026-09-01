@@ -767,6 +767,50 @@ describe("Aether WebMCP registry", () => {
     registry?.dispose();
   });
 
+  it("tells an agent why each component fails, not only that it does", async () => {
+    // The engine computes a causal chain and the canvas animates it, but the
+    // tool returned a flat blast radius. An agent could name the five
+    // components and not the path failure took through them — which is the
+    // difference between a component hit directly and one reached through its
+    // dependency, and so which repair is worth proposing.
+    const live: RegisteredTool[] = [];
+    const registry = createAetherToolRegistry(() => {}, undefined, {
+      registerTool: async (tool) => {
+        live.push(tool as unknown as RegisteredTool);
+      },
+    });
+    await registry?.refresh(createInitialState(paymentPlatformBaseline));
+    const output = String(
+      await live
+        .find((tool) => tool.name === "inspect_failure_domain")
+        ?.execute({ scenario: "regional_outage" }),
+    );
+    registry?.dispose();
+    const result = JSON.parse(output) as {
+      blastRadius: string[];
+      causalChain: { component: string; cause: string; depth: number }[];
+    };
+
+    // Every component in the blast radius is accounted for by the chain.
+    expect(result.causalChain.length).toBe(result.blastRadius.length);
+    expect(result.causalChain.map((step) => step.component).sort()).toEqual(
+      [...result.blastRadius].sort(),
+    );
+
+    // The origin is named by the domain that failed, and something further
+    // out is named by the component it depends on — the two cases a flat
+    // list cannot distinguish.
+    const origin = result.causalChain.find((step) => step.depth === 0);
+    expect(origin?.cause).toMatch(/unavailable/i);
+    const downstream = result.causalChain.find((step) => step.depth > 0);
+    expect(downstream?.cause).toMatch(/depends on/i);
+
+    // And it still fits the budget: exceeding it returns an error instead of
+    // a shorter answer, which would lose the whole result.
+    expect(output).not.toContain("RESULT_TOO_LARGE");
+    expect(output.length).toBeLessThanOrEqual(maxToolResultLength);
+  });
+
   it("tells an agent what to do at the decision point", async () => {
     // Every other tool names a next action. This one, at the point a
     // decision is actually made, returned futures and a human gate and

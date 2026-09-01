@@ -689,6 +689,17 @@ export function createAetherToolRegistry(
             scenario: parsed.data.scenario,
             failedDomain: run.causalChain[0]?.cause ?? "no failure seeded",
             blastRadius: run.affectedEntityIds.map(named),
+            // Why each component fails, not only that it does. The engine
+            // computes this and the interface animates it, but the tool
+            // returned a flat list, so an agent could name the blast radius
+            // and not the path failure took through it — the one thing that
+            // distinguishes a component hit directly from one reached through
+            // its dependency, and so which repair is worth proposing.
+            causalChain: run.causalChain.map((step) => ({
+              component: named(step.entityId),
+              cause: step.cause,
+              depth: step.depth,
+            })),
             availability: run.availability,
             rtoMinutes: run.rtoMinutes,
             latencyMs: run.latencyMs,
