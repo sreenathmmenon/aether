@@ -532,11 +532,10 @@ button {
   width: min(330px, 44%);
   margin: 0;
   padding: 11px 13px;
-  backdrop-filter: blur(3px);
   border: 1px solid rgba(17, 36, 64, 0.14);
   list-style: none;
   color: var(--muted);
-  background: rgba(251, 250, 246, 0.9);
+  background: rgba(251, 250, 246, 0.97);
   font-size: 10px;
 }
 .causal-timeline li {
@@ -1145,8 +1144,7 @@ button {
   display: grid;
   place-items: center;
   padding: 24px;
-  background: rgba(8, 21, 40, 0.48);
-  backdrop-filter: blur(5px);
+  background: rgba(8, 21, 40, 0.72);
 }
 .compare-modal {
   position: relative;

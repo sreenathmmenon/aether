@@ -432,6 +432,10 @@ None. Production is deployed on Railway with durable PostgreSQL-backed per-visit
 - [x] **M15.14 — Anchor the seeded notes to components they are about** `DONE`
   - Evidence: the human cost constraint anchored to the last component the failure reached, which on the payment platform is Reconciliation — unrelated to cost. It now anchors to the most expensive component, so the note sits on what it concerns: Primary Ledger on the payment platform, Inference Pool on the inference platform. Fixing it also surfaced a second hardcoded copy of the seeded notes in the persistence migration, naming payment-platform components regardless of the loaded system; that path is removed, since notes are seeded from the graph at creation and a workspace without them is better served by none than by borrowed content.
 
+- [x] **M15.15 — Remove the last backdrop blur artifact** `DONE`
+  - Acceptance: no overlay renders the page behind it as duplicated or mirrored content.
+  - Evidence: a screenshot of the comparison overlay showed the page behind it mirrored and doubled — the same `backdrop-filter` artifact already removed from the intro, still present on the compare scrim and the causal timeline. Blurring a full page is expensive and, in this browser, visibly wrong. Both now use opacity alone: the comparison sits on a solid scrim through which the product stays legible, and the timeline card is opaque enough to read over the canvas grid. No `backdrop-filter` remains in the stylesheet.
+
 ## Milestone 13 — Real-time architecture decision room
 
 - [x] **M13.1 — Define and build the unmistakable collaborative decision-room journey** `DONE`
