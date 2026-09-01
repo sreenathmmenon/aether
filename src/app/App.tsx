@@ -1820,9 +1820,19 @@ export function App() {
             className="simulation-provenance"
             title="The same architecture always produces this same result. The engine version and fingerprints identify the model and the exact input and output it ran on. The availability model's weights are declared assumptions, not measured production data."
           >
+            {/* The tooltip claimed both the input and the output were shown
+                and only the output was. The input fingerprint is what lets a
+                reviewer check that two runs were given the same architecture,
+                which is the half of reproducibility that matters when
+                comparing a result against one recorded earlier. */}
             <span>Reproducible run</span>
             <code>{evidence.engineVersion}</code>
-            <code>{evidence.outputHash}</code>
+            <code title="Fingerprint of the exact architecture and scenario this run was given">
+              in {evidence.inputHash.replace("fnv1a-", "")}
+            </code>
+            <code title="Fingerprint of the result this run produced">
+              out {evidence.outputHash.replace("fnv1a-", "")}
+            </code>
           </div>
           {/* A large architecture can breach a hundred SLOs at once. Rendering
               every one pushed the approval controls off the screen entirely,

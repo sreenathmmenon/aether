@@ -445,4 +445,50 @@ describe("dependency-graph simulation", () => {
         ).toBe(run.affectedEntityIds.length);
       }
   });
+
+  it("fingerprints the input as well as the result", () => {
+    // The output fingerprint says what a run produced. The input fingerprint
+    // says what it was given, which is the half a reviewer needs to check
+    // that two results are comparable at all — and it was computed and never
+    // shown anywhere, in the interface or to an agent.
+    const base = runScenario(
+      paymentPlatformBaseline,
+      "regional_outage",
+      "branch-baseline",
+      1,
+    );
+
+    // A different question about the same architecture is a different input.
+    const otherScenario = runScenario(
+      paymentPlatformBaseline,
+      "traffic_spike",
+      "branch-baseline",
+      1,
+    );
+    expect(otherScenario.inputHash).not.toBe(base.inputHash);
+
+    // And a changed architecture is a different input under the same question.
+    const changed = structuredClone(paymentPlatformBaseline);
+    (
+      changed.entities["ledger"]!.properties as Record<string, unknown>
+    ).capacityRps = 99_999;
+    const otherGraph = runScenario(
+      changed,
+      "regional_outage",
+      "branch-baseline",
+      1,
+    );
+    expect(otherGraph.inputHash).not.toBe(base.inputHash);
+    expect(otherGraph.outputHash).not.toBe(base.outputHash);
+
+    // The same input twice is the same fingerprint, or it identifies nothing.
+    expect(
+      runScenario(
+        paymentPlatformBaseline,
+        "regional_outage",
+        "branch-baseline",
+        1,
+      ).inputHash,
+    ).toBe(base.inputHash);
+  });
 });

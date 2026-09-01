@@ -570,6 +570,10 @@ export function createAetherToolRegistry(
               "monthlyCostUsd",
             ],
             engineVersion: run.engineVersion,
+            // Both halves: the input fingerprint lets a model check that two
+            // results were computed from the same architecture before it
+            // compares them, which the output fingerprint alone cannot show.
+            inputHash: run.inputHash,
             outputHash: run.outputHash,
           });
         },
