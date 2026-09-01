@@ -920,4 +920,54 @@ describe("Aether WebMCP registry", () => {
       );
     registry?.dispose();
   });
+
+  it("rejects every bad call in one shape a model can parse", async () => {
+    // Schema rejections arrived as { error, problems, nextAction } while
+    // engine rejections arrived as { ok, code, message }, so a model had to
+    // recognise two failure shapes from the same tool and only one of them
+    // said what to do next.
+    const tools: RegisteredTool[] = [];
+    const registry = createAetherToolRegistry(() => {}, undefined, {
+      registerTool: async (tool) => {
+        tools.push(tool as unknown as RegisteredTool);
+      },
+    });
+    await registry?.refresh(createInitialState(blankBaseline, "blank"));
+    const add = tools.find(
+      (tool) => tool.name === "add_architecture_component",
+    );
+
+    const base = {
+      branchId: "branch-baseline",
+      kind: "service",
+      regionId: "region-primary",
+      peakRps: 1,
+      capacityRps: 2,
+      monthlyCostUsd: 1,
+    };
+    const rejections = [
+      // Caught by the schema.
+      { ...base, name: "<script>alert(1)</script>" },
+      { ...base, name: "Neg", peakRps: -1 },
+      { ...base, name: "Huge", peakRps: 1e12 },
+      { ...base, name: "BadKind", kind: "quantum-mesh" },
+      // Caught by the engine, past the schema.
+      { ...base, name: "NoRegion", regionId: "region-does-not-exist" },
+    ];
+
+    for (const args of rejections) {
+      const parsed = JSON.parse(String(await add?.execute(args))) as {
+        error?: string;
+        problems?: string[];
+        nextAction?: string;
+        ok?: boolean;
+      };
+      expect(parsed.ok, JSON.stringify(args)).toBeUndefined();
+      expect(typeof parsed.error, JSON.stringify(args)).toBe("string");
+      expect(parsed.problems?.length, JSON.stringify(args)).toBeGreaterThan(0);
+      // Every rejection has to say what would succeed, not only what failed.
+      expect(parsed.nextAction, JSON.stringify(args)).toBeTruthy();
+    }
+    registry?.dispose();
+  });
 });

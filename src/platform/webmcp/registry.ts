@@ -126,6 +126,26 @@ function invalidInput(error: z.ZodError, retryHint: string) {
   });
 }
 
+/**
+ * A rejection from the engine, in the same shape as a schema rejection.
+ *
+ * These arrived as `{ ok, code, message }` while schema failures arrived as
+ * `{ error, problems, nextAction }`, so a model had to recognise two failure
+ * shapes from the same tool and only one of them said what to do next.
+ */
+function rejected(failure: { code: string; message: string }) {
+  return toolResult({
+    error: failure.code,
+    problems: [failure.message],
+    nextAction:
+      failure.code === "NOT_AVAILABLE"
+        ? "This is not permitted in the current state. Read get_architecture_summary for the next allowed action."
+        : failure.code === "UNAUTHORIZED"
+          ? "Only a human can do this. Propose it with add_decision_note instead."
+          : "Correct the named problem and call the tool again.",
+  });
+}
+
 export function createAetherToolRegistry(
   onState: (state: AetherState) => void,
   onToolCount?: (count: number, names: string[]) => void,
@@ -348,7 +368,7 @@ export function createAetherToolRegistry(
             { type: "CREATE_BRANCH", input: parsed.data },
             agent,
           );
-          if (!result.ok) return toolResult(result);
+          if (!result.ok) return rejected(result);
           onState(result.value);
           return toolResult({
             branchId: result.value.workspace.activeBranchId,
@@ -401,7 +421,7 @@ export function createAetherToolRegistry(
               { type: "ADD_DECISION_NOTE", input: parsed.data },
               agent,
             );
-            if (!result.ok) return toolResult(result);
+            if (!result.ok) return rejected(result);
             onState(result.value);
             return toolResult({
               branchId: parsed.data.branchId,
@@ -453,7 +473,7 @@ export function createAetherToolRegistry(
               { type: "RUN_SCENARIO", input: parsed.data },
               agent,
             );
-            if (!result.ok) return toolResult(result);
+            if (!result.ok) return rejected(result);
             onState(result.value);
             return toolResult(
               result.value.simulations[parsed.data.branchId]?.find(
@@ -655,7 +675,7 @@ export function createAetherToolRegistry(
               { type: "ADD_COMPONENT", input: parsed.data },
               agent,
             );
-            if (!result.ok) return toolResult(result);
+            if (!result.ok) return rejected(result);
             onState(result.value);
             return toolResult({
               branchId: parsed.data.branchId,
@@ -878,7 +898,7 @@ export function createAetherToolRegistry(
               { type: "CONNECT_COMPONENTS", input: parsed.data },
               agent,
             );
-            if (!result.ok) return toolResult(result);
+            if (!result.ok) return rejected(result);
             onState(result.value);
             return toolResult({
               connected: `${parsed.data.sourceId} -> ${parsed.data.targetId}`,
@@ -927,7 +947,7 @@ export function createAetherToolRegistry(
               { type: "SET_PROPERTY", input: parsed.data },
               agent,
             );
-            if (!result.ok) return toolResult(result);
+            if (!result.ok) return rejected(result);
             onState(result.value);
             return toolResult({
               branchId: parsed.data.branchId,
