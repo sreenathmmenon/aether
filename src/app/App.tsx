@@ -20,6 +20,7 @@ import {
 import { edgeBetween } from "./edge-geometry";
 import { futuresMessage } from "./futures-message";
 import { gateReason } from "./gate-reason";
+import { loadSummary } from "./load-summary";
 import { reconcileMessage } from "./reconcile-message";
 import { mergeEvidence } from "@core/evidence-merge";
 import { scenarioNarrative } from "./scenario-copy";
@@ -1322,6 +1323,15 @@ export function App() {
                   : undefined
                 : (webMcp.reason ?? undefined)
             }
+            // When the surface is absent the reason is the only thing that
+            // explains it, and it lived in a title — hover only. The tool
+            // names are listed accessibly in the agent-surface panel below,
+            // so only this case needs the name to carry more.
+            aria-label={
+              webMcp.available
+                ? undefined
+                : `WebMCP not detected. ${webMcp.reason ?? "This browser does not expose a model context on this page."}`
+            }
           >
             {webMcp.available
               ? `WebMCP live · ${toolCount} tools`
@@ -1774,7 +1784,12 @@ export function App() {
                       100
                     }%`,
                   }}
-                  aria-label={`${entity.kind.toUpperCase()} ${entity.name} — ${affected ? (downstream ? "degraded downstream" : "direct failure") : "nominal"}`}
+                  // The load bar is drawn as a decorative element with its
+                  // numbers in a title, so a screen reader heard the kind,
+                  // the name and the failure state but never that the
+                  // component is running at capacity — which is what drives
+                  // the deficits a reviewer has to resolve before approval.
+                  aria-label={`${entity.kind.toUpperCase()} ${entity.name} — ${affected ? (downstream ? "degraded downstream" : "direct failure") : "nominal"}${loadSummary(entity.properties)}`}
                   // Selecting a component drives the inspector and the
                   // property editor, but it was conveyed by a class alone, so
                   // someone navigating by keyboard could not tell which
