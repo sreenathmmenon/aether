@@ -1124,3 +1124,16 @@ was already underway again.
 
 - [x] **M69.2 — Say why the gate is closed, to everyone** `DONE`
   - Evidence: the approval control is disabled with a reason stated in an adjacent span — "Run a scenario to make approval eligible" — but nothing linked the two, so a screen reader announced a disabled button and no explanation. The button now carries `aria-describedby` pointing at that reason. Verified live, where it reads "First run on this future · 5 of 5 components affected" beside a correctly blocked approval.
+
+## Milestone 70 — The human gate reaches approval, and evidence still has a hole
+
+- [x] **M70.1 — Confirm a future can actually be approved** `DONE`
+  - Acceptance: the human gate the submission is built around can fire on the shipped demo.
+  - Evidence: none of the three seeded futures passes every scenario as created — all fail `traffic_spike` on capacity deficits — so the first probe suggested approval was unreachable. That was wrong. The shipped `Scale N components past peak demand` action derives deficits from the whole graph with a 1.5x headroom rule, not from the truncated violation list, and one click raises all three undersized components and clears every scenario.
+  - Verified against the deployed origin end to end: create three futures, one click on "Scale 3 components past peak demand", approve, commit. The tool surface correctly shrank from 12 to 7 once the future was merged, and rollback was offered — the state-dependent surface proving itself at the gate.
+
+- [ ] **M70.2 — Evidence is lost across a rapid human click sequence** `OPEN`
+  - What is wrong: after create → scale → approve → commit in quick succession, the merged future's card reads `Awaiting evidence` and `compare_architecture_futures` returns `evidence: []`, while the server holds all four runs at the matching branch version. A reviewer who walks the gate quickly sees a committed future with no evidence behind it.
+  - What is verified correct, each checked rather than assumed: the reducer accumulates runs and preserves them through approve and merge; `MERGE_BRANCH` does not bump the branch version; the persistence round trip keeps all four runs; the stored runs carry the current `aether-sim-3` engine version, so the loader's superseded-engine filter is not dropping them; and the agent path — branch, two scenarios through WebMCP — accumulates correctly on the live origin.
+  - What was changed and did not close it: writes now merge evidence rather than replace it (`src/core/evidence-merge.ts`, three tests), `apply` and the two batch handlers compose onto the held state rather than the render closure, and the held state is advanced by every write. Each is a real defect fixed and each is covered by a test that fails without it, but none is the cause of this symptom.
+  - Left open deliberately rather than deploying a fourth guess. The remaining suspect is React batching several dispatches within one click sequence before any commit, but that has not been measured, and three hypotheses in a row were wrong here. A probe that patched `Storage.setItem` recorded zero writes, which turned out to be the merged branch correctly refusing a write rather than evidence of a bug — the kind of misreading that has already cost time in this session.
