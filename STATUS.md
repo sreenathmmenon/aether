@@ -1309,3 +1309,14 @@ was already underway again.
   - Evidence: the same check asked only whether `graph.entities[regionId]` existed, not whether it was a region. Passing `regionId: "ledger"` — a database — was accepted, so a component could be nested inside another component and the region it belonged to was whatever that entity was. The relocation path already checked `kind === "region"`; the creation path did not.
   - Both now require it. Verified live: `regionId: "ledger"` is refused with the same actionable message rather than silently creating a component inside a database.
   - Typecheck caught a loose `object` parameter in the new test helper, which was fixed to `Record<string, unknown>` rather than cast away.
+
+## Milestone 87 — A dependency joins two components
+
+- [x] **M87.1 — Refuse an edge that names a region** `DONE`
+  - Acceptance: the same asymmetry M86 found on one validation path does not survive on the others.
+  - Evidence: auditing every entity-reference check found `CONNECT_COMPONENTS` asking only whether an id exists, not what it is. An agent could wire a component to a region and the tool answered `{"connected":"gateway -> region-bengaluru"}` — success, for an edge that means nothing. A region is a failure domain: the engine filters it out of every blast radius, so the metrics did not move, and the canvas already refused to draw it. The graph, the audit trail and `trace_architecture_dependency` carried it anyway.
+  - Both ends must now be components, and the refusal names ones that would work rather than only rejecting. Verified against the deployed origin: the region edge is refused with "Both ends must be components. Choose from: gateway, auth, ledger, queue, reconciliation.", and `gateway -> reconciliation` still connects, so the guard is scoped to the meaningless case.
+
+- [x] **M87.2 — Enumerate the components an edge can name** `DONE`
+  - Evidence: `sourceId` and `targetId` were advertised as bare strings while every other entity reference on this surface enumerates from the live graph. An agent had to guess ids for the one tool whose whole purpose is naming two of them.
+  - Both now carry the enum. Verified live: each lists the five real components and excludes both regions, so what the schema offers is what the runtime accepts — the advertised-versus-enforced parity this codebase has had to restore four times now.
