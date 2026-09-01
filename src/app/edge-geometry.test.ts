@@ -23,6 +23,21 @@ describe("dependency edge geometry", () => {
     expect(drawn).toBeGreaterThan(0);
   });
 
+  it("never draws the edge backwards", () => {
+    // The shipped payment platform spaces components 180 apart while the card
+    // is 176 wide, so trimming each end independently overshot the gap and
+    // produced x1 > x2 — an edge pointing back through both cards. Every
+    // separation must keep the drawn direction the same as the real one.
+    for (let separation = 10; separation <= 400; separation += 10) {
+      const edge = edgeBetween({ x: 0, y: 0 }, { x: separation, y: 0 }, extent);
+      expect(edge.x2).toBeGreaterThanOrEqual(edge.x1);
+    }
+    for (let separation = 10; separation <= 400; separation += 10) {
+      const edge = edgeBetween({ x: 0, y: 0 }, { x: 0, y: separation }, extent);
+      expect(edge.y2).toBeGreaterThanOrEqual(edge.y1);
+    }
+  });
+
   it("does not invert when two components overlap", () => {
     // A degenerate case must not produce a line pointing the wrong way.
     const edge = edgeBetween({ x: 300, y: 300 }, { x: 300, y: 300 }, extent);

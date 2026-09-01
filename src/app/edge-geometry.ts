@@ -33,14 +33,14 @@ export function edgeBetween(
   };
 
   const length = Math.hypot(dx, dy);
-  const startScale = exit(dx, dy);
-  const endScale = exit(dx, dy);
-  const startTrim = Math.min(1, startScale + gap / length);
-  const endTrim = Math.min(1, endScale + gap / length);
+  const trim = Math.min(0.5, exit(dx, dy) + gap / length);
+  // Both ends trim by the same fraction, and never past the midpoint. Trimming
+  // each end independently let the two exceed the whole line when the cards
+  // sat close together, which drew the edge backwards through both of them.
   return {
-    x1: from.x + dx * startTrim,
-    y1: from.y + dy * startTrim,
-    x2: to.x - dx * endTrim,
-    y2: to.y - dy * endTrim,
+    x1: from.x + dx * trim,
+    y1: from.y + dy * trim,
+    x2: to.x - dx * trim,
+    y2: to.y - dy * trim,
   };
 }
