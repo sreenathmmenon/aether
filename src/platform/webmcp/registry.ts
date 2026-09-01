@@ -185,7 +185,17 @@ function rejected(failure: { code: string; message: string }) {
 }
 
 export function createAetherToolRegistry(
-  onState: (state: AetherState) => void,
+  /**
+   * Hand a freshly computed state to the host, and read back the state the
+   * host actually holds.
+   *
+   * A tool dispatched from the registry's own copy, which the host updated
+   * only afterwards from an effect. The three-second reconcile poll replaces
+   * that state wholesale, so a write landing between a poll and the effect
+   * composed onto a stale copy: running a second scenario dropped the first,
+   * and a future approved on one scenario reported no evidence at all.
+   */
+  onState: (state: AetherState) => AetherState | void,
   onToolCount?: (count: number, names: string[]) => void,
   contextOverride?: ModelContext,
   onToolCall?: (call: ToolCall) => void,
@@ -215,8 +225,11 @@ export function createAetherToolRegistry(
    */
   async function commit(next: AetherState) {
     currentState = next;
-    onState(next);
-    await refreshSurface(next);
+    // The host may reconcile the write against state the registry has not
+    // seen; whatever it returns is what the page now holds.
+    const settled = onState(next) ?? next;
+    currentState = settled;
+    await refreshSurface(settled);
   }
 
   let callSequence = 0;

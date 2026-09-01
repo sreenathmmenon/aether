@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createInitialState, dispatch } from "./branch-engine";
 import { blankBaseline } from "../fixtures/blank/baseline";
+import { paymentPlatformBaseline } from "../fixtures/payment-platform/baseline";
 import { wouldDiscardWork } from "./sync-guard";
 
 const human = { id: "s", kind: "human" as const, displayName: "S" };
@@ -35,6 +36,54 @@ describe("shared state never destroys local work", () => {
     expect(wouldDiscardWork(built, idleTab)).toBe(true);
     // The reverse is welcome: a richer workspace may arrive.
     expect(wouldDiscardWork(idleTab, built)).toBe(false);
+  });
+
+  it("refuses an update that would drop recorded evidence", () => {
+    // Evidence is work. The guard weighed components, branches and audit
+    // length but not stored runs, so a reconcile could adopt state holding
+    // fewer of them: running a second scenario dropped the first, and a
+    // future approved on one scenario then reported no evidence at all.
+    // Reproduced against the deployed origin before this test existed.
+    const seeded = createInitialState(paymentPlatformBaseline);
+    const branched = dispatch(
+      seeded,
+      {
+        type: "CREATE_BRANCH",
+        input: { name: "Evidence probe", intent: "highest_resilience" },
+      },
+      human,
+    );
+    if (!branched.ok) throw new Error("branch must be created");
+
+    let withEvidence = branched.value;
+    for (const scenario of ["regional_outage", "traffic_spike"] as const) {
+      const run = dispatch(
+        withEvidence,
+        {
+          type: "RUN_SCENARIO",
+          input: { branchId: "branch-highest_resilience", scenario },
+        },
+        human,
+      );
+      if (!run.ok) throw new Error(`${scenario} must run`);
+      withEvidence = run.value;
+    }
+
+    // Same architecture, same branches, one fewer recorded run.
+    const fewerRuns = {
+      ...withEvidence,
+      simulations: {
+        ...withEvidence.simulations,
+        "branch-highest_resilience": (
+          withEvidence.simulations["branch-highest_resilience"] ?? []
+        ).slice(0, 1),
+      },
+    };
+
+    expect(wouldDiscardWork(withEvidence, fewerRuns)).toBe(true);
+    // More evidence arriving is welcome, and equal evidence still reconciles.
+    expect(wouldDiscardWork(fewerRuns, withEvidence)).toBe(false);
+    expect(wouldDiscardWork(withEvidence, withEvidence)).toBe(false);
   });
 
   it("still accepts an equally rich update so real collaboration works", () => {

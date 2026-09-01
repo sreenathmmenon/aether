@@ -7,6 +7,7 @@ import {
   useState,
 } from "react";
 import { createInitialState, deriveGraph, dispatch } from "@core/branch-engine";
+import type { AetherState } from "@core/branch-engine";
 import { getBranchDiff } from "@core/branch-diff";
 import { wouldDiscardWork } from "@core/sync-guard";
 import {
@@ -174,6 +175,10 @@ function display(value: string | number | boolean) {
 
 export function App() {
   const webMcp = getWebMcpAvailability();
+  // The state the page currently holds, readable outside React's render
+  // cycle. The registry composes an agent's write onto this rather than onto
+  // a copy the reconcile poll may already have replaced.
+  const stateRef = useRef<AetherState | undefined>(undefined);
   const [state, setState] = useState(() => {
     // A ?system= link must open that system. Reviewers and demos share links,
     // and silently landing on somebody's previous workspace makes the link
@@ -566,7 +571,14 @@ export function App() {
   useEffect(() => {
     registryRef.current ??=
       createAetherToolRegistry(
-        setState,
+        // Return the state the page settles on. A tool's write is composed
+        // here rather than in the registry's own copy, which the reconcile
+        // poll can replace between a write and the effect below.
+        (next) => {
+          stateRef.current = next;
+          setState(next);
+          return next;
+        },
         (count, names) => {
           setToolCount(count);
           if (names.length) setRegisteredTools(names);
@@ -577,6 +589,7 @@ export function App() {
           setLatestCall(call);
         },
       ) ?? undefined;
+    stateRef.current = state;
     void registryRef.current?.refresh(state);
   }, [state]);
   useEffect(() => () => registryRef.current?.dispose(), []);
@@ -2702,7 +2715,10 @@ export function App() {
           </p>
         )}
         <div className="review-actions">
-          <span>
+          {/* The gate controls are disabled for a reason this span states, but
+              nothing linked the two, so a screen reader announced a disabled
+              button and no explanation. */}
+          <span id="review-gate-reason">
             {/* This sits immediately above the commit control, so it has to
                 say what the evidence covers in words rather than echo an
                 internal enum. "Evidence scope: affected" told a reviewer
@@ -2754,6 +2770,7 @@ export function App() {
                 !writable ||
                 activeBranch.id === "branch-baseline"
               }
+              aria-describedby="review-gate-reason"
               onClick={() =>
                 apply({
                   type: "APPROVE_BRANCH",
