@@ -860,4 +860,64 @@ describe("Aether WebMCP registry", () => {
     expect(mergedNames).toContain("get_architecture_summary");
     expect(mergedNames).toContain("create_architecture_branch");
   });
+
+  it("describes its tools the way they actually behave", async () => {
+    // A description that has drifted from the implementation is worse than
+    // none: the model plans against it. Each of these had drifted at least
+    // once — a scenario list missing a scenario, a name field the engine
+    // discards, and answers naming a fixture rather than the live graph.
+    const tools: RegisteredTool[] = [];
+    const state = dispatch(createInitialState(paymentPlatformBaseline), {
+      type: "CREATE_BRANCH",
+      input: { name: "Repair", intent: "highest_resilience" },
+    });
+    if (!state.ok) throw new Error("fixture branch must be created");
+    const registry = createAetherToolRegistry(() => {}, undefined, {
+      registerTool: async (tool) => {
+        tools.push(tool as unknown as RegisteredTool);
+      },
+    });
+    await registry?.refresh(state.value);
+    const described = new Map(
+      tools.map((tool) => [
+        tool.name,
+        tool as unknown as { description: string; inputSchema: unknown },
+      ]),
+    );
+
+    // Every scenario the engine accepts must be offered by the tools that
+    // take one, and named in the description a model reads first.
+    const scenarios = [
+      "regional_outage",
+      "traffic_spike",
+      "database_failure",
+      "dependency_failure",
+    ];
+    for (const toolName of ["run_failure_scenario", "inspect_failure_domain"]) {
+      const schema = described.get(toolName)?.inputSchema as {
+        properties: { scenario?: { enum?: string[] } };
+      };
+      expect(schema.properties.scenario?.enum, toolName).toEqual(scenarios);
+    }
+    expect(described.get("run_failure_scenario")?.description).toContain(
+      "depend",
+    );
+
+    // The branch tool must not promise that the name it takes is used.
+    const branchSchema = described.get("create_architecture_branch")
+      ?.inputSchema as {
+      properties: { name: { description: string } };
+    };
+    expect(branchSchema.properties.name.description).toMatch(
+      /not what appears|comes from the intent/i,
+    );
+
+    // No description may name a shipped example, because the same tools serve
+    // an architecture the reviewer described moments earlier.
+    for (const [name, tool] of described)
+      expect(tool.description.toLowerCase(), name).not.toMatch(
+        /payment|mumbai|bengaluru|ride-hailing|inference/,
+      );
+    registry?.dispose();
+  });
 });

@@ -316,18 +316,20 @@ export function createAetherToolRegistry(
       await register({
         name: "create_architecture_branch",
         description:
-          "Create one named isolated repair future from the baseline architecture.",
+          "Create one isolated repair future from the architecture as it stands. The future is named for the trade-off it optimizes, and one future exists per trade-off.",
         inputSchema: {
           type: "object",
           properties: {
             name: {
               type: "string",
-              description: "Short name for the isolated future.",
+              description:
+                "Your label for this future. The stored name comes from the intent, so this is not what appears in the interface.",
             },
             intent: {
               type: "string",
               enum: ["lowest_cost", "fastest_recovery", "highest_resilience"],
-              description: "The trade-off this repair future should optimize.",
+              description:
+                "The trade-off this repair future optimizes. This also names it: Lowest cost, Fastest recovery, or Highest resilience.",
             },
           },
           required: ["name", "intent"],
@@ -412,7 +414,7 @@ export function createAetherToolRegistry(
         await register({
           name: "run_failure_scenario",
           description:
-            "Run a deterministic outage, traffic spike, or database failure simulation for a branch.",
+            "Run a deterministic simulation for a branch: a regional outage, a traffic spike, a database failure, or the loss of the component the most others depend on.",
           inputSchema: {
             type: "object",
             properties: {
