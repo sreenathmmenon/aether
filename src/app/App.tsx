@@ -18,6 +18,7 @@ import {
 } from "./region-bounds";
 import { scenarioNarrative } from "./scenario-copy";
 import { useModalDialog } from "./use-modal-dialog";
+import { syncExplanation, syncTone } from "./sync-status";
 import { offlineToolSurface } from "@platform/webmcp/offline-surface";
 import {
   clausesOf,
@@ -1199,7 +1200,22 @@ export function App() {
               Room · {sharedRoom.replace(/^room-/, "")}
             </span>
           )}
-          <span className="shared-live">{syncStatus}</span>
+          {/* "Offline draft" means the work is not saved anywhere durable,
+              and it was rendered in the same reassuring green as "Synced".
+              A reviewer whose changes are at risk needs to be able to see
+              that at a glance. */}
+          <span
+            className={`shared-live ${
+              {
+                durable: "",
+                pending: "sync-pending",
+                "at-risk": "sync-at-risk",
+              }[syncTone(syncStatus)]
+            }`}
+            title={syncExplanation(syncStatus)}
+          >
+            {syncStatus}
+          </span>
           <span
             className="human-chip"
             title="Sreenath — the only actor who can approve or merge"

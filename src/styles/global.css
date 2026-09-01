@@ -275,6 +275,18 @@ button {
   font-size: 12px;
   font-weight: 800;
 }
+/* Not saved anywhere durable: the strongest signal the header carries. */
+.sync-at-risk {
+  border-color: rgba(217, 93, 79, 0.4);
+  color: var(--coral);
+  background: rgba(217, 93, 79, 0.09);
+}
+/* Held locally, not yet durable. */
+.sync-pending {
+  border-color: rgba(17, 36, 64, 0.22);
+  color: var(--muted);
+  background: rgba(17, 36, 64, 0.05);
+}
 .human-chip {
   display: grid;
   place-items: center;
