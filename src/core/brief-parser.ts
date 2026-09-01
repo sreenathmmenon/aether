@@ -71,6 +71,14 @@ const quantifiers =
 const framing =
   /^(?:stack|architecture|system|setup|infra|infrastructure|components?|services?|middle|overview|design)$/i;
 
+/**
+ * Words that end a noun phrase: the verbs that connect components and the
+ * prepositions that introduce one. Everything before these belongs to the
+ * previous clause, not to this component's name.
+ */
+const boundary =
+  /^(?:hits?|calls?|writes?|reads?|flows?|through|to|from|into|via|by|with|on|in|of|for|publishes?|emits?|produces?|consumes?|subscribes?|routes?|proxies|forwards?|invokes?|depends?|persists?|stores?|pushes?|sends?|queries|talks?|behind|share|sharing|shares)$/i;
+
 const noise =
   /^(the|a|an|our|we|they|users?|user|and|then|which|that|it|is|are|was|were|hits?|hit|calls?|call|writes?|write|reads?|read|flows?|flow|through|to|from|into|via|by|with|on|in|of|for|handles?|handling|serves?|serving|costs?|costing|peaks?|peaking|runs?|running|sits?|stays?|buffers?|holds?|keeps?|stores?|uses?|has|have|had|about|around|roughly|up)$/i;
 
@@ -90,6 +98,10 @@ export function clausesOf(brief: string) {
       // An arrow is a dependency, and the thing after it is a component.
       .replace(/\s*(?:->|-->|→|=>)\s*/g, " then calls ")
       .split(/[\n,.;:]+|\bthen\b|\band then\b|\bwhich\b|\bwhile\b|\bwhereas\b/i)
+      // "a monolith on EC2 with an RDS database behind an ALB" names three
+      // components in one clause. These prepositions introduce another
+      // component rather than continuing the current noun phrase.
+      .flatMap((part) => part.split(/\s+(?=\b(?:with|behind)\b)/i))
       // "reads from Redis and writes to Postgres" is two clauses, but "auth
       // and catalog" is one list, so only split on "and" before a verb.
       .flatMap((part) =>
@@ -135,6 +147,11 @@ export function componentNameFrom(rawClause: string) {
     .replace(/[^A-Za-z0-9 -]/g, " ")
     .split(/\s+/)
     .filter(Boolean);
+  // Walk back from the end of the clause collecting the noun phrase. A word
+  // that is filler on its own can still qualify the noun beside it — "users
+  // hit the API" is filler, but "user service" and "user db" name components,
+  // and breaking on the first filler word turned both into "service" and
+  // "db". Only the verbs and prepositions that join clauses end the phrase.
   const kept: string[] = [];
   for (
     let index = words.length - 1;
@@ -142,8 +159,16 @@ export function componentNameFrom(rawClause: string) {
     index -= 1
   ) {
     const word = words[index]!;
-    if (noise.test(word)) {
+    if (boundary.test(word)) {
       if (kept.length > 0) break;
+      continue;
+    }
+    if (noise.test(word)) {
+      // Filler before the phrase begins is dropped. Once the phrase has
+      // started, the same word is qualifying the noun beside it — "user
+      // service" and "user db" — so it belongs to the name.
+      if (kept.length === 0) continue;
+      kept.unshift(word);
       continue;
     }
     kept.unshift(word);

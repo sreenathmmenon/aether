@@ -242,6 +242,34 @@ describe("system brief parser", () => {
       expect(component.name).not.toMatch(/\b(?:one|three|all)\b/i);
   });
 
+  it("keeps a qualifier that is filler elsewhere in the sentence", () => {
+    // "users hit the API" uses "user" as filler, but "user service" and
+    // "user db" are component names. Ending the noun phrase at the first
+    // filler word turned both into "service" and "db", so an arrow chain
+    // silently lost a link and named another node after its type.
+    const parsed = parseBrief(
+      "Ingress -> auth service -> user service -> user db",
+    );
+    expect(parsed.components.map((c) => c.name)).toEqual([
+      "Ingress",
+      "auth service",
+      "user service",
+      "user db",
+    ]);
+  });
+
+  it("reads several components named in one prepositional clause", () => {
+    // "a monolith on EC2 with an RDS database behind an ALB" describes three
+    // components and produced one, named "database behind ALB".
+    const parsed = parseBrief(
+      "A monolith on EC2 with an RDS database behind an ALB",
+    );
+    const byName = new Map(parsed.components.map((c) => [c.name, c.kind]));
+    expect(byName.get("RDS database")).toBe("database");
+    expect(byName.get("ALB")).toBe("gateway");
+    expect(parsed.distinctComponents).toBeGreaterThanOrEqual(3);
+  });
+
   it("turns a plain description into a simulable graph without an agent", () => {
     // A reviewer in a plain browser must reach a modelled system from their
     // own words; otherwise the entry point depends on narration.
