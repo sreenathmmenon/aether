@@ -713,3 +713,16 @@ remaining roles rather than waiting to find a fourth by accident.
   - Evidence: three paths adopt remote state — the three-second reconcile, the storage event between tabs, and the refused write. The first two checked `wouldDiscardWork` before applying; the refused-write path did not, and that is the path a shared room actually takes. Two people in a room, one write refused, and the loser reloading authoritative state emptier than what they have open would watch their architecture disappear. It now checks the same guard, keeps the local architecture when adopting would destroy it, and says so rather than failing silently.
   - The guard moved to `@core/sync-guard` because its test carried a copy of the implementation rather than importing it — the pattern that had already hidden the brief parser's truncation defect and produced assertions that tested nothing. The test now exercises the shipped function, with a new case covering the room scenario.
   - Conflict and reconcile messages said "another tab" in a shared room, where it is another person.
+
+## Milestone 32 — No test carries its own copy of the code it tests
+
+A test holding a duplicate of the implementation has produced four separate
+defects here: the brief parser's silent truncation, two registry assertions
+that passed without testing anything, and a sync guard whose test never
+exercised the shipped function. This closes the pattern rather than waiting
+for a fifth.
+
+- [x] **M32.1 — Make the layout tests read the geometry the canvas draws** `DONE`
+  - Evidence: the layout tests duplicated five geometry constants from the component, so either could drift while the tests kept passing and the canvas drew a component outside its own failure domain — the exact defect those tests exist to catch. The geometry moved to `@app/region-bounds`: the canvas builds its rectangles from it, the measurement effect converts pixels with the same canvas dimensions rather than repeating 1000 and 700, and the tests import it.
+  - Confirmed the tests now track the real values by inflating the padding tenfold: three fail, naming the overlapping failure domains. With the duplicated constants they would have passed. Verified in the browser and in production that the refactor changed nothing — zero components outside their region, no overlap, nothing clipped.
+  - The remaining two test-local helpers were checked and are fixtures rather than duplicated logic: one clones a graph with a changed property, the other builds a branched state. The sweep found no further instances.
