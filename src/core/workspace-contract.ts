@@ -23,20 +23,46 @@ export type PersistedWorkspace = {
   revisions?: unknown;
   audit?: unknown;
   simulations?: unknown;
+  decisionNotes?: unknown;
 };
 
 export function isValidWorkspaceId(id: string) {
   return workspaceIdPattern.test(id);
 }
 
+/**
+ * Whether a payload is shaped like a workspace this product can load.
+ *
+ * This checked only that the fields were truthy, so `"branches": "not an
+ * object"` was accepted and stored. The client refuses to load that, which is
+ * the right behaviour on read but leaves a shared room poisoned for everyone
+ * in it by any client that sends malformed state. The store should not hold
+ * something no reader will accept.
+ */
 export function isWorkspace(value: unknown): value is PersistedWorkspace {
   if (!value || typeof value !== "object") return false;
   const candidate = value as PersistedWorkspace;
-  return Boolean(
-    candidate.workspace?.id &&
-    candidate.branches &&
-    candidate.revisions &&
-    candidate.audit &&
-    candidate.simulations,
-  );
+  if (!candidate.workspace?.id) return false;
+  const isRecord = (field: unknown) =>
+    Boolean(field) && typeof field === "object" && !Array.isArray(field);
+  if (!isRecord(candidate.branches) || !isRecord(candidate.revisions))
+    return false;
+  if (!isRecord(candidate.simulations)) return false;
+  if (!Array.isArray(candidate.audit)) return false;
+  // Every branch must carry an operation list the engine can replay and
+  // resolve to a revision holding a graph, which is what the client requires
+  // before it will load a workspace at all.
+  return Object.values(
+    candidate.branches as Record<
+      string,
+      { operations?: unknown; baseRevisionId?: string }
+    >,
+  ).every((branch) => {
+    if (!branch || !Array.isArray(branch.operations)) return false;
+    const revisions = candidate.revisions as Record<
+      string,
+      { graph?: { entities?: unknown } }
+    >;
+    return Boolean(revisions[branch.baseRevisionId ?? ""]?.graph?.entities);
+  });
 }
