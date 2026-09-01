@@ -1172,3 +1172,15 @@ was already underway again.
 - [x] **M73.2 — Confirm the audit trail reads back correctly** `DONE`
   - Evidence: `get_decision_record` returns the gate in order with `APPROVE_BRANCH`, `MERGE_BRANCH` and `ROLLBACK_MERGE` all attributed to `human` and the simulations to `system` — the bounded-authority claim, readable by an agent off the live page rather than only asserted in documentation.
   - The interface's replay shows the same history with its evidence attached: "approved the exact plan · 4 clean scenarios · worst 97.11%", and each simulation carrying its own fingerprint. No change was warranted.
+
+## Milestone 74 — Bring your own system, with the whole surface
+
+- [x] **M74.1 — Two tools never registered on a blank canvas** `DONE`
+  - Acceptance: an agent working on a reviewer's own architecture gets the same surface it gets on a seeded one.
+  - Evidence: found by walking the bring-your-own-system path as an agent. `model_architecture` built a three-component system, the engine reasoned about it correctly — "Primary unavailable", blast radius naming the reviewer's own components, 96.83% availability, 2-minute recovery — and the interface then showed three repair futures. But `compare_architecture_futures` and `propose_architecture_change` were absent from `getTools()`, so the agent could neither compare the futures on screen nor propose a change to one.
+  - Both register only once a repair future exists, and the capability key covered writability, template, components and regions but not the branch count. On a seeded system creating a future also flips writability, so the surface rebuilt by accident; on a blank canvas the baseline stays editable and nothing in the key moved, so it never rebuilt. The key now carries the branch count.
+  - Verified against the deployed origin: creating a future on a blank canvas takes the surface from ten tools to twelve, both tools present, and `compare_architecture_futures` returns the reviewer's own future and directs to `run_failure_scenario`.
+
+- [x] **M74.2 — Make the boundary probe test its boundary** `DONE`
+  - Evidence: fixing the key broke the schema-boundary test, which had been passing partly because the surface did not rebuild. Every write in it persists, so probing one workspace repeatedly eventually hits a uniqueness rule — one future per trade-off, one component per name — rather than the boundary under test. Two workarounds had already accumulated for exactly this.
+  - Each probe now runs against its own registry over its own fresh state, so what fails is the boundary and nothing else. Both workarounds were deleted, and the test still passes without them.
