@@ -1036,6 +1036,84 @@ describe("Aether command pipeline", () => {
   });
 });
 
+describe("the blank canvas opens itself on the first component", () => {
+  it("moves its merged baseline to proposed, and only there", () => {
+    // Every shipped system starts with a merged baseline, which the write
+    // guards refuse. A blank canvas has nothing committed, so `ADD_COMPONENT`
+    // carries an exception for it — and that first add is what flips the
+    // branch to proposed, after which every other command sees an ordinary
+    // editable branch. The mechanism the whole bring-your-own-system path
+    // rests on, and it reads like an inconsistency until you follow it.
+    const blank = createInitialState(blankBaseline, "blank");
+    expect(blank.branches["branch-baseline"]!.status).toBe("merged");
+
+    const added = dispatch(
+      blank,
+      {
+        type: "ADD_COMPONENT",
+        input: {
+          branchId: "branch-baseline",
+          name: "Order Store",
+          kind: "database",
+          regionId: "region-primary",
+          peakRps: 9000,
+          capacityRps: 15000,
+          monthlyCostUsd: 800,
+        },
+      },
+      human,
+    );
+    if (!added.ok) throw new Error(`blank add: ${added.message}`);
+    expect(added.value.branches["branch-baseline"]!.status).toBe("proposed");
+
+    // And the commands that carry no exception now work, because the branch
+    // they see is no longer merged.
+    for (const command of [
+      {
+        type: "SET_PROPERTY" as const,
+        input: {
+          branchId: "branch-baseline",
+          entityId: "entity-order-store",
+          property: "replicationMode" as const,
+          value: "sync" as const,
+        },
+      },
+      {
+        type: "MOVE_ENTITY" as const,
+        input: {
+          branchId: "branch-baseline",
+          entityId: "entity-order-store",
+          x: 400,
+          y: 300,
+        },
+      },
+    ])
+      expect(dispatch(added.value, command, human).ok, command.type).toBe(true);
+
+    // The exception is scoped to the blank template. A seeded architecture is
+    // committed, and adding to its baseline is refused.
+    const seeded = createInitialState(blankBaseline, "payment-platform");
+    expect(
+      dispatch(
+        seeded,
+        {
+          type: "ADD_COMPONENT",
+          input: {
+            branchId: "branch-baseline",
+            name: "Sneaky",
+            kind: "service",
+            regionId: "region-primary",
+            peakRps: 1,
+            capacityRps: 1,
+            monthlyCostUsd: 1,
+          },
+        },
+        human,
+      ),
+    ).toMatchObject({ ok: false, code: "NOT_AVAILABLE" });
+  });
+});
+
 describe("a dependency joins two components", () => {
   it("refuses an edge to a region and names what it can connect", () => {
     // A region is a failure domain, not a participant. The engine filters it

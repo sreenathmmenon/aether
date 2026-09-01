@@ -1570,3 +1570,14 @@ was already underway again.
   - In that state the page announces "WebMCP live · 0 state-aware tools" over a surface that registered nothing — the worst of the three states to be wrong about, because the other two tell a reviewer something is missing and this one tells them it works. A Chrome that ships the interface and declines the feature is exactly the browser a judge without the trial is using.
   - Detection now reads the value. A test covers both halves: an exposed-but-undefined context reports unavailable with the origin-trial reason, and a real context still reports available. Restoring the `in` check fails it.
   - Verified against the deployed origin that the working path is untouched — five tools, live chip — and that the shipped bundle no longer contains the `in` form. That first check mattered most: a stricter test is the kind of change that breaks the thing it was meant to protect.
+
+## Milestone 111 — A mechanism nothing named
+
+- [x] **M111.1 — The blank canvas opens itself, and no test said so** `DONE`
+  - Evidence: hunting for more of M110's pattern — one fact derived twice — the reducer looked inconsistent. Three commands refuse any merged branch; two carry an exception for the blank template. Every shipped system starts with a merged baseline, so on the face of it a reviewer could add components to their own canvas but not configure, move or remove them.
+  - Not a defect. `ADD_COMPONENT` carries the exception and flips the baseline from merged to proposed, so every later command sees an ordinary editable branch. The two guard styles are correct: the exception belongs only on the commands that can start a build. Checked by running all four commands rather than reading the guards, which is what settled it.
+  - What was missing is a test. The transition is load-bearing for the whole bring-your-own-system path and reads like an inconsistency until you follow it, so it now has one that names the mechanism: merged before the first add, proposed after, the commands without an exception working afterwards, and a seeded baseline still refusing.
+
+- [x] **M111.2 — A probe that patched the wrong line** `DONE`
+  - Evidence: verifying the new test, breaking the status transition appeared to change nothing — the whole suite passed. That looked like the test was worthless. The probe had replaced the first `branch.status = "proposed"` in the file, which belongs to `SET_PROPERTY`, not the one in `ADD_COMPONENT` five commands later. Patched at the right line, the new test fails by name.
+  - Recorded because the failure mode is specific and repeatable: a string that appears five times, replaced once, silently patches whichever came first. The signal was a break that changed nothing at all, which is rarely what a real break does.
