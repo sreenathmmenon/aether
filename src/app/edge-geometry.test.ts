@@ -5,14 +5,21 @@ const extent = { width: 176, height: 104 };
 
 describe("dependency edge geometry", () => {
   it("starts and ends outside both cards", () => {
-    // The two adjacent components in the shipped payment platform.
-    const edge = edgeBetween({ x: 220, y: 220 }, { x: 400, y: 220 }, extent);
-    const sourceRight = 220 + extent.width;
-    const targetLeft = 400;
+    // Two components spaced as the shipped systems space them. A card is
+    // centred on its coordinate by `translate(-50%, -50%)`, so its edges are
+    // half the extent either side — the earlier version of this test treated
+    // the coordinate as the top-left corner, which is the assumption that put
+    // every drawn edge half a card below where it belonged.
+    const edge = edgeBetween({ x: 220, y: 220 }, { x: 470, y: 220 }, extent);
+    const sourceRight = 220 + extent.width / 2;
+    const targetLeft = 470 - extent.width / 2;
     // Clear of the card it leaves and the card it reaches, or it is drawn
     // underneath them and cannot be seen at all.
     expect(edge.x1).toBeGreaterThanOrEqual(sourceRight);
     expect(edge.x2).toBeLessThanOrEqual(targetLeft);
+    // And it stays on the line between the two centres.
+    expect(edge.y1).toBe(220);
+    expect(edge.y2).toBe(220);
   });
 
   it("is shorter than the centre-to-centre line it replaces", () => {

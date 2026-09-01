@@ -20,9 +20,12 @@ export function edgeBetween(
 ) {
   const halfWidth = extent.width / 2;
   const halfHeight = extent.height / 2;
-  const centreOffset = { x: halfWidth, y: halfHeight };
-  const from = { x: source.x + centreOffset.x, y: source.y + centreOffset.y };
-  const to = { x: target.x + centreOffset.x, y: target.y + centreOffset.y };
+  // A card is centred on its coordinate by `translate(-50%, -50%)`, so the
+  // position already is the centre. Adding half the extent shifted every edge
+  // down and right by half a card — measured through `getScreenCTM`, each
+  // endpoint sat 39 pixels below the card centre it was drawn to connect.
+  const from = { x: source.x, y: source.y };
+  const to = { x: target.x, y: target.y };
   const dx = to.x - from.x;
   const dy = to.y - from.y;
   if (dx === 0 && dy === 0)

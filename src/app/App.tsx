@@ -1658,11 +1658,6 @@ export function App() {
             <svg
               className="architecture-lines"
               viewBox="0 0 1000 700"
-              // The cards are placed by CSS percentage, so this has to map the
-              // same way. Under the default xMidYMid meet the viewBox
-              // letterboxes and every edge sat tens of pixels off the card it
-              // was drawn to connect.
-              preserveAspectRatio="none"
               aria-hidden="true"
             >
               {Object.values(graph.relationships).map((relation) => {
