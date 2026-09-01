@@ -422,6 +422,10 @@ None. Production is deployed on Railway with durable PostgreSQL-backed per-visit
   - Acceptance: the surface sizes named in the README, submission, and compliance checklist are verified rather than remembered.
   - Evidence: all three documents described the surface as growing "from five tools to eleven", which was true of the seeded path but omitted the nine-tool state an own-system canvas exposes — the state the product now leads with. Measured against the registry: five on a committed architecture, nine once the model is editable, eleven when a repair future also exists. Each document now states all three, and a regression test asserts them; regressing the gating to require a branch drops the own-system surface to seven and the test fails on it.
 
+- [x] **M15.12 — Describe a self-built baseline by what it contains** `DONE`
+  - Acceptance: the baseline card and region labels tell the truth on a system the reviewer built.
+  - Evidence: a screenshot of the deployed own-system path showed the baseline card reading "0.00% availability · 1 violation" beside a working three-component architecture, because the card read `revision-baseline` — the original empty canvas — rather than the baseline branch whose operations hold the components. It now derives from the branch as it stands and reports the real figure. The same screenshot showed "PRIMARY · PRIMARY", since a generic canvas names its regions after themselves; the failure domain is now shown only when it differs from the region name, leaving the seeded systems' informative labels intact.
+
 ## Milestone 13 — Real-time architecture decision room
 
 - [x] **M13.1 — Define and build the unmistakable collaborative decision-room journey** `DONE`

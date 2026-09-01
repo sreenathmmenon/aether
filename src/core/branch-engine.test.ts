@@ -666,4 +666,44 @@ describe("Aether command pipeline", () => {
       expect(graph.entities[origin]!.kind).not.toBe("region");
     }
   });
+
+  it("describes a self-built baseline by what it now contains", () => {
+    // The baseline card reads the baseline branch, whose components live in
+    // its operations. Reading the original revision would report an empty
+    // architecture for a system the reviewer just built.
+    let state = createInitialState(blankBaseline, "blank");
+    for (const [name, kind] of [
+      ["Api", "service"],
+      ["Db", "database"],
+    ] as const) {
+      const added = dispatch(
+        state,
+        {
+          type: "ADD_COMPONENT",
+          input: {
+            branchId: "branch-baseline",
+            name,
+            kind,
+            regionId: "region-primary",
+            peakRps: 8000,
+            capacityRps: 10000,
+            monthlyCostUsd: 800,
+          },
+        },
+        human,
+      );
+      if (!added.ok) throw new Error("component must be addable");
+      state = added.value;
+    }
+
+    const baseline = state.branches["branch-baseline"]!;
+    const evidence = runScenario(
+      deriveGraph(state, baseline),
+      "regional_outage",
+      "branch-baseline",
+      baseline.version,
+    );
+    expect(evidence.availability).toBeGreaterThan(0);
+    expect(evidence.monthlyCostUsd).toBe(1600);
+  });
 });

@@ -228,17 +228,19 @@ export function App() {
   );
   const evidence = activeSimulation ?? previewEvidence;
   // The baseline card always reflects the unrepaired architecture.
-  const baselineEvidence = useMemo(
-    () =>
-      runScenario(
-        state.revisions["revision-baseline"]!.graph,
-        selectedScenario,
-        "branch-baseline",
-        1,
-        state.workspace.costCeilingUsd,
-      ),
-    [state.revisions, selectedScenario, state.workspace.costCeilingUsd],
-  );
+  // The baseline card must describe the baseline branch as it stands. On a
+  // self-built workspace the components live in that branch's operations, so
+  // reading the original revision would report an empty architecture.
+  const baselineEvidence = useMemo(() => {
+    const baseline = state.branches["branch-baseline"]!;
+    return runScenario(
+      deriveGraph(state, baseline),
+      selectedScenario,
+      "branch-baseline",
+      baseline.version,
+      state.workspace.costCeilingUsd,
+    );
+  }, [state, selectedScenario]);
   // An unbuilt canvas has no components at all, so nothing may assume one.
   // Default to the component the failure actually originates at, which is the
   // one a reader should be looking at first.
@@ -984,10 +986,18 @@ export function App() {
                 key={region.id}
               >
                 <span>
-                  {region.name.toUpperCase()} ·{" "}
-                  {(
-                    region.properties as { failureDomain?: string }
-                  ).failureDomain?.toUpperCase() ?? ""}
+                  {region.name.toUpperCase()}
+                  {(() => {
+                    const domain = (
+                      region.properties as { failureDomain?: string }
+                    ).failureDomain;
+                    // A generic canvas names its regions after themselves, so
+                    // only show the failure domain when it adds information.
+                    return domain &&
+                      domain.toLowerCase() !== region.name.toLowerCase()
+                      ? ` · ${domain.toUpperCase()}`
+                      : "";
+                  })()}
                 </span>
               </div>
             ))}
