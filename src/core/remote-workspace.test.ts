@@ -49,6 +49,22 @@ describe("production workspace persistence contract", () => {
     );
   });
 
+  it("reports the server local fallback separately from durable sync", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValue(
+          new Response(
+            JSON.stringify({ version: 2, persistence: "local-fallback" }),
+            { status: 200 },
+          ),
+        ),
+    );
+
+    await expect(saveRemoteWorkspace(state, 1)).resolves.toBe("local");
+  });
+
   it("gives each visitor a private workspace that survives reloads", () => {
     // A shared identifier would let two people evaluating at once overwrite
     // each other's decisions in the same stored workspace.

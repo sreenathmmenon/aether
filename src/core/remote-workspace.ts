@@ -43,7 +43,7 @@ export async function loadRemoteWorkspace(): Promise<AetherState | undefined> {
 export async function saveRemoteWorkspace(
   state: AetherState,
   expectedVersion: number,
-): Promise<number | "conflict" | "offline"> {
+): Promise<number | "conflict" | "offline" | "local"> {
   try {
     const response = await fetch(endpointFor(), {
       method: "PUT",
@@ -58,7 +58,12 @@ export async function saveRemoteWorkspace(
     });
     if (response.status === 409) return "conflict";
     if (!response.ok) return "offline";
-    return ((await response.json()) as { version: number }).version;
+    const payload = (await response.json()) as {
+      version: number;
+      persistence?: string;
+    };
+    if (payload.persistence === "local-fallback") return "local";
+    return payload.version;
   } catch {
     return "offline";
   }

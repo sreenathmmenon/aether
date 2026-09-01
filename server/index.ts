@@ -80,7 +80,7 @@ app.get("/health", async (context) => {
 
 app.get("/api/workspaces/:id", async (context) => {
   if (!(await ensureStorage()))
-    return context.json({ error: "PERSISTENCE_UNAVAILABLE" }, 503);
+    return context.json({ state: null, persistence: "local-fallback" });
   const result = await pool!.query<{
     state: PersistedWorkspace;
     version: number;
@@ -101,8 +101,6 @@ app.get("/api/workspaces/:id", async (context) => {
 });
 
 app.put("/api/workspaces/:id", async (context) => {
-  if (!(await ensureStorage()))
-    return context.json({ error: "PERSISTENCE_UNAVAILABLE" }, 503);
   const body = (await context.req.json()) as {
     state?: unknown;
     expectedVersion?: unknown;
@@ -115,6 +113,11 @@ app.put("/api/workspaces/:id", async (context) => {
     return context.json({ error: "INVALID_WORKSPACE" }, 400);
   if (!body.state.workspace?.id)
     return context.json({ error: "INVALID_WORKSPACE" }, 400);
+  if (!(await ensureStorage()))
+    return context.json({
+      version: Number(body.expectedVersion) + 1,
+      persistence: "local-fallback",
+    });
   const version = Number(body.expectedVersion);
   const saved = await pool!.query<{ version: number }>(
     `INSERT INTO aether_workspaces (id, state, version)

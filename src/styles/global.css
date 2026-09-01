@@ -1149,14 +1149,20 @@ button {
 .compare-modal {
   position: relative;
   width: min(800px, 100%);
+  /* A short viewport must never put the close control out of reach. */
+  max-height: 92vh;
+  overflow: auto;
   padding: 32px;
   background: #fbfaf6;
   box-shadow: 0 28px 75px rgba(0, 0, 0, 0.25);
 }
 .close-modal {
-  position: absolute;
-  top: 14px;
-  right: 15px;
+  /* Sticky rather than absolute: inside a scrolling modal an absolutely
+     positioned control scrolls away with the content. */
+  position: sticky;
+  top: 0;
+  float: right;
+  margin: -14px -10px 0 0;
   border: 0;
   background: transparent;
   color: var(--muted);

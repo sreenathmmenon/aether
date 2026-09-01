@@ -105,6 +105,13 @@ const offlineToolSurface = [
 /** Starting systems a visitor can model, so the product is not one story. */
 const systemTemplates = [
   {
+    id: "blank",
+    name: "Your own system",
+    summary:
+      "Empty canvas. Describe your architecture to an agent and it builds the model here.",
+    graph: blankBaseline,
+  },
+  {
     id: "payment-platform",
     name: "Payment platform",
     summary: "Two regions, one writable ledger on the critical path.",
@@ -115,13 +122,6 @@ const systemTemplates = [
     name: "AI inference platform",
     summary: "A shared vector store feeding two independent read paths.",
     graph: aiPlatformBaseline,
-  },
-  {
-    id: "blank",
-    name: "Your own system",
-    summary:
-      "Empty canvas. Describe your architecture to an agent and it builds the model here.",
-    graph: blankBaseline,
   },
 ] as const;
 
@@ -154,14 +154,15 @@ function display(value: string | number | boolean) {
 export function App() {
   const webMcp = getWebMcpAvailability();
   const [state, setState] = useState(
-    () => loadPersistedState() ?? createInitialState(paymentPlatformBaseline),
+    () => loadPersistedState() ?? createInitialState(blankBaseline, "blank"),
   );
   const [message, setMessage] = useState(
-    "Trace the failed regional dependency, then branch a repair future.",
+    "Describe your architecture. The agent can build it here, and Aether will prove the consequences.",
   );
   const [toolCount, setToolCount] = useState(0);
   const [toolCalls, setToolCalls] = useState<ToolCall[]>([]);
   const [registeredTools, setRegisteredTools] = useState<string[]>([]);
+  const [syncStatus, setSyncStatus] = useState("Checking sync");
   // Empty until a graph is loaded; the selection then falls back to whichever
   // component the engine considers most consequential.
   const [selectedEntityId, setSelectedEntityId] = useState("");
@@ -211,6 +212,10 @@ export function App() {
   // A seeded architecture is committed and read-only. A system the user is
   // building themselves stays editable on its baseline until they branch.
   const ownSystem = state.workspace.templateId === "blank";
+  const currentTemplate =
+    systemTemplates.find(
+      (template) => template.id === (state.workspace.templateId ?? "blank"),
+    ) ?? systemTemplates[0];
   const writable =
     (activeBranch.status !== "merged" || ownSystem) &&
     activeBranch.status !== "discarded";
@@ -343,6 +348,7 @@ export function App() {
   const entities = Object.values(graph.entities).filter(
     (entity) => entity.kind !== "region",
   );
+  const unbuilt = entities.length === 0;
   const regions = Object.values(graph.entities).filter(
     (entity) => entity.kind === "region",
   );
@@ -416,7 +422,12 @@ export function App() {
     }
     if (!remoteReadyRef.current) return;
     void saveRemoteWorkspace(state, remoteVersionRef.current).then((result) => {
-      if (typeof result === "number") remoteVersionRef.current = result;
+      if (typeof result === "number") {
+        remoteVersionRef.current = result;
+        setSyncStatus("Synced");
+      }
+      if (result === "local") setSyncStatus("Local draft");
+      if (result === "offline") setSyncStatus("Offline draft");
       if (result === "conflict")
         void loadRemoteWorkspace().then((remote) => {
           if (!remote) return;
@@ -431,11 +442,13 @@ export function App() {
     void loadRemoteWorkspace().then((remote) => {
       remoteReadyRef.current = true;
       if (!remote) {
+        setSyncStatus("Local draft");
         setState((current) => ({ ...current }));
         return;
       }
       applyingRemoteRef.current = true;
       remoteVersionRef.current = remote.workspace.persistenceVersion ?? 0;
+      setSyncStatus("Synced");
       setState(remote);
       setMessage("Production workspace restored from shared persistence.");
     });
@@ -448,6 +461,7 @@ export function App() {
         if (!remote || remoteVersion <= remoteVersionRef.current) return;
         applyingRemoteRef.current = true;
         remoteVersionRef.current = remoteVersion;
+        setSyncStatus("Synced");
         setState(remote);
         setMessage("Another tab changed this architecture. Evidence is live.");
       });
@@ -587,7 +601,9 @@ export function App() {
     );
     setSelectedScenario("regional_outage");
     setMessage(
-      `${template.name} loaded. The baseline is failing and ready for review.`,
+      template.id === "blank"
+        ? "Your own system is ready. Add components manually or ask an agent to build it through WebMCP."
+        : `${template.name} loaded. The baseline is failing and ready for review.`,
     );
   }
   function resolveCapacity() {
@@ -636,7 +652,7 @@ export function App() {
     );
   }
   function reset() {
-    loadTemplate(systemTemplates[0].id);
+    loadTemplate(state.workspace.templateId ?? "blank");
   }
   function createFutures() {
     let next = state;
@@ -789,7 +805,8 @@ export function App() {
           <span className="brand-mark" /> AETHER
         </a>
         <div className="breadcrumb">
-          Payment platform <i /> Counterfactual resilience review
+          {currentTemplate.name} <i />{" "}
+          {ownSystem ? "Agent-modeled proof room" : "Counterfactual review"}
         </div>
         <div className="header-status">
           <span
@@ -797,7 +814,7 @@ export function App() {
           >
             {webMcp.available ? "WebMCP live" : "WebMCP not detected"}
           </span>
-          <span className="shared-live">Synced</span>
+          <span className="shared-live">{syncStatus}</span>
           <span className="human-chip">S</span>
         </div>
       </header>
@@ -821,9 +838,11 @@ export function App() {
         <div className="hero-proof">
           <span>Decision now</span>
           <strong>
-            {branchCount
-              ? `Review ${activeBranch.name}`
-              : "Create repair futures"}
+            {unbuilt
+              ? "Build the model first"
+              : branchCount
+                ? `Review ${activeBranch.name}`
+                : "Create repair futures"}
           </strong>
           <small>Sreenath + Aether · shared, auditable</small>
         </div>
@@ -835,14 +854,22 @@ export function App() {
         <div className="brief-incident">
           <span className="brief-label">01 · Incident</span>
           <strong>{scenarioCopy[selectedScenario].short}</strong>
-          <small>Payment writes have one vulnerable path in Mumbai.</small>
+          <small>
+            {entities.length === 0
+              ? "No architecture is committed yet. Build the graph first."
+              : ownSystem
+                ? "This is the system you modelled here, not a shipped fixture."
+                : `${currentTemplate.name} is loaded as a worked example.`}
+          </small>
         </div>
         <div className="brief-recommendation">
           <span className="brief-label">02 · Agent recommendation</span>
           <strong>
-            {branchCount
-              ? `${activeBranch.name} is the active evidence-backed future.`
-              : "Create isolated futures before touching production."}
+            {unbuilt
+              ? "Model the architecture before proposing repairs."
+              : branchCount
+                ? `${activeBranch.name} is the active evidence-backed future.`
+                : "Create isolated futures before touching production."}
           </strong>
           <small>
             The agent can propose. The deterministic model must prove.
@@ -870,7 +897,11 @@ export function App() {
           </div>
           <button
             className={`baseline-card ${activeBranch.id === "branch-baseline" ? "future-card-active" : ""}`}
-            aria-label={`CURRENT Baseline breach — ${baselineEvidence.availability.toFixed(2)}% availability, ${baselineEvidence.sloViolations.length} ${baselineEvidence.sloViolations.length === 1 ? "violation" : "violations"}`}
+            aria-label={
+              unbuilt
+                ? "CURRENT Unbuilt baseline — waiting for architecture"
+                : `CURRENT Baseline breach — ${baselineEvidence.availability.toFixed(2)}% availability, ${baselineEvidence.sloViolations.length} ${baselineEvidence.sloViolations.length === 1 ? "violation" : "violations"}`
+            }
             onClick={() =>
               setState({
                 ...state,
@@ -882,18 +913,21 @@ export function App() {
             }
           >
             <span className="future-kicker">CURRENT</span>
-            <strong>Baseline breach</strong>
+            <strong>{unbuilt ? "Unbuilt baseline" : "Baseline breach"}</strong>
             <small>
-              {baselineEvidence.availability.toFixed(2)}% availability ·{" "}
-              {baselineEvidence.sloViolations.length}{" "}
-              {baselineEvidence.sloViolations.length === 1
-                ? "violation"
-                : "violations"}
+              {unbuilt
+                ? "Waiting for architecture"
+                : `${baselineEvidence.availability.toFixed(2)}% availability · ${baselineEvidence.sloViolations.length} ${baselineEvidence.sloViolations.length === 1 ? "violation" : "violations"}`}
             </small>
           </button>
           {branchCount === 0 ? (
-            <button className="create-future-button" onClick={createFutures}>
-              <span>✦</span> Create repair futures
+            <button
+              className="create-future-button"
+              disabled={unbuilt}
+              onClick={createFutures}
+            >
+              <span>✦</span>{" "}
+              {unbuilt ? "Build system first" : "Create repair futures"}
             </button>
           ) : (
             <div className="future-stack">
@@ -966,9 +1000,11 @@ export function App() {
             <div>
               <span className="eyebrow">{activeBranch.name}</span>
               <strong>
-                {activeBranch.status === "merged"
-                  ? "Committed architecture"
-                  : "Isolated future"}
+                {unbuilt
+                  ? "Modeling canvas"
+                  : activeBranch.status === "merged"
+                    ? "Committed architecture"
+                    : "Isolated future"}
               </strong>
             </div>
             <div
