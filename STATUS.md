@@ -1539,3 +1539,14 @@ was already underway again.
   - Both routes now read their built file once at startup. A missing file becomes a startup error rather than a request quietly returning the SPA shell, and the app was verified healthy in production afterwards rather than assumed.
   - The test derives the routed filenames from the server source itself, so a third static route added later is covered without anyone remembering to extend it, and it refuses any inline text body that could shadow a file. Reinstating the `robots.txt` string fails it.
   - Verified against the deployed origin: `robots.txt` and `llms.txt` both serve their file contents, and the application still returns 200.
+
+## Milestone 108 — A missing bundle looked like a working page
+
+- [x] **M108.1 — Terminate the asset path** `DONE`
+  - Acceptance: a request for JavaScript that does not exist fails as a missing file, not as a page.
+  - Evidence: probing the server's failure responses found `/assets/missing.js` returning 200 with an HTML document. The static handler passed the missing file to the single-page fallback, so a browser asking for a script received the page shell and failed on a parse error — an error that says nothing about the real cause. A stale cached `index.html` naming an old content hash is exactly how that arises, and it is the shape of failure a reviewer would hit mid-demo with no way to read it.
+  - The asset path now terminates with a 404. Ordering is the whole behaviour — placed before the static handler it would refuse every asset that exists — so a test pins the terminator between the static handler and the fallback, and moving it fails.
+  - Verified against the deployed origin on all three cases that matter: the missing asset answers 404 as text, the real bundle still answers 200 as JavaScript, and deep links and query parameters still receive the shell. The second of those was the one worth checking hardest.
+
+- [x] **M108.2 — Correct a guard that flagged the fix** `DONE`
+  - Evidence: the M107 shadowing test rejected `context.text("Not found", 404)`, because it matched any inline text body. A short status string is a response, not a duplicated document, and the check could not tell them apart. It now bounds the body length instead, which still catches a file inlined into the server — reinstating the `robots.txt` string fails it at forty characters — while allowing a status line.
