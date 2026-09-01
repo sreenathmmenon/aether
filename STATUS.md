@@ -668,3 +668,16 @@ fixed.
   - Evidence: both dialogs declared `aria-modal="true"` while twenty focusable controls sat behind the opening one, all reachable by Tab. A keyboard or screen-reader user tabbed straight out of a dialog that claims to trap them, into content the page had deliberately dimmed and that they could not see. Declaring a behaviour without implementing it is worse than not declaring it, because assistive technology takes the declaration at its word — and Lighthouse does not catch this, since it audits the page state it loads.
   - Focus now starts on the dialog's own control, Tab and Shift+Tab cycle within it, Escape dismisses, and everything behind is marked `aria-hidden` while it is open and restored on close. Closing returns focus to whatever opened the dialog. Both dialogs share one hook rather than a copied implementation, and `dismissIntro` became a stable callback because a new function each render would have torn down and rebuilt the trap continuously.
   - Verified in the browser on both: the opening dialog focuses "Enter the decision room" and stays inside after three Tabs where focus previously escaped, hiding all seven background sections; the comparison modal focuses "Close comparison" and hides all eight; Escape closes each and removes every attribute it set.
+
+## Milestone 28 — Keyboard operability
+
+Lighthouse scores this page 100 for accessibility with and without both of
+these fixes, because it cannot tab through an interface. Both were found by
+driving the keyboard, as the modal focus trap was.
+
+- [x] **M28.1 — Show keyboard users where they are** `DONE`
+  - Evidence: twelve of twenty focusable controls had no focus indicator at all, including the primary "Create repair futures" action and every scenario tab, so a reviewer navigating by keyboard could tab through the product without seeing where they were. Focus styling existed on five controls, added individually as each was built, so coverage was whatever had been remembered. One rule now covers every interactive element, using `:where()` for zero specificity so components with their own treatment keep it, and `:focus-visible` so a mouse click never draws a ring.
+  - Verified with real Tab presses rather than programmatic `focus()`, which does not trigger `:focus-visible` and would have understated the problem: fourteen of fourteen controls in the tab order show a ring, and clicking a canvas node still shows its own selection outline.
+- [x] **M28.2 — Make the scenario tablist answer the keys it advertises** `DONE`
+  - Evidence: the switcher declared `role="tablist"` with `role="tab"` children and implemented none of the keyboard behaviour that role promises — arrow keys did nothing, and every tab was its own tab stop where the pattern specifies one. This was the third instance of a declared ARIA behaviour that was never built, after both dialogs' `aria-modal`. Left and Right now move between scenarios, Home and End jump to the ends, focus follows selection, and a roving tabindex leaves one tab stop.
+  - Verified in the browser: one tab stop before and after, ArrowRight moves selection and focus together, End reaches the last scenario, and the whole pipeline follows — beacon, metrics at 97.06% with 5m recovery, and the reproducible-run fingerprint all update with the tab.
