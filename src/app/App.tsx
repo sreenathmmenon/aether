@@ -54,6 +54,9 @@ import { runScenario, type Scenario } from "@simulation/engine";
  * scenarios reads this: a hardcoded list that omitted one left the tab it
  * missed showing a future with no evidence.
  */
+/** How many recent decisions the replay panel shows before scrolling. */
+const replayWindow = 12;
+
 const scenarioOrder = [
   "regional_outage",
   "traffic_spike",
@@ -2185,12 +2188,20 @@ export function App() {
           >
             <div className="thread-heading">
               <strong>Replayable change history</strong>
-              <span>{state.audit.length} recorded commands</span>
+              <span>
+                {state.audit.length}{" "}
+                {state.audit.length === 1
+                  ? "recorded command"
+                  : "recorded commands"}
+              </span>
             </div>
-            <ol>
+            {/* A record a reviewer is auditing must not truncate in silence.
+                It shows a scrollable window of the most recent decisions and
+                says how many earlier ones exist. */}
+            <ol className="replay-list">
               {state.audit.length ? (
                 state.audit
-                  .slice(-7)
+                  .slice(-replayWindow)
                   .reverse()
                   .map((event, index) => {
                     const described = commandLabels[event.commandName];
@@ -2241,6 +2252,15 @@ export function App() {
                 </li>
               )}
             </ol>
+            {state.audit.length > replayWindow && (
+              <p className="replay-earlier">
+                {state.audit.length - replayWindow} earlier{" "}
+                {state.audit.length - replayWindow === 1
+                  ? "decision is"
+                  : "decisions are"}{" "}
+                held in this record and persisted with the workspace.
+              </p>
+            )}
           </section>
         </div>
       </section>

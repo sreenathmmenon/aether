@@ -244,6 +244,16 @@ button {
 .room-invite:hover {
   background: rgba(47, 106, 191, 0.13);
 }
+/* The replay window scrolls rather than hiding what it cannot fit. */
+.replay-list {
+  max-height: 340px;
+  overflow-y: auto;
+}
+.replay-earlier {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
 .shared-live {
   padding: 5px 8px;
   border: 1px solid rgba(36, 135, 101, 0.25);
