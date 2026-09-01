@@ -1652,3 +1652,17 @@ was already underway again.
   - Two nearby behaviours were checked rather than assumed broken, and both were already right: a nonexistent `branchId` returns `NOT_AVAILABLE` with a next action, and an unknown `regionId` returns a named problem listing the valid regions. The seven-field probe had simply hit the name and kind failures first, which is why neither appeared in it.
   - Verified against the deployed origin: a seven-field rejection through the live WebMCP surface returns `3 more not listed, in: peakRps, capacityRps, monthlyCostUsd` alongside the three named problems, so an agent that would previously have looped can correct everything in one more call.
   - A probe error worth recording: the first attempt passed a state _reader_ where the registry takes an `onState` _writer_, so state never advanced and no write tool was ever registered. The second used a two-character branch name that failed its own minimum. Both looked like missing tools and were probe faults.
+
+## Milestone 118 — The claim the whole submission rests on, asserted
+
+- [x] **M118.1 — Find what was holding it up** `DONE`
+  - Acceptance: an agent cannot commit, discard or unwind a decision, in any state, and something fails if that changes.
+  - Evidence: the gate held two ways and neither was fully tested. No approve, merge or rollback tool is ever registered — twelve tools, six reducer commands between them — and separately `dispatch` defaults to the agent actor while five commands refuse anything that is not human. Reading the reducer rather than assuming found exactly which five: `APPROVE_BRANCH`, `MERGE_BRANCH`, `ROLLBACK_MERGE`, `REMOVE_COMPONENT`, `SET_COST_CEILING`.
+  - What already existed covered approve and merge refusing an agent, and the human path working. What nothing covered: the registry layer at all, and the other three actor checks. Removing the check from `ROLLBACK_MERGE` left both existing gate tests green.
+
+- [x] **M118.2 — Derive both sides from source** `DONE`
+  - Evidence: the test extracts the reducer's human-only set and the registry's dispatched commands from the files themselves, so a thirteenth tool or a sixth gated command is covered the day it is added rather than the day someone updates a list. It guards against its own vacuity first — if either extraction matches nothing every later assertion passes for free, which is the characteristic failure of a test shaped like this.
+  - It also walks the state-dependent surface, because registration grows: a surface safe on load can still hand out a tool three calls later, so every tool name is checked against the human-only vocabulary at each step, and the walk asserts the surface actually grew.
+  - Both layers were broken to confirm the test earns its place. Ungating `ROLLBACK_MERGE` alone fails it — the case the existing tests miss. Wiring a registered tool to `MERGE_BRANCH` fails it too.
+  - Scope corrected mid-way: a first version restated the agent-approval refusal and the human path that `branch-engine.test.ts` already covers. Duplicated assertions were dropped rather than left in, so this file holds only what nothing else does.
+  - Probe faults recorded: the first attempt matched `case "COMMAND"` when the reducer uses `if (command.type === ...)`, extracting zero commands — caught by the vacuity guard rather than passing silently. The second assumed `dispatch` returns `{ state }` when it returns `{ ok, value }`, and assumed the seeded workspace already held the three futures when the initial state holds only the baseline.
