@@ -1777,3 +1777,14 @@ was already underway again.
   - `Rollback this merge` appears as a human control after the merge, and no agent tool exists that could perform it. The gate holds in the state where undoing is most consequential.
   - Rolling back marks the future `discarded`, returns the active branch to `branch-baseline`, and leaves seven tools registered — read and propose, no writes — because the baseline is itself a committed architecture. `create_architecture_branch` stays registered, so the path forward from a rejected repair is open rather than dead-ended. Checked rather than assumed: the unchanged count after rollback looked like the surface failing to reopen until the branch state and the actual tool list were read.
   - The decision record read through `get_decision_record` carries the full chain — `RUN_SCENARIO → APPROVE_BRANCH → MERGE_BRANCH → ROLLBACK_MERGE` — every command attributable, and readable by an agent that could perform none of the last three. That is the auditable trail the submission claims, demonstrated on a system with no seeded decisions.
+
+## Milestone 128 — A surface that existed and was never described
+
+- [x] **M128.1 — Derive every state, not the three that were convenient** `DONE`
+  - Acceptance: every tool surface the lifecycle reaches is documented and checked.
+  - Evidence: M127's walk landed in a **seven-tool** surface after a merge. The drift test derived sizes from three states — seeded, blank, branched — so a merged architecture was invisible to it, and any number written about that state would have gone unchecked. The lifecycle now runs through approve, merge and rollback in the test, and all five states contribute.
+  - The property that matters there is asserted directly rather than through a count: no tool registered on a committed architecture may write to it, and `create_architecture_branch` must remain, so a reviewer whose repair was rolled back is not dead-ended. Forcing the write gate open fails four tests.
+
+- [x] **M128.2 — A guard that did not apply to the sentence it was written for** `DONE`
+  - Evidence: the documentation was corrected to name the seven-tool surface, and breaking it deliberately produced **no failure**. The count guard matches the literal phrase `"<word> tools"`, and the new sentence read "seven on an architecture" — the guard never saw it. The claim was correct and unprotected, which is the same shape as a test that passes vacuously.
+  - Rephrased to "seven tools on an architecture with a committed future" so the existing guard applies. Writing "six tools" there now fails, where a moment earlier it did not. Recorded because the first two break attempts both silently did nothing, and reading that as "the guards work" would have left the claim unguarded.

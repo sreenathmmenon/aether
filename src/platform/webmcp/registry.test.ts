@@ -137,12 +137,73 @@ describe("Aether WebMCP registry", () => {
       input: { name: "Count probe", intent: "highest_resilience" },
     });
     if (!branched.ok) throw new Error("fixture branch must be created");
+    // The lifecycle does not end at a repair future. Committing one shrinks
+    // the surface to a read-and-propose set, and that state was invisible
+    // here — derived from three states, so a size only reachable after a
+    // merge could be written in a document and never checked. Found by
+    // walking merge and rollback on the deployed origin.
+    const human = { id: "sreenath", kind: "human" as const, displayName: "S" };
+    const simulated = dispatch(branched.value, {
+      type: "RUN_SCENARIO",
+      input: {
+        branchId: "branch-highest_resilience",
+        scenario: "regional_outage",
+      },
+    });
+    if (!simulated.ok) throw new Error("fixture scenario must run");
+    const repair = simulated.value.branches["branch-highest_resilience"]!;
+    const approved = dispatch(
+      simulated.value,
+      {
+        type: "APPROVE_BRANCH",
+        input: { branchId: repair.id, branchVersion: repair.version },
+      },
+      human,
+    );
+    if (!approved.ok) throw new Error("fixture approval must work");
+    const merged = dispatch(
+      approved.value,
+      {
+        type: "MERGE_BRANCH",
+        input: { branchId: repair.id, branchVersion: repair.version },
+      },
+      human,
+    );
+    if (!merged.ok) throw new Error("fixture merge must work");
+    const rolledBack = dispatch(
+      merged.value,
+      { type: "ROLLBACK_MERGE", input: { branchId: repair.id } },
+      human,
+    );
+    if (!rolledBack.ok) throw new Error("fixture rollback must work");
+
     const truthful = new Set(
       await Promise.all([
         sizeOf(seeded),
         sizeOf(createInitialState(blankBaseline, "blank")),
         sizeOf(branched.value),
+        sizeOf(merged.value),
+        sizeOf(rolledBack.value),
       ]),
+    );
+    // A committed architecture must not leave a write tool registered, which
+    // is the property the merged surface exists to hold.
+    expect(truthful.size).toBeGreaterThan(3);
+    const afterMerge: { name: string }[] = [];
+    const mergedRegistry = createAetherToolRegistry(() => {}, undefined, {
+      registerTool: async (tool) => {
+        afterMerge.push(tool as { name: string });
+      },
+    });
+    await mergedRegistry?.refresh(merged.value);
+    mergedRegistry?.dispose();
+    for (const name of afterMerge.map((tool) => tool.name))
+      expect(name, `${name} writes to a committed architecture`).not.toMatch(
+        /^(add_|connect_|model_|run_failure)/,
+      );
+    // And the reviewer is not dead-ended: a rejected repair can be replaced.
+    expect(afterMerge.map((tool) => tool.name)).toContain(
+      "create_architecture_branch",
     );
 
     const words: Record<string, number> = {
