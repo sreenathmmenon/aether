@@ -580,6 +580,77 @@ describe("Aether WebMCP registry", () => {
     }
   });
 
+  it("names a field and a usable value in every rejection", async () => {
+    // The submission promises rejected calls "name the fields that failed and
+    // the values that would succeed". Two of three probes honoured it; the
+    // creation-path region check answered "Unknown region." — neither the
+    // field nor the options, and the generic nextAction. Found by testing the
+    // claim against the deployed origin rather than reading the code.
+    const live = new Set<RegisteredTool>();
+    let state = createInitialState(paymentPlatformBaseline);
+    const registry = createAetherToolRegistry(
+      (next) => {
+        state = next;
+      },
+      undefined,
+      {
+        registerTool: async (tool, options) => {
+          const entry = tool as unknown as RegisteredTool;
+          live.add(entry);
+          options?.signal?.addEventListener("abort", () => live.delete(entry));
+        },
+      },
+    );
+    await registry?.refresh(state);
+    const call = async (name: string, input: Record<string, unknown>) =>
+      JSON.parse(
+        String(
+          await [...live].find((tool) => tool.name === name)?.execute(input),
+        ),
+      ) as { error?: string; problems?: string[]; nextAction?: string };
+
+    await call("create_architecture_branch", {
+      name: "Rejection probe",
+      intent: "highest_resilience",
+    });
+
+    const rejections = [
+      await call("add_architecture_component", {
+        branchId: "branch-highest_resilience",
+        name: "Probe",
+        kind: "lambda",
+        regionId: "region-mumbai",
+        peakRps: 1,
+        capacityRps: 1,
+        monthlyCostUsd: 1,
+      }),
+      await call("add_architecture_component", {
+        branchId: "branch-highest_resilience",
+        name: "Probe",
+        kind: "service",
+        regionId: "region-atlantis",
+        peakRps: 1,
+        capacityRps: 1,
+        monthlyCostUsd: 1,
+      }),
+      await call("run_failure_scenario", {
+        branchId: "branch-highest_resilience",
+        scenario: "meteor",
+      }),
+    ];
+
+    for (const rejection of rejections) {
+      expect(rejection.error).toBe("INVALID_INPUT");
+      const stated = `${rejection.problems?.join(" ")} ${rejection.nextAction}`;
+      // The field that failed, by name.
+      expect(stated).toMatch(/kind|regionId|region|scenario/);
+      // And at least one value that would have worked, not just a complaint.
+      expect(stated).toMatch(
+        /service|database|queue|gateway|region-mumbai|regional_outage/,
+      );
+    }
+  });
+
   it("tells an agent what to do at the decision point", async () => {
     // Every other tool names a next action. This one, at the point a
     // decision is actually made, returned futures and a human gate and

@@ -548,8 +548,21 @@ export function dispatch(
     // editable until they branch from it.
     if (branch.status === "merged" && next.workspace.templateId !== "blank")
       return commandFailure("NOT_AVAILABLE", "This branch cannot be changed.");
-    if (!graph.entities[command.input.regionId])
-      return commandFailure("INVALID_INPUT", "Unknown region.");
+    // Named field, named valid values. "Unknown region." told an agent
+    // neither, and it was the one refusal on this surface that did not. It
+    // also accepted any entity id, so a component could be created inside
+    // another component rather than inside a region.
+    const targetRegion = graph.entities[command.input.regionId];
+    if (!targetRegion || targetRegion.kind !== "region")
+      return commandFailure(
+        "INVALID_INPUT",
+        `regionId: unknown region. Choose one of: ${Object.values(
+          graph.entities,
+        )
+          .filter((entity) => entity.kind === "region")
+          .map((entity) => entity.id)
+          .join(", ")}.`,
+      );
     const entityId = `entity-${command.input.name
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
