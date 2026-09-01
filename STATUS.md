@@ -1399,3 +1399,15 @@ was already underway again.
 - [x] **M94.2 — Close the verification gap M93 left open** `DONE`
   - Evidence: M93 recorded that a visibility-gated path could not be confirmed from a background tab, because the guard correctly skips. Overriding `document.hidden` with a property descriptor makes the guard observe what it would observe for a reviewer at the keyboard, which is enough to exercise the branch honestly — the guard still runs, it simply sees the state it is written for.
   - Worth recording as a technique rather than a one-off: the first attempt dispatched `visibilitychange` without the override and correctly produced no request, which looked like a failure and was the guard working. The difference between those two runs is the whole point.
+
+## Milestone 95 — The offline path, exercised
+
+- [x] **M95.1 — What a reviewer sees when the network drops** `DONE`
+  - Acceptance: a dropped connection mid-demo loses no work and says so honestly.
+  - Evidence: exercised against the deployed origin by rejecting every `/api/workspaces/` request, which is what a dropped connection looks like to this client. Three repair futures were created and all three survived; the badge moved to "Offline draft" and stayed there. The work is safe and the status is honest — the M53 sync-status work holding up under a condition it had never actually been put through.
+  - The explanation was not reaching everyone. It lived in a `title`, which appears on hover and nowhere else, so a keyboard or screen reader user heard "Offline draft" and never the sentence saying their work had reached no durable storage. That is the third time in this interface an explanation has been on screen and not programmatically attached — after the approval gate reason in M69 and the canvas selection state in M81.
+  - The accessible name now carries both, built from the same `syncExplanation` helper the tooltip uses so the two cannot drift. Verified live in both states: "Synced. This workspace is saved to shared storage." and "Offline draft. Shared storage is unreachable. Changes are held in this browser only."
+
+- [x] **M95.2 — Fix a test that passed on the weaker regression** `DONE`
+  - Evidence: the first version of this assertion read a window ending at the first `{syncStatus}`, which falls inside the label's own template literal, so it matched the `title` line above and passed on a label carrying the status word alone — the likelier regression of the two. Scoping it to the label's own value fails both weakenings: a status-only name, and a hardcoded sentence that would drift from the helper.
+  - Both were checked by breaking the code rather than assumed, which is the only reason the weak version was caught.
