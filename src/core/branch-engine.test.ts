@@ -1109,6 +1109,117 @@ describe("a repair future always repairs something", () => {
   });
 });
 
+describe("a future is never offered with nothing to change", () => {
+  it("refuses an intent the architecture gives nothing to act on", () => {
+    // A lone queue carries neither replicas nor a declared restore time, so
+    // `fastest_recovery` has nothing to change on it. Creating the branch
+    // anyway produced an empty future presented beside two that repair
+    // something, which misrepresents the choice being offered.
+    let state = createInitialState(blankBaseline, "blank");
+    const added = dispatch(
+      state,
+      {
+        type: "ADD_COMPONENT",
+        input: {
+          branchId: "branch-baseline",
+          name: "Only Queue",
+          kind: "queue",
+          regionId: "region-primary",
+          peakRps: 9000,
+          capacityRps: 15000,
+          monthlyCostUsd: 800,
+        },
+      },
+      human,
+    );
+    if (!added.ok) throw new Error("queue must be addable");
+    state = added.value;
+
+    const refused = dispatch(
+      state,
+      {
+        type: "CREATE_BRANCH",
+        input: { name: "Empty", intent: "fastest_recovery" },
+      },
+      human,
+    );
+    expect(refused).toMatchObject({ ok: false, code: "NOT_AVAILABLE" });
+    // And it says what to do about it rather than only that it failed.
+    if (!refused.ok) expect(refused.message).toMatch(/add a component/i);
+
+    // An intent the same architecture does give something to act on still
+    // works, so this refuses the empty case and not the queue itself.
+    expect(
+      dispatch(
+        state,
+        {
+          type: "CREATE_BRANCH",
+          input: { name: "Cheaper", intent: "lowest_cost" },
+        },
+        human,
+      ).ok,
+    ).toBe(true);
+  });
+
+  it("adds redundancy when a stateless architecture cannot recover faster", () => {
+    // With no datastore the engine scores recovery as a fixed reroute, so
+    // there is no restore time to shorten. Redundant instances are what
+    // shorten a stateless outage, and the intent adds them rather than
+    // producing an empty future.
+    let state = createInitialState(blankBaseline, "blank");
+    for (const [name, kind] of [
+      ["Edge Api", "gateway"],
+      ["Order Service", "service"],
+    ] as const) {
+      const added = dispatch(
+        state,
+        {
+          type: "ADD_COMPONENT",
+          input: {
+            branchId: "branch-baseline",
+            name,
+            kind,
+            regionId: "region-primary",
+            peakRps: 9000,
+            capacityRps: 15000,
+            monthlyCostUsd: 800,
+          },
+        },
+        human,
+      );
+      if (!added.ok) throw new Error(`${name}: ${added.message}`);
+      state = added.value;
+    }
+
+    const branched = dispatch(
+      state,
+      {
+        type: "CREATE_BRANCH",
+        input: { name: "Faster", intent: "fastest_recovery" },
+      },
+      human,
+    );
+    if (!branched.ok) throw new Error(branched.message);
+    const branch = branched.value.branches["branch-fastest_recovery"]!;
+    expect(branch.operations.length).toBeGreaterThan(0);
+
+    // And the redundancy it adds actually raises availability.
+    const before = runScenario(
+      deriveGraph(state, state.branches["branch-baseline"]!),
+      "regional_outage",
+      "branch-baseline",
+      1,
+    );
+    const after = runScenario(
+      deriveGraph(branched.value, branch),
+      "regional_outage",
+      branch.id,
+      branch.version,
+    );
+    expect(after.availability).toBeGreaterThan(before.availability);
+  });
+});
+
 describe("every shipped system can actually be approved", () => {
   // The human gate is what this product argues for, so a shipped system that
   // can never reach it is a demo that cannot be finished. Ride-hailing and

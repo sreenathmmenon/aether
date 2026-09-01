@@ -87,7 +87,9 @@ describe("shared state never destroys local work", () => {
   });
 
   it("still accepts an equally rich update so real collaboration works", () => {
-    const state = createInitialState(blankBaseline, "blank");
+    // A seeded system, because a repair future needs an architecture with
+    // something to repair; the blank canvas here was incidental.
+    const state = createInitialState(paymentPlatformBaseline);
     const branched = dispatch(
       state,
       { type: "CREATE_BRANCH", input: { name: "R", intent: "lowest_cost" } },

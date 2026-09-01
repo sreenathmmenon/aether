@@ -366,7 +366,29 @@ export function dispatch(
                 Math.round(costOf(slowestStore) * 1.18),
               ),
             ]
-          : [],
+          : // An architecture with no datastore at all recovers by rerouting,
+            // which this engine scores as a fixed six minutes — there is no
+            // restore time to shorten. Redundant instances are what shorten a
+            // stateless outage, so the intent adds them rather than producing
+            // an empty future.
+            scalable
+            ? [
+                set(
+                  scalable.id,
+                  "replicas",
+                  Math.max(
+                    3,
+                    ((scalable.properties as { replicas?: number }).replicas ??
+                      1) + 2,
+                  ),
+                ),
+                set(
+                  scalable.id,
+                  "monthlyCostUsd",
+                  Math.round(costOf(scalable) * 1.18),
+                ),
+              ]
+            : [],
       // Synchronous standby, more replicas, and capacity above peak demand.
       highest_resilience: [
         ...(atRisk.length
@@ -416,6 +438,15 @@ export function dispatch(
           : []),
       ],
     }[command.input.intent];
+    // A future that changes nothing is not a repair option. Some
+    // architectures leave an intent nothing to act on — a lone queue carries
+    // neither replicas nor a declared restore time — and offering an empty
+    // branch beside two that change something misrepresents the choice.
+    if (operations.length === 0)
+      return commandFailure(
+        "NOT_AVAILABLE",
+        "This architecture offers nothing for that trade-off to change. Add a component it can act on, or choose another intent.",
+      );
     const canonicalName = {
       lowest_cost: "Lowest cost",
       fastest_recovery: "Fastest recovery",

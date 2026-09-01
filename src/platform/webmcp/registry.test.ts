@@ -518,6 +518,19 @@ describe("Aether WebMCP registry", () => {
     const names = () => [...live].map((tool) => tool.name);
     expect(names()).not.toContain("compare_architecture_futures");
 
+    // A future needs something to repair, so build the architecture first —
+    // which is what the interface requires of a reviewer too.
+    await [...live]
+      .find((tool) => tool.name === "add_architecture_component")
+      ?.execute({
+        branchId: "branch-baseline",
+        name: "Order Store",
+        kind: "database",
+        regionId: "region-primary",
+        peakRps: 9000,
+        capacityRps: 15000,
+        monthlyCostUsd: 800,
+      });
     await [...live]
       .find((tool) => tool.name === "create_architecture_branch")
       ?.execute({ name: "Blank probe", intent: "highest_resilience" });
@@ -2013,7 +2026,25 @@ describe("Aether WebMCP registry", () => {
               fresh.push(registered as unknown as RegisteredTool);
             },
           });
-          await isolated?.refresh(createInitialState(blankBaseline, "blank"));
+          // Seed one component: a repair future needs an architecture with
+          // something to repair, and the branch probe creates one.
+          const seededBlank = dispatch(
+            createInitialState(blankBaseline, "blank"),
+            {
+              type: "ADD_COMPONENT",
+              input: {
+                branchId: "branch-baseline",
+                name: "Probe Store",
+                kind: "database",
+                regionId: "region-primary",
+                peakRps: 9000,
+                capacityRps: 15000,
+                monthlyCostUsd: 800,
+              },
+            },
+          );
+          if (!seededBlank.ok) throw new Error("probe seed must be addable");
+          await isolated?.refresh(seededBlank.value);
           isolated?.dispose();
           const probe = fresh.find(
             (candidate) => candidate.name === tool.name,
