@@ -26,6 +26,28 @@ it("degrades cleanly when the browser exposes no WebMCP", () => {
   vi.unstubAllGlobals();
 });
 
+it("reads the surface, not the name of the surface", () => {
+  // The registry gives up when `document.modelContext` is undefined, while
+  // this asked only whether the property existed. A browser that exposes the
+  // interface and declines the feature satisfies one check and not the
+  // other, so the page announced "WebMCP live" over a surface that had
+  // registered nothing — the worst of the three states to be wrong about,
+  // because it tells a reviewer the thing works.
+  vi.stubGlobal("document", { modelContext: undefined });
+  vi.stubGlobal("navigator", {
+    userAgentData: { brands: [{ brand: "Google Chrome" }] },
+  });
+  const declined = getWebMcpAvailability();
+  expect(declined.available).toBe(false);
+  expect(declined.reason).toMatch(/origin trial/i);
+
+  // And a real surface is still reported as available.
+  vi.stubGlobal("document", { modelContext: { getTools: () => [] } });
+  expect(getWebMcpAvailability()).toEqual({ available: true, reason: null });
+
+  vi.unstubAllGlobals();
+});
+
 it("separates a browser that cannot from one that will not here", () => {
   // These need different advice. Telling someone already running a supported
   // Chrome to install Chrome sends them in a circle, when what their page

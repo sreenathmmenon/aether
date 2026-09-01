@@ -15,7 +15,12 @@ export type WebMcpAvailability = {
 export function getWebMcpAvailability(): WebMcpAvailability {
   if (typeof document === "undefined")
     return { available: false, reason: "No document context" };
-  if ("modelContext" in document) return { available: true, reason: null };
+  // The value, not the property. The registry reads `document.modelContext`
+  // and gives up if it is undefined, while this asked only whether the name
+  // exists — so a Chrome that exposes the interface and declines the feature
+  // made the page announce "WebMCP live" over a surface that had registered
+  // nothing. Two checks for one fact must be the same check.
+  if (document.modelContext) return { available: true, reason: null };
 
   // Chromium ships the interface even where the feature is gated, so its
   // presence separates "this browser cannot" from "this browser will not
