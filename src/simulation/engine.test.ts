@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { paymentPlatformBaseline } from "../fixtures/payment-platform/baseline";
 import { rideHailingBaseline } from "../fixtures/ride-hailing/baseline";
-import { runScenario, type Scenario } from "./engine";
+import {
+  deficitLimit,
+  runScenario,
+  simulationEngineVersion,
+  type Scenario,
+} from "./engine";
 import type { ArchitectureGraph } from "@domain/architecture/types";
 
 function withProperty(
@@ -183,7 +188,7 @@ describe("dependency-graph simulation", () => {
       5000,
     );
     expect(first).toMatchObject({
-      engineVersion: "aether-sim-3",
+      engineVersion: simulationEngineVersion,
       inputHash: expect.stringMatching(/^fnv1a-[0-9a-f]{8}$/),
       outputHash: expect.stringMatching(/^fnv1a-[0-9a-f]{8}$/),
     });
@@ -356,12 +361,16 @@ describe("dependency-graph simulation", () => {
     // one: if the engine changes what it computes, this fails and the version
     // must move with it rather than the same tag silently meaning something
     // new. They changed at aether-sim-3, when the fingerprint stopped
-    // covering canvas position, which the engine never reads.
+    // covering canvas position, which the engine never reads, and at
+    // aether-sim-4, when the capacity evidence stopped dropping deficits
+    // past the second one in silence. Only traffic_spike moved: it was the
+    // only scenario reaching more components than the cap reports, which is
+    // the check that the change touched what it should and nothing else.
     const expected: [Scenario, string][] = [
-      ["regional_outage", "fnv1a-19a1b57c"],
-      ["traffic_spike", "fnv1a-ff4f9601"],
-      ["database_failure", "fnv1a-0c5c3ac6"],
-      ["dependency_failure", "fnv1a-a1a0e520"],
+      ["regional_outage", "fnv1a-9bcdc363"],
+      ["traffic_spike", "fnv1a-5831bf59"],
+      ["database_failure", "fnv1a-d13263ad"],
+      ["dependency_failure", "fnv1a-b062f914"],
     ];
     for (const [scenario, hash] of expected) {
       const run = runScenario(
@@ -544,5 +553,63 @@ describe("dependency-graph simulation", () => {
         1,
       ).inputHash,
     ).toBe(base.inputHash);
+  });
+
+  it("says how many components it left out of the capacity evidence", () => {
+    // The evidence names the two worst deficits and stops. The shipped
+    // baseline already exceeds that under a spike — four components over
+    // capacity, two reported — so the untouched fixture is the case, and it
+    // understated the breach a human approves against until this.
+    const result = runScenario(
+      paymentPlatformBaseline,
+      "traffic_spike",
+      "branch-baseline",
+      1,
+    );
+    const named = result.sloViolations.filter((v) =>
+      v.includes("capacity deficit"),
+    );
+    expect(named).toHaveLength(deficitLimit);
+
+    const note = result.sloViolations.find((v) => v.includes("over capacity"));
+    expect(note, "truncated deficits are not disclosed").toBeDefined();
+    const hidden = Number(note!.match(/^(\d+) further/)![1]);
+    expect(hidden).toBeGreaterThan(0);
+    expect(note).toMatch(hidden === 1 ? /component is/ : /components are/);
+
+    // The two it names are the worst two, so a reviewer reading the summary
+    // is not shown a milder pair with the severe ones hidden behind a count.
+    // Reconstructing the deficits from raw peakRps here compared the wrong
+    // numbers — a spike multiplies demand — so read the reported figures.
+    const reported = named.map((v) =>
+      Number(v.match(/: ([\d,]+) RPS/)![1].replace(/,/g, "")),
+    );
+    expect(reported[0]).toBeGreaterThanOrEqual(reported[1]!);
+
+    // And every component the disclosure counts is one the scenario reached,
+    // so the total can never exceed the blast radius it was derived from.
+    const impacted = result.affectedEntityIds.filter(
+      (id) => paymentPlatformBaseline.entities[id]?.kind !== "region",
+    ).length;
+    expect(named.length + hidden).toBeLessThanOrEqual(impacted);
+  });
+
+  it("stays silent when nothing was left out", () => {
+    // A note claiming zero hidden components is noise in the evidence, and is
+    // how the equivalent disclosure in the interface first broke. The shipped
+    // baseline hides two under a spike, so this needs a graph that genuinely
+    // fits — give every component headroom but one.
+    const graph = structuredClone(paymentPlatformBaseline);
+    for (const entity of Object.values(graph.entities)) {
+      if (entity.kind === "region") continue;
+      Object.assign(entity.properties, { peakRps: 10, capacityRps: 100000 });
+    }
+    const result = runScenario(graph, "traffic_spike", "branch-baseline", 1);
+    expect(
+      result.sloViolations.filter((v) => v.includes("capacity deficit")),
+    ).toHaveLength(0);
+    expect(
+      result.sloViolations.filter((v) => v.includes("over capacity")),
+    ).toHaveLength(0);
   });
 });

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { simulationEngineVersion } from "../../simulation/engine";
 import { createInitialState, deriveGraph } from "@core/branch-engine";
 import { dispatch } from "@core/branch-engine";
 import type { AetherState } from "@core/branch-engine";
@@ -1346,7 +1347,7 @@ describe("Aether WebMCP registry", () => {
     expect(inspected.availability).toBeGreaterThan(0);
     expect(inspected.availability).toBeLessThan(100);
     expect(inspected.sloViolations.length).toBeGreaterThan(0);
-    expect(inspected.engineVersion).toBe("aether-sim-3");
+    expect(inspected.engineVersion).toBe(simulationEngineVersion);
     expect(inspected.outputHash).toMatch(/^fnv1a-[0-9a-f]+$/);
 
     // A different scenario must produce a different answer, or the tool is
@@ -1726,7 +1727,7 @@ describe("Aether WebMCP registry", () => {
         branchId: "branch-highest_resilience",
         scenario: "regional_outage",
       }),
-    ).toMatchObject({ engineVersion: "aether-sim-3" });
+    ).toMatchObject({ engineVersion: simulationEngineVersion });
     expect(
       await call("add_architecture_component", {
         branchId: "branch-highest_resilience",
@@ -1940,7 +1941,7 @@ describe("Aether WebMCP registry", () => {
         branchId: "branch-baseline",
         scenario: "regional_outage",
       }),
-    ).toMatchObject({ engineVersion: "aether-sim-3" });
+    ).toMatchObject({ engineVersion: simulationEngineVersion });
     registry?.dispose();
   });
 

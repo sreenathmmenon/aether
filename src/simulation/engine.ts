@@ -37,7 +37,7 @@ export const availabilityModel = {
   ceiling: 99.99,
 } as const;
 
-export const simulationEngineVersion = "aether-sim-3";
+export const simulationEngineVersion = "aether-sim-4";
 
 /**
  * The part of a graph a simulation actually depends on.
@@ -249,6 +249,11 @@ function totalMonthlyCost(graph: ArchitectureGraph) {
 }
 
 /** Entities whose demand exceeds provisioned capacity, worst deficit first. */
+// How many individual capacity deficits the evidence names before it
+// summarises the rest. Exported so a test reads the shipped number rather
+// than a second copy of it.
+export const deficitLimit = 2;
+
 function capacityDeficits(
   graph: ArchitectureGraph,
   demandMultiplier: number,
@@ -537,9 +542,20 @@ export function runScenario(
   for (const entity of impactedDatabases)
     if (replicationOf(entity) === "async")
       violations.push(`${entity.name} recovery point objective is non-zero`);
-  for (const row of deficits.slice(0, 2))
+  // The two worst by deficit, which the sort above makes deterministic. The
+  // cap keeps the evidence readable, but naming two of nine and stopping
+  // silently understates the breach a human is approving against — the same
+  // defect the interface's windowed lists carry, one layer deeper and with
+  // no disclosure at all. So say what was left out.
+  const shownDeficits = deficits.slice(0, deficitLimit);
+  for (const row of shownDeficits)
     violations.push(
       `${row.entity.name} capacity deficit: ${row.deficit.toLocaleString()} RPS`,
+    );
+  const furtherDeficits = deficits.length - shownDeficits.length;
+  if (furtherDeficits > 0)
+    violations.push(
+      `${furtherDeficits} further ${furtherDeficits === 1 ? "component is" : "components are"} over capacity in this scenario`,
     );
   if (scenario === "traffic_spike" && deficits.length > 0)
     violations.push("Traffic spike SLO breached");
