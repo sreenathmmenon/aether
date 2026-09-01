@@ -11,6 +11,7 @@ import { offlineToolSurface } from "./offline-surface";
 import webmcpDoc from "../../../docs/WEBMCP.md?raw";
 import complianceDoc from "../../../docs/WEBMCP_COMPLIANCE.md?raw";
 import planDoc from "../../../docs/V3_REVERSE_WINNER_PLAN.md?raw";
+import appSource from "../../app/App.tsx?raw";
 
 type RegisteredTool = {
   name: string;
@@ -309,6 +310,61 @@ describe("Aether WebMCP registry", () => {
     expect(tuned.availability).toBeGreaterThan(base.availability);
     expect(tuned.latencyMs).toBeLessThan(base.latencyMs);
     expect(tuned.rtoMinutes).toBeGreaterThan(base.rtoMinutes);
+  });
+
+  it("does not let an agent describe more than a person can", async () => {
+    // The whole argument of this product is that the agent proposes and the
+    // human decides. An agent that can express properties the person cannot
+    // inverts that: the reviewer would have to ask the agent to set something
+    // they were not allowed to set themselves. Every property the creation
+    // tool advertises must therefore be reachable in the component form.
+    const live = new Set<RegisteredTool>();
+    const registry = createAetherToolRegistry(() => {}, undefined, {
+      registerTool: async (tool, options) => {
+        const entry = tool as unknown as RegisteredTool;
+        live.add(entry);
+        options?.signal?.addEventListener("abort", () => live.delete(entry));
+      },
+    });
+    await registry?.refresh(createInitialState(blankBaseline, "blank"));
+    const add = [...live].find(
+      (tool) => tool.name === "add_architecture_component",
+    ) as unknown as {
+      inputSchema: { properties: Record<string, unknown> };
+    };
+    registry?.dispose();
+
+    // Scope this to what the form actually dispatches. Searching the whole
+    // component matched a control's own `value=` binding, so removing a
+    // property from the payload while leaving its input on screen still
+    // passed — a test that could not fail for the reason it was written.
+    // Start at the opening of the input object, not at its first draft-bound
+    // field: `name` is listed above that and would otherwise fall outside.
+    const start = appSource.lastIndexOf(
+      "input: {",
+      appSource.indexOf("kind: componentDraft.kind"),
+    );
+    const payload = appSource.slice(
+      start,
+      appSource.indexOf("humanActor", start),
+    );
+    // Read the shipped component, not a list kept here, which would drift the
+    // way the documentation did.
+    const unreachable = Object.keys(add.inputSchema.properties)
+      // branchId identifies the target rather than describing the component.
+      .filter((property) => property !== "branchId")
+      // Require the property to be *assigned* from the draft, not merely
+      // mentioned. A looser check passed while `replicas: 3` was hardcoded,
+      // because the guard condition around it still named the draft field.
+      // Locals are accepted for the two the handler binds above the payload.
+      .filter((property) => {
+        const assigned = new RegExp(
+          `${property}:\\s*[^,;]{0,80}componentDraft\\.${property}\\b`,
+        );
+        const shorthand = new RegExp(`^\\s*${property},$`, "m");
+        return !assigned.test(payload) && !shorthand.test(payload);
+      });
+    expect(unreachable).toEqual([]);
   });
 
   it("tells an agent what to do at the decision point", async () => {

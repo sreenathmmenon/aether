@@ -233,6 +233,14 @@ export function App() {
     regionId: "",
     dependsOn: "",
     replicationMode: "none" as "none" | "async" | "sync",
+    // Kept as strings so an untouched control sends nothing and the reducer's
+    // default for the kind stands, rather than a number the person never chose.
+    replicas: "",
+    latencyTargetMs: "",
+    recoveryTimeMinutes: "",
+    peakRps: "",
+    capacityRps: "",
+    monthlyCostUsd: "",
   });
   const [dragPreview, setDragPreview] = useState<
     { id: string; x: number; y: number } | undefined
@@ -1097,15 +1105,30 @@ export function App() {
           name,
           kind: componentDraft.kind,
           regionId,
-          // Sensible starting capacity; the architect tunes it on the canvas.
-          peakRps: 8000,
-          capacityRps: 10000,
-          monthlyCostUsd: 800,
+          // Sensible starting capacity when the architect does not say; these
+          // drive capacity deficits and the cost ceiling, so someone modelling
+          // their own system has to be able to state them.
+          peakRps: Number(componentDraft.peakRps) || 8000,
+          capacityRps: Number(componentDraft.capacityRps) || 10000,
+          monthlyCostUsd: Number(componentDraft.monthlyCostUsd) || 800,
           // Only datastores carry replication, and only a deliberate choice
           // is sent: the reducer's default stays the unreplicated one.
           ...(componentDraft.kind === "database" &&
           componentDraft.replicationMode !== "none"
             ? { replicationMode: componentDraft.replicationMode }
+            : {}),
+          ...(componentDraft.kind === "service" && componentDraft.replicas
+            ? { replicas: Number(componentDraft.replicas) }
+            : {}),
+          ...(componentDraft.kind === "service" &&
+          componentDraft.latencyTargetMs
+            ? { latencyTargetMs: Number(componentDraft.latencyTargetMs) }
+            : {}),
+          ...(componentDraft.kind === "database" &&
+          componentDraft.recoveryTimeMinutes
+            ? {
+                recoveryTimeMinutes: Number(componentDraft.recoveryTimeMinutes),
+              }
             : {}),
         },
       },
@@ -2129,6 +2152,109 @@ export function App() {
                       <option value="sync">Sync standby</option>
                     </select>
                   )}
+                  {/* The remaining properties the engine scores on. An agent
+                      can describe all of them; a person could describe four,
+                      which inverts the authority this product argues for.
+                      Each is optional: untouched, the kind's default stands. */}
+                  {componentDraft.kind === "database" && (
+                    <select
+                      aria-label="Recovery time"
+                      value={componentDraft.recoveryTimeMinutes}
+                      disabled={!writable}
+                      onChange={(event) =>
+                        setComponentDraft((draft) => ({
+                          ...draft,
+                          recoveryTimeMinutes: event.target.value,
+                        }))
+                      }
+                    >
+                      <option value="">Recovery: default</option>
+                      <option value="10">Recovers in 10m</option>
+                      <option value="30">Recovers in 30m</option>
+                      <option value="120">Recovers in 2h</option>
+                    </select>
+                  )}
+                  {componentDraft.kind === "service" && (
+                    <select
+                      aria-label="Replicas"
+                      value={componentDraft.replicas}
+                      disabled={!writable}
+                      onChange={(event) =>
+                        setComponentDraft((draft) => ({
+                          ...draft,
+                          replicas: event.target.value,
+                        }))
+                      }
+                    >
+                      <option value="">Replicas: default</option>
+                      <option value="1">1 instance</option>
+                      <option value="3">3 instances</option>
+                      <option value="6">6 instances</option>
+                    </select>
+                  )}
+                  {componentDraft.kind === "service" && (
+                    <select
+                      aria-label="Latency target"
+                      value={componentDraft.latencyTargetMs}
+                      disabled={!writable}
+                      onChange={(event) =>
+                        setComponentDraft((draft) => ({
+                          ...draft,
+                          latencyTargetMs: event.target.value,
+                        }))
+                      }
+                    >
+                      <option value="">Latency: default</option>
+                      <option value="40">40ms target</option>
+                      <option value="150">150ms target</option>
+                      <option value="400">400ms target</option>
+                    </select>
+                  )}
+                  <input
+                    aria-label="Peak RPS"
+                    type="number"
+                    min={0}
+                    max={1000000}
+                    placeholder="Peak RPS"
+                    value={componentDraft.peakRps}
+                    disabled={!writable}
+                    onChange={(event) =>
+                      setComponentDraft((draft) => ({
+                        ...draft,
+                        peakRps: event.target.value,
+                      }))
+                    }
+                  />
+                  <input
+                    aria-label="Capacity RPS"
+                    type="number"
+                    min={0}
+                    max={1000000}
+                    placeholder="Capacity RPS"
+                    value={componentDraft.capacityRps}
+                    disabled={!writable}
+                    onChange={(event) =>
+                      setComponentDraft((draft) => ({
+                        ...draft,
+                        capacityRps: event.target.value,
+                      }))
+                    }
+                  />
+                  <input
+                    aria-label="Monthly cost USD"
+                    type="number"
+                    min={0}
+                    max={1000000}
+                    placeholder="Monthly $"
+                    value={componentDraft.monthlyCostUsd}
+                    disabled={!writable}
+                    onChange={(event) =>
+                      setComponentDraft((draft) => ({
+                        ...draft,
+                        monthlyCostUsd: event.target.value,
+                      }))
+                    }
+                  />
                   <button type="submit" disabled={!writable}>
                     Add
                   </button>

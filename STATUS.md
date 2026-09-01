@@ -1039,3 +1039,16 @@ was already underway again.
   - Evidence: M61 fixed `replicationMode`, so the question was whether it was the only one. It was not. The engine reads eight properties; creation accepted five. `replicas` was reachable only through a second `propose_architecture_change` call, and `recoveryTimeMinutes` and `latencyTargetMs` were reachable nowhere at all — an agent got the hardcoded defaults of 30 minutes and 150ms whatever the system it was describing.
   - All three are now accepted at creation, threaded through the command schema, the operation type, the reducer and `deriveGraph`, and exposed on both `add_architecture_component` and `model_architecture` with the runtime validator widened to match the advertised schema. Every one is optional, so a component described without them keeps its kind's default.
   - Each reaches the engine rather than merely being stored, which is the part worth asserting: `replicas: 6` moves availability 96.55 → 96.83, `latencyTargetMs: 40` moves latency 150 → 120, `recoveryTimeMinutes: 120` moves the recovery objective 5 → 18 minutes. The test drives all three through the batch tool and checks the metric each is supposed to move; dropping any one of them in `deriveGraph` fails it independently.
+
+## Milestone 63 — A person can describe everything an agent can
+
+- [x] **M63.1 — Close the authority inversion** `DONE`
+  - Acceptance: no property is reachable by an agent and not by the human at the same moment.
+  - Evidence: M61 and M62 gave the creation tool eight properties. The component form offered four, so an agent could express things the reviewer could not — a reviewer would have had to ask the agent to set something they were not permitted to set themselves. That inverts the bounded-authority argument this whole product makes.
+  - The form now carries all eight. Replicas, latency target and recovery time are presets rather than raw numbers, so the page stays scannable; peak RPS, capacity and monthly cost are numeric inputs, because a person modelling their own system has to state its actual load. Every one is optional and an untouched control sends nothing, so the reducer's default for the kind still stands.
+  - Writing the test found three more than expected: `peakRps`, `capacityRps` and `monthlyCostUsd` were hardcoded to 8000, 10000 and 800 in the form. They drive capacity deficits and the cost ceiling, so someone building their own architecture could not describe its load at all.
+
+- [x] **M63.2 — A parity test that can actually fail** `DONE`
+  - Evidence: the first version searched the whole component for `componentDraft.<property>`. Removing `peakRps` from the dispatched payload left its input's own `value=` binding on screen, so the test passed — it asserted a control existed, not that the value was sent.
+  - Scoping it to the dispatched input object was still not enough: hardcoding `replicas: 3` passed, because the guard condition wrapping it still named the draft field. The check now requires the property to be assigned from the draft, and each of the eight fails independently when hardcoded.
+  - It reads the shipped `App.tsx` rather than keeping a list of expected properties, so a ninth property added to the tool and forgotten in the form fails immediately.
