@@ -1332,3 +1332,14 @@ was already underway again.
 - [x] **M88.2 — An empty enum is worse than a bare string** `DONE`
   - Evidence: the first filter excluded merged branches, which is right on a seeded architecture and wrong on a blank canvas, where the merged baseline stays editable — the same exception `canEditModel` makes. That left the enum empty on the one surface where an agent builds from nothing, advertising that no value would be accepted while five write tools stood registered and working.
   - Caught by checking the enum's contents across both surfaces rather than only that the attribute existed. The test asserts both halves separately: a missing enum fails naming the tool, and an empty one fails with a different message naming a different tool.
+
+## Milestone 89 — The bounds a batch call is judged against
+
+- [x] **M89.1 — Declare what the batch tool already enforces** `DONE`
+  - Acceptance: an agent filling a schema is not rejected by a limit the schema omitted.
+  - Evidence: M88 swept the string enums, so this swept the numeric and length bounds. `add_architecture_component` declares minimum, maximum, and a pattern on every field it takes. `model_architecture`, validating the same properties through the same rules, declared none for `key`, `name`, `peakRps` or `capacityRps` — while the runtime enforced key 2 to 24 with a pattern, name 2 to 32, and both rates up to a million. Exactly the mismatch M60 fixed for the component count, on four more fields of the same tool.
+  - All four are now stated. Verified against the deployed origin: the live schema carries them, and a key of 25 characters is refused with `components.0.key: Too big: expected string to have <=24 characters` — the bound now named in the schema that rejected it.
+
+- [x] **M89.2 — Check the worse direction too** `DONE`
+  - Evidence: a schema that understates the runtime wastes a call; one that overstates it promises something that will always fail. Every advertised extreme was driven through the batch tool — key at 2 and 24, name at 2 and 32, both rates at a million — and all six were accepted, so nothing is advertised that the runtime would refuse.
+  - The test holds both halves, and each was verified to fail on its own: removing the declared key bounds fails it, and tightening the runtime's name limit below the schema's fails it too. The existing boundary-probe test covers three tools and skips this one, because its flat-field loop cannot express a nested array — which is why the gap survived there.
