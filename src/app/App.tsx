@@ -1594,9 +1594,9 @@ export function App() {
                 <p className="eyebrow">Start here</p>
                 <strong>Describe your architecture in a sentence.</strong>
                 <p>
-                  Name the services, stores, and queues and how they depend on
-                  each other. Aether models them, then proves what a failure
-                  costs.
+                  A sentence or an arrow chain —{" "}
+                  <code>nginx -&gt; api -&gt; Postgres</code> works. Aether
+                  models it, then proves what a failure costs.
                 </p>
                 <button
                   type="button"
@@ -1748,8 +1748,9 @@ export function App() {
                   Describe any architecture. Let the agent model it.
                 </strong>
                 <small>
-                  Name the services, stores, and queues in a sentence. Aether
-                  models them and shows what a failure would cost.
+                  Name the services, stores, and queues — in a sentence or as an
+                  arrow chain. Aether models them and shows what a failure would
+                  cost.
                 </small>
               </div>
               <textarea
@@ -1758,7 +1759,10 @@ export function App() {
                 maxLength={420}
                 rows={4}
                 aria-label="Describe your architecture for an agent to model"
-                placeholder="Example: Users hit an API gateway, checkout calls fraud scoring, fraud writes to Postgres, events flow through Kafka, and analytics reads from a warehouse."
+                /* Show the compact form too: an arrow chain is how most
+                   people sketch a stack, and nobody tries it unless the
+                   placeholder says it works. */
+                placeholder="Prose or a chain — both work. Example: nginx -> orders API -> Postgres, and a worker consumes from SQS. Or: users hit an API gateway, checkout calls fraud scoring, fraud writes to Postgres."
                 onChange={(event) => setSystemBrief(event.target.value)}
               />
               <ol>
