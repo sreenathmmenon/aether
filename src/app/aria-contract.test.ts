@@ -173,6 +173,27 @@ describe("the interface honours the ARIA it declares", () => {
     expect(chip).not.toContain('aria-live="assertive"');
   });
 
+  it("announces an agent call once, and only the new one", () => {
+    // The header chip and the tool feed both carried the same call, both as
+    // polite live regions, so a screen reader said every agent action twice —
+    // bare in the header and in full in the feed. The feed wins: it names the
+    // arguments too.
+    const header = appSource.slice(
+      appSource.indexOf("header-call header-call-idle"),
+      appSource.indexOf("{latestCall && <code>"),
+    );
+    expect(header).not.toContain("aria-live");
+
+    // And the feed announces the arriving call rather than re-reading itself:
+    // without this the fourth call replays the three before it.
+    const feed = appSource.slice(
+      appSource.indexOf('className="tool-feed"'),
+      appSource.indexOf('className="tool-feed"') + 120,
+    );
+    expect(feed).toContain('aria-live="polite"');
+    expect(feed).toContain('aria-atomic="false"');
+  });
+
   it("keeps the tab panel bound to the tab that opens it", () => {
     // A tabpanel labelled by a tab that is not the selected one describes the
     // wrong scenario, which is worse than being unlabelled.

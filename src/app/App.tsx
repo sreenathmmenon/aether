@@ -1352,16 +1352,17 @@ export function App() {
                 `WebMCP live · ${toolCount} state-aware tools`
               : "WebMCP not detected"}
           </span>
-          {/* The live region has to exist before the content arrives. Mounting
-              it together with the message means a screen reader sees a new
-              node rather than a changed region, and usually says nothing. */}
+          {/* Visible but not announced. The tool feed below is already a
+              polite live region carrying the same call with its arguments, so
+              marking this one too made a screen reader say every agent call
+              twice — once bare here and once in full there. The louder of two
+              duplicates is the one worth keeping. */}
           <span
             className={
               latestCall
                 ? `header-call header-call-${latestCall.outcome}`
                 : "header-call header-call-idle"
             }
-            aria-live="polite"
           >
             {latestCall && <code>{latestCall.name}</code>}
           </span>
@@ -2560,7 +2561,10 @@ export function App() {
                 : `${offlineToolSurface.length} tools published · no agent detected`}
             </strong>
           </div>
-          <div className="tool-feed" aria-live="polite">
+          {/* Only the arriving call is announced. Without this the whole
+              feed is re-read on every agent action, so the fourth call
+              replays the three before it. */}
+          <div className="tool-feed" aria-live="polite" aria-atomic="false">
             <p className="eyebrow">
               {toolCalls.length ? "Agent tool activity" : "Agent tool surface"}
             </p>
