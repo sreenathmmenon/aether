@@ -1820,3 +1820,11 @@ was already underway again.
   - The server was checked before concluding anything: it held **both** notes at version 4, so nothing was lost. The tab had not pulled the change because its `remoteVersionRef` was already 4 — it had written that version itself — and the poll skips when `remoteVersion <= remoteVersionRef`. Forcing another write made it conflict, reconcile, and hold both notes, confirming the reconciliation path is correct and only the pull had been skipped.
   - **Reported as no finding, having tested the premise.** Two distinct states can share a version number only if a writer writes from a version another writer has already superseded, and the server's optimistic guard makes that impossible between real clients — verified directly: two writers both sending `expectedVersion: 1` produce one `{"version":2}` and one `409 STALE_WORKSPACE`. The probe produced the situation by writing from a version the tab had already moved past, which no client of this product does.
   - Recorded because the cheap conclusion — "the poll drops external writes" — was available at the second step and would have been wrong, and the fix it implied would have made the poll merge on every tick for no reason.
+
+## Milestone 132 — Regression check after a run of sync changes
+
+- [x] **M132.1 — Confirm the core demo still holds** `DONE`
+  - Acceptance: five milestones of persistence and merge changes have not disturbed what a judge sees first.
+  - Evidence: M129 through M131 changed the merge, the discard guard in three places, and the conflict retry — all on the path that loads and saves every workspace. That is exactly the kind of run that breaks the opening screen without anyone noticing, so the whole journey was re-walked on the deployed origin from a cleared browser.
+  - First load is intact: `Mumbai is down. Choose the repair before traffic peaks.`, five state-aware tools, live causal evidence, and a `Synced` badge. The agent journey then reproduces end to end — creating a repair future grows the surface to twelve, two runs of the same scenario return byte-identical results, and the approve control is enabled reading `Evidence is current and clean · First run on this future · 5 of 5 components simulated`, which is the M126 wording.
+  - Repository state: 252 tests, clean tree, typecheck and lint silent.
