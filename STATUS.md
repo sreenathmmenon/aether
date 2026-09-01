@@ -1707,4 +1707,5 @@ was already underway again.
 - [x] **M121.2 — Extend the guard that should have caught it** `DONE`
   - Evidence: a drift test already derived true tool counts and rejected any other number written beside the word "tools", but it covered three documents and not `WEBMCP_EVALS.md`, and it checked counts and not the budget. Adding the file caught the "nine tools" claim on the first run.
   - The budget is now held to `maxToolResultLength` wherever a document states one, so the two cannot drift apart again. It guards its own vacuity: deleting the phrase fails the test rather than passing it, which matters because the easiest way to satisfy a claim check is to delete the claim.
+  - Verified against the deployed origin: every result measured on the live surface sits well inside the enforced ceiling. The 1,528 figure the documents now cite is the full three-future worst case the test constructs, which is the number worth documenting rather than whatever a partly-populated workspace happens to produce.
   - Three breaks confirmed: reverting the budget to 1,500 fails, writing a wrong tool count fails, and removing the budget sentence entirely fails.
