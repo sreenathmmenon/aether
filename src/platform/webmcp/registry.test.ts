@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createInitialState } from "@core/branch-engine";
 import { dispatch } from "@core/branch-engine";
+import type { AetherState } from "@core/branch-engine";
 import { paymentPlatformBaseline } from "../../fixtures/payment-platform/baseline";
 import { blankBaseline } from "../../fixtures/blank/baseline";
 import { rideHailingBaseline } from "../../fixtures/ride-hailing/baseline";
@@ -1017,5 +1018,70 @@ describe("Aether WebMCP registry", () => {
       expect(tool.annotations.untrustedContentHint, tool.name).toBe(true);
     }
     registry?.dispose();
+  });
+
+  it("matches the tool surface the submission documents describe", async () => {
+    // The README and submission quote these counts and names, and a doc claim
+    // that has gone stale is worse than none: the compliance table's "no
+    // user-generated payload is returned" was false, and that claim was what
+    // made a wrong annotation look correct. These are the numbers prose
+    // depends on, so the suite owns them.
+    const surface = async (state: AetherState) => {
+      const tools: RegisteredTool[] = [];
+      const registry = createAetherToolRegistry(() => {}, undefined, {
+        registerTool: async (tool) => {
+          tools.push(tool as unknown as RegisteredTool);
+        },
+      });
+      await registry?.refresh(state);
+      registry?.dispose();
+      return tools as unknown as {
+        name: string;
+        annotations: { readOnlyHint?: boolean };
+      }[];
+    };
+
+    const committed = await surface(
+      createInitialState(paymentPlatformBaseline, "payment-platform"),
+    );
+    expect(committed.map((tool) => tool.name).sort()).toEqual(
+      [
+        "get_decision_record",
+        "get_architecture_summary",
+        "inspect_failure_domain",
+        "trace_architecture_dependency",
+        "create_architecture_branch",
+      ].sort(),
+    );
+
+    const own = await surface(createInitialState(blankBaseline, "blank"));
+    expect(own).toHaveLength(10);
+
+    const branched = dispatch(
+      createInitialState(paymentPlatformBaseline, "payment-platform"),
+      {
+        type: "CREATE_BRANCH",
+        input: { name: "Repair", intent: "highest_resilience" },
+      },
+    );
+    if (!branched.ok) throw new Error("fixture branch must be created");
+    const withFuture = await surface(branched.value);
+    expect(withFuture).toHaveLength(12);
+
+    // Two claims the submission makes about authority and honesty.
+    expect(
+      withFuture.filter((tool) =>
+        /approve|merge|commit|rollback/i.test(tool.name),
+      ),
+    ).toEqual([]);
+    expect(
+      withFuture
+        .filter(
+          (tool) =>
+            /^(add_|connect_|model_|create_|run_|propose_)/.test(tool.name) &&
+            tool.annotations.readOnlyHint === true,
+        )
+        .map((tool) => tool.name),
+    ).toEqual([]);
   });
 });
