@@ -642,7 +642,7 @@ export function createAetherToolRegistry(
       await register({
         name: "inspect_failure_domain",
         description:
-          "Read the deterministic blast radius and decision variables for a named failure scenario. Use this before proposing a repair.",
+          "Read the deterministic consequence of a named failure scenario: which components are affected, why each one fails and how far it sits from the origin, plus the metrics, violations and the properties worth changing. Use this before proposing a repair.",
         inputSchema: {
           type: "object",
           properties: {

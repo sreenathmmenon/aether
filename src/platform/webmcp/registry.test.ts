@@ -809,6 +809,15 @@ describe("Aether WebMCP registry", () => {
     // a shorter answer, which would lose the whole result.
     expect(output).not.toContain("RESULT_TOO_LARGE");
     expect(output.length).toBeLessThanOrEqual(maxToolResultLength);
+
+    // The description has to say the chain is here. An agent choosing between
+    // tools reads that, not the result it has not called yet, and this one
+    // advertised "blast radius and decision variables" after the chain was
+    // added — describing the tool it used to be.
+    const described = live.find(
+      (tool) => tool.name === "inspect_failure_domain",
+    ) as unknown as { description: string };
+    expect(described.description).toMatch(/why each one fails|causal|path/i);
   });
 
   it("tells an agent what to do at the decision point", async () => {
