@@ -65,6 +65,23 @@ describe("a write never erases evidence it has not seen", () => {
     );
   });
 
+  it("keeps both sides when remote and local each hold runs the other lacks", () => {
+    // Adopting shared state swapped simulations wholesale in both
+    // directions, so whichever side the page took, the other side's runs
+    // were gone. Reproduced live: the server held sixteen runs while the
+    // page held none, and a merged future reported no evidence at all.
+    const local = withRuns(["regional_outage"]);
+    const remote = withRuns(["traffic_spike"]);
+    expect(runsOf(mergeEvidence(local, remote))).toEqual([
+      "regional_outage",
+      "traffic_spike",
+    ]);
+    expect(runsOf(mergeEvidence(remote, local))).toEqual([
+      "regional_outage",
+      "traffic_spike",
+    ]);
+  });
+
   it("takes the incoming state whole when nothing is held yet", () => {
     const incoming = withRuns(["regional_outage"]);
     expect(mergeEvidence(undefined, incoming)).toBe(incoming);

@@ -648,7 +648,12 @@ export function App() {
           }
           applyingRemoteRef.current = true;
           remoteVersionRef.current = remote.workspace.persistenceVersion ?? 0;
-          setState(remote);
+          // Union the evidence rather than swapping wholesale. Remote and local
+          // can each hold runs the other has not seen — the writer that produced
+          // one may not have observed the other — and adopting either direction
+          // wholesale drops the difference. Runs are keyed on branch, version and
+          // scenario, so a union is safe and no evidence is lost either way.
+          setState((current) => mergeEvidence(current, remote));
           setMessage(
             sharedRoom
               ? "Someone else in this room updated the architecture. Evidence is live."
@@ -672,7 +677,12 @@ export function App() {
       // how a shared link lands a reviewer on somebody else's canvas.
       if (requestedTemplate()) return;
       applyingRemoteRef.current = true;
-      setState(remote);
+      // Union the evidence rather than swapping wholesale. Remote and local
+      // can each hold runs the other has not seen — the writer that produced
+      // one may not have observed the other — and adopting either direction
+      // wholesale drops the difference. Runs are keyed on branch, version and
+      // scenario, so a union is safe and no evidence is lost either way.
+      setState((current) => mergeEvidence(current, remote));
       setMessage("Production workspace restored from shared persistence.");
     });
   }, []);
@@ -691,7 +701,12 @@ export function App() {
         applyingRemoteRef.current = true;
         remoteVersionRef.current = remoteVersion;
         setSyncStatus("Synced");
-        setState(remote);
+        // Union the evidence rather than swapping wholesale. Remote and local
+        // can each hold runs the other has not seen — the writer that produced
+        // one may not have observed the other — and adopting either direction
+        // wholesale drops the difference. Runs are keyed on branch, version and
+        // scenario, so a union is safe and no evidence is lost either way.
+        setState((current) => mergeEvidence(current, remote));
         setMessage(
           sharedRoom
             ? "Someone else in this room changed the architecture. Evidence is live."
