@@ -19,6 +19,7 @@ import {
 } from "./region-bounds";
 import { edgeBetween } from "./edge-geometry";
 import { futuresMessage } from "./futures-message";
+import { gateReason } from "./gate-reason";
 import { mergeEvidence } from "@core/evidence-merge";
 import { scenarioNarrative } from "./scenario-copy";
 import { useModalDialog } from "./use-modal-dialog";
@@ -2770,13 +2771,18 @@ export function App() {
                 say what the evidence covers in words rather than echo an
                 internal enum. "Evidence scope: affected" told a reviewer
                 nothing they could act on. */}
-            {activeSimulation
-              ? `${
-                  activeSimulation.rerunScope === "affected"
-                    ? "Recomputed after your edits"
-                    : "First run on this future"
-                } · ${activeSimulation.affectedEntityIds.length} of ${entities.length} components affected`
-              : "Run a scenario to make approval eligible."}
+            {gateReason({
+              currentRuns: currentRuns.length,
+              blockingRuns: blockingRuns.length,
+              hasAnyRun: (state.simulations[activeBranch.id] ?? []).length > 0,
+              scope: activeSimulation
+                ? {
+                    recomputed: activeSimulation.rerunScope === "affected",
+                    affected: activeSimulation.affectedEntityIds.length,
+                    total: entities.length,
+                  }
+                : undefined,
+            })}
             {state.workspace.costCeilingUsd
               ? ` · human cost ceiling $${state.workspace.costCeilingUsd.toLocaleString()}`
               : ""}
