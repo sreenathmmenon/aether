@@ -20,6 +20,7 @@ import {
 import { edgeBetween } from "./edge-geometry";
 import { futuresMessage } from "./futures-message";
 import { gateReason } from "./gate-reason";
+import { reconcileMessage } from "./reconcile-message";
 import { mergeEvidence } from "@core/evidence-merge";
 import { scenarioNarrative } from "./scenario-copy";
 import { useModalDialog } from "./use-modal-dialog";
@@ -656,11 +657,7 @@ export function App() {
           // wholesale drops the difference. Runs are keyed on branch, version and
           // scenario, so a union is safe and no evidence is lost either way.
           setState((current) => mergeEvidence(current, remote));
-          setMessage(
-            sharedRoom
-              ? "Someone else in this room updated the architecture. Evidence is live."
-              : "Another tab updated this workspace. State refreshed.",
-          );
+          setMessage(reconcileMessage(Boolean(sharedRoom)));
         });
     });
   }, [state, sharedRoom]);
@@ -709,11 +706,7 @@ export function App() {
         // wholesale drops the difference. Runs are keyed on branch, version and
         // scenario, so a union is safe and no evidence is lost either way.
         setState((current) => mergeEvidence(current, remote));
-        setMessage(
-          sharedRoom
-            ? "Someone else in this room changed the architecture. Evidence is live."
-            : "Another tab changed this architecture. Evidence is live.",
-        );
+        setMessage(reconcileMessage(Boolean(sharedRoom)));
       });
     };
     const interval = window.setInterval(poll, 3000);
@@ -736,13 +729,15 @@ export function App() {
       // Union the evidence, as the other three adoption paths do. This one
       // was missed because it names the incoming state differently.
       setState((current) => mergeEvidence(current, incoming));
-      setMessage(
-        "Live workspace update received. Reviewing the current future.",
-      );
+      // Who the update came from depends on where the workspace is shared.
+      // This path said "Live workspace update received" in both cases, so a
+      // reviewer in a room was told a second tab of their own browser had
+      // changed the architecture when a colleague had.
+      setMessage(reconcileMessage(Boolean(sharedRoom)));
     };
     window.addEventListener("storage", sync);
     return () => window.removeEventListener("storage", sync);
-  }, []);
+  }, [sharedRoom]);
   useEffect(() => {
     const move = (event: PointerEvent) => {
       const drag = dragRef.current;
