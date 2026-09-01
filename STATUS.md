@@ -1788,3 +1788,18 @@ was already underway again.
 - [x] **M128.2 — A guard that did not apply to the sentence it was written for** `DONE`
   - Evidence: the documentation was corrected to name the seven-tool surface, and breaking it deliberately produced **no failure**. The count guard matches the literal phrase `"<word> tools"`, and the new sentence read "seven on an architecture" — the guard never saw it. The claim was correct and unprotected, which is the same shape as a test that passes vacuously.
   - Rephrased to "seven tools on an architecture with a committed future" so the existing guard applies. Writing "six tools" there now fails, where a moment earlier it did not. Recorded because the first two break attempts both silently did nothing, and reading that as "the guards work" would have left the claim unguarded.
+
+## Milestone 129 — A shared room that silently kept work local
+
+- [x] **M129.1 — Two tabs, one room, and a write that never landed** `DONE`
+  - Acceptance: two reviewers editing one workspace both keep their work and both see it persisted.
+  - Evidence: found by running the collaboration path rather than reading it — two real browser sessions on one room link. The second reviewer saw the first's repair future, and evidence propagated with a **byte-identical fingerprint**, so shared state works. Then both tabs wrote at once, and both settled on `Local draft` **while each was reading the other's notes**.
+  - The badge was not lying. The network told the real story: `PUT 409 → GET 200 → nothing`. A refused write reloaded the shared state and stopped, so the local change never reached the server — accurately reported as a local draft, which is exactly what made it hard to see.
+
+- [x] **M129.2 — Three fixes, because the first two were wrong** `DONE`
+  - Evidence recorded honestly, since each attempt was a different misreading:
+  - **First**, the badge alone was set to `Synced` after reconciling. That would have reported shared work that was still local — the inverse of the defect it was meant to fix. Reverted once the network showed no retry.
+  - **Second**, the reconcile was made to write the merged state back. Correct and necessary, but still no PUT: the discard branch was firing before it.
+  - **Third**, the real cause. `mergeEvidence` unioned simulations and took `...incoming` for everything else, so a merge genuinely dropped the local audit and notes — and `wouldDiscardWork` correctly refused it. The merge now unions audit entries and notes too, keyed on content and timestamp because ids are positional and two tabs mint `event-5` for different events.
+  - **And the last step**: the guard was asking about `remote` while the code adopts the _merge_. A concurrent write always fails that question, so every conflict took the refusal branch. Only this path merges, so only this path tests the merge; the two callers that adopt wholesale rightly test the incoming state.
+  - Verified against the deployed origin, end to end: the sequence is now `PUT 409 → GET 200 → PUT 409 → PUT 200`, the badge reads `Synced`, and the server holds **both** reviewers' notes across seven audit entries at version 7.
