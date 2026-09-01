@@ -470,6 +470,27 @@ describe("Aether WebMCP registry", () => {
     expect(unreachable).toEqual([]);
   });
 
+  it("unions evidence on every path that adopts shared state", async () => {
+    // Four places adopt state from outside this tab: the mount restore, the
+    // three-second poll, the refused-write conflict, and the storage event.
+    // Three were unioned and the fourth was missed because it names its
+    // incoming state differently — and that one fires in the same tab,
+    // because persisting to local storage is what the listener watches. It
+    // swapped simulations wholesale, so creating three futures wrote twelve
+    // runs and then immediately zero, measured in the browser.
+    const adoptions =
+      appSource.match(/setState\((?:\(current\) =>|[a-z]+)/g) ?? [];
+    // Every adoption of an outside state must go through the union. Naming
+    // them individually here would drift; this asserts the shape instead.
+    for (const name of ["remote", "incoming"]) {
+      expect(
+        appSource.includes(`setState(${name})`),
+        `setState(${name}) adopts outside state without unioning evidence`,
+      ).toBe(false);
+    }
+    expect(adoptions.length).toBeGreaterThan(0);
+  });
+
   it("tells an agent what to do at the decision point", async () => {
     // Every other tool names a next action. This one, at the point a
     // decision is actually made, returned futures and a human gate and
