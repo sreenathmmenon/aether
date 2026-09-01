@@ -14,26 +14,6 @@ describe("workspace persistence shape", () => {
     ).toBe("Primary Ledger");
   });
 
-  it("migrates pre-decision-room workspaces with an explanatory decision record", () => {
-    const legacy = createInitialState(paymentPlatformBaseline) as {
-      decisionNotes?: unknown;
-    };
-    delete legacy.decisionNotes;
-    const restored = parsePersistedState(JSON.stringify(legacy));
-    expect(restored?.decisionNotes).toHaveLength(2);
-    expect(restored?.decisionNotes[0]).toMatchObject({
-      actor: { kind: "agent" },
-      entityId: "ledger",
-    });
-  });
-
-  it("backfills an empty pre-decision-room note collection", () => {
-    const legacy = createInitialState(paymentPlatformBaseline);
-    legacy.decisionNotes = [];
-    const restored = parsePersistedState(JSON.stringify(legacy));
-    expect(restored?.decisionNotes).toHaveLength(2);
-  });
-
   it("drops simulation results produced by a superseded engine", () => {
     const state = createInitialState(paymentPlatformBaseline);
     const stale = {
@@ -92,5 +72,20 @@ describe("workspace persistence shape", () => {
 
     // A coherent workspace still restores.
     expect(parsePersistedState(JSON.stringify(good))).toBeDefined();
+  });
+
+  it("does not invent decision notes for a workspace that has none", () => {
+    // Notes are seeded from the loaded graph when a workspace is created, so
+    // a stored workspace without them predates that. Injecting a hardcoded
+    // set would name components the loaded system may not contain.
+    const state = createInitialState(paymentPlatformBaseline);
+    const stripped = parsePersistedState(
+      JSON.stringify({ ...state, decisionNotes: [] }),
+    );
+    expect(stripped?.decisionNotes).toEqual([]);
+
+    // Existing notes are preserved untouched.
+    const kept = parsePersistedState(JSON.stringify(state));
+    expect(kept?.decisionNotes).toHaveLength(state.decisionNotes.length);
   });
 });

@@ -29,6 +29,17 @@ const humanActor = {
   kind: "human" as const,
   displayName: "Sreenath",
 };
+/**
+ * Evidence the product computes on the reviewer's behalf is not a human
+ * decision. Attributing it to Sreenath would make the replay -- whose whole
+ * purpose is showing who decided what -- claim he ran nine simulations he
+ * never chose individually.
+ */
+const engineActor = {
+  id: "aether-engine",
+  kind: "system" as const,
+  displayName: "Aether",
+};
 function scenarioNarrative(
   graph: ArchitectureGraph,
   evidence: { causalChain?: { entityId: string; entityName: string }[] },
@@ -129,6 +140,12 @@ const commandLabels: Record<string, { label: string; impact: string }> = {
   ROLLBACK_MERGE: { label: "rolled back the merge", impact: "gate" },
   ADD_DECISION_NOTE: { label: "recorded decision context", impact: "note" },
 };
+
+/** One place decides how an actor is named, so the views cannot disagree. */
+function actorName(kind: "human" | "agent" | "system") {
+  if (kind === "human") return "Sreenath";
+  return kind === "agent" ? "Aether agent" : "Aether engine";
+}
 
 function display(value: string | number | boolean) {
   return typeof value === "number" ? value.toLocaleString() : String(value);
@@ -609,7 +626,7 @@ export function App() {
           type: "RUN_SCENARIO",
           input: { branchId: activeBranch.id, scenario },
         },
-        humanActor,
+        engineActor,
       );
       if (outcome.ok) next = outcome.value;
     }
@@ -653,7 +670,7 @@ export function App() {
               scenario,
             },
           },
-          humanActor,
+          engineActor,
         );
         if (simulated.ok) next = simulated.value;
       }
@@ -1440,11 +1457,7 @@ export function App() {
                   key={note.id}
                 >
                   <div>
-                    <strong>
-                      {note.actor.kind === "human"
-                        ? "Sreenath"
-                        : "Aether agent"}
-                    </strong>
+                    <strong>{actorName(note.actor.kind)}</strong>
                     <span>
                       {note.entityId
                         ? `Anchored to ${graph.entities[note.entityId]?.name ?? note.entityId}`
@@ -1495,11 +1508,7 @@ export function App() {
                       >
                         <i>{state.audit.length - index}</i>
                         <div>
-                          <strong>
-                            {event.actor.kind === "human"
-                              ? "Sreenath"
-                              : "Aether agent"}
-                          </strong>
+                          <strong>{actorName(event.actor.kind)}</strong>
                           <span>
                             {described?.label ??
                               event.commandName
@@ -1625,7 +1634,7 @@ export function App() {
             .reverse()
             .map((event) => (
               <li key={event.id}>
-                <b>{event.actor.kind === "human" ? "SREENATH" : "AETHER"}</b>{" "}
+                <b>{actorName(event.actor.kind).toUpperCase()}</b>{" "}
                 {commandLabels[event.commandName]?.label ??
                   event.commandName.replaceAll("_", " ").toLowerCase()}
               </li>

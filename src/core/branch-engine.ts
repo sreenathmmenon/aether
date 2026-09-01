@@ -98,7 +98,17 @@ function openingNotes(
       id: "note-2",
       workspaceId: "workspace-payment",
       branchId: "branch-baseline",
-      entityId: opening.causalChain.at(-1)?.entityId,
+      // A cost constraint concerns the most expensive component, not
+      // whichever one the failure happened to reach last.
+      entityId: Object.values(graph.entities)
+        .filter((entity) => entity.kind !== "region")
+        .sort(
+          (left, right) =>
+            ((right.properties as { monthlyCostUsd?: number }).monthlyCostUsd ??
+              0) -
+              ((left.properties as { monthlyCostUsd?: number })
+                .monthlyCostUsd ?? 0) || left.id.localeCompare(right.id),
+        )[0]?.id,
       actor: human,
       body: `Keep the monthly cost under $${budget.toLocaleString()}. Show me the resilience trade-off and the capacity risk before I approve anything.`,
       evidenceRef: "Human constraint",

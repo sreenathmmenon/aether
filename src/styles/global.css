@@ -1692,3 +1692,12 @@ button {
   font-size: 12.5px;
   line-height: 1.5;
 }
+
+/* Evidence the engine computed on the reviewer's behalf reads as neither a
+   human decision nor an agent action. */
+.decision-replay li.replay-system {
+  border-left-color: var(--muted);
+}
+.decision-replay li.replay-system strong {
+  color: var(--muted);
+}

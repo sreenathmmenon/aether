@@ -426,6 +426,12 @@ None. Production is deployed on Railway with durable PostgreSQL-backed per-visit
   - Acceptance: the baseline card and region labels tell the truth on a system the reviewer built.
   - Evidence: a screenshot of the deployed own-system path showed the baseline card reading "0.00% availability · 1 violation" beside a working three-component architecture, because the card read `revision-baseline` — the original empty canvas — rather than the baseline branch whose operations hold the components. It now derives from the branch as it stands and reports the real figure. The same screenshot showed "PRIMARY · PRIMARY", since a generic canvas names its regions after themselves; the failure domain is now shown only when it differs from the region name, leaving the seeded systems' informative labels intact.
 
+- [x] **M15.13 — Credit the engine for evidence nobody chose to run** `DONE`
+  - Acceptance: the replay distinguishes a human decision from evidence the product computed on their behalf.
+  - Evidence: a screenshot of the decision room showed twelve entries all attributed to Sreenath, nine of them simulations that "Create repair futures" and the capacity action run programmatically. The section whose purpose is showing who decided what claimed a person ran nine simulations they never chose individually. Generated evidence is now attributed to a system actor rendered as "Aether engine" with its own colour, while branching and property changes remain the human's. One helper names actors so the discussion, replay, and activity strip cannot disagree.
+- [x] **M15.14 — Anchor the seeded notes to components they are about** `DONE`
+  - Evidence: the human cost constraint anchored to the last component the failure reached, which on the payment platform is Reconciliation — unrelated to cost. It now anchors to the most expensive component, so the note sits on what it concerns: Primary Ledger on the payment platform, Inference Pool on the inference platform. Fixing it also surfaced a second hardcoded copy of the seeded notes in the persistence migration, naming payment-platform components regardless of the loaded system; that path is removed, since notes are seeded from the graph at creation and a workspace without them is better served by none than by borrowed content.
+
 ## Milestone 13 — Real-time architecture decision room
 
 - [x] **M13.1 — Define and build the unmistakable collaborative decision-room journey** `DONE`
