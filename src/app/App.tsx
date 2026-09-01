@@ -31,6 +31,7 @@ import {
   replayWindow,
   violationWindow,
 } from "./replay-window";
+import { shouldRestore } from "./requested-system";
 import { loadSummary } from "./load-summary";
 import { reconcileMessage } from "./reconcile-message";
 import { mergeEvidence } from "@core/evidence-merge";
@@ -199,7 +200,20 @@ export function App() {
     // and silently landing on somebody's previous workspace makes the link
     // useless and the product look like it ignored the request.
     const requested = requestedTemplate();
-    if (requested) return createInitialState(requested.graph, requested.id);
+    if (requested) {
+      // A ?system= link must open that system, but `loadTemplate` writes that
+      // parameter into the address bar itself, so a person who picks their own
+      // system from the dropdown then has a URL that discarded their work on
+      // every reload — reproduced on the deployed origin: pick "Your own
+      // system", add a component, refresh, and the canvas is empty again.
+      // Restoring work the visitor did *in the requested system* honours the
+      // link and keeps their work; only a link naming a different system
+      // still opens fresh, which is the case the reset exists for.
+      const stored = loadPersistedState();
+      if (stored && shouldRestore(requested.id, stored.workspace.templateId))
+        return stored;
+      return createInitialState(requested.graph, requested.id);
+    }
     // A returning visitor keeps their own work. A first arrival opens on a
     // worked incident rather than an empty grid: the submission says the
     // product opens on a payment platform losing a region, and the strongest
@@ -692,8 +706,16 @@ export function App() {
       setSyncStatus("Synced");
       // A ?system= link is an explicit request for that architecture. Restoring
       // a stored workspace over it makes the link silently do nothing, which is
-      // how a shared link lands a reviewer on somebody else's canvas.
-      if (requestedTemplate()) return;
+      // how a shared link lands a reviewer on somebody else's canvas. But a
+      // remote workspace holding the same system is this visitor's own work in
+      // the very system the link names, and dropping that is what made a
+      // reload on ?system=blank empty the canvas.
+      const requested = requestedTemplate();
+      if (
+        requested &&
+        !shouldRestore(requested.id, remote.workspace.templateId)
+      )
+        return;
       applyingRemoteRef.current = true;
       // Union the evidence rather than swapping wholesale. Remote and local
       // can each hold runs the other has not seen — the writer that produced
