@@ -1598,3 +1598,14 @@ was already underway again.
   - The agent's decision record was checked too and deliberately left alone. It returns `outcome: "human_edit"` next to `command: "SET_PROPERTY"`, which is a machine-readable pair for a machine consumer; prose there would be worse, not better. Two of three surfaces needed changing and one did not, which is only visible by looking at each.
   - Verified against the deployed origin: the replay reads "Sreenath changed a component property" with its timestamp and evidence and no enum, while `get_decision_record` still returns `human_edit`.
   - The test holds each surface to its own form and fails in both directions — putting the enum back in the replay fails it, and prettifying the agent's outcome fails it too. A single assertion in one direction would have allowed the second mistake.
+
+## Milestone 114 — The replay, checked rather than assumed
+
+- [x] **M114.1 — Audit the record a judge inspects** `DONE`
+  - Evidence: the replay header counts every command and the list renders twelve, so with sixteen recorded the two disagree on their face. A first probe suggested nothing explained the gap — the selector had matched no entries — but the disclosure was there and correct: "4 earlier decisions are held in this record and persisted with the workspace." Checking the DOM rather than trusting the first reading is what settled it.
+  - The claim it makes was then verified rather than taken at face value. The full history survives a reload, and the server holds all sixteen audit entries — the number on the page is literally the number persisted, not an optimistic label.
+
+- [x] **M114.2 — Test the sentence that reconciles them** `DONE`
+  - Evidence: that disclosure had no test, and it is the only thing standing between a reviewer and the conclusion that four decisions were dropped. Its singular-plural agreement against a count is the part that breaks quietly, which this codebase has now seen in the futures message and the decision record too.
+  - Extracted with its window constant so the two cannot drift, and tested for four properties: silent while everything fits, counting correctly beyond the window, agreeing in number, and saying the hidden commands are kept rather than discarded. Forcing the plural fails it; allowing a zero-hidden note fails it differently.
+  - Verified against the deployed origin: sixteen recorded, twelve shown, and the disclosure accounting for exactly the four-command difference.
