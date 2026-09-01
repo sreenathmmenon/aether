@@ -1031,3 +1031,11 @@ was already underway again.
 - [x] **M61.2 — People can set it too** `DONE`
   - Evidence: the human component form had no replication control, so this change would have given the agent a capability a person did not have — the inverse of the bounded-authority story this project makes. The form now offers no standby, async, or sync, shown only for databases where it applies, and sends a value only when it is a deliberate choice.
   - A correction worth recording: an earlier probe concluded setting the ledger to `sync` changed nothing. It changed nothing because `create_architecture_branch` with `highest_resilience` already seeds that exact repair, so the probe measured a no-op. The engine was right and the probe was wrong.
+
+## Milestone 62 — Every property the engine scores is one an agent can describe
+
+- [x] **M62.1 — Close the class, not the instance** `DONE`
+  - Acceptance: a component can be described completely at the moment it is created.
+  - Evidence: M61 fixed `replicationMode`, so the question was whether it was the only one. It was not. The engine reads eight properties; creation accepted five. `replicas` was reachable only through a second `propose_architecture_change` call, and `recoveryTimeMinutes` and `latencyTargetMs` were reachable nowhere at all — an agent got the hardcoded defaults of 30 minutes and 150ms whatever the system it was describing.
+  - All three are now accepted at creation, threaded through the command schema, the operation type, the reducer and `deriveGraph`, and exposed on both `add_architecture_component` and `model_architecture` with the runtime validator widened to match the advertised schema. Every one is optional, so a component described without them keeps its kind's default.
+  - Each reaches the engine rather than merely being stored, which is the part worth asserting: `replicas: 6` moves availability 96.55 → 96.83, `latencyTargetMs: 40` moves latency 150 → 120, `recoveryTimeMinutes: 120` moves the recovery objective 5 → 18 minutes. The test drives all three through the batch tool and checks the metric each is supposed to move; dropping any one of them in `deriveGraph` fails it independently.

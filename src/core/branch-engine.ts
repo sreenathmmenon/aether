@@ -188,12 +188,15 @@ export function deriveGraph(
           capacityRps: operation.capacityRps,
           monthlyCostUsd: operation.monthlyCostUsd,
           ...(operation.entityKind === "service"
-            ? { replicas: 1, latencyTargetMs: 150 }
+            ? {
+                replicas: operation.replicas ?? 1,
+                latencyTargetMs: operation.latencyTargetMs ?? 150,
+              }
             : {}),
           ...(operation.entityKind === "database"
             ? {
                 replicationMode: operation.replicationMode ?? "none",
-                recoveryTimeMinutes: 30,
+                recoveryTimeMinutes: operation.recoveryTimeMinutes ?? 30,
               }
             : {}),
           ...(operation.entityKind === "queue" ? { durable: true } : {}),
@@ -507,6 +510,15 @@ export function dispatch(
       monthlyCostUsd: command.input.monthlyCostUsd,
       ...(command.input.replicationMode
         ? { replicationMode: command.input.replicationMode }
+        : {}),
+      ...(command.input.replicas !== undefined
+        ? { replicas: command.input.replicas }
+        : {}),
+      ...(command.input.recoveryTimeMinutes !== undefined
+        ? { recoveryTimeMinutes: command.input.recoveryTimeMinutes }
+        : {}),
+      ...(command.input.latencyTargetMs !== undefined
+        ? { latencyTargetMs: command.input.latencyTargetMs }
         : {}),
     });
     branch.version += 1;

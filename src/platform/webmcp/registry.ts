@@ -90,6 +90,19 @@ const modelArchitectureInput = z.object({
         // it: a validator that rejects what the schema offers teaches an
         // agent something false about this page.
         replicationMode: z.enum(["none", "async", "sync"]).optional(),
+        replicas: z.number().int().min(1).max(64).optional(),
+        recoveryTimeMinutes: z
+          .number()
+          .finite()
+          .nonnegative()
+          .max(10_080)
+          .optional(),
+        latencyTargetMs: z
+          .number()
+          .finite()
+          .nonnegative()
+          .max(60_000)
+          .optional(),
       }),
     )
     .min(1)
@@ -755,6 +768,27 @@ export function createAetherToolRegistry(
                 description:
                   "Databases only. An unreplicated store scores as a single point of failure; sync gives it a standby that survives losing its region.",
               },
+              replicas: {
+                type: "integer",
+                minimum: 1,
+                maximum: 64,
+                description:
+                  "Services only. Redundant instances; more of them cushion availability when the component is impacted.",
+              },
+              recoveryTimeMinutes: {
+                type: "number",
+                minimum: 0,
+                maximum: 10080,
+                description:
+                  "Databases only. Declared time to restore this store, which sets the recovery objective a failure reports.",
+              },
+              latencyTargetMs: {
+                type: "number",
+                minimum: 0,
+                maximum: 60000,
+                description:
+                  "Services only. Target response time; the slowest target on the path sets the latency a failure reports.",
+              },
             },
             required: [
               "branchId",
@@ -837,6 +871,27 @@ export function createAetherToolRegistry(
                       description:
                         "Databases only. An unreplicated store scores as a single point of failure; sync gives it a regional standby.",
                     },
+                    replicas: {
+                      type: "integer",
+                      minimum: 1,
+                      maximum: 64,
+                      description:
+                        "Services only. Redundant instances cushion availability when impacted.",
+                    },
+                    recoveryTimeMinutes: {
+                      type: "number",
+                      minimum: 0,
+                      maximum: 10080,
+                      description:
+                        "Databases only. Declared restore time, which sets the reported recovery objective.",
+                    },
+                    latencyTargetMs: {
+                      type: "number",
+                      minimum: 0,
+                      maximum: 60000,
+                      description:
+                        "Services only. Target response time; the slowest on the path sets reported latency.",
+                    },
                   },
                   required: ["key", "name", "kind", "regionId"],
                   additionalProperties: false,
@@ -905,6 +960,15 @@ export function createAetherToolRegistry(
                     monthlyCostUsd: component.monthlyCostUsd ?? 800,
                     ...(component.replicationMode
                       ? { replicationMode: component.replicationMode }
+                      : {}),
+                    ...(component.replicas !== undefined
+                      ? { replicas: component.replicas }
+                      : {}),
+                    ...(component.recoveryTimeMinutes !== undefined
+                      ? { recoveryTimeMinutes: component.recoveryTimeMinutes }
+                      : {}),
+                    ...(component.latencyTargetMs !== undefined
+                      ? { latencyTargetMs: component.latencyTargetMs }
                       : {}),
                   },
                 },

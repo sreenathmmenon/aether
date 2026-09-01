@@ -59,6 +59,12 @@ export const addComponentInput = z.object({
   // violation, and repair it with a second call. Optional, so every existing
   // caller keeps the previous default of no replication.
   replicationMode: z.enum(["none", "async", "sync"]).optional(),
+  // The remaining properties the engine scores on. Each was reachable only
+  // through a second call, or not at all, so a component could not be
+  // described completely at the moment it was being described.
+  replicas: z.number().int().min(1).max(64).optional(),
+  recoveryTimeMinutes: z.number().finite().nonnegative().max(10_080).optional(),
+  latencyTargetMs: z.number().finite().nonnegative().max(60_000).optional(),
 });
 
 export const connectComponentsInput = z.object({

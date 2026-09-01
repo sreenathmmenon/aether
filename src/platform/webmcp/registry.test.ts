@@ -240,6 +240,77 @@ describe("Aether WebMCP registry", () => {
     );
   });
 
+  it("scores every property a component can be created with", async () => {
+    // The engine reads eight properties. Creation accepted five, so replicas,
+    // recovery time and latency target were reachable only through a second
+    // call or not at all — a component could not be described completely at
+    // the moment it was being described. Each one must reach the engine, not
+    // merely be stored, so this asserts the metric each is supposed to move.
+    const model = async (service: object, database: object) => {
+      const live = new Set<RegisteredTool>();
+      let state = createInitialState(blankBaseline, "blank");
+      const registry = createAetherToolRegistry(
+        (next) => {
+          state = next;
+        },
+        undefined,
+        {
+          registerTool: async (tool, options) => {
+            const entry = tool as unknown as RegisteredTool;
+            live.add(entry);
+            options?.signal?.addEventListener("abort", () =>
+              live.delete(entry),
+            );
+          },
+        },
+      );
+      await registry?.refresh(state);
+      await [...live]
+        .find((tool) => tool.name === "model_architecture")
+        ?.execute({
+          branchId: "branch-baseline",
+          components: [
+            {
+              key: "api",
+              name: "Api Tier",
+              kind: "service",
+              regionId: "region-primary",
+              ...service,
+            },
+            {
+              key: "db",
+              name: "Main Store",
+              kind: "database",
+              regionId: "region-primary",
+              replicationMode: "sync",
+              ...database,
+            },
+          ],
+          dependencies: [
+            { sourceKey: "api", targetKey: "db", kind: "writes_to" },
+          ],
+        });
+      const branch = state.branches["branch-baseline"]!;
+      return runScenario(
+        deriveGraph(state, branch),
+        "regional_outage",
+        branch.id,
+        branch.version,
+      );
+    };
+
+    const base = await model({}, {});
+    const tuned = await model(
+      { replicas: 6, latencyTargetMs: 40 },
+      { recoveryTimeMinutes: 120 },
+    );
+
+    // Each property moves the metric it is supposed to move.
+    expect(tuned.availability).toBeGreaterThan(base.availability);
+    expect(tuned.latencyMs).toBeLessThan(base.latencyMs);
+    expect(tuned.rtoMinutes).toBeGreaterThan(base.rtoMinutes);
+  });
+
   it("tells an agent what to do at the decision point", async () => {
     // Every other tool names a next action. This one, at the point a
     // decision is actually made, returned futures and a human gate and

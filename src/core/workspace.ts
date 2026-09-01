@@ -76,6 +76,10 @@ export type BranchOperation =
       monthlyCostUsd: number;
       /** Datastores only; absent keeps the unreplicated default. */
       replicationMode?: "none" | "async" | "sync";
+      /** Absent keeps the kind's default for each. */
+      replicas?: number;
+      recoveryTimeMinutes?: number;
+      latencyTargetMs?: number;
     }
   | { kind: "remove_entity"; entityId: EntityId };
 
