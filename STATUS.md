@@ -1297,3 +1297,15 @@ was already underway again.
   - What that exposed: the sentence above the control described the last simulation's scope, not the approval state. After the edit a reviewer read a disabled button beside "First run on this future · 5 of 5 components affected" — a run that no longer applied to the version on screen. Three distinct blocking states all rendered as one line about coverage.
   - The reason is now derived in `gate-reason.ts` and distinguishes them: never simulated, simulated and then superseded by an edit, blocked by a named number of violating scenarios, or current and clean with its coverage. Verified live across all four: "Run a scenario to make approval eligible.", "1 scenario reports violations. Resolve them to make approval eligible.", "First run on this future · 5 of 5 components affected", and "This future changed after its last run. Re-run a scenario to make approval eligible."
   - Extracted rather than left inline because the singular and plural forms and the ordering of the three cases are what break quietly. Each case was verified to fail on its own when removed.
+
+## Milestone 86 — Every rejection is actionable
+
+- [x] **M86.1 — Test the rejection-quality claim** `DONE`
+  - Acceptance: the submission's "rejected calls name the fields that failed and the values that would succeed" is true of every refusal, not most.
+  - Evidence: probed three refusals against the deployed origin. An invalid `kind` and an invalid `scenario` both named the field and listed every valid option. The creation-path region check answered `"Unknown region."` — neither the field, nor the options, and its `nextAction` fell back to the generic "Correct the named problem and call the tool again." One refusal out of three failed the claim the submission makes.
+  - It now reads `regionId: unknown region. Choose one of: region-mumbai, region-bengaluru.`, matching the relocation guard added in M67. A test drives all three rejections and asserts each names a field and at least one value that would have worked; reverting the message fails it.
+
+- [x] **M86.2 — A component could be created inside another component** `DONE`
+  - Evidence: the same check asked only whether `graph.entities[regionId]` existed, not whether it was a region. Passing `regionId: "ledger"` — a database — was accepted, so a component could be nested inside another component and the region it belonged to was whatever that entity was. The relocation path already checked `kind === "region"`; the creation path did not.
+  - Both now require it. Verified live: `regionId: "ledger"` is refused with the same actionable message rather than silently creating a component inside a database.
+  - Typecheck caught a loose `object` parameter in the new test helper, which was fixed to `Record<string, unknown>` rather than cast away.
