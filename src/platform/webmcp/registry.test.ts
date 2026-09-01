@@ -1477,6 +1477,10 @@ describe("Aether WebMCP registry", () => {
       }[];
     };
     const evidence = compared.futures[0]!.evidence[0]!;
+    expect(
+      evidence,
+      "comparison must not exceed its output budget",
+    ).toBeDefined();
     for (const metric of [
       "availability",
       "rtoMinutes",
@@ -1504,6 +1508,87 @@ describe("Aether WebMCP registry", () => {
       expect(inspected[metric], `${metric} must reach a model`).toBeTypeOf(
         "number",
       );
+    registry?.dispose();
+  });
+
+  it("stays inside its output budget with every future simulated", async () => {
+    // Adding latency to the comparison pushed three futures across four
+    // scenarios past the 1500-character budget, and the tool returned
+    // RESULT_TOO_LARGE — failing exactly when there is most to compare. It
+    // returns the newest run per scenario rather than every run ever
+    // recorded, because a future re-simulated after each edit accumulates
+    // history no model is comparing against.
+    const tools: RegisteredTool[] = [];
+    const registry = createAetherToolRegistry(() => {}, undefined, {
+      registerTool: async (tool) => {
+        tools.push(tool as unknown as RegisteredTool);
+      },
+    });
+    let state = createInitialState(paymentPlatformBaseline, "payment-platform");
+    for (const intent of [
+      "lowest_cost",
+      "fastest_recovery",
+      "highest_resilience",
+    ] as const) {
+      const made = dispatch(state, {
+        type: "CREATE_BRANCH",
+        input: { name: `Future ${intent}`, intent },
+      });
+      if (!made.ok) throw new Error("branch must be created");
+      state = made.value;
+    }
+    // Simulate every scenario on every future, twice, so history accumulates.
+    for (let pass = 0; pass < 2; pass += 1)
+      for (const branchId of Object.keys(state.branches))
+        for (const scenario of [
+          "regional_outage",
+          "traffic_spike",
+          "database_failure",
+          "dependency_failure",
+        ] as const) {
+          const run = dispatch(state, {
+            type: "RUN_SCENARIO",
+            input: { branchId, scenario },
+          });
+          if (run.ok) state = run.value;
+        }
+    await registry?.refresh(state);
+
+    const compare = tools.find(
+      (tool) => tool.name === "compare_architecture_futures",
+    )!;
+
+    // Narrowing to one scenario is what the tool offers and what a model
+    // comparing a trade-off actually wants, and it must fit.
+    const narrowed = JSON.parse(
+      String(await compare.execute({ scenario: "regional_outage" })),
+    ) as { error?: string; futures?: { evidence: { scenario: string }[] }[] };
+    expect(narrowed.error).toBeUndefined();
+    expect(narrowed.futures).toHaveLength(3);
+    for (const future of narrowed.futures!) {
+      // One run per future, and it is the scenario that was asked for.
+      expect(future.evidence).toHaveLength(1);
+      expect(future.evidence[0]!.scenario).toBe("regional_outage");
+    }
+
+    // Asking for everything at this size does not fit, and says so with a
+    // remedy rather than truncating evidence a person may be about to act on.
+    const everything = JSON.parse(String(await compare.execute({}))) as {
+      error?: string;
+      message?: string;
+    };
+    if (everything.error) {
+      expect(everything.error).toBe("RESULT_TOO_LARGE");
+      expect(everything.message).toContain("narrower");
+    }
+
+    // Repeated runs must not accumulate: whatever comes back is the newest
+    // run per scenario, never one row per simulation ever performed.
+    const single = JSON.parse(
+      String(await compare.execute({ scenario: "traffic_spike" })),
+    ) as { futures: { evidence: unknown[] }[] };
+    for (const future of single.futures)
+      expect(future.evidence).toHaveLength(1);
     registry?.dispose();
   });
 });

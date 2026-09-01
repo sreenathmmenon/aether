@@ -9,7 +9,7 @@ import {
 } from "@core/commands";
 import type { AetherState } from "@core/branch-engine";
 import { briefComponentLimit } from "@core/brief-parser";
-import { runScenario } from "@simulation/engine";
+import { runScenario, type ScenarioResult } from "@simulation/engine";
 import { deriveGraph, dispatch } from "@core/branch-engine";
 import type { Actor } from "@core/types";
 
@@ -42,6 +42,14 @@ function modelContext(): ModelContext | undefined {
 }
 
 const maxToolResultLength = 1500;
+
+/** Every scenario the engine accepts, for the schemas that offer a choice. */
+const scenarioNames = [
+  "regional_outage",
+  "traffic_spike",
+  "database_failure",
+  "dependency_failure",
+] as const;
 const modelArchitectureInput = z.object({
   branchId: z.string().min(1),
   components: z
@@ -989,39 +997,58 @@ export function createAetherToolRegistry(
         await register({
           name: "compare_architecture_futures",
           description:
-            "Read the latest deterministic evidence for all isolated repair futures. Use before asking the human to approve one.",
+            "Read the latest deterministic evidence for every isolated repair future. Pass a scenario to compare the futures under one failure; omit it for every scenario, which may exceed the output budget once several futures are fully simulated.",
           inputSchema: {
             type: "object",
-            properties: {},
+            properties: {
+              scenario: {
+                type: "string",
+                enum: scenarioNames,
+                description:
+                  "Compare the futures under this one failure. Omit to read every scenario.",
+              },
+            },
             additionalProperties: false,
           },
           annotations: { readOnlyHint: true, untrustedContentHint: false },
-          execute: async () =>
-            toolResult({
+          execute: async (input: unknown) => {
+            const wanted = (input as { scenario?: string } | undefined)
+              ?.scenario;
+            return toolResult({
               futures: Object.values(snapshot().branches)
                 .filter((branch) => branch.id !== "branch-baseline")
                 .map((branch) => ({
                   branchId: branch.id,
                   name: branch.name,
                   status: branch.status,
-                  evidence: (snapshot().simulations[branch.id] ?? []).map(
-                    (run) => ({
-                      scenario: run.scenario,
-                      availability: run.availability,
-                      rtoMinutes: run.rtoMinutes,
-                      // The interface shows latency beside the other three,
-                      // and a model weighing the same trade-off could not see
-                      // it. Withholding a metric the human has is an
-                      // asymmetry with no reason behind it.
-                      latencyMs: run.latencyMs,
-                      monthlyCostUsd: run.monthlyCostUsd,
-                      violations: run.sloViolations.length,
-                    }),
-                  ),
+                  // The newest run per scenario, not every run recorded: a
+                  // future re-simulated after each edit accumulates history
+                  // no model is comparing against, and enough of it pushed
+                  // this past the output budget so the tool returned nothing
+                  // at all — failing exactly when there is most to compare.
+                  evidence: Array.from(
+                    (snapshot().simulations[branch.id] ?? [])
+                      .filter((run) => !wanted || run.scenario === wanted)
+                      .reduce(
+                        (latest, run) => latest.set(run.scenario, run),
+                        new Map<string, ScenarioResult>(),
+                      )
+                      .values(),
+                  ).map((run) => ({
+                    scenario: run.scenario,
+                    availability: run.availability,
+                    rtoMinutes: run.rtoMinutes,
+                    // The interface shows latency beside the other three, and
+                    // a model weighing the same trade-off could not see it.
+                    latencyMs: run.latencyMs,
+                    monthlyCostUsd: run.monthlyCostUsd,
+                    violations: run.sloViolations.length,
+                  })),
                 })),
               humanGate:
                 "Only Sreenath can approve and merge a branch in the visible Aether UI.",
-            }),
+            });
+          },
         });
       }
       onToolCount?.(registrations.length, registeredNames);
