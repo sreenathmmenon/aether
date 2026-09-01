@@ -1294,4 +1294,63 @@ describe("Aether WebMCP registry", () => {
     expect(registered.length - before).toBe(0);
     registry?.dispose();
   });
+
+  it("aborts every superseded registration and leaves none behind", async () => {
+    // The compliance notes claim an abort-signal registration lifecycle. That
+    // matters more now that the surface re-registers whenever the graph
+    // changes: a signal that is never aborted leaves a listener per tool per
+    // edit, and a reviewer building a system would accumulate them for the
+    // life of the page.
+    const human = { id: "s", kind: "human" as const, displayName: "S" };
+    let live = 0;
+    let total = 0;
+    const registry = createAetherToolRegistry(() => {}, undefined, {
+      registerTool: async (_tool, options) => {
+        total += 1;
+        live += 1;
+        options?.signal?.addEventListener("abort", () => {
+          live -= 1;
+        });
+      },
+    });
+
+    let state = createInitialState(blankBaseline, "blank");
+    await registry?.refresh(state);
+    const surfaceSize = live;
+    expect(surfaceSize).toBe(10);
+
+    for (let index = 0; index < 5; index += 1) {
+      const added = dispatch(
+        state,
+        {
+          type: "ADD_COMPONENT",
+          input: {
+            branchId: "branch-baseline",
+            name: `Node ${index}`,
+            kind: "service",
+            regionId: "region-primary",
+            peakRps: 100,
+            capacityRps: 500,
+            monthlyCostUsd: 10,
+          },
+        },
+        human,
+      );
+      if (!added.ok) throw new Error("component must be addable");
+      state = added.value;
+      await registry?.refresh(state);
+    }
+    // Each edit rebuilds the surface, and the previous one is fully aborted.
+    expect(live, "exactly one surface stays live").toBe(surfaceSize);
+    expect(total).toBe(surfaceSize * 6);
+
+    // Idle polling must cost nothing: the interface refreshes every three
+    // seconds whether or not anything changed.
+    const beforeIdle = total;
+    for (let index = 0; index < 20; index += 1) await registry?.refresh(state);
+    expect(total - beforeIdle, "idle refresh must not re-register").toBe(0);
+
+    registry?.dispose();
+    expect(live, "dispose leaves nothing registered").toBe(0);
+  });
 });
