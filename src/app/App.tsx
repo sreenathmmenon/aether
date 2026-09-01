@@ -180,10 +180,9 @@ export function App() {
   // cycle. The registry composes an agent's write onto this rather than onto
   // a copy the reconcile poll may already have replaced.
   const stateRef = useRef<AetherState | undefined>(undefined);
-  // Assigned during render, not from an effect. A click sequence can dispatch
-  // several writes before React commits and runs effects, and each of those
-  // writes composes onto this — so if it only caught up afterwards, the
-  // second click in a sequence would erase what the first recorded.
+  // Advanced by every write rather than only from an effect: a click sequence
+  // can dispatch several writes before React commits, and each composes onto
+  // this, so a stale value would let the second erase what the first recorded.
   const [state, setState] = useState(() => {
     // A ?system= link must open that system. Reviewers and demos share links,
     // and silently landing on somebody's previous workspace makes the link
@@ -200,7 +199,6 @@ export function App() {
       createInitialState(paymentPlatformBaseline, "payment-platform")
     );
   });
-  stateRef.current = state;
   const [toolCount, setToolCount] = useState(0);
   const [toolCalls, setToolCalls] = useState<ToolCall[]>([]);
   // The newest call, held briefly in the header so agent activity is visible
@@ -812,7 +810,7 @@ export function App() {
     // over. Approving and merging both dispatch from a value captured before
     // the scenarios ran, so replacing state wholesale erased the very
     // evidence the approval required — a merged future reported none.
-    const settled = mergeEvidence(stateRef.current, outcome.value);
+    const settled = mergeEvidence(stateRef.current ?? state, outcome.value);
     stateRef.current = settled;
     setState(settled);
     setMessage(
@@ -912,7 +910,7 @@ export function App() {
       );
       if (outcome.ok) next = outcome.value;
     }
-    stateRef.current = mergeEvidence(stateRef.current, next);
+    stateRef.current = mergeEvidence(stateRef.current ?? state, next);
     setState(stateRef.current);
     setMessage(
       "Capacity raised past peak demand. Every scenario recomputed against the new plan.",
@@ -958,7 +956,7 @@ export function App() {
         if (simulated.ok) next = simulated.value;
       }
     });
-    stateRef.current = mergeEvidence(stateRef.current, next);
+    stateRef.current = mergeEvidence(stateRef.current ?? state, next);
     setState(stateRef.current);
     setMessage(
       live === 0
@@ -1102,7 +1100,7 @@ export function App() {
       refuse("Those components already exist on this canvas.");
       return;
     }
-    stateRef.current = mergeEvidence(stateRef.current, next);
+    stateRef.current = mergeEvidence(stateRef.current ?? state, next);
     setState(stateRef.current);
     setSelectedEntityId(created[0]!);
     setComposerNotice("");
