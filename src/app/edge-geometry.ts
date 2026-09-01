@@ -13,7 +13,10 @@ export function edgeBetween(
   source: Point,
   target: Point,
   extent: { width: number; height: number },
-  gap = 6,
+  // Canvas units of clearance at each end. The shipped systems leave about
+  // twelve pixels between adjacent cards, so a larger gap consumes the edge
+  // it is meant to reveal.
+  gap = 2,
 ) {
   const halfWidth = extent.width / 2;
   const halfHeight = extent.height / 2;
