@@ -592,3 +592,12 @@ fixed.
   - Evidence: the system brief sat 996px down a page with a 758px fold, so a reviewer arriving to describe their own architecture met a blank grid and no visible action. The canvas now carries the entry point where they are already looking, with a control that moves the brief into view and focuses it ready to type.
   - That control exposed a real defect: any smooth scroll on this page returns to the top. Isolated it in the browser — an instant scroll holds at 661px, the identical smooth scroll ends at 0 with no scroll events fired at all — so the control jumps directly rather than animating.
   - Verified in production: all six changes are present in the deployed bundle and stylesheet, and the three seeded systems are untouched — real metrics, real beacon, risk dot, and no empty prompt.
+
+## Milestone 21 — Onboarding a reviewer can read
+
+- [x] **M21.1 — Show the proposal-proof-approval loop rather than describing it** `DONE`
+  - Acceptance: the mechanism is legible at a glance, not after three paragraphs.
+  - Evidence: the opening card asked a reviewer to read prose before seeing what the product does. It now presents the loop as three steps — the agent proposes a branch through WebMCP and cannot touch the committed architecture; a deterministic simulation over the real dependency graph returns the same result every time; and no approve or merge tool is registered for an agent in any state. Each is a claim this codebase enforces and has tests for. The card still fits one viewport with live evidence visible behind it. Semantics checked (a real ordered list, dialog role and label intact) and contrast measured at 5.06:1 for the step text and 14.27:1 for the titles, both clear of WCAG AA.
+- [x] **M21.2 — Make the interface legible** `DONE`
+  - Evidence: a Lighthouse audit of the deployed origin reported only **29.83% legible text**, dropping best practices to 96. Seventy-one declarations sat below 12px, some at 8px, across the tool inventory, decision notes, brief panel, rail hints, and eyebrows. This was never only a score — a reviewer scans a dense product quickly and 8-to-11px body text is hard to read. Every size below 12px was raised to at least 12px with relative order intact; the hierarchy survives because the eyebrows read as labels through case and letterspacing rather than size. No element overflows its container and the page has no horizontal overflow.
+  - Re-measured on the deployed origin afterwards: **accessibility 100, best practices 100, SEO 100, performance 99, and 100% legible text**.
