@@ -263,6 +263,17 @@ export function dispatch(
         (entity.properties as { replicationMode?: string }).replicationMode ===
           "none",
     );
+    // Every store the engine can raise a durability violation against, not
+    // just the first unreplicated one. A system with two datastores — one
+    // unreplicated and one asynchronous — had its second left at `async`,
+    // which reports a non-zero recovery point objective, so the future named
+    // "highest resilience" could never be approved on its own architecture.
+    const atRisk = components.filter(
+      (entity) =>
+        entity.kind === "database" &&
+        (entity.properties as { replicationMode?: string }).replicationMode !==
+          "sync",
+    );
     const tightest = components
       .map((entity) => {
         const props = entity.properties as {
@@ -329,15 +340,15 @@ export function dispatch(
         : [],
       // Synchronous standby, more replicas, and capacity above peak demand.
       highest_resilience: [
-        ...(unreplicated
-          ? [
-              set(unreplicated.id, "replicationMode", "sync"),
+        ...(atRisk.length
+          ? atRisk.flatMap((entity) => [
+              set(entity.id, "replicationMode", "sync"),
               set(
-                unreplicated.id,
+                entity.id,
                 "monthlyCostUsd",
-                Math.round(costOf(unreplicated) * 1.53),
+                Math.round(costOf(entity) * 1.53),
               ),
-            ]
+            ])
           : []),
         ...(scalable
           ? [

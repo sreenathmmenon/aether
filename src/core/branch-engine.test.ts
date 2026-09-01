@@ -3,6 +3,7 @@ import { createInitialState, deriveGraph, dispatch } from "./branch-engine";
 import { paymentPlatformBaseline } from "../fixtures/payment-platform/baseline";
 import { blankBaseline } from "../fixtures/blank/baseline";
 import { aiPlatformBaseline } from "../fixtures/ai-platform/baseline";
+import { rideHailingBaseline } from "../fixtures/ride-hailing/baseline";
 import { runScenario } from "@simulation/engine";
 
 const human = {
@@ -1033,4 +1034,94 @@ describe("Aether command pipeline", () => {
       dispatch(state, { type: "ROLLBACK_MERGE", input: { branchId } }, human),
     ).toMatchObject({ ok: false, code: "NOT_AVAILABLE" });
   });
+});
+
+describe("every shipped system can actually be approved", () => {
+  // The human gate is what this product argues for, so a shipped system that
+  // can never reach it is a demo that cannot be finished. Ride-hailing and
+  // the AI platform both carried a second datastore left at `async`, which
+  // reports a non-zero recovery point objective, so the future named
+  // "highest resilience" was blocked on its own architecture forever.
+  const scenarios = [
+    "regional_outage",
+    "traffic_spike",
+    "database_failure",
+    "dependency_failure",
+  ] as const;
+
+  for (const [name, baseline] of [
+    ["payment platform", paymentPlatformBaseline],
+    ["ride hailing", rideHailingBaseline],
+    ["AI platform", aiPlatformBaseline],
+  ] as const) {
+    it(`reaches a clean approval on the ${name}`, () => {
+      let state = createInitialState(baseline, name);
+      const branched = dispatch(
+        state,
+        {
+          type: "CREATE_BRANCH",
+          input: { name: "Repair", intent: "highest_resilience" },
+        },
+        human,
+      );
+      if (!branched.ok) throw new Error(`${name}: ${branched.message}`);
+      state = branched.value;
+      const branchId = "branch-highest_resilience";
+
+      // The same rule the interface's capacity action applies: raise anything
+      // provisioned under 1.5x its peak to 1.6x.
+      for (const entity of Object.values(
+        deriveGraph(state, state.branches[branchId]!).entities,
+      )) {
+        if (entity.kind === "region") continue;
+        const properties = entity.properties as {
+          peakRps?: number;
+          capacityRps?: number;
+        };
+        const peak = properties.peakRps ?? 0;
+        if (peak * 1.5 - (properties.capacityRps ?? 0) <= 0) continue;
+        const raised = dispatch(
+          state,
+          {
+            type: "SET_PROPERTY",
+            input: {
+              branchId,
+              entityId: entity.id,
+              property: "capacityRps",
+              value: Math.round(peak * 1.6),
+            },
+          },
+          human,
+        );
+        if (raised.ok) state = raised.value;
+      }
+
+      for (const scenario of scenarios) {
+        const run = dispatch(
+          state,
+          { type: "RUN_SCENARIO", input: { branchId, scenario } },
+          human,
+        );
+        if (!run.ok) throw new Error(`${name} ${scenario}: ${run.message}`);
+        state = run.value;
+      }
+
+      // Every scenario clean, so the human gate opens.
+      for (const run of state.simulations[branchId] ?? [])
+        expect(run.sloViolations, `${name} ${run.scenario}`).toEqual([]);
+      expect(
+        dispatch(
+          state,
+          {
+            type: "APPROVE_BRANCH",
+            input: {
+              branchId,
+              branchVersion: state.branches[branchId]!.version,
+            },
+          },
+          human,
+        ).ok,
+      ).toBe(true);
+    });
+  }
 });
