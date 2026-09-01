@@ -2083,6 +2083,122 @@ export function App() {
                   command nothing could issue. A person can remove a component
                   from a future they are shaping; the agent still cannot. */}
               {selectedEntity && writable && (
+                <div className="component-editor">
+                  <span className="component-editor-label">
+                    Change {selectedEntity.name}
+                  </span>
+                  {/* An agent can propose all four of these. A person could
+                      propose none of them: the only edit on a selected
+                      component was removing it. Each control dispatches the
+                      same validated SET_PROPERTY command the tool emits. */}
+                  <div>
+                    <select
+                      aria-label="Move to region"
+                      value=""
+                      onChange={(event) => {
+                        if (!event.target.value) return;
+                        apply({
+                          type: "SET_PROPERTY",
+                          input: {
+                            branchId: activeBranch.id,
+                            entityId: selectedEntity.id,
+                            property: "regionId",
+                            value: event.target.value,
+                          },
+                        });
+                      }}
+                    >
+                      <option value="">Move to region…</option>
+                      {regions
+                        .filter(
+                          (region) =>
+                            region.id !==
+                            (
+                              selectedEntity.properties as {
+                                regionId?: string;
+                              }
+                            )?.regionId,
+                        )
+                        .map((region) => (
+                          <option key={region.id} value={region.id}>
+                            Move to {region.name}
+                          </option>
+                        ))}
+                    </select>
+                    {selectedEntity.kind === "database" && (
+                      <select
+                        aria-label="Change replication"
+                        value=""
+                        onChange={(event) => {
+                          if (!event.target.value) return;
+                          apply({
+                            type: "SET_PROPERTY",
+                            input: {
+                              branchId: activeBranch.id,
+                              entityId: selectedEntity.id,
+                              property: "replicationMode",
+                              value: event.target.value as
+                                "none" | "async" | "sync",
+                            },
+                          });
+                        }}
+                      >
+                        <option value="">Replication…</option>
+                        <option value="none">No standby</option>
+                        <option value="async">Async standby</option>
+                        <option value="sync">Sync standby</option>
+                      </select>
+                    )}
+                    <select
+                      aria-label="Change monthly cost"
+                      value=""
+                      onChange={(event) => {
+                        if (!event.target.value) return;
+                        apply({
+                          type: "SET_PROPERTY",
+                          input: {
+                            branchId: activeBranch.id,
+                            entityId: selectedEntity.id,
+                            property: "monthlyCostUsd",
+                            value: Number(event.target.value),
+                          },
+                        });
+                      }}
+                    >
+                      <option value="">Monthly cost…</option>
+                      {[500, 1500, 4000, 9000].map((amount) => (
+                        <option key={amount} value={amount}>
+                          ${amount.toLocaleString()} / month
+                        </option>
+                      ))}
+                    </select>
+                    {selectedEntity.kind === "service" && (
+                      <select
+                        aria-label="Change replicas"
+                        value=""
+                        onChange={(event) => {
+                          if (!event.target.value) return;
+                          apply({
+                            type: "SET_PROPERTY",
+                            input: {
+                              branchId: activeBranch.id,
+                              entityId: selectedEntity.id,
+                              property: "replicas",
+                              value: Number(event.target.value),
+                            },
+                          });
+                        }}
+                      >
+                        <option value="">Replicas…</option>
+                        <option value="1">1 instance</option>
+                        <option value="3">3 instances</option>
+                        <option value="6">6 instances</option>
+                      </select>
+                    )}
+                  </div>
+                </div>
+              )}
+              {selectedEntity && writable && (
                 <button
                   className="secondary-action"
                   onClick={() =>

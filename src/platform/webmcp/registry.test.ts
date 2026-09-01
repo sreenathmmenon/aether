@@ -434,6 +434,42 @@ describe("Aether WebMCP registry", () => {
     expect(stranded.problems?.[0]).toContain("region-mumbai");
   });
 
+  it("does not let an agent change more than a person can", async () => {
+    // The same inversion, on the other half of the surface. An agent could
+    // propose four properties on an existing component; the only edit a
+    // person had was removing it, so a reviewer wanting a store replicated
+    // had to ask the agent to do what they could not do themselves.
+    const live = new Set<RegisteredTool>();
+    const registry = createAetherToolRegistry(() => {}, undefined, {
+      registerTool: async (tool, options) => {
+        const entry = tool as unknown as RegisteredTool;
+        live.add(entry);
+        options?.signal?.addEventListener("abort", () => live.delete(entry));
+      },
+    });
+    const seeded = createInitialState(paymentPlatformBaseline);
+    const branched = dispatch(seeded, {
+      type: "CREATE_BRANCH",
+      input: { name: "Parity probe", intent: "highest_resilience" },
+    });
+    if (!branched.ok) throw new Error("fixture branch must be created");
+    await registry?.refresh(branched.value);
+    const propose = [...live].find(
+      (tool) => tool.name === "propose_architecture_change",
+    ) as unknown as {
+      inputSchema: { properties: { property: { enum: string[] } } };
+    };
+    registry?.dispose();
+
+    // Every property the tool advertises must be dispatched somewhere in the
+    // interface, as a SET_PROPERTY the person can reach. Read the shipped
+    // component rather than keeping a second list here.
+    const unreachable = propose.inputSchema.properties.property.enum.filter(
+      (property) => !appSource.includes(`property: "${property}"`),
+    );
+    expect(unreachable).toEqual([]);
+  });
+
   it("tells an agent what to do at the decision point", async () => {
     // Every other tool names a next action. This one, at the point a
     // decision is actually made, returned futures and a human gate and

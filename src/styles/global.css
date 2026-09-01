@@ -1613,7 +1613,8 @@ button {
     min-height: 38px;
   }
   /* Two columns of property fields are too narrow to read on a phone. */
-  .component-composer > div {
+  .component-composer > div,
+  .component-editor > div {
     grid-template-columns: minmax(0, 1fr);
   }
   .studio {
@@ -1867,6 +1868,39 @@ button {
 }
 
 /* Architects add their own components, so the model is theirs to shape. */
+/* Editing a selected component: the same four properties an agent can
+   propose, so a person is never the weaker actor on their own architecture. */
+.component-editor {
+  display: grid;
+  gap: 6px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.6);
+}
+.component-editor-label {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.component-editor > div {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+.component-editor select {
+  min-height: 32px;
+  min-width: 0;
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+  font-size: 12px;
+  text-overflow: ellipsis;
+}
 .component-composer {
   display: grid;
   gap: 7px;
