@@ -196,8 +196,12 @@ export function deriveGraph(
           ...(operation.entityKind === "queue" ? { durable: true } : {}),
         } as ArchitectureEntity["properties"],
         version: 1,
-        createdAt: operation.entityId,
-        updatedAt: operation.entityId,
+        // These are timestamps. They held the entity id — "entity-standby-
+        // ledger" where an ISO date belongs — on every component an agent or
+        // a reviewer added, and that wrong value persisted to the database.
+        // The branch carries when it was created and last changed.
+        createdAt: branch.createdAt,
+        updatedAt: branch.updatedAt,
       };
     }
     if (operation.kind === "add_relationship") {

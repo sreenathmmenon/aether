@@ -796,4 +796,45 @@ describe("Aether command pipeline", () => {
   // The brief parser now lives in `@core/brief-parser`, and
   // `brief-parser.test.ts` exercises the shipped implementation rather than
   // a hand-synced copy of it, which is how its truncation bug survived here.
+
+  it("stores real timestamps on a component someone adds", () => {
+    // These fields held the entity id — "entity-standby-ledger" where an ISO
+    // date belongs — on every component an agent or a reviewer added, and
+    // that value persisted to the database. The alias IsoTimestamp is a plain
+    // string, so the compiler could not tell an id from a date.
+    const created = dispatch(createInitialState(paymentPlatformBaseline), {
+      type: "CREATE_BRANCH",
+      input: { name: "Repair", intent: "highest_resilience" },
+    });
+    if (!created.ok) throw new Error("fixture branch must be created");
+    const branchId = "branch-highest_resilience";
+    const added = dispatch(
+      created.value,
+      {
+        type: "ADD_COMPONENT",
+        input: {
+          branchId,
+          name: "Standby Ledger",
+          kind: "database",
+          regionId: "region-bengaluru",
+          peakRps: 4000,
+          capacityRps: 9000,
+          monthlyCostUsd: 3200,
+        },
+      },
+      human,
+    );
+    if (!added.ok) throw new Error("component must be addable");
+    const entity = Object.values(
+      deriveGraph(added.value, added.value.branches[branchId]!).entities,
+    ).find((candidate) => candidate.name === "Standby Ledger");
+    expect(entity).toBeDefined();
+    for (const field of ["createdAt", "updatedAt"] as const) {
+      const value = entity![field];
+      expect(value, field).not.toContain("entity-");
+      expect(Number.isNaN(Date.parse(value)), `${field} must parse`).toBe(
+        false,
+      );
+    }
+  });
 });
