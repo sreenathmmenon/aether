@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { paymentPlatformBaseline } from "../fixtures/payment-platform/baseline";
 import { rideHailingBaseline } from "../fixtures/ride-hailing/baseline";
-import { runScenario } from "./engine";
+import { runScenario, type Scenario } from "./engine";
 import type { ArchitectureGraph } from "@domain/architecture/types";
 
 function withProperty(
@@ -295,5 +295,33 @@ describe("dependency-graph simulation", () => {
       1,
     );
     expect(second).toEqual(first);
+  });
+
+  it("produces the exact fingerprints the deployed product reports", () => {
+    // The interface calls these a reproducible run, and a reviewer can quote
+    // one. These values were read from the deployed origin in a browser, so
+    // this pins the claim across runtimes rather than only within one: if the
+    // engine changes what it computes, this fails and the version must move
+    // with it rather than the same tag silently meaning something new.
+    const expected: [Scenario, string][] = [
+      ["regional_outage", "fnv1a-f504d77f"],
+      ["traffic_spike", "fnv1a-ab223002"],
+      ["database_failure", "fnv1a-aa22e8bc"],
+      ["dependency_failure", "fnv1a-78f3f80e"],
+    ];
+    for (const [scenario, hash] of expected) {
+      const run = runScenario(
+        paymentPlatformBaseline,
+        scenario,
+        "branch-baseline",
+        1,
+      );
+      expect(run.outputHash, scenario).toBe(hash);
+    }
+    // And every scenario must differ, or the fingerprint is not identifying
+    // the run it claims to.
+    expect(new Set(expected.map(([, hash]) => hash)).size).toBe(
+      expected.length,
+    );
   });
 });
