@@ -681,3 +681,14 @@ driving the keyboard, as the modal focus trap was.
 - [x] **M28.2 — Make the scenario tablist answer the keys it advertises** `DONE`
   - Evidence: the switcher declared `role="tablist"` with `role="tab"` children and implemented none of the keyboard behaviour that role promises — arrow keys did nothing, and every tab was its own tab stop where the pattern specifies one. This was the third instance of a declared ARIA behaviour that was never built, after both dialogs' `aria-modal`. Left and Right now move between scenarios, Home and End jump to the ends, focus follows selection, and a roving tabindex leaves one tab stop.
   - Verified in the browser: one tab stop before and after, ArrowRight moves selection and focus together, End reaches the last scenario, and the whole pipeline follows — beacon, metrics at 97.06% with 5m recovery, and the reproducible-run fingerprint all update with the tab.
+
+## Milestone 29 — The rest of the ARIA surface
+
+Three declared-but-unimplemented ARIA behaviours in a row — both dialogs'
+`aria-modal` and the tablist's keyboard contract — made it worth auditing the
+remaining roles rather than waiting to find a fourth by accident.
+
+- [x] **M29.1 — Connect the scenario tabs to the panel they switch** `DONE`
+  - Evidence: the tabs announced themselves as tabs but named nothing they control, and the evidence panel they switch was not a tabpanel. A screen-reader user was told "tab, selected" with no way to move to the content that tab selects, and the panel arrived unlabelled. Each tab now points at the panel through `aria-controls`, the panel carries `role="tabpanel"`, and its accessible name follows the selected tab — so it announces itself as "Trip State failure" rather than as an unnamed region. Verified in the browser: both ID references resolve, and after End the panel's label is the last tab's own element, whose `aria-selected` is true.
+- [x] **M29.2 — Make the tool-call announcement actually announce** `DONE`
+  - Evidence: the header's live region was mounted together with its message, so a screen reader saw a new node appear rather than an existing region change, which is usually not announced. The region whose whole job is telling a blind user an agent just called a tool was the one that said nothing. It now stays in the DOM and empties instead of unmounting, and is hidden by removing padding, border and width rather than `display: none`, which would take it out of the accessibility tree and recreate the problem. Verified in the browser: the node before an agent call is the same node after it, so content changes in place, and the header reads cleanly while idle.
