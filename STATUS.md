@@ -1320,3 +1320,15 @@ was already underway again.
 - [x] **M87.2 — Enumerate the components an edge can name** `DONE`
   - Evidence: `sourceId` and `targetId` were advertised as bare strings while every other entity reference on this surface enumerates from the live graph. An agent had to guess ids for the one tool whose whole purpose is naming two of them.
   - Both now carry the enum. Verified live: each lists the five real components and excludes both regions, so what the schema offers is what the runtime accepts — the advertised-versus-enforced parity this codebase has had to restore four times now.
+
+## Milestone 88 — Audit the class rather than wait for the next instance
+
+- [x] **M88.1 — Every id-shaped field, checked at once** `DONE`
+  - Acceptance: no field an agent must supply is advertised without the values that would work.
+  - Evidence: the advertised-versus-enforced gap had been found and fixed four separate times, each after a probe happened to hit it. Rather than wait for a fifth, a sweep enumerated every id-shaped field across the whole registered surface and compared it against what the runtime accepts. One gap remained: `branchId`, advertised as a bare string on all six write tools while every other id enumerates from the live graph. It is the one field every write requires, and the one an agent got no help with — it had to guess the id of the branch it had just created.
+  - All six now enumerate. Verified against the deployed origin on both surfaces that register writes: six tools on a seeded architecture with a repair future, five on a blank canvas, every one carrying a non-empty enum.
+  - `dependencies[].sourceKey` and `targetKey` were deliberately left alone. Those are caller-invented labels scoped to a single `model_architecture` batch, not references to anything that exists yet, so an enum would be wrong rather than missing.
+
+- [x] **M88.2 — An empty enum is worse than a bare string** `DONE`
+  - Evidence: the first filter excluded merged branches, which is right on a seeded architecture and wrong on a blank canvas, where the merged baseline stays editable — the same exception `canEditModel` makes. That left the enum empty on the one surface where an agent builds from nothing, advertising that no value would be accepted while five write tools stood registered and working.
+  - Caught by checking the enum's contents across both surfaces rather than only that the attribute existed. The test asserts both halves separately: a missing enum fails naming the tool, and an empty one fails with a different message naming a different tool.
