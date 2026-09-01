@@ -1012,3 +1012,9 @@ was already underway again.
 
 - [x] **M60.3 — Audit the judge-facing surface** `DONE`
   - Evidence: verified against the deployed origin rather than assumed. The intro dialog carries `aria-modal`, a resolving `aria-labelledby`, focus landing inside it, and a working Escape. The header's tool count is live, not decorative: it moved 5 → 12 as a branch was created, matching `getTools()` exactly. The canvas renders five components, eight edges and two regions with the incident headline above them. No change was warranted in any of it.
+
+- [x] **M60.4 — Hold the quoted surface sizes to the registry** `DONE`
+  - Acceptance: a number written beside the word "tools" is one the page actually publishes.
+  - Evidence: `docs/V3_REVERSE_WINNER_PLAN.md` said "nine tools while modeling, eleven tools once a future exists" long after the registry published ten and twelve — two wrong numbers in one sentence, in a document written to describe the winning surface. `WEBMCP_COMPLIANCE.md` was already correct at five, ten and twelve.
+  - A test now derives all three sizes from the registry itself and rejects any other written number appearing beside "tools" in the three documents that quote them. Reintroducing the stale sentence fails with `docs/V3_REVERSE_WINNER_PLAN.md claims "nine tools"; the registry publishes 5, 10, 12`.
+  - A first attempt at this assertion was deleted rather than kept: it compared a claim to itself and would have passed whatever the documents said. A test that cannot fail is worse than none, which this codebase has now had to relearn twice.

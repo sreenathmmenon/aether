@@ -8,6 +8,8 @@ import { rideHailingBaseline } from "../../fixtures/ride-hailing/baseline";
 import { createAetherToolRegistry, maxToolResultLength } from "./registry";
 import { offlineToolSurface } from "./offline-surface";
 import webmcpDoc from "../../../docs/WEBMCP.md?raw";
+import complianceDoc from "../../../docs/WEBMCP_COMPLIANCE.md?raw";
+import planDoc from "../../../docs/V3_REVERSE_WINNER_PLAN.md?raw";
 
 type RegisteredTool = {
   name: string;
@@ -102,6 +104,63 @@ describe("Aether WebMCP registry", () => {
       .map((tool) => tool.name)
       .filter((name) => !doc.includes(`\`${name}\``));
     expect(undocumented).toEqual([]);
+  });
+
+  it("quotes surface sizes the registry actually publishes", async () => {
+    // These counts are written out in prose across the documents, where they
+    // drift silently: the plan still said nine and eleven long after the
+    // registry published ten and twelve. Derive the true sizes here, then
+    // reject any other number written beside the word "tools".
+    const sizeOf = async (state: AetherState) => {
+      const registered: RegisteredTool[] = [];
+      const registry = createAetherToolRegistry(() => {}, undefined, {
+        registerTool: async (tool) => {
+          registered.push(tool as unknown as RegisteredTool);
+        },
+      });
+      await registry?.refresh(state);
+      registry?.dispose();
+      return registered.length;
+    };
+
+    const seeded = createInitialState(paymentPlatformBaseline);
+    const branched = dispatch(seeded, {
+      type: "CREATE_BRANCH",
+      input: { name: "Count probe", intent: "highest_resilience" },
+    });
+    if (!branched.ok) throw new Error("fixture branch must be created");
+    const truthful = new Set(
+      await Promise.all([
+        sizeOf(seeded),
+        sizeOf(createInitialState(blankBaseline, "blank")),
+        sizeOf(branched.value),
+      ]),
+    );
+
+    const words: Record<string, number> = {
+      five: 5,
+      six: 6,
+      seven: 7,
+      eight: 8,
+      nine: 9,
+      ten: 10,
+      eleven: 11,
+      twelve: 12,
+      thirteen: 13,
+    };
+    for (const [name, text] of [
+      ["docs/WEBMCP.md", webmcpDoc],
+      ["docs/WEBMCP_COMPLIANCE.md", complianceDoc],
+      ["docs/V3_REVERSE_WINNER_PLAN.md", planDoc],
+    ] as const) {
+      for (const [word, value] of Object.entries(words)) {
+        if (!text.includes(`${word} tools`)) continue;
+        expect(
+          truthful.has(value),
+          `${name} claims "${word} tools"; the registry publishes ${[...truthful].sort((a, b) => a - b).join(", ")}`,
+        ).toBe(true);
+      }
+    }
   });
 
   it("tells an agent what to do at the decision point", async () => {
