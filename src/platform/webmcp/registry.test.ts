@@ -2499,6 +2499,27 @@ describe("Aether WebMCP registry", () => {
       expect(output, tool.name).toContain(injected);
       expect(tool.annotations.untrustedContentHint, tool.name).toBe(true);
     }
+
+    // The converse, which is the half that breaks silently: a tool marked
+    // trusted must not carry agent-written text. Only one direction was
+    // checked, so a future result that started including note bodies — or a
+    // branch's agent-supplied name — would launder them through an
+    // annotation saying the content is safe to act on. Verified live on the
+    // deployed origin before being pinned here.
+    for (const tool of described) {
+      if (tool.annotations.untrustedContentHint) continue;
+      if (
+        !["get_architecture_summary", "compare_architecture_futures"].includes(
+          tool.name,
+        )
+      )
+        continue;
+      const output = String(await tool.execute({}));
+      expect(
+        output,
+        `${tool.name} echoes agent text while marked trusted`,
+      ).not.toContain(injected);
+    }
     registry?.dispose();
   });
 

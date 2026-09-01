@@ -1849,3 +1849,14 @@ was already underway again.
   - `add_architecture_component` requires `peakRps`, `capacityRps` and `monthlyCostUsd`; `model_architecture` requires only `key`, `name`, `kind`, `regionId`. That looked like two paths to one command disagreeing, so the batch schema was changed to match. **Wrong**: the batch path defaults the three values (`component.peakRps ?? 8000`), so the omission is deliberate ergonomics — an agent can sketch a system without inventing numbers it does not have. The change was reverted.
   - The component created that way was absent from the traffic-spike blast radius, which looked like confirmation that it was invisible to the engine. **Also wrong**: it appears in `connect_components` as `entity-no-capacity-svc`, so it exists and is fully addressable. It was simply unconnected, and a component wired to nothing is correctly in no failure path.
   - Both conclusions were checked against the code and the live surface before anything shipped. The cost of being wrong here would have been a schema change making the batch tool harder to use, defended by a comment describing a defect that did not exist.
+
+## Milestone 135 — Half of the untrusted-content contract was unchecked
+
+- [x] **M135.1 — Verify the boundary with real injection text** `DONE`
+  - Acceptance: agent-written text reaches only tools that declare it untrusted.
+  - Evidence: an injection marker was written through every free-text path an agent has on the deployed origin — a decision note body and a branch name — and then every read tool was called and searched for it. `get_architecture_summary`, `compare_architecture_futures`, `inspect_failure_domain` and `trace_architecture_dependency` carried none of it; only `get_decision_record`, the one tool annotated `untrustedContentHint: true`, did. The annotations describe what the tools actually do.
+  - The branch name is the interesting case. An agent supplies one, but the comparison reports `"Highest resilience"` — the intent-derived name — which is why the tool schema says the stored name comes from the intent. The agent's string never becomes content another agent reads as trusted.
+
+- [x] **M135.2 — Assert the direction that breaks silently** `DONE`
+  - Evidence: a test already checked that the untrusted tool _does_ carry agent text. Nothing checked the converse — that trusted tools do not — and that is the half a regression takes: a result that starts including note bodies would launder them through an annotation saying the content is safe to act on.
+  - Adding `latestNote: state.decisionNotes.at(-1)?.body` to the summary now fails the test. Before this it would have shipped silently, with the annotation still claiming the output was trusted.
