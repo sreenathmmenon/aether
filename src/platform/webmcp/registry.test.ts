@@ -541,6 +541,45 @@ describe("Aether WebMCP registry", () => {
     expect(names()).toContain("propose_architecture_change");
   });
 
+  it("registers no tool that removes a component, in any state", async () => {
+    // The submission said removal "is refused", which described a guard in
+    // the command layer that no registered tool could reach — an agent has
+    // never been able to attempt a removal at all. The guarantee is stronger
+    // than the claim was, and the claim now says so; this holds the fact.
+    const surfaces: string[][] = [];
+    const seeded = createInitialState(paymentPlatformBaseline);
+    const branched = dispatch(seeded, {
+      type: "CREATE_BRANCH",
+      input: { name: "Removal probe", intent: "highest_resilience" },
+    });
+    if (!branched.ok) throw new Error("fixture branch must be created");
+
+    for (const state of [
+      seeded,
+      branched.value,
+      createInitialState(blankBaseline, "blank"),
+    ]) {
+      const registered: RegisteredTool[] = [];
+      const registry = createAetherToolRegistry(() => {}, undefined, {
+        registerTool: async (tool) => {
+          registered.push(tool as unknown as RegisteredTool);
+        },
+      });
+      await registry?.refresh(state);
+      registry?.dispose();
+      surfaces.push(registered.map((tool) => tool.name));
+    }
+
+    // Every state, not just the one a demo happens to show.
+    expect(surfaces.length).toBe(3);
+    for (const names of surfaces) {
+      expect(names.length).toBeGreaterThan(0);
+      expect(
+        names.filter((name) => /remove|delete|destroy/i.test(name)),
+      ).toEqual([]);
+    }
+  });
+
   it("tells an agent what to do at the decision point", async () => {
     // Every other tool names a next action. This one, at the point a
     // decision is actually made, returned futures and a human gate and

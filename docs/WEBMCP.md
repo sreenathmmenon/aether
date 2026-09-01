@@ -50,7 +50,7 @@ The workspace names its own capability surface in the interface. With no agent c
 
 ## Human gate
 
-Agent authority is bounded on both ends. No approval or merge tool is registered, so an agent can never ship a change. It also cannot dismantle the system it was asked to repair: removal is refused when it would reduce the architecture below two components, or when three or more dependencies rely on the component, and the refusal names the reason and directs the agent to propose the change for human review. A human retains full authority over the same commands.
+Agent authority is bounded on both ends. No approval or merge tool is registered, so an agent can never ship a change. It also cannot dismantle the system it was asked to repair: no removal tool is registered in any state, so deleting a component is not something an agent can attempt. The command layer enforces the same boundary independently of the surface — an agent-actor removal that would reduce the architecture below two components, or that touches a component three or more dependencies rely on, is refused with the reason named and the agent directed to propose the change for human review. A human retains full authority over the same commands.
 
 No approval or merge tool is registered. Any branch mutation or changed constraint invalidates approval. The visible Aether interface presents the exact merge summary and proceeds only after an explicit human action. An agent can add an attributed, evidence-bound decision note or propose a reversible change, but can never approve or merge its own work.
 
