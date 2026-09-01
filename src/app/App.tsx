@@ -9,6 +9,13 @@ import {
 import { createInitialState, deriveGraph, dispatch } from "@core/branch-engine";
 import { getBranchDiff } from "@core/branch-diff";
 import { wouldDiscardWork } from "@core/sync-guard";
+import {
+  canvasHeight,
+  canvasWidth,
+  defaultNodeExtent,
+  regionRect,
+  regionRectPercent,
+} from "./region-bounds";
 import { scenarioNarrative } from "./scenario-copy";
 import { useModalDialog } from "./use-modal-dialog";
 import { offlineToolSurface } from "@platform/webmcp/offline-surface";
@@ -381,7 +388,7 @@ export function App() {
    * own failure domain, which is precisely the fact this canvas exists to
    * show.
    */
-  const [nodeExtent, setNodeExtent] = useState({ width: 176, height: 104 });
+  const [nodeExtent, setNodeExtent] = useState(defaultNodeExtent);
   useEffect(() => {
     const measure = () => {
       const world = canvasRef.current;
@@ -390,8 +397,8 @@ export function App() {
       const worldBox = world.getBoundingClientRect();
       const nodeBox = node.getBoundingClientRect();
       if (!worldBox.width || !worldBox.height) return;
-      const width = (nodeBox.width / worldBox.width) * 1000;
-      const height = (nodeBox.height / worldBox.height) * 700;
+      const width = (nodeBox.width / worldBox.width) * canvasWidth;
+      const height = (nodeBox.height / worldBox.height) * canvasHeight;
       setNodeExtent((current) =>
         Math.abs(current.width - width) < 1 &&
         Math.abs(current.height - height) < 1
@@ -414,27 +421,9 @@ export function App() {
         (entity) =>
           (entity.properties as { regionId?: string }).regionId === region.id,
       );
-      if (members.length === 0) continue;
-      // A node is centred on its position by `translate(-50%, -50%)`, so the
-      // rectangle reaches half a node beyond the outermost members in every
-      // direction, plus room above for the region's own label.
-      const padX = 26;
-      const padTop = 30;
-      const padBottom = 22;
-      const reachX = nodeExtent.width / 2;
-      const reachY = nodeExtent.height / 2;
-      const xs = members.map((member) => member.position.x);
-      const ys = members.map((member) => member.position.y);
-      const left = Math.max(0, Math.min(...xs) - reachX - padX);
-      const top = Math.max(0, Math.min(...ys) - reachY - padTop);
-      const right = Math.min(1000, Math.max(...xs) + reachX + padX);
-      const bottom = Math.min(700, Math.max(...ys) + reachY + padBottom);
-      bounds.set(region.id, {
-        left: (left / 1000) * 100,
-        top: (top / 700) * 100,
-        width: ((right - left) / 1000) * 100,
-        height: ((bottom - top) / 700) * 100,
-      });
+      const rect = regionRect(members, nodeExtent);
+      if (!rect) continue;
+      bounds.set(region.id, regionRectPercent(rect));
     }
     return bounds;
   }, [entities, regions, nodeExtent]);

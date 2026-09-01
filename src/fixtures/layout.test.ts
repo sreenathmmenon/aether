@@ -4,6 +4,7 @@ import { aiPlatformBaseline } from "./ai-platform/baseline";
 import { rideHailingBaseline } from "./ride-hailing/baseline";
 import { blankBaseline } from "./blank/baseline";
 import { runScenario } from "@simulation/engine";
+import { canvasHeight, canvasWidth, regionRect } from "../app/region-bounds";
 import type { ArchitectureGraph } from "@domain/architecture/types";
 
 /**
@@ -11,13 +12,10 @@ import type { ArchitectureGraph } from "@domain/architecture/types";
  * contains. If two regions occupy overlapping space, one failure domain is
  * drawn on top of another and a reviewer cannot tell which components share a
  * fate — the single most important fact the canvas conveys.
+ *
+ * These read the shipped geometry rather than a copy of it: a test carrying
+ * its own constants would keep passing while the canvas drifted.
  */
-const nodeWidth = 176;
-const nodeHeight = 104;
-const padX = 26;
-const padTop = 30;
-const padBottom = 22;
-
 function regionRects(graph: ArchitectureGraph) {
   const entities = Object.values(graph.entities);
   return entities
@@ -28,17 +26,8 @@ function regionRects(graph: ArchitectureGraph) {
           entity.kind !== "region" &&
           (entity.properties as { regionId?: string }).regionId === region.id,
       );
-      if (members.length === 0) return undefined;
-      const xs = members.map((member) => member.position.x);
-      const ys = members.map((member) => member.position.y);
-      return {
-        name: region.name,
-        left: Math.min(...xs) - nodeWidth / 2 - padX,
-        top: Math.min(...ys) - nodeHeight / 2 - padTop,
-        right: Math.max(...xs) + nodeWidth / 2 + padX,
-        bottom: Math.max(...ys) + nodeHeight / 2 + padBottom,
-        members,
-      };
+      const rect = regionRect(members);
+      return rect ? { name: region.name, ...rect, members } : undefined;
     })
     .filter((rect) => rect !== undefined);
 }
@@ -85,11 +74,11 @@ describe("shipped architecture layouts", () => {
         expect(
           rect.right,
           `${rect.name} extends past the right edge`,
-        ).toBeLessThanOrEqual(1000);
+        ).toBeLessThanOrEqual(canvasWidth);
         expect(
           rect.bottom,
           `${rect.name} extends below the bottom edge`,
-        ).toBeLessThanOrEqual(700);
+        ).toBeLessThanOrEqual(canvasHeight);
       }
     });
   }
