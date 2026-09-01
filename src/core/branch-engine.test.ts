@@ -926,4 +926,91 @@ describe("Aether command pipeline", () => {
       ).ok,
     ).toBe(true);
   });
+
+  it("rolls a committed future back to the architecture before it", () => {
+    // Rollback is the recovery path after the most consequential action in
+    // the product, and it had a control in the interface and no test at all.
+    // A commit a person cannot undo is worse than one they cannot make.
+    const agent = { id: "probe", kind: "agent" as const, displayName: "Probe" };
+    const created = dispatch(createInitialState(paymentPlatformBaseline), {
+      type: "CREATE_BRANCH",
+      input: { name: "Repair", intent: "highest_resilience" },
+    });
+    if (!created.ok) throw new Error("fixture branch must be created");
+    let state = created.value;
+    const branchId = "branch-highest_resilience";
+    const set = (entityId: string, property: string, value: unknown) => {
+      const result = dispatch(
+        state,
+        {
+          type: "SET_PROPERTY",
+          input: { branchId, entityId, property, value },
+        } as never,
+        human,
+      );
+      if (result.ok) state = result.value;
+    };
+
+    // Repair until the evidence is clean, the way a reviewer would.
+    set("ledger", "replicationMode", "sync");
+    for (const id of ["ledger", "auth", "reconciliation", "gateway", "queue"])
+      set(id, "capacityRps", 60000);
+    for (const scenario of [
+      "regional_outage",
+      "traffic_spike",
+      "database_failure",
+      "dependency_failure",
+    ] as const) {
+      const run = dispatch(
+        state,
+        { type: "RUN_SCENARIO", input: { branchId, scenario } },
+        human,
+      );
+      if (run.ok) state = run.value;
+    }
+
+    const branchVersion = state.branches[branchId]!.version;
+    const approved = dispatch(
+      state,
+      { type: "APPROVE_BRANCH", input: { branchId, branchVersion } },
+      human,
+    );
+    if (!approved.ok) throw new Error("clean evidence must be approvable");
+    const merged = dispatch(
+      approved.value,
+      { type: "MERGE_BRANCH", input: { branchId, branchVersion } },
+      human,
+    );
+    if (!merged.ok) throw new Error("an approved future must be mergeable");
+    state = merged.value;
+    expect(state.branches[branchId]!.status).toBe("merged");
+
+    // An agent cannot undo a human's commit any more than it could make one.
+    expect(
+      dispatch(state, { type: "ROLLBACK_MERGE", input: { branchId } }, agent),
+    ).toMatchObject({ ok: false, code: "UNAUTHORIZED" });
+
+    const rolledBack = dispatch(
+      state,
+      { type: "ROLLBACK_MERGE", input: { branchId } },
+      human,
+    );
+    if (!rolledBack.ok) throw new Error("a human must be able to roll back");
+    state = rolledBack.value;
+
+    // The workspace returns to the committed architecture, and the change the
+    // future carried is gone from it.
+    expect(state.workspace.activeBranchId).toBe("branch-baseline");
+    expect(state.branches[branchId]!.status).toBe("discarded");
+    const ledger = deriveGraph(state, state.branches["branch-baseline"]!)
+      .entities["ledger"];
+    expect(
+      (ledger!.properties as { replicationMode?: string }).replicationMode,
+    ).toBe("none");
+
+    // And a discarded future cannot be rolled back again.
+    expect(
+      dispatch(state, { type: "ROLLBACK_MERGE", input: { branchId } }, human),
+    ).toMatchObject({ ok: false, code: "NOT_AVAILABLE" });
+  });
 });
