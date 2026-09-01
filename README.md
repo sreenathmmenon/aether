@@ -53,6 +53,16 @@ Read the detailed contracts in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [do
 - TypeScript, React, Vite, Hono, and a Node server
 - Shared command/domain packages with Zod-backed tool-input validation
 - PostgreSQL-backed per-visitor workspace persistence, optimistic writes, and Railway deployment
+
+Each visitor's workspace is keyed by an unguessable identifier generated in
+their browser with `crypto.getRandomValues` and held in local storage. The
+persistence endpoints validate that identifier on read and write, reject a
+body over 1&nbsp;MB before parsing it, and use optimistic versioning so a
+stale write is refused rather than silently overwriting someone's decisions.
+There are no user accounts: anyone holding a workspace identifier can read and
+write that workspace, so it is evaluation and demonstration state rather than a
+store for confidential architecture.
+
 - Top-level WebMCP Imperative API, using the official `webmcp-types` definitions
 - Deterministic dependency-graph simulation of regional outage, traffic spike, and database failure
 

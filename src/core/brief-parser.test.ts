@@ -1,11 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createInitialState, deriveGraph, dispatch } from "./branch-engine";
 import { blankBaseline } from "../fixtures/blank/baseline";
-import {
-  briefComponentLimit,
-  parseBrief,
-  resolveAlias,
-} from "./brief-parser";
+import { briefComponentLimit, parseBrief, resolveAlias } from "./brief-parser";
 import { runScenario } from "@simulation/engine";
 
 const human = { id: "sreenath", kind: "human" as const, displayName: "S" };
@@ -26,12 +22,15 @@ describe("system brief parser", () => {
   });
 
   it("reports overflow rather than dropping clauses silently", () => {
+    // Fifteen genuinely different components exceed the budget by three, and
+    // the reviewer is told so rather than left with a canvas that quietly
+    // disagrees with the brief above it.
     const brief = Array.from(
       { length: briefComponentLimit + 3 },
-      (_, index) => `service number ${index} calls the next hop`,
+      (_, index) => `checkout calls service${index}`,
     ).join(", ");
     const parsed = parseBrief(brief);
-    expect(parsed.components).toHaveLength(briefComponentLimit);
+    expect(parsed.distinctComponents).toBe(briefComponentLimit);
     expect(parsed.overflow).toBe(3);
   });
 
@@ -92,10 +91,7 @@ describe("system brief parser", () => {
     const parsed = parseBrief(
       "orders publishes to Kafka, analytics consumes from Kafka",
     );
-    expect(parsed.components.map((c) => c.name)).toEqual([
-      "Kafka",
-      "Kafka",
-    ]);
+    expect(parsed.components.map((c) => c.name)).toEqual(["Kafka", "Kafka"]);
     expect(parsed.components.map((c) => c.edgeKind)).toEqual([
       "publishes_to",
       "consumes_from",
@@ -123,6 +119,50 @@ describe("system brief parser", () => {
     expect(resolveAlias("fraud", existing)).toBe("fraud scoring");
     expect(resolveAlias("Postgres", existing)).toBe("Postgres");
     expect(resolveAlias("warehouse", existing)).toBeUndefined();
+  });
+
+  it("never invents a component from a figure stated in its own sentence", () => {
+    // A reviewer writes "Peak is 40000 rps." as its own sentence. Reading that
+    // as a component called "Peak" both fabricates a node and misfiles the
+    // real figure onto it — and the phantom then enters the availability
+    // calculation, corrupting the number the product asks to be trusted.
+    const parsed = parseBrief(
+      "Our API gateway routes to checkout. Checkout calls fraud scoring. Peak is 40000 rps. Monthly cost is 2400 usd.",
+    );
+    expect(parsed.components.map((c) => c.name)).toEqual([
+      "checkout",
+      "fraud scoring",
+    ]);
+    // The figures measure the component the brief had just described.
+    const measured = parsed.components[1]!;
+    expect(measured.peakRps).toBe(40000);
+    expect(measured.monthlyCostUsd).toBe(2400);
+    expect(measured.unmeasured).toBe(false);
+  });
+
+  it("keeps a framing verb out of the component name", () => {
+    // "checkout handles 12k rps" names checkout, not "checkout handles".
+    const parsed = parseBrief(
+      "checkout handles 12k rps, Postgres costs 4200 usd monthly",
+    );
+    expect(parsed.components.map((c) => c.name)).toEqual([
+      "checkout",
+      "Postgres",
+    ]);
+    expect(parsed.components[0]!.peakRps).toBe(12000);
+    expect(parsed.components[1]!.monthlyCostUsd).toBe(4200);
+  });
+
+  it("budgets components rather than clauses", () => {
+    // Fifteen sentences about one store is one component, not a truncated
+    // brief. Counting clauses reported work as dropped that never existed.
+    const parsed = parseBrief(
+      Array.from({ length: 15 }, () => "billing reads from Postgres").join(
+        ". ",
+      ),
+    );
+    expect(parsed.distinctComponents).toBe(1);
+    expect(parsed.overflow).toBe(0);
   });
 
   it("turns a plain description into a simulable graph without an agent", () => {

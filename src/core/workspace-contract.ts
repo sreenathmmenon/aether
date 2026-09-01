@@ -34,9 +34,9 @@ export function isWorkspace(value: unknown): value is PersistedWorkspace {
   const candidate = value as PersistedWorkspace;
   return Boolean(
     candidate.workspace?.id &&
-      candidate.branches &&
-      candidate.revisions &&
-      candidate.audit &&
-      candidate.simulations,
+    candidate.branches &&
+    candidate.revisions &&
+    candidate.audit &&
+    candidate.simulations,
   );
 }

@@ -154,8 +154,7 @@ function requestedTemplate() {
     if (!requested) return undefined;
     return systemTemplates.find(
       (template) =>
-        template.id === requested ||
-        template.name.toLowerCase() === requested,
+        template.id === requested || template.name.toLowerCase() === requested,
     );
   } catch {
     // A malformed URL must never keep the product from opening.
@@ -539,9 +538,13 @@ export function App() {
         setState((current) => ({ ...current }));
         return;
       }
-      applyingRemoteRef.current = true;
       remoteVersionRef.current = remote.workspace.persistenceVersion ?? 0;
       setSyncStatus("Synced");
+      // A ?system= link is an explicit request for that architecture. Restoring
+      // a stored workspace over it makes the link silently do nothing, which is
+      // how a shared link lands a reviewer on somebody else's canvas.
+      if (requestedTemplate()) return;
+      applyingRemoteRef.current = true;
       setState(remote);
       setMessage("Production workspace restored from shared persistence.");
     });

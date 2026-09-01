@@ -39,16 +39,28 @@ export type BriefComponent = {
 };
 
 export type ParsedBrief = {
+  /**
+   * One entry per clause that names a component, in the order written. A
+   * component mentioned twice appears twice, because each mention carries its
+   * own dependency edge; `distinctComponents` counts the nodes.
+   */
   components: BriefComponent[];
   /** Clauses beyond the component budget, reported rather than dropped silently. */
   overflow: number;
+  /** How many distinct components the brief describes. */
+  distinctComponents: number;
 };
 
 /** The engine's per-brief component budget. */
 export const briefComponentLimit = 12;
 
+/**
+ * Words that never name a component: articles, prepositions, and the verbs a
+ * brief uses to connect components or to state a figure. Leaving a framing
+ * verb in place produces names like "checkout handles" instead of "checkout".
+ */
 const noise =
-  /^(the|a|an|our|we|they|users?|user|and|then|which|that|it|is|are|hits?|hit|calls?|call|writes?|write|reads?|read|flows?|flow|through|to|from|into|via|by|with|on|in|of|for)$/i;
+  /^(the|a|an|our|we|they|users?|user|and|then|which|that|it|is|are|was|were|hits?|hit|calls?|call|writes?|write|reads?|read|flows?|flow|through|to|from|into|via|by|with|on|in|of|for|handles?|handling|serves?|serving|costs?|costing|peaks?|peaking|runs?|running|sits?|stays?|buffers?|holds?|keeps?|stores?|uses?|has|have|had|about|around|roughly|up)$/i;
 
 export function clausesOf(brief: string) {
   return brief
@@ -63,18 +75,20 @@ export function clausesOf(brief: string) {
  * called "2400 usd monthly".
  */
 export function withoutMeasurements(clause: string) {
-  return clause
-    .replace(
-      /\b(?:at|around|about|roughly|handling|serving|costing|peaking at|up to)?\s*[0-9][0-9,.]*\s*(?:k|m)?\s*(?:rps|qps|requests?\/s|req\/s|usd|dollars?|\/mo|per month|monthly|capacity|headroom|ceiling)\b/gi,
-      " ",
-    )
-    // Any measurement word left stranded once its figure is gone names nothing.
-    .replace(
-      /\b(?:usd|dollars?|monthly|per month|rps|qps|capacity|headroom|ceiling|costing|handling|serving|peaking)\b/gi,
-      " ",
-    )
-    .replace(/\s+/g, " ")
-    .trim();
+  return (
+    clause
+      .replace(
+        /\b(?:at|around|about|roughly|handling|serving|costing|peaking at|up to)?\s*[0-9][0-9,.]*\s*(?:k|m)?\s*(?:rps|qps|requests?\/s|req\/s|usd|dollars?|\/mo|per month|monthly|capacity|headroom|ceiling)\b/gi,
+        " ",
+      )
+      // Any measurement word left stranded once its figure is gone names nothing.
+      .replace(
+        /\b(?:usd|dollars?|monthly|per month|rps|qps|capacity|headroom|ceiling|costing|handling|serving|peaking)\b/gi,
+        " ",
+      )
+      .replace(/\s+/g, " ")
+      .trim()
+  );
 }
 
 /** Prefer the trailing noun phrase: "fraud writes to Postgres" -> Postgres. */
@@ -85,7 +99,11 @@ export function componentNameFrom(rawClause: string) {
     .split(/\s+/)
     .filter(Boolean);
   const kept: string[] = [];
-  for (let index = words.length - 1; index >= 0 && kept.length < 3; index -= 1) {
+  for (
+    let index = words.length - 1;
+    index >= 0 && kept.length < 3;
+    index -= 1
+  ) {
     const word = words[index]!;
     if (noise.test(word)) {
       if (kept.length > 0) break;
@@ -180,30 +198,94 @@ export function resolveAlias(subject: string, existingNames: string[]) {
   });
 }
 
+/**
+ * True when a clause states figures and nothing else. "Peak is 40000 rps" is
+ * a measurement of the component just described, not a component called
+ * "Peak" — and treating it as one both invents a node and misfiles the real
+ * number onto it.
+ */
+export function isMeasurementOnly(clause: string) {
+  const stated =
+    numberNear(clause, /(?:rps|qps|requests?\/s|req\/s)/) ??
+    numberNear(clause, /(?:capacity|headroom|ceiling)/) ??
+    numberNear(clause, /(?:usd|dollars?|\/mo|per month|monthly)/);
+  if (stated === undefined) return false;
+  // What is left once the figures, the nouns that name a measurement, and the
+  // words that frame them are removed. If nothing remains, the clause named
+  // no component.
+  const remainder = withoutMeasurements(clause)
+    .replace(
+      /\b(?:peak|throughput|traffic|load|volume|cost|spend|price|budget|capacity|headroom|ceiling|latency|rate)\b/gi,
+      " ",
+    )
+    .replace(
+      /\b(?:is|are|was|were|of|at|about|around|roughly|the|a|an|our|its|it|and|to|per|each|with|runs|sits|stays|about)\b/gi,
+      " ",
+    )
+    .replace(/[^A-Za-z0-9]+/g, " ")
+    .trim();
+  return remainder.length === 0;
+}
+
 export function parseBrief(brief: string): ParsedBrief {
   const all = clausesOf(brief);
-  const clauses = all.slice(0, briefComponentLimit);
+  const components: BriefComponent[] = [];
+  let overflow = 0;
+
+  for (const clause of all) {
+    const peakRps = numberNear(clause, /(?:rps|qps|requests?\/s|req\/s)/) ?? 0;
+    const capacityRps =
+      numberNear(clause, /(?:capacity|headroom|ceiling)/) ?? 0;
+    const monthlyCostUsd =
+      numberNear(clause, /(?:usd|dollars?|\/mo|per month|monthly)/) ?? 0;
+
+    // A clause that only states figures measures the component already named,
+    // rather than introducing one. Attaching it to that component is what the
+    // reviewer meant, and it keeps a phantom node out of the evidence.
+    if (isMeasurementOnly(clause)) {
+      const previous = components[components.length - 1];
+      if (previous) {
+        if (peakRps) previous.peakRps = peakRps;
+        if (capacityRps) previous.capacityRps = capacityRps;
+        if (monthlyCostUsd) previous.monthlyCostUsd = monthlyCostUsd;
+        previous.unmeasured = !previous.peakRps && !previous.capacityRps;
+      }
+      continue;
+    }
+
+    const name = componentNameFrom(clause);
+    // The budget counts distinct components, not clauses. A brief describing
+    // five components across fifteen sentences is not a truncated brief, and
+    // reporting it as one tells the reviewer work was dropped that never was.
+    const distinct = new Set(
+      components.map((component) => component.name.toLowerCase()),
+    );
+    if (
+      !distinct.has(name.toLowerCase()) &&
+      distinct.size >= briefComponentLimit
+    ) {
+      overflow += 1;
+      continue;
+    }
+    components.push({
+      name,
+      // Classify the component this clause names, not every noun mentioned
+      // in it: "the gateway routes to checkout" introduces checkout.
+      kind: kindFor(name),
+      peakRps,
+      capacityRps,
+      monthlyCostUsd,
+      unmeasured: !peakRps && !capacityRps,
+      edgeKind: edgeKindFor(clause),
+      sourceName: subjectNameFrom(clause),
+    });
+  }
+
   return {
-    overflow: all.length - clauses.length,
-    components: clauses.map((clause) => {
-      const name = componentNameFrom(clause);
-      const peakRps = numberNear(clause, /(?:rps|qps|requests?\/s|req\/s)/) ?? 0;
-      const capacityRps =
-        numberNear(clause, /(?:capacity|headroom|ceiling)/) ?? 0;
-      const monthlyCostUsd =
-        numberNear(clause, /(?:usd|dollars?|\/mo|per month|monthly)/) ?? 0;
-      return {
-        name,
-        // Classify the component this clause names, not every noun mentioned
-        // in it: "the gateway routes to checkout" introduces checkout.
-        kind: kindFor(name),
-        peakRps,
-        capacityRps,
-        monthlyCostUsd,
-        unmeasured: !peakRps && !capacityRps,
-        edgeKind: edgeKindFor(clause),
-        sourceName: subjectNameFrom(clause),
-      };
-    }),
+    components,
+    overflow,
+    distinctComponents: new Set(
+      components.map((component) => component.name.toLowerCase()),
+    ).size,
   };
 }

@@ -8,6 +8,7 @@ import {
   setPropertyInput,
 } from "@core/commands";
 import type { AetherState } from "@core/branch-engine";
+import { briefComponentLimit } from "@core/brief-parser";
 import { deriveGraph, dispatch } from "@core/branch-engine";
 import type { Actor } from "@core/types";
 
@@ -629,7 +630,9 @@ export function createAetherToolRegistry(
               components: {
                 type: "array",
                 minItems: 1,
-                maxItems: 6,
+                // The agent must never be the weaker route: this matches the
+                // component budget the unassisted brief path allows.
+                maxItems: briefComponentLimit,
                 items: {
                   type: "object",
                   properties: {
@@ -646,18 +649,18 @@ export function createAetherToolRegistry(
                       enum: ["service", "database", "queue", "gateway"],
                     },
                     regionId: {
-                type: "string",
-                enum: regionIds(),
-                description: "Region this component runs in.",
-              },
+                      type: "string",
+                      enum: regionIds(),
+                      description: "Region this component runs in.",
+                    },
                     peakRps: { type: "number" },
                     capacityRps: { type: "number" },
                     monthlyCostUsd: {
-                type: "number",
-                minimum: 0,
-                maximum: 1000000,
-                description: "Monthly run cost of this component in USD.",
-              },
+                      type: "number",
+                      minimum: 0,
+                      maximum: 1000000,
+                      description: "Monthly run cost of this component in USD.",
+                    },
                   },
                   required: ["key", "name", "kind", "regionId"],
                   additionalProperties: false,
@@ -665,7 +668,8 @@ export function createAetherToolRegistry(
               },
               dependencies: {
                 type: "array",
-                maxItems: 8,
+                // A connected architecture needs more edges than nodes.
+                maxItems: briefComponentLimit * 2,
                 items: {
                   type: "object",
                   properties: {

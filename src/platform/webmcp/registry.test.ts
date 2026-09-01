@@ -707,7 +707,8 @@ describe("Aether WebMCP registry", () => {
               r.sloViolations,
             ]),
           ) +
-          " V=" + branchVersion,
+          " V=" +
+          branchVersion,
       );
     const merged = dispatch(
       approved.value,
@@ -731,16 +732,34 @@ describe("Aether WebMCP registry", () => {
     // Every tool that mutates the model must be gone, because `dispatch` now
     // refuses those commands. Reading, branching again, comparing futures and
     // proposing a reviewable change all stay available.
-    for (const editing of [
-      "model_architecture",
-      "add_architecture_component",
-      "connect_components",
-      "set_component_property",
-      "remove_architecture_component",
-      "run_failure_scenario",
-      "add_decision_note",
-    ])
-      expect(mergedNames).not.toContain(editing);
+    // Assert against the tools that are actually registered in an editable
+    // state, computed rather than listed by hand: naming a tool that does not
+    // exist makes the assertion pass without testing anything.
+    const editableNames: string[] = [];
+    {
+      const registered: RegisteredTool[] = [];
+      const editable = createAetherToolRegistry(() => {}, undefined, {
+        registerTool: async (tool) => {
+          registered.push(tool as unknown as RegisteredTool);
+        },
+      });
+      await editable?.refresh(branched.value);
+      editable?.dispose();
+      editableNames.push(...registered.map((tool) => tool.name));
+    }
+    const withdrawn = editableNames.filter(
+      (name) => !mergedNames.includes(name),
+    );
+    expect(withdrawn.sort()).toEqual(
+      [
+        "add_architecture_component",
+        "add_decision_note",
+        "connect_components",
+        "model_architecture",
+        "run_failure_scenario",
+      ].sort(),
+    );
+    for (const editing of withdrawn) expect(mergedNames).not.toContain(editing);
     expect(mergedNames).toContain("get_architecture_summary");
     expect(mergedNames).toContain("create_architecture_branch");
   });

@@ -6,6 +6,7 @@ import {
   saveRemoteWorkspace,
   workspaceId,
 } from "./remote-workspace";
+import { isValidWorkspaceId } from "./workspace-contract";
 
 const state = createInitialState(paymentPlatformBaseline);
 
@@ -78,6 +79,11 @@ describe("production workspace persistence contract", () => {
 
     const first = workspaceId();
     expect(first).toMatch(/^w-[a-z0-9-]+$/i);
+    // The id is the only thing separating one visitor's decisions from
+    // another's, so it must carry real entropy and still satisfy the pattern
+    // both persistence endpoints enforce.
+    expect(first.length).toBeGreaterThanOrEqual(20);
+    expect(isValidWorkspaceId(first)).toBe(true);
     expect(first).not.toBe("payment-platform");
     // The same browser keeps its workspace across reloads.
     expect(workspaceId()).toBe(first);
