@@ -1637,3 +1637,17 @@ was already underway again.
   - Suppressing the disclosure fails two tests; removing the cap fails two. The fingerprint test catches both, which is its purpose — evidence changing must move the hash.
   - Four assertions across two files held their own copy of the version string and had to be edited by hand for the bump. They now read the exported `simulationEngineVersion`, so the next move needs one edit rather than five.
   - Verified against the deployed origin on a cleared workspace, so this is the seeded baseline a judge sees on first load, not a polluted probe state: the human evidence panel renders the disclosure, and `inspect_failure_domain` returns it to an agent too, with `engineVersion: "aether-sim-4"`. The tool surface was confirmed at five tools with zero futures and twelve once a future exists.
+
+## Milestone 117 — The last silent truncation
+
+- [x] **M117.1 — Audit every cap, not only the one that was found** `DONE`
+  - Acceptance: no agent-facing result reports fewer items than it found without saying so.
+  - Evidence: M116 fixed one truncation, so the rest were enumerated rather than assumed fixed. Four caps exist in the tool surface. Two already disclose their remainder and were confirmed to emit it — `componentsNotListed` on the summary and `failuresNotListed` on the batch. One is a display trim on a note body, not a dropped item. The fourth, the schema-rejection list, did not.
+  - Reproduced before changing anything: a call with seven bad fields returned three problems, and because two of them were the same field reported twice, the agent was told about two fields out of five. It would correct those, retry, and fail again on the three it was never told about — the loop the actionable-error text exists to prevent.
+  - The cap stays; the reply is bounded by an output budget and a wall of issues costs it. What is added is the count _and the field names_, because "3 more" sends an agent guessing while "3 more not listed, in: peakRps, capacityRps, monthlyCostUsd" does not.
+
+- [x] **M117.2 — Test it against the real shape of the failure** `DONE`
+  - Evidence: the test asserts the cap still holds, that the remainder names its fields, and that the reply still fits `maxToolResultLength` — adding text to an error path must not push it into a size error exactly when the agent most needs to read it. It also pins the reason the field names matter: two of the three named problems are the same field, so the cap hides more fields than its count suggests.
+  - Suppressing the disclosure fails it; reducing the note to a bare count fails it too. Both were introduced and reverted.
+  - Two nearby behaviours were checked rather than assumed broken, and both were already right: a nonexistent `branchId` returns `NOT_AVAILABLE` with a next action, and an unknown `regionId` returns a named problem listing the valid regions. The seven-field probe had simply hit the name and kind failures first, which is why neither appeared in it.
+  - A probe error worth recording: the first attempt passed a state _reader_ where the registry takes an `onState` _writer_, so state never advanced and no write tool was ever registered. The second used a two-character branch name that failed its own minimum. Both looked like missing tools and were probe faults.

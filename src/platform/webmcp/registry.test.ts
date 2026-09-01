@@ -6,7 +6,11 @@ import type { AetherState } from "@core/branch-engine";
 import { paymentPlatformBaseline } from "../../fixtures/payment-platform/baseline";
 import { blankBaseline } from "../../fixtures/blank/baseline";
 import { rideHailingBaseline } from "../../fixtures/ride-hailing/baseline";
-import { createAetherToolRegistry, maxToolResultLength } from "./registry";
+import {
+  createAetherToolRegistry,
+  maxToolResultLength,
+  problemLimit,
+} from "./registry";
 import { runScenario } from "@simulation/engine";
 import { offlineToolSurface } from "./offline-surface";
 import webmcpDoc from "../../../docs/WEBMCP.md?raw";
@@ -1591,6 +1595,80 @@ describe("Aether WebMCP registry", () => {
     };
     expect(comparison.futures).toHaveLength(3);
     expect(comparison.futures[0]?.evidence).toHaveLength(3);
+    registry?.dispose();
+  });
+
+  it("says how many schema failures it did not name", async () => {
+    // A rejection listed three problems and stopped. A call with seven bad
+    // fields told the agent about two of them — the third issue was a second
+    // complaint about the same field — so it would correct those, retry, and
+    // fail again on branchId, regionId and the three numbers it was never
+    // told about. That is the loop this text exists to prevent.
+    const tools: RegisteredTool[] = [];
+    let state = createInitialState(paymentPlatformBaseline);
+    const registry = createAetherToolRegistry(
+      (next) => {
+        state = next;
+      },
+      undefined,
+      {
+        registerTool: async (tool) => {
+          tools.push(tool as RegisteredTool);
+        },
+      },
+    );
+    const call = async (name: string, input: Record<string, unknown>) => {
+      await registry?.refresh(state);
+      const tool = tools.filter((candidate) => candidate.name === name).at(-1);
+      if (!tool) throw new Error(`${name} was not registered`);
+      return String(await tool.execute(input));
+    };
+    // A write tool exists only once a future does, so this needs the branch.
+    await call("create_architecture_branch", {
+      name: "rejection probe",
+      intent: "lowest_cost",
+    });
+
+    const raw = await call("add_architecture_component", {
+      branchId: "nope",
+      name: "!",
+      kind: "spaceship",
+      regionId: "mars",
+      peakRps: -5,
+      capacityRps: -9,
+      monthlyCostUsd: -1,
+    });
+    const rejection = JSON.parse(raw) as {
+      error: string;
+      problems: string[];
+      nextAction: string;
+    };
+    expect(rejection.error).toBe("INVALID_INPUT");
+
+    // The individual failures are still capped, or the reply grows unbounded.
+    const named = rejection.problems.filter((p) => !p.includes("not listed"));
+    expect(named).toHaveLength(problemLimit);
+
+    // And the rest are accounted for, by count and by field, so the agent can
+    // fix them in one more call rather than discovering them one at a time.
+    const note = rejection.problems.find((p) => p.includes("not listed"));
+    expect(note, "unlisted schema failures are not disclosed").toBeDefined();
+    expect(note).toMatch(/^\d+ more not listed, in: /);
+    // Named by field, not just counted: "3 more" sends an agent guessing,
+    // "3 more ... peakRps, capacityRps, monthlyCostUsd" does not.
+    for (const field of ["peakRps", "capacityRps", "monthlyCostUsd"])
+      expect(note, `${field} was dropped silently`).toContain(field);
+    // Two of the three named problems are the same field reported twice, so
+    // the cap hides more fields than it looks like it does — which is the
+    // reason the remainder has to name them rather than only count them.
+    expect(new Set(named.map((p) => p.split(":")[0])).size).toBeLessThan(
+      named.length,
+    );
+
+    // Adding text to an error path must not push it past the budget every
+    // result is bounded by, which would replace the reply with a size error
+    // exactly when the agent most needs to read it.
+    expect(raw.length).toBeLessThanOrEqual(maxToolResultLength);
     registry?.dispose();
   });
 

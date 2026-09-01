@@ -160,14 +160,35 @@ function toolResult(value: unknown) {
  * Turn a Zod failure into the specific, actionable text an agent needs to
  * correct its own call, rather than a bare error code it cannot act on.
  */
+// How many individual schema failures a rejection names before it summarises
+// the rest. Exported so a test reads the shipped number, not a copy of it.
+export const problemLimit = 3;
+
 function invalidInput(error: z.ZodError, retryHint: string) {
-  const problems = error.issues.slice(0, 3).map((issue) => {
+  // Zod reports every failure, and a call with seven bad fields produced a
+  // reply naming three. An agent correcting from that list fixes three,
+  // retries, and fails again on the fourth — the loop this text exists to
+  // prevent. The cap stays, because a wall of issues costs the budget the
+  // whole result is bounded by, but the count no longer disappears.
+  const named = error.issues.slice(0, problemLimit).map((issue) => {
     const field = issue.path.join(".") || "input";
     return `${field}: ${issue.message}`;
   });
+  const unlisted = error.issues.length - named.length;
+  // Naming the fields costs little and is what makes the count actionable:
+  // "2 more" sends an agent guessing, "2 more: regionId, peakRps" does not.
+  const remaining = [
+    ...new Set(
+      error.issues
+        .slice(problemLimit)
+        .map((issue) => issue.path.join(".") || "input"),
+    ),
+  ];
   return toolResult({
     error: "INVALID_INPUT",
-    problems,
+    problems: unlisted
+      ? [...named, `${unlisted} more not listed, in: ${remaining.join(", ")}`]
+      : named,
     nextAction: retryHint,
   });
 }
