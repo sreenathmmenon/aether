@@ -726,3 +726,13 @@ for a fifth.
   - Evidence: the layout tests duplicated five geometry constants from the component, so either could drift while the tests kept passing and the canvas drew a component outside its own failure domain — the exact defect those tests exist to catch. The geometry moved to `@app/region-bounds`: the canvas builds its rectangles from it, the measurement effect converts pixels with the same canvas dimensions rather than repeating 1000 and 700, and the tests import it.
   - Confirmed the tests now track the real values by inflating the padding tenfold: three fail, naming the overlapping failure domains. With the duplicated constants they would have passed. Verified in the browser and in production that the refactor changed nothing — zero components outside their region, no overlap, nothing clipped.
   - The remaining two test-local helpers were checked and are fixtures rather than duplicated logic: one clones a graph with a changed property, the other builds a branched state. The sweep found no further instances.
+
+## Milestone 33 — The reproducible run is held to its word
+
+- [x] **M33.1 — Pin the fingerprints across runtimes** `DONE`
+  - Acceptance: changing what the engine computes cannot leave the same engine version tagging different results.
+  - Evidence: the interface labels every simulation a reproducible run and shows a fingerprint a reviewer can quote, but nothing held the engine to those values. Determinism was proven only within a single run, so a coefficient could change and the same version would go on tagging results nobody's records matched.
+  - Verified at each level rather than assumed. Two separate Node processes produce byte-identical fingerprints for all eight scenario-and-system pairs. The deployed browser returns exactly the four payment-platform values Node does — `f504d77f`, `ab223002`, `aa22e8bc`, `78f3f80e` — so the claim holds across runtimes, not only across calls.
+  - Those four are now asserted along with all four being distinct, since a fingerprint that collides is not identifying the run it claims to. Confirmed by nudging one availability coefficient from 4.2 to 4.25: the test fails naming the scenario and both hashes, so changing the engine now forces its version to move.
+- [x] **M33.2 — Confirm the responsive layout** `DONE`
+  - Evidence: audited at a 412px emulated mobile viewport against the deployed origin — accessibility, best practices and SEO all 100 with no failures, and no horizontal overflow or spilling elements.
