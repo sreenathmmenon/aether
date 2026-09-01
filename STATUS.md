@@ -1267,3 +1267,15 @@ was already underway again.
 - [x] **M82.2 — Fix a test that passed on what it exists to catch** `DONE`
   - Evidence: the dialog check first read 400 characters after `role="dialog"`, which reached past the dialog's own tag into the close button's `aria-label` inside it. Deleting the dialog's own accessible name still matched, so the test passed on exactly the defect it was written for. Scoping it to the opening tag makes all three dialog breaks fail it.
   - Worth recording as the same pattern this project keeps meeting: a test that cannot fail is worse than no test, and the only way to know which one you have is to break the code and watch.
+
+## Milestone 83 — The focus trap is tested, and now catches both directions
+
+- [x] **M83.1 — Test the behaviour `aria-modal` promises** `DONE`
+  - Acceptance: the dialog behaviour a screen reader takes on trust is held by the suite, not by hand.
+  - Evidence: M82 asserted the ARIA attributes exist and resolve, but not that they behave. `useModalDialog` had no tests at all — it needs a DOM and the suite runs in node — so the trap, the Escape handler and the sibling hiding were verified only by probes I ran myself.
+  - The wrapping rules moved into `trapFocus`, a pure function of a count, an index and a modifier, tested directly across six cases: forward wrap, backward wrap, ordinary movement left alone, focus pulled back from outside, a single-control dialog where the only button is both first and last, and an empty dialog. The hook now calls it rather than carrying a second copy of the same logic.
+
+- [x] **M83.2 — Close a gap the extraction exposed** `DONE`
+  - Evidence: writing the rules out made an asymmetry obvious. Focus that had escaped the dialog — a click on the dimmed page behind can do it — was pulled back only on Shift+Tab. A plain Tab let it continue into content the page had dimmed and `aria-hidden`, which is precisely what the trap exists to prevent.
+  - Both directions now return it. Verified against the deployed origin: focus forced outside is recovered by Tab and by Shift+Tab, the single-control intro dialog still cycles on itself, Escape still closes, and all seven hidden shell siblings have their `aria-hidden` removed on close — the one remaining is the decorative edge-layer SVG, which carries it deliberately.
+  - Also checked and found already correct: the trap genuinely prevents the default Tab, and every sibling of the dialog, including the section holding the canvas, is hidden from assistive technology while it is open.
