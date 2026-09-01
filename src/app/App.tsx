@@ -567,6 +567,61 @@ export function App() {
     void registryRef.current?.refresh(state);
   }, [state]);
   useEffect(() => () => registryRef.current?.dispose(), []);
+  /**
+   * Keep focus inside the opening dialog while it is up.
+   *
+   * It declares `aria-modal="true"`, but twenty focusable controls sat behind
+   * it and Tab walked straight out into content the reviewer cannot see. A
+   * dialog that says it is modal has to behave like one: focus starts inside,
+   * Tab cycles within it, and Escape dismisses.
+   */
+  const introRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (introDismissed) return;
+    const dialog = introRef.current;
+    if (!dialog) return;
+    const focusable = () =>
+      Array.from(
+        dialog.querySelectorAll<HTMLElement>(
+          'button, a[href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+        ),
+      ).filter((element) => element.offsetParent !== null);
+    focusable()[0]?.focus();
+    // Hide everything behind the dialog from assistive technology too, so a
+    // screen reader announces the dialog rather than the dimmed page under
+    // it. The overlay is the last child of the shell, so its siblings are
+    // exactly what should be inert.
+    const shell = dialog.parentElement;
+    const behind = shell
+      ? Array.from(shell.children).filter((child) => child !== dialog)
+      : [];
+    for (const sibling of behind) sibling.setAttribute("aria-hidden", "true");
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        dismissIntro();
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const targets = focusable();
+      if (targets.length === 0) return;
+      const first = targets[0]!;
+      const last = targets[targets.length - 1]!;
+      const active = document.activeElement;
+      if (event.shiftKey && (active === first || !dialog.contains(active))) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && active === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      for (const sibling of behind) sibling.removeAttribute("aria-hidden");
+    };
+  }, [introDismissed]);
   useEffect(() => {
     if (!latestCall) return;
     const timer = window.setTimeout(() => setLatestCall(undefined), 6000);
@@ -2349,6 +2404,7 @@ export function App() {
       )}
       {!introDismissed && (
         <div
+          ref={introRef}
           className="intro-overlay"
           role="dialog"
           aria-modal="true"
