@@ -1581,3 +1581,11 @@ was already underway again.
 - [x] **M111.2 — A probe that patched the wrong line** `DONE`
   - Evidence: verifying the new test, breaking the status transition appeared to change nothing — the whole suite passed. That looked like the test was worthless. The probe had replaced the first `branch.status = "proposed"` in the file, which belongs to `SET_PROPERTY`, not the one in `ADD_COMPONENT` five commands later. Patched at the right line, the new test fails by name.
   - Recorded because the failure mode is specific and repeatable: a string that appears five times, replaced once, silently patches whichever came first. The signal was a break that changed nothing at all, which is rarely what a real break does.
+
+## Milestone 112 — Eleven states a reviewer could not act on
+
+- [x] **M112.1 — The reducer's enum was reaching the page** `DONE`
+  - Acceptance: after a command, a reviewer is told what changed and what to do next.
+  - Evidence: auditing what the twelve reducer states are asserted against found eight with no test at all, which led to asking where they surface. Three places: the activity strip, the replay history, and the agent's decision record. One state had been written out properly — a scenario run — and the other eleven fell through to `State updated: ${nextState}`. Changing a component's replicas told a reviewer "State updated: human edit.", which names the machine's category rather than their action. The same defect as the evidence scope that once read "Evidence scope: affected".
+  - Each state now has a sentence that names the change and the next step. Verified against the deployed origin: "Component updated. Re-run the scenario to see its consequence.", with no enum anywhere in the strip.
+  - The test derives the state list from the reducer source rather than holding its own copy, so a state added later fails there instead of reaching a reviewer as an enum. It also refuses a message too terse to act on, which is how a relabelled token would otherwise pass — removing one state fails by name, and shortening one fails differently.
