@@ -1759,3 +1759,11 @@ was already underway again.
 - [x] **M125.2 — Confirm the numbers are the graph's, not a constant** `DONE`
   - Evidence: the ride-hailing baseline reports the same 93.96% availability as the payment platform, which looked like a value insensitive to the architecture. Measuring all three shipped systems across all four scenarios showed recovery time, cost, violations and output hash all differ per system, and availability varies by scenario within each. The collision is real: both baselines lose a comparable fraction of their graph to a regional outage.
   - The payment platform reporting identical availability for three of four scenarios was checked too, and is correct — it is single-region, so any root failure impacts the same five components, while recovery time still separates them at 46, 39 and 25 minutes.
+
+## Milestone 126 — A clean verdict that read like six failures
+
+- [x] **M126.1 — Fix what the walk exposed** `DONE`
+  - Acceptance: the sentence beside an enabled approve button says why it is enabled.
+  - Evidence: M125's walk surfaced `First run on this future · 6 of 6 components affected` sitting directly beside an _enabled_ approve control. That branch of `gateReason` is reached only when every current run is clean, and the sentence never said so — it reported scope alone, and "6 of 6 affected" reads as six failures, which is the opposite of the reason the button is eligible. The neighbouring branch already said "Evidence is current and clean"; the scoped branch had dropped it.
+  - Now reads `Evidence is current and clean · First run on this future · 3 of 5 components simulated`. The verdict leads, because that is what the control's state depends on and what a reviewer decides from, and "affected" becomes "simulated" — a clean run covered those components, it did not damage them.
+  - The existing test pinned the exact old string, so it failed on the wording rather than on the meaning. Rewritten to assert the properties: the verdict comes first, "affected" is absent, "simulated" is present, and the scope still distinguishes a first run from one recomputed after an edit. Dropping the verdict fails it; restoring "affected" fails it too.

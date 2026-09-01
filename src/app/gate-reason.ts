@@ -3,6 +3,9 @@
  *
  * The span above it described the simulation's scope — "First run on this
  * future · 5 of 5 components affected" — which says nothing about approval.
+ * The same sentence then survived into the eligible state, where "affected"
+ * reads as failures beside a button that is enabled precisely because there
+ * were none.
  * After an edit invalidated the evidence, a reviewer read a disabled button
  * saying "Resolve evidence before approval" beside a sentence about a run
  * that no longer applied to the version they were looking at.
@@ -25,8 +28,12 @@ export function gateReason(input: {
   if (blockingRuns > 0)
     return `${blockingRuns} ${blockingRuns === 1 ? "scenario reports" : "scenarios report"} violations. Resolve them to make approval eligible.`;
   if (!scope) return "Evidence is current and clean.";
+  // This branch is only reached when every current run is clean, and the
+  // sentence never said so: "6 of 6 components affected" beside an enabled
+  // approve button reads as six failures, which is the opposite of what
+  // makes approval eligible. Lead with the verdict, keep the scope after it.
   const opening = scope.recomputed
     ? "Recomputed after your edits"
     : "First run on this future";
-  return `${opening} · ${scope.affected} of ${scope.total} components affected`;
+  return `Evidence is current and clean · ${opening} · ${scope.affected} of ${scope.total} components simulated`;
 }
