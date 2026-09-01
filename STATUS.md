@@ -746,3 +746,17 @@ for a fifth.
   - Audited the rest of the surface rather than fixing only the instance: the only other caller-supplied text reaching a read is component names in the blast radius, bounded by schema to 32 characters of alphanumerics with dot and dash, and branch names never reach output because the engine replaces them with canonical ones.
   - A test writes an injection-shaped note, reads it back, and asserts both that the text is echoed and that the tool declares itself untrusted. Confirmed by flipping the annotation back and watching it fail by tool name. Verified in production: both tools untrusted, `readOnlyHint` preserved, description warning present.
   - The compliance table had claimed "no external or user-generated payload is returned by the current tools", which was false and was the claim that made the annotation look correct. Both documents now state the laundering rule and why the other two paths are safe.
+
+## Milestone 35 — The suite owns the numbers the documents quote
+
+Prompted by the false compliance claim: a doc claim that has gone stale is
+worse than none, because it is what makes a defect look correct. That claim
+said no user-generated payload is returned, which hid a laundered annotation.
+The submission still said 97 unit tests when there were 110, so the same drift
+was already underway again.
+
+- [x] **M35.1 — Assert the tool-surface claims rather than remembering them** `DONE`
+  - Evidence: a test pins the five tools a committed architecture registers by name, ten on an editable canvas, twelve once a repair future exists, that no approve, merge, commit or rollback tool is registered in any state, and that no mutating tool claims to be read-only. All five values were read from the registry before being written down. Confirmed the test defends the claim by adding an approval tool: four assertions fail, including the safety promise the submission leads with. Verified in production: exactly those five names committed, twelve with a future, zero approval tools, none mutating-yet-read-only.
+  - The prose test count is gone rather than corrected, because a number in a document drifts from the suite it describes and the suite reports its own.
+- [x] **M35.2 — Correct the remaining claims the product had outgrown** `DONE`
+  - Evidence: the submission said two worked systems ship, and ride-hailing dispatch makes three. It described the agent build path component-by-component and omitted `model_architecture`, the batch call that most distinguishes the agent path from clicking. The README called synchronization tab-to-tab, which understates a shared room synchronizing people, and its Lighthouse line did not note that the same scores hold at an emulated 412px mobile viewport. Every count was read from the registry or the filesystem before being written.
