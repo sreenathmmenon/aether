@@ -1064,3 +1064,16 @@ was already underway again.
   - Acceptance: the submit reads as the action, not as another field.
   - Evidence: the grid was `1fr 1fr auto`, built for two selects and a button. With seven controls the `auto` column stranded "Add" mid-grid beside the monthly cost input, and the dependency select was orphaned on a row below it — so the last thing under the button was another field. Found by screenshotting the page rather than trusting the markup.
   - The fields now share an even two-column grid that collapses to one column under 740px, the dependency spans the full row because it names another component, and the submit is a full-width action beneath them. Half-width selects were also clipping their own labels — "Recovery: defau…" — so those presets read "auto" instead.
+
+## Milestone 65 — The dependency edges are actually on the canvas
+
+- [x] **M65.1 — Draw edges outside the cards they connect** `DONE`
+  - Acceptance: the dependency graph is visible, not hidden under the components.
+  - Evidence: found by screenshotting the deployed canvas. Edges were drawn centre to centre while the component cards stack above the SVG at `z-index: 2`, so all but a sliver of every edge was underneath a card. The one visible line was the long diagonal between two distant components; the four short ones were not there at all. The graph — the thing the product reasons about — was effectively invisible.
+  - Each edge is now trimmed to the card boundary through a `edgeBetween` helper with its own tests, and the SVG has an explicit layer between the region boxes and the cards.
+  - A first version trimmed each end independently, which let the two trims exceed the whole line when cards sat closer together than their own width: the browser reported `x1=402.8, x2=394`, an edge drawn backwards through both components. Both ends now trim by the same fraction and never past the midpoint. A test sweeps separations from 10 to 400 in both axes and fails on the unclamped version.
+
+- [x] **M65.2 — Give the edge somewhere to be drawn** `DONE`
+  - Evidence: the shipped systems space components 180 canvas units apart while a card measured about 177 of them. Trimming to the boundary therefore produced two zero-length edges — correct geometry with nothing to show. The card is now 128px rather than 146px, the clearance at each end is 2 canvas units rather than 6, and the stroke is heavier with round caps so a short connector still reads.
+  - What was tried and reverted: spreading the fixture positions to 240 units apart. A determinism test caught it immediately — component positions feed the simulation input fingerprint, so moving them changes hashes quoted in this file and shown in the interface. Scaling positions at render time was rejected too: the ride-hailing and AI-platform systems already reach x=830 of 1000, so spreading would push components off the canvas.
+  - Honest limit: adjacent components connect through roughly twelve pixels, so a dependency between two neighbours reads as a short weighted connector rather than a long line. The diagonals across regions render at full length. Closing this properly means relaying out the shipped fixtures, which cannot be done without republishing every fingerprint that depends on them.
