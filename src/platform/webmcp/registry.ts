@@ -246,10 +246,17 @@ export function createAetherToolRegistry(
     async refresh(state) {
       currentState = state;
       // The key must change whenever the registered surface would change, or
-      // the early return below leaves a stale set of tools on the page.
-      const capabilityKey = `${canEditModel(state) ? "editable" : "readonly"}:${
-        state.workspace.templateId === "blank" ? "own" : "seeded"
-      }`;
+      // the early return below leaves a stale set of tools on the page. That
+      // includes the schemas: entityId and regionId are enumerated from the
+      // live graph, so a component a reviewer just added has to appear in
+      // them. Keying only on writability left those enums empty forever, and
+      // an agent could not anchor a note or trace a dependency to anything.
+      const capabilityKey = [
+        canEditModel(state) ? "editable" : "readonly",
+        state.workspace.templateId === "blank" ? "own" : "seeded",
+        componentIds().join(","),
+        regionIds().join(","),
+      ].join(":");
       if (capabilityKey === registeredCapabilityKey) return;
       registeredCapabilityKey = capabilityKey;
       registrations.forEach((registration) => registration.abort());

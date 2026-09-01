@@ -1234,4 +1234,64 @@ describe("Aether WebMCP registry", () => {
     expect(probed).toBeGreaterThan(6);
     registry?.dispose();
   });
+
+  it("enumerates components a reviewer just added", async () => {
+    // entityId and regionId are enumerated from the live graph, and the
+    // submission says so. The capability key tracked only writability and
+    // template, so adding a component did not change it, refresh returned
+    // early, and those enums stayed empty forever — an agent could not anchor
+    // a note or trace a dependency to anything on a canvas being built.
+    const human = { id: "s", kind: "human" as const, displayName: "S" };
+    const registered: {
+      name: string;
+      inputSchema: { properties: Record<string, { enum?: string[] }> };
+    }[] = [];
+    const registry = createAetherToolRegistry(() => {}, undefined, {
+      registerTool: async (tool) => {
+        registered.push(
+          tool as unknown as {
+            name: string;
+            inputSchema: { properties: Record<string, { enum?: string[] }> };
+          },
+        );
+      },
+    });
+    const entityEnum = () =>
+      registered.filter((tool) => tool.name === "add_decision_note").at(-1)
+        ?.inputSchema.properties.entityId?.enum;
+
+    let state = createInitialState(blankBaseline, "blank");
+    await registry?.refresh(state);
+    expect(entityEnum()).toEqual([]);
+
+    for (const name of ["Fresh Api", "Second Store"]) {
+      const added = dispatch(
+        state,
+        {
+          type: "ADD_COMPONENT",
+          input: {
+            branchId: "branch-baseline",
+            name,
+            kind: "service",
+            regionId: "region-primary",
+            peakRps: 100,
+            capacityRps: 500,
+            monthlyCostUsd: 10,
+          },
+        },
+        human,
+      );
+      if (!added.ok) throw new Error(`${name} must be addable`);
+      state = added.value;
+      await registry?.refresh(state);
+    }
+    expect(entityEnum()).toEqual(["entity-fresh-api", "entity-second-store"]);
+
+    // And the surface must not churn: refreshing unchanged state re-registers
+    // nothing, or every poll would tear down and rebuild every tool.
+    const before = registered.length;
+    await registry?.refresh(state);
+    expect(registered.length - before).toBe(0);
+    registry?.dispose();
+  });
 });
