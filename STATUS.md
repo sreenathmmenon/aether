@@ -534,3 +534,27 @@ anything was changed, and each fix is pinned by a test so it cannot regress.
 - [x] **M16.4 — Declare the availability model instead of burying its coefficients** `DONE`
   - Acceptance: a reviewer can audit the assumptions behind a score.
   - Evidence: availability applied unexplained literals while the interface labelled the result a "Deterministic proof". Determinism was and remains true; what was missing was honesty about the weights. They are now a named model with each coefficient's unit and meaning stated, and the badge reads "Reproducible run" and says the weights are declared assumptions rather than measured production data. Pure refactor: all tests pass unchanged.
+
+## Milestone 17 — Second council review
+
+The panel re-convened and verified the Milestone 16 fixes independently in
+production rather than accepting the summary. Their verification: the
+capability key genuinely mirrors the reducer guard, the round-one baseline
+attack now returns `NOT_AVAILABLE` against the deployed app, and the tool
+surface provably changes through `AbortController` rather than display
+filtering. They then found five further defects, all reproduced before being
+fixed.
+
+- [x] **M17.1 — Stop the parser inventing components from stated figures** `DONE`
+  - Acceptance: a figure written as its own sentence measures a component instead of becoming one.
+  - Evidence: "Our API gateway routes to checkout. Checkout calls fraud scoring. Peak is 40000 rps. Monthly cost is 2400 usd." produced phantom components named "Peak" and "cost", and attached the real 40,000 RPS to the phantom so the genuine component was reported unmeasured — and the phantoms then entered `impactShare`, corrupting the headline availability figure. Measurements were stripped within a clause, but clause-splitting ran first. A clause that states figures and names nothing now measures the component already described. Framing verbs no longer survive into names either: "checkout handles 12k rps" names checkout.
+- [x] **M17.2 — Budget distinct components rather than clauses** `DONE`
+  - Evidence: fifteen sentences about one store reported "2 clauses not modelled" for work that never existed. `ParsedBrief` now carries `distinctComponents` beside the per-clause list, because a repeat mention is a real dependency edge rather than a duplicate to discard.
+- [x] **M17.3 — Make the agent path at least as capable as the human path** `DONE`
+  - Evidence: `model_architecture` accepted six components while the unassisted brief path allowed twelve, so the agent surface was the weaker route on the criterion this challenge weighs most. Both now derive from `briefComponentLimit`, and dependencies scale with it.
+- [x] **M17.4 — Remove assertions that passed without testing anything** `DONE`
+  - Evidence: the committed-surface test asserted `set_component_property` and `remove_architecture_component` are absent after a merge. Neither is registered in any state, so both assertions passed vacuously. The test now computes the set of tools actually withdrawn when a future is committed and asserts it exactly, so a renamed or retained tool fails it.
+- [x] **M17.5 — Give workspace identifiers real entropy and state the security model** `DONE`
+  - Evidence: identifiers were twelve hex characters of a truncated UUID with a `Math.random` fallback, and they are the only thing separating one visitor's decisions from another's. They now use `crypto.getRandomValues`, are asserted to satisfy the pattern both endpoints enforce, and the README states plainly that workspaces are unauthenticated evaluation state rather than a store for confidential architecture.
+- [x] **M17.6 — Make a shared system link open the system it names** `DONE`
+  - Evidence: `?system=ride-hailing` was overwritten by the restored workspace on mount, so a shared link silently landed a reviewer on somebody else's canvas. An explicit link now wins over stored state, and switching systems rewrites the address bar so the current architecture stays shareable.
