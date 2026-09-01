@@ -1430,3 +1430,14 @@ was already underway again.
   - That distinction is the whole point of the graph. A component hit directly by a regional outage needs a different repair from one reached through its dependency: verified live, three components fail with "Mumbai unavailable" at depth 0, Bengaluru Queue at depth 1 "depends on Primary Ledger", and Reconciliation at depth 2 "depends on Bengaluru Queue". A flat list cannot express any of that.
   - Measured before adding rather than after: existing results run 470 to 605 characters against the 2000 budget and the chain costs about 400, so nothing approaches truncation. The live result is 849 characters.
   - The test asserts the chain accounts for every component in the blast radius, that a depth-zero step names the failed domain and a deeper one names what it depends on, and that the result still fits the budget. Removing the chain fails it; flattening every cause to one string fails it too.
+
+## Milestone 98 — The description follows the tool
+
+- [x] **M98.1 — Audit every engine field against what the tools return** `DONE`
+  - Acceptance: nothing the engine computes is withheld from an agent without reason.
+  - Evidence: M97 found `inspect_failure_domain` discarding the causal chain, so the same comparison was run across the surface. `run_failure_scenario` returns all fourteen `ScenarioResult` fields, and its chain already carries both `entityId` and `entityName`, so an agent can name a component or address it. `affectedEntityIds` returns raw ids deliberately — they match the enums the other tools accept, so an agent can pass them straight on. Nothing else is withheld.
+
+- [x] **M98.2 — Update the description M97 left behind** `DONE`
+  - Evidence: adding the chain left `inspect_failure_domain` describing itself as "the deterministic blast radius and decision variables" — the tool it used to be. An agent choosing between tools reads the description, not a result it has not called yet, so the propagation path was available and unadvertised. The same failure as M78, one round after it.
+  - It now names what it returns: which components are affected, why each one fails, how far each sits from the origin, and the metrics and properties worth changing. 250 characters against the 500 the metadata test enforces.
+  - A test holds the description to the result, so the next field added here cannot be advertised as the previous version. Reverting the wording fails it.
