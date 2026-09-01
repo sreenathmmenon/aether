@@ -1733,3 +1733,16 @@ was already underway again.
   - Creating a repair future on that agent-built system grew the surface to twelve, and not one of the twelve names an action a human reserves. The gate holds on a graph nobody wrote a fixture for.
   - `run_failure_scenario` returned `aether-sim-5` with `availability: 98.23`, `rtoMinutes: 4`, and an input fingerprint, and running it a second time returned a **byte-identical result**. Determinism is demonstrated on a novel graph, which is stronger evidence than repeating it on the seeded one.
   - Compliance claims checked from outside at the same time: the live origin serves `Cross-Origin-Opener-Policy: same-origin`, `Cross-Origin-Embedder-Policy: require-corp`, `Permissions-Policy: tools=(self)`, and an `Origin-Trial` header whose token decodes to origin `https://webmcp-production-38e5.up.railway.app:443`, feature `WebMCP`, expiring 2026-11-17 — 76 days out, matching the deployed host exactly.
+
+## Milestone 124 — Work discarded on the path the onboarding advertises
+
+- [x] **M124.1 — A reload emptied the canvas** `DONE`
+  - Acceptance: a visitor's own work survives a reload, and a shared link still opens the system it names.
+  - Evidence: found by continuing to use the product after M123 rather than reading more of it. Picking "Your own system" from the dropdown makes `loadTemplate` write `?system=blank` into the address bar. Both load paths — the initial state and the remote restore — treated the mere presence of a `?system=` link as a reason to open fresh, so **every later reload emptied the canvas**. Reproduced on the deployed origin with no hand-crafted URL: pick the option, add a component through the live WebMCP surface, refresh, and the work is gone.
+  - This is the "bring your own system" path the onboarding advertises, so a judge who tries the most ambitious claim and refreshes loses everything they built. Nothing in the suite covered it: the blank canvas has seventeen tests, and none of them reload.
+  - The original reasoning was sound and had to be preserved — a stored workspace restored over a shared link makes the link silently do nothing, which lands a reviewer on somebody else's canvas. What was wrong was the _test_: whether a link is present, rather than which system the stored work belongs to.
+
+- [x] **M124.2 — One rule, both paths, both asserted** `DONE`
+  - Evidence: `shouldRestore(requested, stored)` restores when the stored work is already in the system the link names, opens fresh when the link names a different one, and keeps work on an ordinary visit with no link. Both call sites share it rather than each carrying the comparison, because the defect existed in both and a fix applied to one would have left the other shipping.
+  - A separate assertion holds that `App.tsx` calls it twice and that neither path has gone back to deciding on the link's presence — a helper nothing calls would leave every test above passing over the original behaviour. Reverting the remote path fails that assertion; reverting the rule itself fails a different one.
+  - Verified against the deployed origin, both directions: a component added on `?system=blank` survives a reload, and navigating to `?system=ride-hailing` opens that architecture cleanly with no leakage from the blank workspace.
