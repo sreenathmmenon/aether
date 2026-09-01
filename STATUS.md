@@ -272,10 +272,14 @@ The detailed plan is in `docs/V3_REVERSE_WINNER_PLAN.md`. V3 keeps the challenge
 - [x] **M16.6 — Add a third shipped example outside payments and AI infrastructure** `DONE`
   - Acceptance: the product demonstrates at least three materially different system domains without fixture-specific copy or logic.
   - Evidence: ride-hailing dispatch ships alongside the payment platform and the inference platform — location ingest, matching, driver supply, trip state, trip events, and surge pricing, where matching depends on both a geospatial store and the trip database so one stateful failure stops dispatch entirely. The engine carries no fixture-specific branching; all three run through the same graph traversal, and `layout.test.ts` asserts the same invariants across all three.
-- [ ] **M16.7 — Upgrade replay into a decision timeline** `TODO`
-  - Acceptance: the reviewer can scrub through human actions, agent tool calls, engine-generated evidence, blocked approvals, approvals, commits, and rollback.
-- [ ] **M16.8 — Add optional live room collaboration** `TODO`
-  - Acceptance: private workspaces remain default, but an explicit room can synchronize two browsers with presence and attributable changes.
+- [x] **M16.7 — Upgrade replay into a decision timeline** `DONE`
+  - Acceptance: the reviewer can read human actions, agent tool calls, engine-generated evidence, blocked approvals, approvals, and commits in one attributable sequence.
+  - Evidence: the history named actor, action, and outcome but not when it happened or what evidence stood behind it, so auditing an approval meant taking it on trust. Each entry now carries its timestamp; a simulation shows the availability, recovery time, and reproducible-run fingerprint it produced; an approval or merge shows how many scenarios were clean at that branch version and the worst availability among them — the figure the human actually accepted. Verified end to end through WebMCP: four agent simulations recorded with distinct fingerprints, approval correctly blocked while violations remained, and after repair the timeline recorded "Sreenath · approved the exact plan · human approved · 3 clean scenarios · worst 97.11%" with the time.
+- [x] **M16.8 — Add optional live room collaboration** `DONE`
+  - Acceptance: private workspaces remain default, but an explicit room can synchronize two browsers with attributable changes.
+  - Evidence: the persistence layer already carried per-workspace rows, optimistic versioning, stale-write rejection, and a three-second reconcile, so a room is the link naming the workspace. `?room=<name>` puts everyone holding that link in one workspace and the header shows which room they are in. Without the parameter nothing changes: the visitor keeps their private workspace and joining a room does not consume it. Every change already carries its actor through the audit trail, so shared changes stay attributable.
+  - The room reaches the store as a workspace id and is sanitised to the shape both endpoints validate. Writing that test caught a real defect: a name sanitising away entirely, such as `?room=%%%`, still produced the valid id `room-`, which would have put every such link into one shared workspace.
+  - Verified in production: a write to `room-judgetest99` as one browser returned version 1 and a second read of the same room returned that workspace, and the deployed page at `?room=incident-42` shows a "Room · incident-42" chip with Postgres-backed Synced status.
 - [ ] **M16.9 — Validate the V3 journey end to end** `TODO`
   - Acceptance: ChatGPT browser, Chrome, Railway production, tests, docs, and submission copy all prove the self-built-system V3 demo path.
 
