@@ -402,6 +402,10 @@ export function createAetherToolRegistry(
             humanGuardrail: snapshot().workspace.costCeilingUsd
               ? `$${snapshot().workspace.costCeilingUsd} monthly cost ceiling`
               : "No cost ceiling set",
+            // Three notes at their full length, each with an evidence
+            // reference, reach 88 per cent of the budget. Trim the bodies
+            // rather than let one long discussion replace the whole record
+            // with an error.
             recentNotes: (snapshot().decisionNotes ?? [])
               .slice(-3)
               .map((note) => ({
@@ -409,7 +413,7 @@ export function createAetherToolRegistry(
                 branchId: note.branchId,
                 entityId: note.entityId,
                 body: note.body.slice(0, 160),
-                evidenceRef: note.evidenceRef,
+                evidenceRef: note.evidenceRef?.slice(0, 60),
               })),
             recentCommands: snapshot()
               .audit.slice(-4)

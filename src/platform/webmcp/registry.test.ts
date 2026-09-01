@@ -882,6 +882,61 @@ describe("Aether WebMCP registry", () => {
     expect(output).not.toContain("RESULT_TOO_LARGE");
   });
 
+  it("keeps the decision record inside its budget at full length", async () => {
+    // The record bounds itself to three notes and four commands, so its size
+    // has a ceiling rather than a growth curve — but the ceiling was 88 per
+    // cent of the budget, because nothing capped the evidence reference each
+    // note carries. One long discussion and the whole record would have
+    // become an error.
+    let state = createInitialState(rideHailingBaseline, "ride-hailing");
+    const branched = dispatch(state, {
+      type: "CREATE_BRANCH",
+      input: { name: "Record ceiling", intent: "highest_resilience" },
+    });
+    if (!branched.ok) throw new Error("fixture branch must be created");
+    state = branched.value;
+    for (let index = 0; index < 6; index += 1) {
+      const noted = dispatch(state, {
+        type: "ADD_DECISION_NOTE",
+        input: {
+          branchId: "branch-highest_resilience",
+          // A real component on this graph: an unknown one is refused, which
+          // silently left an earlier probe measuring only the seeded notes.
+          entityId: "matching",
+          body: `N${index} `.padEnd(280, "y"),
+          evidenceRef: "e".padEnd(120, "z"),
+        },
+      });
+      if (noted.ok) state = noted.value;
+    }
+
+    const tools: RegisteredTool[] = [];
+    const registry = createAetherToolRegistry(() => {}, undefined, {
+      registerTool: async (tool) => {
+        tools.push(tool as unknown as RegisteredTool);
+      },
+    });
+    await registry?.refresh(state);
+    const output = String(
+      await tools
+        .find((tool) => tool.name === "get_decision_record")
+        ?.execute({}),
+    );
+    registry?.dispose();
+    const record = JSON.parse(output) as {
+      error?: string;
+      recentNotes: { evidenceRef?: string }[];
+    };
+
+    expect(record.error).toBeUndefined();
+    expect(record.recentNotes).toHaveLength(3);
+    // Room to grow, not merely a fit: a result at the line breaks on the
+    // next field anyone adds.
+    expect(output.length).toBeLessThan(maxToolResultLength * 0.85);
+    for (const note of record.recentNotes)
+      expect((note.evidenceRef ?? "").length).toBeLessThanOrEqual(60);
+  });
+
   it("tells an agent what to do at the decision point", async () => {
     // Every other tool names a next action. This one, at the point a
     // decision is actually made, returned futures and a human gate and
