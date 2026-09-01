@@ -1494,3 +1494,14 @@ was already underway again.
   - Evidence: the first live verification announced "0 tools registered for the current state" and then "12". Rebuilding the surface aborts every registration and registers again, and the count was reported between those two steps — a real defect that had been invisible because nothing announced it.
   - The surface is never empty from an agent's point of view: the rebuild is one operation, and `getTools` outside it never observes the gap. The intermediate report is gone, and a test pins the sequence to `[5, 12]` exactly; reinstating the zero fails it with `[0, 5, 0, 12]`.
   - Verified against the deployed origin: one announcement of twelve, no zero, which is what a screen reader now hears when an agent creates a repair future.
+
+## Milestone 104 — One announcement per agent action
+
+- [x] **M104.1 — Two regions were saying the same thing** `DONE`
+  - Acceptance: an agent call is announced once, in the form that carries the most.
+  - Evidence: following M103's approach of watching what the live regions actually emit. The header chip and the tool feed both carried the latest call and both were polite live regions, so a screen reader said every agent action twice — the bare tool name in the header, then the same name with its arguments in the feed. The header is now visible and silent; the feed keeps the announcement because it names what the call was made with.
+  - Verified against the deployed origin by observing both regions during one call: one announcement, from the feed, reading `trace_architecture_dependency` with its entity. Two live regions remain and they say different things — the chip announces the surface size changing, the feed announces calls.
+
+- [x] **M104.2 — The feed was re-reading itself** `DONE`
+  - Evidence: it had no `aria-atomic="false"`, so a change anywhere inside re-announced the whole region. The fourth agent call would have replayed the three before it, which gets worse exactly as an agent does more work.
+  - Scoped to the arriving entry. A test holds both properties, and each fails on its own: restoring the header's live region fails it, and removing the atomic attribute fails it separately.
