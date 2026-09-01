@@ -834,3 +834,11 @@ was already underway again.
   - The sweep is a test rather than a one-time audit: it reads every advertised `minLength`, `maxLength`, `minimum` and `maximum` from the live schemas, calls each tool with that field at exactly its stated extreme, and asserts the call succeeds, so a schema promising more than the runtime honours fails the build. Confirmed by advertising a 400-character note body against the 280-character validator — it fails naming the field and the rejection.
   - Verified in production: the deployed schemas publish 3–280, 3–120 and 3–48, and calls at exactly those maxima are accepted.
   - Writing the probe surfaced a bug in the probe rather than the product: making component names unique truncated a three-character minimum below its own limit. The substitution now preserves the exact length under test.
+
+## Milestone 44 — The schemas describe the graph as it is now
+
+- [x] **M44.1 — Enumerate components a reviewer just added** `DONE`
+  - Acceptance: an identifier a person or agent creates appears in the schemas an agent reads.
+  - Evidence: the submission says component identifiers in the tool schemas are enumerated from the live graph so an agent can operate on something a person added moments earlier. They were not. The capability key tracked writability and template only, so adding a component did not change it, `refresh` returned early, and the `entityId` and `regionId` enums kept whatever they held at registration — empty, on the canvas a reviewer builds their own system on. An agent reading those schemas saw no valid component to anchor a decision note to or trace a dependency from, on exactly the path the product leads with.
+  - The key now includes the component and region identifiers, so the schemas re-register when the graph they describe changes. Verified in isolation that adding two components moves the enum from empty to both identifiers, and that refreshing with unchanged state re-registers nothing — the surface must not churn on every three-second poll. Confirmed the test catches the old behaviour, failing with "expected [] to deeply equal [ 'entity-fresh-api', …(1) ]".
+  - Verified end to end in production: both enums move from empty to `entity-fresh-api` the moment a component is added, and an agent then anchors a decision note using that identifier successfully.
