@@ -1264,15 +1264,13 @@ export function App() {
                       x2={x2}
                       y2={y2}
                     />
-                    {!affected && (
-                      <line
-                        className="path-flow"
-                        x1={x1}
-                        y1={y1}
-                        x2={x2}
-                        y2={y2}
-                      />
-                    )}
+                    <line
+                      className={`path-flow ${affected ? (edgeDegraded ? "flow-degraded" : "flow-failed") : ""}`}
+                      x1={x1}
+                      y1={y1}
+                      x2={x2}
+                      y2={y2}
+                    />
                   </g>
                 );
               })}

@@ -495,6 +495,10 @@ The detailed plan is in `docs/V3_REVERSE_WINNER_PLAN.md`. V3 keeps the challenge
 - [x] **M15.22 — Recover from a full disk without losing work** `DONE`
   - Evidence: the workstation filled during the previous session, which emptied `node_modules` and made every shell command fail before it ran. No work was lost: the tree was clean at `9a4da82`, everything was pushed, and the deployed origin was unaffected because it runs on Railway. After `npm ci` the full gate passes and the live bundle still matches the local build.
 
+- [x] **M15.23 — Make the architecture read as running, not drawn** `DONE`
+  - Acceptance: the canvas conveys a live system on arrival, without the reviewer clicking anything.
+  - Evidence: motion only appeared on healthy paths, and in a failure scenario nearly every path is impacted, so a reviewer landing on the incident saw a static diagram. Every component's load bar now breathes, faster when the component is under strain, and every dependency carries moving traffic coloured by its condition — cyan while serving, amber when degraded, coral when failing. The incident beacon pulses so the eye lands on the fault before the labels. On the ride-hailing system that is six components and five paths in continuous motion on arrival. All motion is suppressed under a reduced-motion preference.
+
 ## Milestone 13 — Real-time architecture decision room
 
 - [x] **M13.1 — Define and build the unmistakable collaborative decision-room journey** `DONE`
