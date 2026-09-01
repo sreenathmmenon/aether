@@ -1451,9 +1451,9 @@ export function App() {
           </div>
           <div
             className="simulation-provenance"
-            title="A stable fingerprint of the exact simulation input and result."
+            title="The same architecture always produces this same result. The engine version and fingerprints identify the model and the exact input and output it ran on. The availability model's weights are declared assumptions, not measured production data."
           >
-            <span>Deterministic proof</span>
+            <span>Reproducible run</span>
             <code>{evidence.engineVersion}</code>
             <code>{evidence.outputHash}</code>
           </div>

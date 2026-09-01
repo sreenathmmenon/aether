@@ -4,6 +4,35 @@ import type {
 } from "@domain/architecture/types";
 
 export type Scenario = "regional_outage" | "traffic_spike" | "database_failure";
+/**
+ * The declared availability model.
+ *
+ * Every number here is an assumption this product makes explicit, expressed in
+ * percentage points of availability, so that a reviewer can audit the model
+ * rather than take a score on faith. They are chosen to rank architectures
+ * consistently against one another; they are not calibrated against measured
+ * production incidents, and the product does not claim they are.
+ */
+export const availabilityModel = {
+  /** Points lost per unit share of the system knocked out by the scenario. */
+  impactedShareWeight: 4.2,
+  /** Points lost for each impacted datastore with no standby replica. */
+  unreplicatedStorePenalty: 2.4,
+  /** Points regained for each datastore replicating synchronously. */
+  synchronousReplicaCredit: 0.75,
+  /** Points regained per redundant compute replica, up to the cap. */
+  replicaCushionCredit: 0.28,
+  /** Redundant replicas beyond this stop adding credit. */
+  replicaCushionCap: 4,
+  /** Points lost per 10,000 RPS of unmet demand on the worst component. */
+  capacityDeficitWeight: 2.4,
+  /** The most availability a capacity shortfall alone can remove. */
+  capacityDeficitCeiling: 3.2,
+  /** The model does not express total loss or perfect uptime. */
+  floor: 80,
+  ceiling: 99.99,
+} as const;
+
 export const simulationEngineVersion = "aether-sim-2";
 
 function stableJson(value: unknown): string {
@@ -386,14 +415,30 @@ export function runScenario(
 
   // Availability starts from the share of the system still serving traffic and
   // is then corrected by the resilience actually configured on the graph.
-  let availability = 100 - impactShare * 4.2;
-  availability -= 2.4 * unreplicated.length;
-  availability += 0.75 * synchronous.length;
-  availability += Math.min(replicaCushion, 4) * 0.28;
+  //
+  // The weights below are a declared model, not measured field data. They are
+  // stated here rather than buried as literals so a reviewer can see exactly
+  // what each one asserts, disagree with any of them, and know that the
+  // comparison between two futures is what the evidence is for. What the
+  // engine guarantees is that the same graph always yields the same number
+  // and that every input comes from the graph — not that these coefficients
+  // predict a real system's uptime.
+  const model = availabilityModel;
+  let availability = 100 - impactShare * model.impactedShareWeight;
+  availability -= model.unreplicatedStorePenalty * unreplicated.length;
+  availability += model.synchronousReplicaCredit * synchronous.length;
+  availability +=
+    Math.min(replicaCushion, model.replicaCushionCap) *
+    model.replicaCushionCredit;
   if (worstDeficit > 0)
-    availability -= Math.min(3.2, (worstDeficit / 10000) * 2.4);
+    availability -= Math.min(
+      model.capacityDeficitCeiling,
+      (worstDeficit / 10_000) * model.capacityDeficitWeight,
+    );
 
-  availability = round(Math.max(80, Math.min(99.99, availability)));
+  availability = round(
+    Math.max(model.floor, Math.min(model.ceiling, availability)),
+  );
 
   const rtoMinutes = recoveryMinutes(graph, impacted, scenario);
 
