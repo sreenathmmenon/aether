@@ -277,6 +277,20 @@ export function App() {
   const registryRef = useRef<ToolRegistry | undefined>(undefined);
   const remoteReadyRef = useRef(false);
   const applyingRemoteRef = useRef(false);
+  /**
+   * Incoming shared state was refused because adopting it would destroy work
+   * the reviewer has here. That keeps their architecture, but it also means
+   * the page and the shared workspace have diverged, so the badge must stop
+   * claiming the work is shared. Declared above the effects that call it, and
+   * stable so they do not tear down and rebuild every render.
+   */
+  const keepLocalWork = useCallback(() => {
+    setSyncStatus("Local draft");
+    setNotice({
+      text: "Someone else changed this workspace while you were working. Your architecture is kept; reload to take theirs.",
+      tone: "done",
+    });
+  }, []);
   const remoteVersionRef = useRef(state.workspace.persistenceVersion ?? 0);
   const activeBranch = state.branches[state.workspace.activeBranchId]!;
   const graph = useMemo(
@@ -643,10 +657,7 @@ export function App() {
             return current;
           });
           if (discards) {
-            setSyncStatus("Local draft");
-            setMessage(
-              "Someone else changed this workspace while you were working. Your architecture is kept; reload to take theirs.",
-            );
+            keepLocalWork();
             return;
           }
           applyingRemoteRef.current = true;
@@ -660,7 +671,7 @@ export function App() {
           setMessage(reconcileMessage(Boolean(sharedRoom)));
         });
     });
-  }, [state, sharedRoom]);
+  }, [state, sharedRoom, keepLocalWork]);
   useEffect(() => {
     void loadRemoteWorkspace().then((remote) => {
       remoteReadyRef.current = true;
@@ -696,7 +707,15 @@ export function App() {
           discards = wouldDiscardWork(current, remote);
           return current;
         });
-        if (discards) return;
+        // Refusing the incoming state keeps the reviewer's work, but it also
+        // means what is on screen is no longer what the shared workspace
+        // holds. Returning silently left the badge reading "Synced" while the
+        // page held four branches and the server held one — the reviewer was
+        // told their work was shared when it existed only in this browser.
+        if (discards) {
+          keepLocalWork();
+          return;
+        }
         applyingRemoteRef.current = true;
         remoteVersionRef.current = remoteVersion;
         setSyncStatus("Synced");
@@ -711,7 +730,7 @@ export function App() {
     };
     const interval = window.setInterval(poll, 3000);
     return () => window.clearInterval(interval);
-  }, [sharedRoom]);
+  }, [sharedRoom, keepLocalWork]);
   useEffect(() => {
     const sync = (event: StorageEvent) => {
       if (event.key !== storageKey || !event.newValue) return;
@@ -722,7 +741,13 @@ export function App() {
         discards = wouldDiscardWork(current, incoming);
         return current;
       });
-      if (discards) return;
+      // Same reasoning as the poll: keeping local work means the page and the
+      // shared workspace have diverged, and the badge must not claim
+      // otherwise.
+      if (discards) {
+        keepLocalWork();
+        return;
+      }
       applyingRemoteRef.current = true;
       remoteVersionRef.current =
         incoming.workspace.persistenceVersion ?? remoteVersionRef.current;
@@ -737,7 +762,7 @@ export function App() {
     };
     window.addEventListener("storage", sync);
     return () => window.removeEventListener("storage", sync);
-  }, [sharedRoom]);
+  }, [sharedRoom, keepLocalWork]);
   useEffect(() => {
     const move = (event: PointerEvent) => {
       const drag = dragRef.current;

@@ -82,6 +82,28 @@ describe("the interface honours the ARIA it declares", () => {
       );
   });
 
+  it("never refuses shared state without saying the page has diverged", () => {
+    // Refusing incoming state keeps the reviewer's work, but the page and the
+    // shared workspace have then diverged. The poll and the storage event
+    // both returned silently, so the badge kept reading "Synced" while the
+    // page held four branches and the server held one — reproduced in a real
+    // shared room against the deployed origin.
+    const refusals =
+      appSource.match(/if \(discards\)[\s\S]{0,200}?return;/g) ?? [];
+    expect(refusals.length).toBeGreaterThan(0);
+    for (const refusal of refusals)
+      expect(refusal, "a discard returns without reporting it").toContain(
+        "keepLocalWork",
+      );
+    // And the helper it calls says both things: the status is no longer
+    // durable, and the reviewer is told why.
+    const start = appSource.indexOf("const keepLocalWork");
+    expect(start, "keepLocalWork is not declared").toBeGreaterThan(0);
+    const helper = appSource.slice(start, start + 400);
+    expect(helper).toContain('setSyncStatus("Local draft")');
+    expect(helper).toMatch(/Someone else changed this workspace/);
+  });
+
   it("keeps the tab panel bound to the tab that opens it", () => {
     // A tabpanel labelled by a tab that is not the selected one describes the
     // wrong scenario, which is worse than being unlabelled.
