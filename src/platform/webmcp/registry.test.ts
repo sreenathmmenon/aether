@@ -1139,4 +1139,99 @@ describe("Aether WebMCP registry", () => {
     expect(result.added).toHaveLength(limit);
     registry?.dispose();
   });
+
+  it("accepts every boundary value its schemas advertise", async () => {
+    // A limit the runtime enforces and the schema omits is one an agent can
+    // only discover by being rejected, and a limit the schema states more
+    // loosely than the runtime is worse: the agent fills the schema it was
+    // handed and the call fails. The batch tool had exactly that, advertising
+    // twelve components while enforcing six.
+    const tools: RegisteredTool[] = [];
+    const registry = createAetherToolRegistry(() => {}, undefined, {
+      registerTool: async (tool) => {
+        tools.push(tool as unknown as RegisteredTool);
+      },
+    });
+    await registry?.refresh(createInitialState(blankBaseline, "blank"));
+    const described = tools as unknown as {
+      name: string;
+      inputSchema: {
+        properties: Record<
+          string,
+          {
+            type?: string;
+            minLength?: number;
+            maxLength?: number;
+            minimum?: number;
+            maximum?: number;
+            enum?: string[];
+          }
+        >;
+        required?: string[];
+      };
+      execute: (input: Record<string, unknown>) => Promise<unknown>;
+    }[];
+
+    // A valid baseline call for each tool that takes bounded string or number
+    // fields, then one probe per boundary with that field at its extreme.
+    const baseFor: Record<string, Record<string, unknown>> = {
+      add_architecture_component: {
+        branchId: "branch-baseline",
+        name: "Probe",
+        kind: "service",
+        regionId: "region-primary",
+        peakRps: 1,
+        capacityRps: 1,
+        monthlyCostUsd: 1,
+      },
+      add_decision_note: {
+        branchId: "branch-baseline",
+        body: "A valid note body for probing.",
+      },
+      create_architecture_branch: {
+        name: "Probe future",
+        intent: "highest_resilience",
+      },
+    };
+
+    let probed = 0;
+    for (const tool of described) {
+      const base = baseFor[tool.name];
+      if (!base) continue;
+      for (const [field, spec] of Object.entries(tool.inputSchema.properties)) {
+        const extremes: [string, unknown][] = [];
+        if (spec.minLength !== undefined)
+          extremes.push([`${field} minLength`, "A".repeat(spec.minLength)]);
+        if (spec.maxLength !== undefined)
+          extremes.push([`${field} maxLength`, "A".repeat(spec.maxLength)]);
+        if (spec.minimum !== undefined)
+          extremes.push([`${field} minimum`, spec.minimum]);
+        if (spec.maximum !== undefined)
+          extremes.push([`${field} maximum`, spec.maximum]);
+
+        for (const [label, value] of extremes) {
+          probed += 1;
+          // Component names must stay unique or the engine rejects a
+          // duplicate for a reason unrelated to the boundary under test.
+          // The substitution has to preserve the exact length being probed.
+          const suffix = String(probed);
+          const unique =
+            field === "name" &&
+            typeof value === "string" &&
+            value.length > suffix.length
+              ? value.slice(0, value.length - suffix.length) + suffix
+              : value;
+          const result = JSON.parse(
+            String(await tool.execute({ ...base, [field]: unique })),
+          ) as { error?: string; problems?: string[] };
+          expect(
+            result.error,
+            `${tool.name}: ${label} is advertised but ${JSON.stringify(result.problems)}`,
+          ).toBeUndefined();
+        }
+      }
+    }
+    expect(probed).toBeGreaterThan(6);
+    registry?.dispose();
+  });
 });

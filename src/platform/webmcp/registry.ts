@@ -350,6 +350,8 @@ export function createAetherToolRegistry(
           properties: {
             name: {
               type: "string",
+              minLength: 3,
+              maxLength: 48,
               description:
                 "Your label for this future. The stored name comes from the intent, so this is not what appears in the interface.",
             },
@@ -402,13 +404,20 @@ export function createAetherToolRegistry(
                 enum: componentIds(),
                 description: "Optional component the note concerns.",
               },
+              // A limit the runtime enforces and the schema omits is one an
+              // agent can only discover by being rejected. These match the
+              // validator exactly.
               body: {
                 type: "string",
+                minLength: 3,
+                maxLength: 280,
                 description:
                   "Concise, evidence-grounded decision context for collaborators.",
               },
               evidenceRef: {
                 type: "string",
+                minLength: 3,
+                maxLength: 120,
                 description:
                   "Short metric or evidence reference supporting the note.",
               },
