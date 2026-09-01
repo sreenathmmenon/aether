@@ -41,8 +41,16 @@ describe("the file an agent reads about this page", () => {
         serverSource,
         `/${file} is answered from something other than dist/${file}`,
       ).toContain(`readFileSync("./dist/${file}"`);
-    // And no inline body that would shadow one.
-    expect(serverSource).not.toMatch(/context\.text\("[A-Za-z#]/);
+    // And no inline body long enough to be a copy of a file. A short status
+    // string like "Not found" is a response, not a shadowed document, and
+    // the first version of this check could not tell them apart.
+    for (const [, body] of serverSource.matchAll(
+      /context\.text\("((?:[^"\\]|\\.)*)"/g,
+    ))
+      expect(
+        body.length,
+        `an inline body of ${body.length} characters may shadow a file`,
+      ).toBeLessThan(40);
   });
 
   it("describes the surface an agent can actually use", () => {

@@ -158,6 +158,11 @@ app.get("/llms.txt", (context) =>
 );
 
 app.use("/assets/*", serveStatic({ root: "./dist" }));
+// A missing bundle fell through to the single-page fallback below, so a
+// browser asking for JavaScript received an HTML document with a 200 and
+// failed on a parse error rather than a missing file. A stale cached
+// index.html naming an old hash is exactly how that happens.
+app.all("/assets/*", (context) => context.text("Not found", 404));
 app.use("*", serveStatic({ root: "./dist", path: "index.html" }));
 
 const port = Number(process.env.PORT ?? 3000);
