@@ -1473,3 +1473,12 @@ was already underway again.
   - `model_architecture` did not. A batch at its own advertised maxima — twelve components and twenty-four dependencies — with every item refused produces one message per item, and that overflowed the budget. The reply became `RESULT_TOO_LARGE`: 109 characters naming no field, no region, and nothing to correct. An agent that submits a large brief and gets it wrong learned nothing, at the moment guidance matters most.
   - The reply now names the first eight failures and counts the rest. Verified against the deployed origin and matching the local measurement exactly: 1,018 characters, `components.0` named with "Choose one of: region-core, region-analytics", 28 further failures counted, and `outcome: no_change` so nothing was partially applied.
   - The test drives the maxima from the schema rather than hardcoding twelve and twenty-four, so raising either limit re-tests the new worst case instead of the old one. Removing the bound fails it; raising the reported limit past what fits fails it too.
+
+## Milestone 102 — The first thing a reviewer reads about the agent surface
+
+- [x] **M102.1 — A count without its qualifier undersells the claim** `DONE`
+  - Acceptance: the opening view says what the tool count means, not only what it is.
+  - Evidence: the header chip read "WebMCP live · 5 tools", which reads as everything the agent can ever do. It is what the committed state registers, and the count grows to twelve once a repair future exists — the state-dependent registration this submission is built on and the thing a judge is asked to look for.
+  - Measured rather than assumed: the panel that explains the surface sits at 910 pixels against a 623 pixel viewport, so it is below the fold on the opening view. The intro dialog already said "state-aware tools" and the chip did not, so the word doing the work was missing from the one place a reviewer reads first.
+  - The chip now carries it, and its accessible name says what the phrase means rather than leaving a bare count to imply it. Verified against the deployed origin, where the chip demonstrates the claim by changing: "WebMCP live · 5 state-aware tools" before a repair future, "12 state-aware tools" after, with the explanation intact in both.
+  - A test holds both halves and the shared source of the count: dropping the qualifier fails it, and replacing the explanation with a bare count fails it separately.
