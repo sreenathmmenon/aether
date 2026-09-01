@@ -1089,3 +1089,14 @@ was already underway again.
 - [x] **M66.2 — Lay the canvas out for the graph it draws** `DONE`
   - Evidence: with position out of the fingerprint, the three shipped systems could finally be spaced. Horizontal spacing went from 180 canvas units to 250, and the measured dependency edges went from 0–33 units to 91–184. The region-overlap test rejected a first arrangement of the AI platform, which was reverted to a conservative one rather than loosened.
   - Verified against the deployed origin: `engineVersion: "aether-sim-3"`, `outputHash: "fnv1a-19a1b57c"` matching the value pinned in the test, and availability still 93.96% — the layout changed nothing the engine computes, which is the whole point.
+
+## Milestone 67 — An agent can move a component out of a failing region
+
+- [x] **M67.1 — Make regionId proposable** `DONE`
+  - Acceptance: the repair the architecture document uses as its worked example is one an agent can actually make.
+  - Evidence: `regionId` was the only property the engine reads that `propose_architecture_change` did not accept. The engine resolves a component's region from its properties rather than its canvas position, so relocation is a real change to the model — and it was unreachable. An agent could replicate a store, resize it, or re-cost it, but not move it.
+  - The reducer checks the named region exists on the graph and is a region, refusing anything else with the valid ids named: `Unknown region. Choose one of: region-mumbai, region-bengaluru.` Without that check a component would be stranded in a region the engine cannot find and the scenario would stop reaching it at all. The tool's retry hint, which said every property other than `replicationMode` takes a number, now names the region ids too.
+  - Verified against the deployed origin: the advertised enum carries `regionId`, an unknown region is refused naming the two that exist, and a valid relocation returns `branchVersion: 2`. The region outline recomputed from the new membership rather than from where the card sits.
+
+- [x] **M67.2 — Correct a claim about the engine while checking it** `DONE`
+  - Evidence: STATUS recorded that "moving the ledger out of the failed region changes the causal chain". Probing it, relocating the ledger changed nothing: `regional_outage` fails whichever region carries the most stateful load, so the failure follows the ledger. That looked like a defect until the causal chain showed what actually happens — relocating the gateway moves it from depth 0, `Mumbai unavailable`, to depth 1, `depends on Authentication`. The engine is right: the component is no longer directly hit, it is reached through its dependency, and availability is unchanged because the impacted share is. The effective repair on this architecture remains replication, which moves availability 93.96 to 97.11 and recovery 46 minutes to 7.
