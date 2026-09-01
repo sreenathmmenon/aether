@@ -902,3 +902,11 @@ was already underway again.
   - Evidence: the line directly above the commit control read "Evidence scope: affected" — an internal enum printed verbatim at the moment a person decides whether to ship a change. It now says whether this is the first run on the future or a recomputation after their edits, and how many components the failure reached out of how many exist. Verified across all three states: the baseline reads "Run a scenario to make approval eligible", a fresh future reads "First run on this future · 5 of 5 components affected", and after an edit "Recomputed after your edits · 5 of 5 components affected".
 - [x] **M51.2 — Give a model the metrics the interface shows a person** `DONE`
   - Evidence: the evidence panel shows availability, recovery, latency and cost. `compare_architecture_futures` returned three of the four, so a model weighing the same trade-off could not see latency — an asymmetry with nothing behind it. Both agent reads now carry all four, and a test asserts the parity by name rather than by count. Confirmed it catches a withheld metric: removing latency fails with "latencyMs must reach a model".
+
+## Milestone 52 — Every read bounded against a used workspace
+
+- [x] **M52.1 — Measure all reads at realistic scale** `DONE`
+  - Acceptance: no read fails silently as a workspace fills up.
+  - Evidence: the comparison tool exceeded its output budget and returned nothing at all, and that was found only by probing it. Any read that grows with the workspace can fail the same way, so all of them were measured against a workspace far past anything a review produces — three futures simulated across every scenario, and a hundred maximum-length decision notes.
+  - Every read is bounded by design rather than by the workspace happening to stay small: the decision record holds at 1207 characters whether the workspace has ten notes or a hundred, because it takes the most recent few rather than all of them, and the architecture summary, failure-domain read and dependency trace all sit well under. Only the unfiltered comparison exceeds, which is the case the scenario filter exists for.
+  - A test holds all five reads to the budget under that load. Confirmed it catches an unbounded read by removing the decision record's slice: it fails with "get_decision_record must stay inside its budget".
