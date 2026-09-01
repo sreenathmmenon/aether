@@ -51,6 +51,14 @@ function modelContext(): ModelContext | undefined {
 export const maxToolResultLength = 2000;
 /** Components named in one summary before it degrades to a count. */
 const summaryComponentLimit = 24;
+/**
+ * Failures named in one batch reply before it degrades to a count.
+ *
+ * Every item in a full batch can fail, and one message per item at the
+ * advertised maxima exceeded the output budget — which replaced the whole
+ * reply with an error naming no field at all.
+ */
+const batchFailureLimit = 8;
 
 /** Every scenario the engine accepts, for the schemas that offer a choice. */
 const scenarioNames = [
@@ -1101,10 +1109,18 @@ export function createAetherToolRegistry(
               next = result.value;
             }
             await commit(next);
+            // A full batch where every item fails produces one message per
+            // item, and at the advertised maxima of twelve components and
+            // twenty-four dependencies that exceeded the budget — so the
+            // reply became RESULT_TOO_LARGE and the agent learned nothing
+            // about what to correct, exactly when it most needed to.
+            const reportedFailures = failures.slice(0, batchFailureLimit);
+            const unreported = failures.length - reportedFailures.length;
             return toolResult({
               outcome: created.length ? "architecture_modelled" : "no_change",
               added: created,
-              failures,
+              failures: reportedFailures,
+              ...(unreported > 0 ? { failuresNotListed: unreported } : {}),
               nextAction: failures.length
                 ? "Correct the named fields, then run model_architecture again."
                 : "run_failure_scenario",

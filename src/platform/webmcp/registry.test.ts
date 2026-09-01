@@ -937,6 +937,80 @@ describe("Aether WebMCP registry", () => {
       expect((note.evidenceRef ?? "").length).toBeLessThanOrEqual(60);
   });
 
+  it("names what to fix when a whole batch is rejected", async () => {
+    // A batch at the advertised maxima where every item fails produced one
+    // message per item and exceeded the budget, so the reply became
+    // RESULT_TOO_LARGE — 109 characters naming no field at all. An agent that
+    // submits a large brief and gets it wrong learned nothing about what to
+    // correct, which is the moment the guidance matters most.
+    const seeded = createInitialState(rideHailingBaseline, "ride-hailing");
+    const branched = dispatch(seeded, {
+      type: "CREATE_BRANCH",
+      input: { name: "Batch reject", intent: "highest_resilience" },
+    });
+    if (!branched.ok) throw new Error("fixture branch must be created");
+
+    const tools: RegisteredTool[] = [];
+    const registry = createAetherToolRegistry(() => {}, undefined, {
+      registerTool: async (tool) => {
+        tools.push(tool as unknown as RegisteredTool);
+      },
+    });
+    await registry?.refresh(branched.value);
+    const batch = tools.find(
+      (tool) => tool.name === "model_architecture",
+    ) as unknown as {
+      inputSchema: {
+        properties: {
+          components: { maxItems: number };
+          dependencies: { maxItems: number };
+        };
+      };
+      execute: (input: Record<string, unknown>) => Promise<unknown>;
+    };
+    const limit = batch.inputSchema.properties.components.maxItems;
+    const edgeLimit = batch.inputSchema.properties.dependencies.maxItems;
+
+    const output = String(
+      await batch.execute({
+        branchId: "branch-highest_resilience",
+        // Schema-valid, engine-refused: every component names a region that
+        // does not exist, and every dependency an unknown key.
+        components: Array.from({ length: limit }, (_, index) => ({
+          key: `k${index}`,
+          name: `Component ${index}`,
+          kind: "service",
+          regionId: "region-atlantis",
+        })),
+        dependencies: Array.from({ length: edgeLimit }, (_, index) => ({
+          sourceKey: `zz${index}`,
+          targetKey: `yy${index}`,
+          kind: "calls",
+        })),
+      }),
+    );
+    registry?.dispose();
+    const result = JSON.parse(output) as {
+      error?: string;
+      outcome: string;
+      failures: { field: string; message: string }[];
+      failuresNotListed?: number;
+    };
+
+    expect(result.error).toBeUndefined();
+    expect(output.length).toBeLessThanOrEqual(maxToolResultLength);
+    // Nothing partially applied, and the reply still names fields to fix.
+    expect(result.outcome).toBe("no_change");
+    expect(result.failures.length).toBeGreaterThan(0);
+    expect(result.failures[0]?.field).toMatch(/components\.\d+/);
+    expect(result.failures[0]?.message).toMatch(/region-core/);
+    // The ones it could not fit are counted rather than dropped in silence.
+    expect(result.failuresNotListed).toBeGreaterThan(0);
+    expect(
+      result.failures.length + (result.failuresNotListed ?? 0),
+    ).toBeGreaterThanOrEqual(limit);
+  });
+
   it("tells an agent what to do at the decision point", async () => {
     // Every other tool names a next action. This one, at the point a
     // decision is actually made, returned futures and a human gate and
