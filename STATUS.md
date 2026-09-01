@@ -1234,3 +1234,12 @@ was already underway again.
 
 - [x] **M79.2 — Check the documented claim still holds** `DONE`
   - Evidence: `docs/V3_REVERSE_WINNER_PLAN.md` claims the product can compare at least three futures for a reviewer-built system, which M77's refusal could have invalidated. Measured across six architecture shapes: three futures on a typical system, on a service-and-store pair, on a lone database, and on a lone service. Only a single gateway or a single queue yields two, and neither is an architecture anyone compares repair futures for. The claim stands, so the document was left alone rather than softened.
+
+## Milestone 80 — Edges drawn where the cards actually are
+
+- [x] **M80.1 — The card coordinate is its centre** `DONE`
+  - Acceptance: a dependency edge meets the components it connects.
+  - Evidence: the canvas looked subtly wrong on a fresh screenshot, and measuring through `getScreenCTM` gave the number: every edge endpoint sat 39 pixels below the centre of the card it was drawn to connect, hitting the bottom border instead. The graph read as disconnected fragments rather than one system.
+  - A card is centred on its coordinate by `transform: translate(-50%, -50%)`, so the position already is the centre. `edgeBetween` added half the extent on top, shifting every edge down and right by half a card. Removing that offset drops the measured error from a uniform 39 pixels to 6, 6 and -4 — the remaining variation is the deliberate trim toward each target.
+  - `edge-geometry.test.ts` had encoded the same top-left assumption, computing card bounds as `x` to `x + width`, so it passed throughout. It now uses `x ± width/2` and additionally asserts a horizontal edge stays on the line between the two centres, which the old version could not have caught.
+  - One change was made and reverted along the way: `preserveAspectRatio="none"` on the edge layer, on the theory that the viewBox was letterboxing. Measuring the SVG's own screen mapping showed it already spans its container exactly — origin 130, span 578, container height 578 — so the attribute was unnecessary and was taken back out rather than left in as a harmless-looking guess.
