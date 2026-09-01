@@ -1421,3 +1421,12 @@ was already underway again.
   - The WebMCP chip kept the reason the surface is absent in a title, and that reason exists nowhere else on the page: a reviewer on a browser without WebMCP could not hear why. Its accessible name now carries it when absent.
   - Two uses were left alone deliberately. The room chip's title repeats its own visible text, and the registered tool names are already listed in the agent-surface panel below, so neither adds anything a reviewer cannot already reach.
   - Verified against the deployed origin: all five nodes announce their capacity alongside their failure state.
+
+## Milestone 97 — The chain, not just the radius
+
+- [x] **M97.1 — Return why each component fails** `DONE`
+  - Acceptance: an agent can reason about which repair is worth proposing, not only which components are affected.
+  - Evidence: `inspect_failure_domain` returned a flat `blastRadius` of five names. The engine computes a causal chain, the canvas animates it step by step, and the `get_decision_record` tool already carries causes — only this tool discarded it. So an agent could name the blast radius and not the path failure took through it.
+  - That distinction is the whole point of the graph. A component hit directly by a regional outage needs a different repair from one reached through its dependency: verified live, three components fail with "Mumbai unavailable" at depth 0, Bengaluru Queue at depth 1 "depends on Primary Ledger", and Reconciliation at depth 2 "depends on Bengaluru Queue". A flat list cannot express any of that.
+  - Measured before adding rather than after: existing results run 470 to 605 characters against the 2000 budget and the chain costs about 400, so nothing approaches truncation. The live result is 849 characters.
+  - The test asserts the chain accounts for every component in the blast radius, that a depth-zero step names the failed domain and a deeper one names what it depends on, and that the result still fits the budget. Removing the chain fails it; flattening every cause to one string fails it too.
