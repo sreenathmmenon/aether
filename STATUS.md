@@ -1464,3 +1464,12 @@ was already underway again.
 - [x] **M100.2 — Three probes that measured themselves** `DONE`
   - Evidence: worth recording, because each looked like a finding. The first passed a no-op `onState` and read a registry that had never seen the notes. The second refreshed before the writes rather than after. The third — the one that took longest — anchored notes to `entityId: "reconciliation"` on the ride-hailing graph, where no such component exists, so every note was correctly refused and the tool honestly reported the two seeded ones.
   - Each time the number moved, and each time the tool was right. Reading the reducer's own guard is what settled it: an unknown component is refused by design, which is the M86 validation working rather than a tool dropping data.
+
+## Milestone 101 — The reply an agent gets when it gets a batch wrong
+
+- [x] **M101.1 — Measure the rejection paths, not only the successes** `DONE`
+  - Acceptance: a refusal fits its budget, because a refusal that does not is the one that costs an agent the most.
+  - Evidence: M100 measured every read tool. This measured every write tool's refusal on the largest shipped system. Four sit between eight and twenty-two per cent — `propose_architecture_change` at 8, `connect_components` at 10, `run_failure_scenario` at 15, `add_architecture_component` at 19.
+  - `model_architecture` did not. A batch at its own advertised maxima — twelve components and twenty-four dependencies — with every item refused produces one message per item, and that overflowed the budget. The reply became `RESULT_TOO_LARGE`: 109 characters naming no field, no region, and nothing to correct. An agent that submits a large brief and gets it wrong learned nothing, at the moment guidance matters most.
+  - The reply now names the first eight failures and counts the rest. Verified against the deployed origin and matching the local measurement exactly: 1,018 characters, `components.0` named with "Choose one of: region-core, region-analytics", 28 further failures counted, and `outcome: no_change` so nothing was partially applied.
+  - The test drives the maxima from the schema rather than hardcoding twelve and twenty-four, so raising either limit re-tests the new worst case instead of the old one. Removing the bound fails it; raising the reported limit past what fits fails it too.
