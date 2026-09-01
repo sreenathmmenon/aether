@@ -690,6 +690,15 @@ export function App() {
           // wholesale drops the difference. Runs are keyed on branch, version and
           // scenario, so a union is safe and no evidence is lost either way.
           setState((current) => mergeEvidence(current, remote));
+          // Reconciled, so the badge must say so. Without this a single
+          // conflict left it reading "Local draft" for the rest of the
+          // session while every later write reached the server — reproduced
+          // in a real shared room with two tabs writing at once, where both
+          // ended up claiming their work had not been shared while each was
+          // reading the other's notes. It is the same defect as the badge
+          // that used to read "Synced" after a refusal, in the other
+          // direction: a status that stops tracking what is true.
+          setSyncStatus("Synced");
           setMessage(reconcileMessage(Boolean(sharedRoom)));
         });
     });

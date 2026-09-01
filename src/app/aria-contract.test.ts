@@ -104,6 +104,29 @@ describe("the interface honours the ARIA it declares", () => {
     expect(helper).toMatch(/Someone else changed this workspace/);
   });
 
+  it("says it is shared again once a conflict has reconciled", () => {
+    // The refusal path sets "Local draft" and nothing cleared it, so one
+    // conflict left the badge claiming the work had not reached shared
+    // storage for the rest of the session while every later write did.
+    // Reproduced in a real shared room: two tabs wrote at once, both settled
+    // on "Local draft", and each was reading the other's notes at the time.
+    // It is the mirror of the badge that used to read "Synced" after a
+    // refusal — a status that stops tracking what is true.
+    const conflict = appSource.slice(
+      appSource.indexOf('if (result === "conflict")'),
+      appSource.indexOf("}, [state, sharedRoom, keepLocalWork]);"),
+    );
+    expect(conflict, "the conflict path is not where it was").toContain(
+      "mergeEvidence",
+    );
+    // Reconciling adopts the remote state, so the badge has to follow it.
+    expect(conflict).toContain('setSyncStatus("Synced")');
+    // And only after the discard check, or a refusal would claim success.
+    expect(conflict.indexOf("keepLocalWork()")).toBeLessThan(
+      conflict.indexOf('setSyncStatus("Synced")'),
+    );
+  });
+
   it("reconciles when a hidden tab becomes visible again", () => {
     // The poll skips while `document.hidden`, and browsers throttle a
     // background tab's timers regardless, so without this a reviewer
