@@ -11,6 +11,17 @@ body {
 button {
   font: inherit;
 }
+/* Every interactive control shows where keyboard focus is.
+   Twelve of twenty focusable controls had no indicator at all — including the
+   primary action and every scenario tab — so a reviewer navigating by
+   keyboard could not see where they were. Lighthouse scores this page 100
+   either way, because it cannot tab through the interface.
+   :focus-visible means a mouse click never draws a ring. */
+:where(button, a[href], input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
 .aether-shell {
   min-height: 100vh;
   background:
