@@ -1533,10 +1533,16 @@ export function App() {
           <div className="evidence-heading">
             <div>
               <p className="eyebrow">Live evidence</p>
+              {/* Name what the metrics below actually describe. A branch with
+                  no run yet shows its projected figures, so calling that
+                  "Baseline breach" made the heading contradict the numbers
+                  directly beneath it. */}
               <h2>
                 {activeSimulation
                   ? scenarioCopy[selectedScenario].label
-                  : "Baseline breach"}
+                  : activeBranch.id === "branch-baseline"
+                    ? "Baseline breach"
+                    : `${activeBranch.name} — projected`}
               </h2>
             </div>
             <span
