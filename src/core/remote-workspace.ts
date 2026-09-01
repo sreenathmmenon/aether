@@ -57,7 +57,11 @@ export function roomId(): string | undefined {
 }
 
 export function workspaceId(): string {
-  if (typeof window === "undefined") return "payment-platform";
+  // Without a window there is no visitor to key a workspace to. Returning a
+  // fixed name would put every such caller into one shared workspace, which
+  // is the collision this per-visitor id exists to prevent, so fail closed
+  // with an id that belongs to nobody.
+  if (typeof window === "undefined") return createWorkspaceId();
   // An explicit room wins: everyone holding the link works in one workspace.
   const room = roomId();
   if (room) return room;

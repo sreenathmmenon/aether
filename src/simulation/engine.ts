@@ -250,7 +250,7 @@ function regionOf(entity: ArchitectureEntity) {
 
 /**
  * Recovery time is driven by the slowest impacted database, because a
- * stateful component dictates how long the payment path stays degraded.
+ * stateful component dictates how long the critical path stays degraded.
  */
 function recoveryMinutes(
   graph: ArchitectureGraph,

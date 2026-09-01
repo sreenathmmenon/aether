@@ -45,8 +45,11 @@ describe("production workspace persistence contract", () => {
 
     await expect(saveRemoteWorkspace(state, 3)).resolves.toBe(4);
     await expect(saveRemoteWorkspace(state, 3)).resolves.toBe("conflict");
+    // Without a window each call mints a fresh id — a fixed fallback would
+    // put every such caller into one shared workspace — so assert the shape
+    // the endpoint accepts rather than a value that is deliberately unstable.
     expect(fetchMock).toHaveBeenCalledWith(
-      `/api/workspaces/${workspaceId()}`,
+      expect.stringMatching(/^\/api\/workspaces\/w-[a-f0-9]{32}$/),
       expect.objectContaining({ method: "PUT" }),
     );
   });
