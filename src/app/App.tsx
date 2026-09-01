@@ -1,6 +1,7 @@
 import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { createInitialState, deriveGraph, dispatch } from "@core/branch-engine";
 import { getBranchDiff } from "@core/branch-diff";
+import { offlineToolSurface } from "@platform/webmcp/offline-surface";
 import {
   clausesOf,
   kindFor as briefKindFor,
@@ -97,18 +98,6 @@ function scenarioNarrative(
 }
 
 const introStorageKey = "aether.intro.v1";
-
-/**
- * Shown when the browser exposes no WebMCP surface, so a reviewer can still
- * see which capabilities this page publishes to an agent.
- */
-const offlineToolSurface = [
-  "get_decision_record",
-  "get_architecture_summary",
-  "create_architecture_branch",
-  "inspect_failure_domain",
-  "trace_architecture_dependency",
-];
 
 /** Starting systems a visitor can model, so the product is not one story. */
 const systemTemplates = [

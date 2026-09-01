@@ -558,3 +558,11 @@ fixed.
   - Evidence: identifiers were twelve hex characters of a truncated UUID with a `Math.random` fallback, and they are the only thing separating one visitor's decisions from another's. They now use `crypto.getRandomValues`, are asserted to satisfy the pattern both endpoints enforce, and the README states plainly that workspaces are unauthenticated evaluation state rather than a store for confidential architecture.
 - [x] **M17.6 — Make a shared system link open the system it names** `DONE`
   - Evidence: `?system=ride-hailing` was overwritten by the restored workspace on mount, so a shared link silently landed a reviewer on somebody else's canvas. An explicit link now wins over stored state, and switching systems rewrites the address bar so the current architecture stays shareable.
+
+## Milestone 18 — Making the WebMCP surface visible
+
+- [x] **M18.1 — Show live agent tool activity in the opening viewport** `DONE`
+  - Acceptance: a reviewer sees the WebMCP surface without scrolling.
+  - Evidence: the tool panel sat 1.13 screens below the fold, measured on the deployed page, so a reviewer formed their first impression of a WebMCP entry without seeing the WebMCP part; the header asserted "WebMCP live" rather than showing anything. The header indicator now carries the live registration count and each agent call names itself beside it for six seconds, coloured by outcome, with the registered tools listed on hover. Verified against the real API in Chrome: the header reads "WebMCP live · 5 tools" on a committed architecture and changes to 12 the moment an agent calls `create_architecture_branch`, matching `getTools().length` exactly — so state-dependent registration is now something a reviewer watches happen rather than something the page claims.
+- [x] **M18.2 — Stop the evidence heading contradicting its own metrics** `DONE`
+  - Evidence: a repair future with no run yet displayed its projected figures under the heading "Baseline breach", so the panel announced the baseline while showing the branch's 97.11% availability directly beneath. The heading now names what the metrics describe: the baseline while it is active, and "<future> — projected" for an unrun branch.

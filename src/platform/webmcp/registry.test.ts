@@ -4,6 +4,7 @@ import { dispatch } from "@core/branch-engine";
 import { paymentPlatformBaseline } from "../../fixtures/payment-platform/baseline";
 import { blankBaseline } from "../../fixtures/blank/baseline";
 import { createAetherToolRegistry } from "./registry";
+import { offlineToolSurface } from "./offline-surface";
 
 type RegisteredTool = {
   name: string;
@@ -617,6 +618,22 @@ describe("Aether WebMCP registry", () => {
       "payment-platform",
     );
     expect(await surfaceFor(seeded)).toBe(5);
+    // The interface lists this surface to reviewers whose browser exposes no
+    // WebMCP, so a hand-maintained copy drifting from the registry would show
+    // them capabilities the page does not actually publish.
+    {
+      const registered: RegisteredTool[] = [];
+      const baseline = createAetherToolRegistry(() => {}, undefined, {
+        registerTool: async (tool) => {
+          registered.push(tool as unknown as RegisteredTool);
+        },
+      });
+      await baseline?.refresh(seeded);
+      baseline?.dispose();
+      expect(registered.map((tool) => tool.name).sort()).toEqual(
+        [...offlineToolSurface].sort(),
+      );
+    }
 
     const branched = dispatch(seeded, {
       type: "CREATE_BRANCH",
