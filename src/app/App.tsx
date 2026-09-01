@@ -163,6 +163,7 @@ export function App() {
   const [toolCalls, setToolCalls] = useState<ToolCall[]>([]);
   const [registeredTools, setRegisteredTools] = useState<string[]>([]);
   const [syncStatus, setSyncStatus] = useState("Checking sync");
+  const [systemBrief, setSystemBrief] = useState("");
   // Empty until a graph is loaded; the selection then falls back to whichever
   // component the engine considers most consequential.
   const [selectedEntityId, setSelectedEntityId] = useState("");
@@ -399,6 +400,32 @@ export function App() {
     )
     .slice(-5)
     .reverse();
+  const briefSeeds = useMemo(
+    () =>
+      systemBrief
+        .split(/[\n,.]+/)
+        .map((part) => part.trim())
+        .filter((part) => part.length > 2)
+        .slice(0, 4),
+    [systemBrief],
+  );
+  const briefPlan = useMemo(() => {
+    if (!systemBrief.trim())
+      return [
+        "Name the services, databases, queues, gateways, and regions.",
+        "Say which components depend on which other components.",
+        "Ask the agent to build it here; WebMCP will expose modeling tools.",
+      ];
+    return [
+      briefSeeds.length
+        ? `Candidate components: ${briefSeeds.join(" · ")}`
+        : "Candidate components will appear from the brief.",
+      entities.length
+        ? `${entities.length} component${entities.length === 1 ? "" : "s"} already modelled on this canvas.`
+        : "No graph exists yet; the next agent action should create components.",
+      "After the graph exists, Aether can run failure evidence and block unsafe approval.",
+    ];
+  }, [briefSeeds, entities.length, systemBrief]);
 
   useEffect(() => {
     registryRef.current ??=
@@ -1279,6 +1306,51 @@ export function App() {
                 </p>
               ))}
           </div>
+          {ownSystem && (
+            <section
+              className="system-brief-panel"
+              aria-label="Guided system brief"
+            >
+              <div>
+                <p className="eyebrow">System brief</p>
+                <strong>
+                  Describe any architecture. Let the agent model it.
+                </strong>
+                <small>
+                  This is the entry point that proves Aether is not a fixed
+                  payment demo.
+                </small>
+              </div>
+              <textarea
+                value={systemBrief}
+                maxLength={420}
+                rows={4}
+                aria-label="Describe your architecture for an agent to model"
+                placeholder="Example: Users hit an API gateway, checkout calls fraud scoring, fraud writes to Postgres, events flow through Kafka, and analytics reads from a warehouse."
+                onChange={(event) => setSystemBrief(event.target.value)}
+              />
+              <ol>
+                {briefPlan.map((step) => (
+                  <li key={step}>{step}</li>
+                ))}
+              </ol>
+              <button
+                type="button"
+                onClick={() => {
+                  setNoteBody(
+                    systemBrief.trim()
+                      ? `System brief: ${systemBrief.trim()}`
+                      : "System brief: awaiting architecture description.",
+                  );
+                  setMessage(
+                    "Brief staged as decision context. An agent can now build the graph through WebMCP.",
+                  );
+                }}
+              >
+                Stage brief in decision record
+              </button>
+            </section>
+          )}
           {(branchCount > 0 || ownSystem) && (
             <div className="human-actions">
               <p className="eyebrow">
