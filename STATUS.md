@@ -825,3 +825,12 @@ was already underway again.
   - Confirmed the cycle assertion is load-bearing by removing the traversal's seen-set guard: it fails with "a cycle / regional_outage must not repeat a component: expected 3 to be 4", and the pinned fingerprints fail alongside it.
   - Verified in production by building a cyclic architecture entirely through WebMCP — alpha calls beta, beta calls gamma, gamma calls alpha. The page stays alive and returns real evidence: 93.40% availability, 30m recovery, $300 monthly, a five-step causal chain, and a reproducible fingerprint.
   - Checked and found correct rather than changed: a component naming a region that does not exist still fails in a regional outage when it depends on something inside the failed region, which is the honest answer.
+
+## Milestone 43 — Every advertised limit is a real one
+
+- [x] **M43.1 — Publish the limits the tools enforce** `DONE`
+  - Acceptance: no tool enforces a bound its schema does not state, and no schema states a bound looser than the runtime.
+  - Evidence: the batch tool advertising twelve components while enforcing six was one instance of a class, so this swept the rest. Three fields enforced a limit their schema never mentioned — a decision note body bounded at 280 characters, an evidence reference at 120, and a branch name at 48 — so an agent could only discover any of them by being rejected. All three now state the bounds the validator applies.
+  - The sweep is a test rather than a one-time audit: it reads every advertised `minLength`, `maxLength`, `minimum` and `maximum` from the live schemas, calls each tool with that field at exactly its stated extreme, and asserts the call succeeds, so a schema promising more than the runtime honours fails the build. Confirmed by advertising a 400-character note body against the 280-character validator — it fails naming the field and the rejection.
+  - Verified in production: the deployed schemas publish 3–280, 3–120 and 3–48, and calls at exactly those maxima are accepted.
+  - Writing the probe surfaced a bug in the probe rather than the product: making component names unique truncated a three-character minimum below its own limit. The substitution now preserves the exact length under test.
