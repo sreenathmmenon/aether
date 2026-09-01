@@ -20,10 +20,17 @@ export const setPropertyInput = z.object({
     "capacityRps",
     "monthlyCostUsd",
     "replicationMode",
+    // Relocating a component out of a failing region is the most basic
+    // architectural repair there is, and the one the documentation uses as
+    // its worked example. It was the only engine-read property an agent
+    // could not propose.
+    "regionId",
   ]),
   value: z.union([
     z.number().finite().nonnegative(),
     z.enum(["none", "async", "sync"]),
+    // A region id, checked against the graph by the reducer.
+    z.string().min(1).max(64),
   ]),
 });
 

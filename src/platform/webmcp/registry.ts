@@ -1108,9 +1108,15 @@ export function createAetherToolRegistry(
                   "capacityRps",
                   "monthlyCostUsd",
                   "replicationMode",
+                  "regionId",
                 ],
+                description:
+                  "regionId relocates the component to another region; the rest reconfigure it in place.",
               },
-              value: {},
+              value: {
+                description:
+                  "A non-negative number, one of none, async or sync for replicationMode, or a region id for regionId.",
+              },
             },
             required: ["branchId", "entityId", "property", "value"],
             additionalProperties: false,
@@ -1121,7 +1127,7 @@ export function createAetherToolRegistry(
             if (!parsed.success)
               return invalidInput(
                 parsed.error,
-                "replicationMode takes none, async, or sync; every other property takes a non-negative number.",
+                `replicationMode takes none, async, or sync; regionId takes one of ${regionIds().join(", ")}; every other property takes a non-negative number.`,
               );
             const result = dispatch(
               snapshot(),

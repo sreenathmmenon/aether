@@ -367,6 +367,73 @@ describe("Aether WebMCP registry", () => {
     expect(unreachable).toEqual([]);
   });
 
+  it("lets an agent relocate a component to another region", async () => {
+    // Moving a component out of a failing region is the most basic
+    // architectural repair, and the one the architecture document uses as its
+    // worked example, but regionId was the only property the engine reads
+    // that an agent could not propose. It reads the region from the entity's
+    // properties, not from canvas position, so this is a real change to the
+    // model rather than a drag.
+    const live = new Set<RegisteredTool>();
+    let state = createInitialState(paymentPlatformBaseline);
+    const registry = createAetherToolRegistry(
+      (next) => {
+        state = next;
+      },
+      undefined,
+      {
+        registerTool: async (tool, options) => {
+          const entry = tool as unknown as RegisteredTool;
+          live.add(entry);
+          options?.signal?.addEventListener("abort", () => live.delete(entry));
+        },
+      },
+    );
+    await registry?.refresh(state);
+    const get = (name: string) => [...live].find((tool) => tool.name === name);
+    await get("create_architecture_branch")?.execute({
+      name: "Relocate probe",
+      intent: "highest_resilience",
+    });
+
+    const moved = JSON.parse(
+      String(
+        await get("propose_architecture_change")?.execute({
+          branchId: "branch-highest_resilience",
+          entityId: "ledger",
+          property: "regionId",
+          value: "region-bengaluru",
+        }),
+      ),
+    ) as { error?: string; branchVersion?: number };
+    expect(moved.error).toBeUndefined();
+
+    // The graph carries the relocation, so the engine sees it.
+    const branch = state.branches["branch-highest_resilience"]!;
+    expect(
+      (
+        deriveGraph(state, branch).entities.ledger?.properties as {
+          regionId?: string;
+        }
+      ).regionId,
+    ).toBe("region-bengaluru");
+
+    // A region that does not exist is refused, naming the ones that do —
+    // otherwise the component is stranded somewhere the engine cannot find.
+    const stranded = JSON.parse(
+      String(
+        await get("propose_architecture_change")?.execute({
+          branchId: "branch-highest_resilience",
+          entityId: "ledger",
+          property: "regionId",
+          value: "region-atlantis",
+        }),
+      ),
+    ) as { error?: string; problems?: string[] };
+    expect(stranded.error).toBe("INVALID_INPUT");
+    expect(stranded.problems?.[0]).toContain("region-mumbai");
+  });
+
   it("tells an agent what to do at the decision point", async () => {
     // Every other tool names a next action. This one, at the point a
     // decision is actually made, returned futures and a human gate and

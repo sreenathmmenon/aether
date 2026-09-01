@@ -420,6 +420,20 @@ export function dispatch(
     const graph = deriveGraph(next, branch);
     if (!graph.entities[command.input.entityId])
       return commandFailure("INVALID_INPUT", "Unknown architecture entity.");
+    // A relocation names a region, so it has to name one that exists on this
+    // graph. Accepting anything would strand the component in a region the
+    // engine cannot find, and the scenario would stop reaching it at all.
+    if (command.input.property === "regionId") {
+      const region = graph.entities[String(command.input.value)];
+      if (!region || region.kind !== "region")
+        return commandFailure(
+          "INVALID_INPUT",
+          `Unknown region. Choose one of: ${Object.values(graph.entities)
+            .filter((entity) => entity.kind === "region")
+            .map((entity) => entity.id)
+            .join(", ")}.`,
+        );
+    }
     branch.operations.push({
       kind: "set_property",
       entityId: command.input.entityId,
