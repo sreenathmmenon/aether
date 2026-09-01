@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { earlierDecisions, replayWindow } from "./replay-window";
+import {
+  diffWindow,
+  earlierChanges,
+  earlierDecisions,
+  earlierNotes,
+  furtherViolations,
+  noteWindow,
+  replayWindow,
+  violationWindow,
+} from "./replay-window";
 
 describe("the replay says what it is not showing", () => {
   it("says nothing while every command is on screen", () => {
@@ -27,5 +36,53 @@ describe("the replay says what it is not showing", () => {
     const note = earlierDecisions(replayWindow + 3)!;
     expect(note).toMatch(/held in this record/);
     expect(note).toMatch(/persisted/);
+  });
+
+  it("holds every windowed list to the same shape", () => {
+    // Four lists in this interface hide entries, and each was written out
+    // separately. The count, the agreement and the promise about where the
+    // hidden entries went are the parts that break quietly.
+    const cases = [
+      {
+        at: replayWindow,
+        render: earlierDecisions,
+        one: /1 earlier decision is/,
+        many: /3 earlier decisions are/,
+      },
+      {
+        at: noteWindow,
+        render: earlierNotes,
+        one: /1 earlier note is/,
+        many: /3 earlier notes are/,
+      },
+      {
+        at: diffWindow,
+        render: earlierChanges,
+        one: /1 earlier change is/,
+        many: /3 earlier changes are/,
+      },
+      {
+        at: violationWindow,
+        render: furtherViolations,
+        one: /1 further violation is/,
+        many: /3 further violations are/,
+      },
+    ];
+    for (const { at, render, one, many } of cases) {
+      expect(render(at)).toBeUndefined();
+      expect(render(at + 1)).toMatch(one);
+      expect(render(at + 3)).toMatch(many);
+      // And every one of them says where the hidden entries went, or a
+      // reviewer reading a short list is left to assume they were dropped.
+      expect(render(at + 3)!.length).toBeGreaterThan(40);
+    }
+  });
+
+  it("says an omitted violation still blocks approval", () => {
+    // The strongest of the four claims. A reviewer reading twelve violations
+    // when thirteen exist must not conclude the thirteenth was forgiven.
+    const note = furtherViolations(violationWindow + 1)!;
+    expect(note).toMatch(/block approval/);
+    expect(note).toMatch(/counted in this evidence/);
   });
 });

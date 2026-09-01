@@ -21,7 +21,16 @@ import { edgeBetween } from "./edge-geometry";
 import { futuresMessage } from "./futures-message";
 import { gateReason } from "./gate-reason";
 import { outcomeMessage } from "./outcome-message";
-import { earlierDecisions, replayWindow } from "./replay-window";
+import {
+  diffWindow,
+  earlierChanges,
+  earlierDecisions,
+  earlierNotes,
+  furtherViolations,
+  noteWindow,
+  replayWindow,
+  violationWindow,
+} from "./replay-window";
 import { loadSummary } from "./load-summary";
 import { reconcileMessage } from "./reconcile-message";
 import { mergeEvidence } from "@core/evidence-merge";
@@ -67,13 +76,10 @@ import { runScenario, type Scenario } from "@simulation/engine";
 /** How many recent decisions the replay panel shows before scrolling. */
 
 /** How many recent notes the discussion panel shows before scrolling. */
-const noteWindow = 8;
 
 /** How many changes the review diff shows before scrolling. */
-const diffWindow = 10;
 
 /** How many SLO violations the evidence panel shows before scrolling. */
-const violationWindow = 12;
 
 const scenarioOrder = [
   "regional_outage",
@@ -2066,13 +2072,9 @@ export function App() {
                 No SLO violations in {scenarioCopy[selectedScenario].label}.
               </p>
             )}
-            {evidence.sloViolations.length > violationWindow && (
+            {furtherViolations(evidence.sloViolations.length) && (
               <p className="replay-earlier">
-                {evidence.sloViolations.length - violationWindow} further{" "}
-                {evidence.sloViolations.length - violationWindow === 1
-                  ? "violation is"
-                  : "violations are"}{" "}
-                counted in this evidence and block approval too.
+                {furtherViolations(evidence.sloViolations.length)}
               </p>
             )}
             {blockingRuns
@@ -2687,13 +2689,9 @@ export function App() {
                 </article>
               ))}
             </div>
-            {branchNotes.length > noteWindow && (
+            {earlierNotes(branchNotes.length) && (
               <p className="replay-earlier">
-                {branchNotes.length - noteWindow} earlier{" "}
-                {branchNotes.length - noteWindow === 1
-                  ? "note is"
-                  : "notes are"}{" "}
-                held in this record and persisted with the workspace.
+                {earlierNotes(branchNotes.length)}
               </p>
             )}
             <form className="note-composer" onSubmit={postDecisionNote}>
@@ -2831,12 +2829,8 @@ export function App() {
             </p>
           )}
         </div>
-        {diff.length > diffWindow && (
-          <p className="replay-earlier">
-            {diff.length - diffWindow} earlier{" "}
-            {diff.length - diffWindow === 1 ? "change is" : "changes are"} in
-            this future and included in the evidence above.
-          </p>
+        {earlierChanges(diff.length) && (
+          <p className="replay-earlier">{earlierChanges(diff.length)}</p>
         )}
         <div className="review-actions">
           {/* The gate controls are disabled for a reason this span states, but
