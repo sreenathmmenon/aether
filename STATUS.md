@@ -465,6 +465,10 @@ The detailed plan is in `docs/V3_REVERSE_WINNER_PLAN.md`. V3 keeps the challenge
   - Acceptance: no overlay renders the page behind it as duplicated or mirrored content.
   - Evidence: a screenshot of the comparison overlay showed the page behind it mirrored and doubled — the same `backdrop-filter` artifact already removed from the intro, still present on the compare scrim and the causal timeline. Blurring a full page is expensive and, in this browser, visibly wrong. Both now use opacity alone: the comparison sits on a solid scrim through which the product stays legible, and the timeline card is opaque enough to read over the canvas grid. No `backdrop-filter` remains in the stylesheet.
 
+- [x] **M15.16 — Keep the comparison overlay usable on a short viewport** `DONE`
+  - Acceptance: no overlay can put its close control out of reach.
+  - Evidence: the intro card bounds itself with `max-height: 92vh` and `overflow: auto`, but the comparison modal had neither — `max-height: none`, `overflow: visible` — so a shorter viewport or a longer future list would overflow it with no way to scroll back. Its close control was also absolutely positioned, which inside a scrolling container scrolls away with the content. The modal now carries the same bound as the intro and the control is sticky. Verified in the browser: bounded to 628px on a 683px viewport, `overflow: auto`, close control sticky and visible. A sweep of the stylesheet for expensive or fragile properties found nothing else — no `backdrop-filter`, `mix-blend-mode`, `filter`, or `will-change` remains, and the only two fixed-position elements are the overlays themselves.
+
 ## Milestone 13 — Real-time architecture decision room
 
 - [x] **M13.1 — Define and build the unmistakable collaborative decision-room journey** `DONE`
