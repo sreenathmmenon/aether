@@ -2752,7 +2752,12 @@ export function App() {
                           </span>
                         </div>
                         <small>
-                          {String(event.result.nextState).replaceAll("_", " ")}
+                          {/* The reducer's state name was rendered here beside
+                              the label, so an entry read "changed a component
+                              property" and then "human edit" — the same fact
+                              twice, once in words and once as an enum. The
+                              label above says what happened; this line carries
+                              what backed it and when. */}
                           {/* A decision record has to say when, and what
                               evidence stood behind the decision. Without the
                               numbers, a reviewer auditing an approval has to

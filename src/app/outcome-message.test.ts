@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import engineSource from "../core/branch-engine.ts?raw";
+import appSource from "./App.tsx?raw";
+import registrySource from "../platform/webmcp/registry.ts?raw";
 import { outcomeMessage } from "./outcome-message";
 
 /**
@@ -41,6 +43,25 @@ describe("what a reviewer is told a command did", () => {
     );
     // And still says something useful without one.
     expect(outcomeMessage("simulated")).toMatch(/deterministically/);
+  });
+
+  it("shows the replay a label, and the agent record an enum", () => {
+    // Three surfaces carried the reducer's state. The activity strip and the
+    // replay are read by a person, so they need words; the agent's decision
+    // record is read by a model, where a stable token is the right answer and
+    // prose would be worse. The replay rendered both — "changed a component
+    // property" and then "human edit", the same fact twice.
+    const replay = appSource.slice(
+      appSource.indexOf('aria-label="Replayable change history"'),
+      appSource.indexOf("</section>", appSource.indexOf("Replayable change")),
+    );
+    expect(replay).not.toMatch(/nextState\)\.replaceAll/);
+    // It still names the command in words and carries its evidence.
+    expect(replay).toMatch(/described\?\.label/);
+    expect(replay).toMatch(/eventEvidence\(event\)/);
+
+    // And the tool keeps the machine-readable outcome.
+    expect(registrySource).toMatch(/outcome: event\.result\.nextState/);
   });
 
   it("falls back rather than throwing on a state it has not met", () => {
