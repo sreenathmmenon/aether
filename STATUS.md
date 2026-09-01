@@ -474,6 +474,9 @@ The detailed plan is in `docs/V3_REVERSE_WINNER_PLAN.md`. V3 keeps the challenge
   - Acceptance: no overlay can put its close control out of reach.
   - Evidence: the intro card bounds itself with `max-height: 92vh` and `overflow: auto`, but the comparison modal had neither — `max-height: none`, `overflow: visible` — so a shorter viewport or a longer future list would overflow it with no way to scroll back. Its close control was also absolutely positioned, which inside a scrolling container scrolls away with the content. The modal now carries the same bound as the intro and the control is sticky. Verified in the browser: bounded to 628px on a 683px viewport, `overflow: auto`, close control sticky and visible. A sweep of the stylesheet for expensive or fragile properties found nothing else — no `backdrop-filter`, `mix-blend-mode`, `filter`, or `will-change` remains, and the only two fixed-position elements are the overlays themselves.
 
+- [x] **M15.17 — Verify the batch modelling tool on the deployed origin** `DONE`
+  - Evidence: `document.modelContext.getTools()` on the live own-system canvas returns ten tools including `model_architecture`, matching the count asserted by the registry test and stated in the README, evaluation set, and compliance checklist. Driving the tool directly builds three components and two dependencies in a single call, returning per-component identifiers and the next action rather than aborting on a partial failure.
+
 ## Milestone 13 — Real-time architecture decision room
 
 - [x] **M13.1 — Define and build the unmistakable collaborative decision-room journey** `DONE`
