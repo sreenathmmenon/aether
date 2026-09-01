@@ -1202,3 +1202,15 @@ was already underway again.
   - It now falls back to shortening the declared restore time of the slowest datastore, which is the objective the intent is named for. A test asserts every intent produces at least one operation and that the recovery-focused future genuinely recovers faster and costs more than the cost-focused one; removing the fallback fails it with `fastest_recovery: expected 0 to be greater than 0`.
   - Verified against the deployed origin on an agent-built healthy system, matching the local numbers exactly: `Lowest cost` $2,160 at 6 minutes, `Fastest recovery` $2,544 at 2 minutes, `Highest resilience` $3,192. The choice the product asks a reviewer to make is now a real one on their own architecture, not only on the seeded fixtures.
   - Also checked and found correct rather than changed: on a self-built system that is not already healthy, the three intents already differentiated on every axis — 93.4 / 95.8 / 96.83 availability with distinct recovery and cost. The flatness was specific to the already-replicated case.
+
+## Milestone 77 — No future without a change
+
+- [x] **M77.1 — Cover the case M76 missed** `DONE`
+  - Acceptance: no intent ever yields a branch that changes nothing, on any architecture.
+  - Evidence: M76 gave `fastest_recovery` a fallback for stores that are already replicated, keyed on the slowest datastore. An architecture with no datastore at all — a gateway and a service, or a lone queue — still produced an empty branch, because that fallback had nothing to key on either. Probing the shape rather than assuming the previous fix generalised is what found it.
+  - With no datastore the engine scores recovery as a fixed reroute, so there is no restore time to shorten. The intent now adds redundant instances instead, which is what shortens a stateless outage: availability moves 95.8 to 96.08 on a gateway-and-service system, and a test asserts that the redundancy actually raises it rather than only that operations exist.
+
+- [x] **M77.2 — Refuse an intent with nothing to act on** `DONE`
+  - Evidence: a lone queue carries neither replicas nor a declared restore time, so no fallback can apply. Rather than chain a third one, the engine now refuses the branch: "This architecture offers nothing for that trade-off to change. Add a component it can act on, or choose another intent."
+  - Scoped deliberately. The same architecture still creates a `lowest_cost` future, verified against the deployed origin, so the refusal blocks the empty intent and not the architecture. The interface already disables future creation on an unbuilt canvas, so this changes nothing a reviewer can reach — it closes the path an agent can.
+  - Three existing tests failed on this change because they created futures against an empty blank canvas, which is now correctly refused. Each was fixed by giving it an architecture to repair rather than by weakening the guard, which is what the interface requires of a reviewer anyway.
