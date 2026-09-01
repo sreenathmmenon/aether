@@ -880,3 +880,10 @@ was already underway again.
   - Evidence: rollback had a control in the interface and no test at all. A commit a person cannot undo is worse than one they cannot make.
   - The test walks the whole journey to reach a real merge rather than forcing a status: repair the ledger's replication, raise the capacity every scenario demands, prove all four clean, approve, merge. Rollback then returns the workspace to the committed architecture, discards the future, and the change it carried is gone — the ledger's replication is back to `none`. A second rollback is refused, and an agent is refused throughout.
   - The agent guard took two attempts to verify: a string-based removal silently matched nothing, so the test's silence meant nothing. Removing the guard by line lets an agent undo a human's commit and the test fails, so the boundary is genuinely held.
+
+## Milestone 49 — Naming the WebMCP problem a reviewer actually has
+
+- [x] **M49.1 — Separate a browser that cannot from one that will not here** `DONE`
+  - Acceptance: an unavailable surface says which situation the reviewer is in.
+  - Evidence: the availability check computed a `reason` and the interface never showed it, so every unavailable case read the same — "Open in ChatGPT's browser, or Chrome 149+". Someone already running a supported Chrome, on a page whose origin is not enrolled in the trial, was told to install the browser they were using. The two situations need different actions and were reported identically.
+  - The check now distinguishes them, identifying Chromium through `navigator.userAgentData` rather than a user-agent string, and the reason appears in the opening card and on the header indicator instead of being discarded. Verified all three branches against this browser's real brand data: supported reports live, a Chromium build without the trial names the trial, and a non-Chromium browser is told plainly that it does not expose WebMCP.
