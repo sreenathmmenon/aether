@@ -1601,6 +1601,10 @@ button {
   .note-composer button {
     min-height: 38px;
   }
+  /* Two columns of property fields are too narrow to read on a phone. */
+  .component-composer > div {
+    grid-template-columns: minmax(0, 1fr);
+  }
   .studio {
     display: block;
   }
@@ -1877,10 +1881,19 @@ button {
   font: inherit;
   font-size: 12px;
 }
+/* Seven property controls, not the two this once held. An `auto` column for
+   the button stranded it mid-grid beside a field, so the fields share an even
+   two-column grid and the submit sits on its own full-width row where an
+   action belongs. */
 .component-composer > div {
   display: grid;
-  grid-template-columns: 1fr 1fr auto;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 6px;
+}
+.component-composer-submit {
+  width: 100%;
+  min-height: 34px;
+  margin-top: 2px;
 }
 .component-composer button {
   padding: 0 14px;

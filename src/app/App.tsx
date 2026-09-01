@@ -1169,7 +1169,21 @@ export function App() {
     // The composer notice is styled as a refusal, so a success clears it and
     // the confirmation goes to the activity strip that reports outcomes.
     setComposerNotice("");
-    setComponentDraft((draft) => ({ ...draft, name: "" }));
+    // Clear what described the component just added, and keep only the two
+    // choices someone building a system holds steady across several of them.
+    // Carrying the rest forward silently applied one component's load, cost
+    // and replication to the next one the person added.
+    setComponentDraft((draft) => ({
+      ...draft,
+      name: "",
+      replicas: "",
+      latencyTargetMs: "",
+      recoveryTimeMinutes: "",
+      replicationMode: "none",
+      peakRps: "",
+      capacityRps: "",
+      monthlyCostUsd: "",
+    }));
   }
   function postDecisionNote(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -2255,10 +2269,14 @@ export function App() {
                       }))
                     }
                   />
-                  <button type="submit" disabled={!writable}>
-                    Add
-                  </button>
                 </div>
+                <button
+                  className="component-composer-submit"
+                  type="submit"
+                  disabled={!writable}
+                >
+                  Add component
+                </button>
                 {composerNotice && (
                   <p className="composer-notice" role="status">
                     {composerNotice}
