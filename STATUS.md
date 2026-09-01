@@ -1052,3 +1052,15 @@ was already underway again.
   - Evidence: the first version searched the whole component for `componentDraft.<property>`. Removing `peakRps` from the dispatched payload left its input's own `value=` binding on screen, so the test passed — it asserted a control existed, not that the value was sent.
   - Scoping it to the dispatched input object was still not enough: hardcoding `replicas: 3` passed, because the guard condition wrapping it still named the draft field. The check now requires the property to be assigned from the draft, and each of the eight fails independently when hardcoded.
   - It reads the shipped `App.tsx` rather than keeping a list of expected properties, so a ninth property added to the tool and forgotten in the form fails immediately.
+
+## Milestone 64 — The form that grew seven controls still reads as a form
+
+- [x] **M64.1 — Clear what described the last component** `DONE`
+  - Acceptance: adding a component does not silently configure the next one.
+  - Evidence: the submit handler cleared only the name, which was right when kind and region were the only other fields. After M63 it left six property fields populated, so a 4,444 RPS synchronously replicated database silently applied its load, cost and replication to whatever the person added next — visible in the browser, where a second component inherited the first one's settings.
+  - The reset now clears everything that described the component just added and keeps only kind and region, which are the two choices someone holds steady while building several components. Verified against the deployed origin: name, replication and peak RPS clear; kind stays.
+
+- [x] **M64.2 — Give the action its own row** `DONE`
+  - Acceptance: the submit reads as the action, not as another field.
+  - Evidence: the grid was `1fr 1fr auto`, built for two selects and a button. With seven controls the `auto` column stranded "Add" mid-grid beside the monthly cost input, and the dependency select was orphaned on a row below it — so the last thing under the button was another field. Found by screenshotting the page rather than trusting the markup.
+  - The fields now share an even two-column grid that collapses to one column under 740px, the dependency spans the full row because it names another component, and the submit is a full-width action beneath them. Half-width selects were also clipping their own labels — "Recovery: defau…" — so those presets read "auto" instead.
