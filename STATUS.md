@@ -868,3 +868,13 @@ was already underway again.
   - A person can now remove a component from a future they are shaping, from the same panel as the other human controls. The agent still has no removal tool, so the asymmetry the submission describes is real in both directions rather than vacuous on one side.
   - Verified in production: selecting a component offers "Remove Reconciliation from this future", removal takes the future from five components to four, the diff shows "Reconciliation · component removed · present → absent", the record reads "Sreenath removed a component", evidence recomputes, and `getTools()` exposes no removal tool to an agent.
   - Writing the test found my own assumption wrong rather than a defect: I asserted an agent would be refused with three components left, but the rule refuses a removal that would leave fewer than two, so three-to-two is allowed and two-to-one is not. The test asserts the real boundary, and that a person may still make the removal an agent cannot — the limit is on agent authority, not on the model.
+
+## Milestone 48 — The recovery path after a commit
+
+- [x] **M48.1 — Sweep for remaining unreachable commands** `DONE`
+  - Evidence: mapped all eleven command types against both dispatch paths. Every one now has an interface path, and the five with no agent tool — approve, merge, rollback, cost ceiling, and move — are exactly the human-only set the submission describes. No unreachable command remains after removal was wired up.
+- [x] **M48.2 — Cover the rollback that undoes a commit** `DONE`
+  - Acceptance: a person can undo the most consequential action in the product, and an agent cannot.
+  - Evidence: rollback had a control in the interface and no test at all. A commit a person cannot undo is worse than one they cannot make.
+  - The test walks the whole journey to reach a real merge rather than forcing a status: repair the ledger's replication, raise the capacity every scenario demands, prove all four clean, approve, merge. Rollback then returns the workspace to the committed architecture, discards the future, and the change it carried is gone — the ledger's replication is back to `none`. A second rollback is refused, and an agent is refused throughout.
+  - The agent guard took two attempts to verify: a string-based removal silently matched nothing, so the test's silence meant nothing. Removing the guard by line lets an agent undo a human's commit and the test fails, so the boundary is genuinely held.
