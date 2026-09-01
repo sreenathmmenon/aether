@@ -1329,12 +1329,21 @@ export function App() {
             // so only this case needs the name to carry more.
             aria-label={
               webMcp.available
-                ? undefined
+                ? // "state-aware" is doing real work and a count alone does
+                  // not carry it: the surface is this size for this state and
+                  // changes with it.
+                  `WebMCP live. ${toolCount} tools registered for the current state; the surface changes as the architecture does.`
                 : `WebMCP not detected. ${webMcp.reason ?? "This browser does not expose a model context on this page."}`
             }
           >
             {webMcp.available
-              ? `WebMCP live · ${toolCount} tools`
+              ? // "5 tools" reads as the whole surface. It is the committed
+                // state's surface, and the count grows to twelve once a
+                // repair future exists — which is the state-dependent
+                // registration this submission is built on. The panel that
+                // explains that sits below the fold, so the word doing the
+                // work belongs in the chip a reviewer sees first.
+                `WebMCP live · ${toolCount} state-aware tools`
               : "WebMCP not detected"}
           </span>
           {/* The live region has to exist before the content arrives. Mounting

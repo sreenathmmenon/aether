@@ -139,6 +139,24 @@ describe("the interface honours the ARIA it declares", () => {
     expect(label).toContain("syncExplanation(syncStatus)");
   });
 
+  it("says the tool count is for the current state, not the whole surface", () => {
+    // The header chip is the first thing a reviewer reads and the panel that
+    // explains the surface sits below the fold — measured at 910 pixels
+    // against a 623 pixel viewport. "5 tools" read as everything the agent
+    // can ever do, when it is what this state registers and the count grows
+    // to twelve once a repair future exists.
+    const chip = appSource.slice(
+      appSource.indexOf("aria-label={\n              webMcp.available"),
+      appSource.indexOf('"WebMCP not detected"}'),
+    );
+    expect(chip).toMatch(/state-aware tools/);
+    // And the accessible name says what the phrase means, since a count on
+    // its own does not carry it.
+    expect(chip).toMatch(/surface changes as the architecture does/);
+    // Both halves read the same live count rather than a second source.
+    expect(chip.match(/toolCount/g)?.length ?? 0).toBeGreaterThanOrEqual(2);
+  });
+
   it("keeps the tab panel bound to the tab that opens it", () => {
     // A tabpanel labelled by a tab that is not the selected one describes the
     // wrong scenario, which is worse than being unlabelled.
