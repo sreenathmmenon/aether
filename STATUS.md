@@ -514,3 +514,23 @@ The detailed plan is in `docs/V3_REVERSE_WINNER_PLAN.md`. V3 keeps the challenge
   - Evidence: `get_decision_record` is read-only; state-dependent `add_decision_note` is bounded, marked untrusted-content aware, invokes the validated command path, and returns no approval authority. Unit and in-app-browser calls passed.
 - [ ] **M13.6 — Validate the complete decision-room journey in Chrome, ChatGPT, and production** `IN_PROGRESS`
   - Evidence: live Railway health is PostgreSQL-ready; ChatGPT’s in-app browser discovers and calls `get_decision_record`; the deployed origin emits the Chrome WebMCP origin-trial token, COOP, COEP, and `Permissions-Policy: tools=(self)` headers; Chrome visual/a11y audit is 100/100/100/100. The only remaining Chrome clause is repeating the WebMCP API check in a Chrome profile with the WebMCP testing flag disabled, so origin-trial activation is proven without the local flag masking it.
+
+## Milestone 16 — Adversarial judging review
+
+Four independent reviewers were asked to break the product live rather than
+read its claims. Every finding below was reproduced against the code before
+anything was changed, and each fix is pinned by a test so it cannot regress.
+
+- [x] **M16.1 — Stop the agent tool surface advertising capabilities the engine refuses** `DONE`
+  - Acceptance: `document.modelContext.getTools()` and the reducer agree in every state.
+  - Evidence: the capability key asked only whether a branch existed, so once any repair future was created every editing tool stayed registered — including after that future was committed and the interface correctly reported read-only. A reviewer calling `getTools()` was told it could edit an architecture `dispatch` would refuse. The key now mirrors the reducer's own write guard. Verified in production Chrome: on a committed payment platform `getTools()` returns exactly 5 tools with zero editing tools reachable, and the baseline holds zero operations.
+- [x] **M16.2 — Pin the committed-baseline invariant with agent-driven tests** `DONE`
+  - Acceptance: the guarantee lives in the reducer, not in interface copy.
+  - Evidence: a reviewer reported adding a component to `branch-baseline` as an agent. Reproduced: the write succeeds only on a self-built (`blank`) workspace, where the baseline is deliberately editable until the reviewer branches — the seeded architectures correctly refuse it. The gap was that interface copy claimed the baseline is immutable unconditionally, which is false in that state, so a true claim was falsifiable. Copy now states the actual rule, and tests drive all four mutation commands as an agent against a committed baseline, asserting refusal and a byte-identical graph.
+- [x] **M16.3 — Read a system brief as an architecture rather than a list of clauses** `DONE`
+  - Acceptance: the canvas matches the sentence a reviewer typed.
+  - Evidence: the unassisted entry point kept the first four clauses and dropped the rest in silence, gave every component the same invented 8,000/10,000/800 figures, and chained components in text order regardless of the verbs used. It now keeps every clause to the component budget and reports overflow; reads only figures actually stated, leaving the rest unmeasured and saying which; derives each edge kind from the verb; draws edges from the subject the clause names, creating a component the brief names but never introduced; and resolves shortened repeat mentions to the existing node. Verified in production on an eight-clause brief: ten components and every edge as written, including `orders -publishes_to-> Kafka`, `analytics -consumes_from-> Kafka`, and `billing -reads_from-> Postgres`, with one Kafka node carrying two edges and only the single stated figure (40,000 RPS) recorded.
+  - The parser moved to `@core/brief-parser` because the test had been duplicating its logic rather than importing it, which is how the truncation defect survived.
+- [x] **M16.4 — Declare the availability model instead of burying its coefficients** `DONE`
+  - Acceptance: a reviewer can audit the assumptions behind a score.
+  - Evidence: availability applied unexplained literals while the interface labelled the result a "Deterministic proof". Determinism was and remains true; what was missing was honesty about the weights. They are now a named model with each coefficient's unit and meaning stated, and the badge reads "Reproducible run" and says the weights are declared assumptions rather than measured production data. Pure refactor: all tests pass unchanged.
