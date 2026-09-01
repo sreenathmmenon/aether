@@ -673,9 +673,19 @@ export function App() {
           // adopted over work it would destroy — the poll and the storage
           // event both check this, and this path did not, which is the path a
           // shared room actually takes.
+          //
+          // The candidate is the *merge*, not the incoming state, because the
+          // merge is what gets adopted here. Testing `remote` refused every
+          // concurrent write — the local note is not in the remote audit, so
+          // the guard saw loss that adopting the merge would not cause — and
+          // the tab stayed a local draft with its note never sent. The two
+          // other callers adopt `remote` wholesale and rightly test it.
           let discards = false;
           setState((current) => {
-            discards = wouldDiscardWork(current, remote);
+            discards = wouldDiscardWork(
+              current,
+              mergeEvidence(current, remote),
+            );
             return current;
           });
           if (discards) {

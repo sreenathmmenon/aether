@@ -117,6 +117,13 @@ describe("the interface honours the ARIA it declares", () => {
     expect(conflict, "the conflict path is not where it was").toContain(
       "mergeEvidence",
     );
+    // The guard has to test the state actually adopted here, which is the
+    // merge. Testing the incoming state refused every concurrent write: the
+    // local note is not in the remote audit, so it saw loss the merge would
+    // not cause, and the tab never sent its note at all.
+    expect(conflict).toMatch(
+      /wouldDiscardWork\(\s*current,\s*mergeEvidence\(current, remote\)/,
+    );
     // The retry is what makes the reconciliation durable rather than local.
     expect(conflict).toContain("saveRemoteWorkspace");
     // And it must not set the applying flag, which suppresses the save
