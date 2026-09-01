@@ -157,6 +157,22 @@ describe("the interface honours the ARIA it declares", () => {
     expect(chip.match(/toolCount/g)?.length ?? 0).toBeGreaterThanOrEqual(2);
   });
 
+  it("announces the surface changing, which is the claim proving itself", () => {
+    // Five tools becoming twelve when a repair future exists is the
+    // state-dependent registration a judge is asked to look for, and it
+    // happened silently. Measured before adding the live region: running a
+    // scenario and adding a note both left the count alone, so this
+    // announces the transition rather than churn.
+    const chip = appSource.slice(
+      appSource.indexOf("aria-label={\n              webMcp.available"),
+      appSource.indexOf('"WebMCP not detected"}'),
+    );
+    expect(chip).toContain('aria-live="polite"');
+    // Polite, not assertive: the surface changing is worth hearing at the
+    // next pause, not worth interrupting a reviewer mid-sentence.
+    expect(chip).not.toContain('aria-live="assertive"');
+  });
+
   it("keeps the tab panel bound to the tab that opens it", () => {
     // A tabpanel labelled by a tab that is not the selected one describes the
     // wrong scenario, which is worse than being unlabelled.

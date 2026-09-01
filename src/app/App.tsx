@@ -1335,6 +1335,12 @@ export function App() {
                   `WebMCP live. ${toolCount} tools registered for the current state; the surface changes as the architecture does.`
                 : `WebMCP not detected. ${webMcp.reason ?? "This browser does not expose a model context on this page."}`
             }
+            /* The count moving from five to twelve is the state-dependent
+               registration proving itself, and it happened silently. Measured
+               before adding this: the count does not change during ordinary
+               work — running a scenario and adding a note both left it alone —
+               so this announces the transition and not churn. */
+            aria-live="polite"
           >
             {webMcp.available
               ? // "5 tools" reads as the whole surface. It is the committed
