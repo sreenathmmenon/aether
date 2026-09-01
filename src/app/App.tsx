@@ -57,6 +57,9 @@ import { runScenario, type Scenario } from "@simulation/engine";
 /** How many recent decisions the replay panel shows before scrolling. */
 const replayWindow = 12;
 
+/** How many recent notes the discussion panel shows before scrolling. */
+const noteWindow = 8;
+
 const scenarioOrder = [
   "regional_outage",
   "traffic_spike",
@@ -503,14 +506,15 @@ export function App() {
     return undefined;
   };
   const decisionNotes = state.decisionNotes ?? [];
-  const activeNotes = decisionNotes
-    .filter(
-      (note) =>
-        note.branchId === activeBranch.id ||
-        note.branchId === "branch-baseline",
-    )
-    .slice(-5)
-    .reverse();
+  // Notes on this branch and on the baseline, newest first. The count and the
+  // list are derived from the same filtered set: taking the count from an
+  // already-sliced list would report the window size as the total, so a
+  // record of twenty notes would call itself five.
+  const branchNotes = decisionNotes.filter(
+    (note) =>
+      note.branchId === activeBranch.id || note.branchId === "branch-baseline",
+  );
+  const activeNotes = branchNotes.slice(-noteWindow).reverse();
   // Keep every clause the reviewer wrote. The parser reports what it could
   // not model instead of silently truncating the brief.
   const briefSeeds = useMemo(() => clausesOf(systemBrief), [systemBrief]);
@@ -2144,7 +2148,10 @@ export function App() {
           >
             <div className="thread-heading">
               <strong>Human + agent discussion</strong>
-              <span>{activeNotes.length} decision notes</span>
+              <span>
+                {branchNotes.length}{" "}
+                {branchNotes.length === 1 ? "decision note" : "decision notes"}
+              </span>
             </div>
             <div className="thread-notes">
               {activeNotes.map((note) => (
@@ -2165,6 +2172,15 @@ export function App() {
                 </article>
               ))}
             </div>
+            {branchNotes.length > noteWindow && (
+              <p className="replay-earlier">
+                {branchNotes.length - noteWindow} earlier{" "}
+                {branchNotes.length - noteWindow === 1
+                  ? "note is"
+                  : "notes are"}{" "}
+                held in this record and persisted with the workspace.
+              </p>
+            )}
             <form className="note-composer" onSubmit={postDecisionNote}>
               <label htmlFor="decision-note">
                 Record Sreenath’s decision note
