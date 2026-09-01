@@ -189,9 +189,6 @@ export function App() {
       createInitialState(paymentPlatformBaseline, "payment-platform")
     );
   });
-  const [message, setMessage] = useState(
-    "Describe your architecture. The agent can build it here, and Aether will prove the consequences.",
-  );
   const [toolCount, setToolCount] = useState(0);
   const [toolCalls, setToolCalls] = useState<ToolCall[]>([]);
   // The newest call, held briefly in the header so agent activity is visible
@@ -202,6 +199,19 @@ export function App() {
   // activity strip sits far below the fold while this form is in use.
   const [composerNotice, setComposerNotice] = useState("");
   const [syncStatus, setSyncStatus] = useState("Checking sync");
+  // The message and whether it reports something done or something refused,
+  // held together so a refusal cannot leave its tone behind on the next
+  // message. Nineteen call sites set this; only one of them refuses.
+  const [notice, setNotice] = useState<{
+    text: string;
+    tone: "done" | "refused";
+  }>({
+    text: "Describe your architecture. The agent can build it here, and Aether will prove the consequences.",
+    tone: "done",
+  });
+  const message = notice.text;
+  const setMessage = (text: string) => setNotice({ text, tone: "done" });
+  const refuse = (text: string) => setNotice({ text, tone: "refused" });
   const [systemBrief, setSystemBrief] = useState("");
   // Empty until a graph is loaded; the selection then falls back to whichever
   // component the engine considers most consequential.
@@ -757,7 +767,11 @@ export function App() {
 
   function apply(command: Parameters<typeof dispatch>[1]) {
     const outcome = dispatch(state, command, humanActor);
-    if (!outcome.ok) return setMessage(outcome.message);
+    // A refusal read exactly like a success: same strip, same colour, so
+    // "A component with that name already exists" looked like a confirmation
+    // that something had happened. A reviewer has to be able to tell whether
+    // the thing they asked for was done.
+    if (!outcome.ok) return refuse(outcome.message);
     setState(outcome.value);
     setMessage(
       outcome.nextState === "simulated" && command.type === "RUN_SCENARIO"
@@ -937,6 +951,7 @@ export function App() {
     const parsed = parseBrief(systemBrief);
     if (parsed.components.length === 0) {
       setComposerNotice("Describe at least one component in the brief first.");
+      refuse("Describe at least one component in the brief first.");
       return;
     }
     let next = state;
@@ -1040,6 +1055,7 @@ export function App() {
 
     if (created.length === 0) {
       setComposerNotice("Those components already exist on this canvas.");
+      refuse("Those components already exist on this canvas.");
       return;
     }
     setState(next);
@@ -1066,7 +1082,7 @@ export function App() {
       setComposerNotice(
         "Give the component a name of at least two characters.",
       );
-      setMessage("Name the component before adding it to the architecture.");
+      refuse("Name the component before adding it to the architecture.");
       return;
     }
     setComposerNotice("");
@@ -1090,7 +1106,7 @@ export function App() {
     );
     if (!added.ok) {
       setComposerNotice(added.message);
-      setMessage(added.message);
+      refuse(added.message);
       return;
     }
     // A component with no dependency cannot affect anything, so wire it up in
@@ -1120,11 +1136,9 @@ export function App() {
         ? `${name} added and wired to ${graph.entities[dependsOn]?.name ?? dependsOn}. Recalculate to see its consequence.`
         : `${name} added. Add another component to connect it to.`,
     );
-    setComposerNotice(
-      dependsOn
-        ? `${name} added and wired in.`
-        : `${name} added. Add another component to connect it to.`,
-    );
+    // The composer notice is styled as a refusal, so a success clears it and
+    // the confirmation goes to the activity strip that reports outcomes.
+    setComposerNotice("");
     setComponentDraft((draft) => ({ ...draft, name: "" }));
   }
   function postDecisionNote(event: FormEvent<HTMLFormElement>) {
@@ -2464,7 +2478,11 @@ export function App() {
       </section>
       <section className="activity-strip" aria-label="Shared activity">
         <span className="eyebrow">Shared state</span>
-        <p>{message}</p>
+        <p
+          className={notice.tone === "refused" ? "message-refused" : undefined}
+        >
+          {message}
+        </p>
         <ol>
           {state.audit
             .slice(-4)

@@ -1398,6 +1398,12 @@ button {
   background: #fff;
   border-color: var(--coral);
 }
+/* A refusal must not read like a confirmation. The strip sits on the dark
+   ground, so this lifts rather than darkens. */
+.message-refused {
+  color: #ffb3a7;
+  font-weight: 650;
+}
 .activity-strip {
   display: grid;
   grid-template-columns: 120px minmax(200px, 1fr) minmax(250px, 2fr);
@@ -2041,12 +2047,13 @@ button {
 }
 
 /* Outcome of an add lands beside the form, not in a strip below the fold. */
+/* This only ever carries a refusal, and cyan reads as information. */
 .composer-notice {
   margin: 0;
   padding: 6px 8px;
-  border-left: 2px solid var(--cyan);
-  background: rgba(17, 167, 184, 0.08);
-  color: #35485f;
+  border-left: 2px solid var(--coral);
+  background: rgba(217, 93, 79, 0.08);
+  color: #7a2f26;
   font-size: 12.5px;
   line-height: 1.4;
 }
