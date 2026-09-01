@@ -731,7 +731,9 @@ export function App() {
       applyingRemoteRef.current = true;
       remoteVersionRef.current =
         incoming.workspace.persistenceVersion ?? remoteVersionRef.current;
-      setState(incoming);
+      // Union the evidence, as the other three adoption paths do. This one
+      // was missed because it names the incoming state differently.
+      setState((current) => mergeEvidence(current, incoming));
       setMessage(
         "Live workspace update received. Reviewing the current future.",
       );
