@@ -20,6 +20,7 @@ import {
 import { edgeBetween } from "./edge-geometry";
 import { futuresMessage } from "./futures-message";
 import { gateReason } from "./gate-reason";
+import { outcomeMessage } from "./outcome-message";
 import { loadSummary } from "./load-summary";
 import { reconcileMessage } from "./reconcile-message";
 import { mergeEvidence } from "@core/evidence-merge";
@@ -866,9 +867,12 @@ export function App() {
     stateRef.current = settled;
     setState(settled);
     setMessage(
-      outcome.nextState === "simulated" && command.type === "RUN_SCENARIO"
-        ? `${scenarioCopy[command.input.scenario].label} evidence recalculated deterministically.`
-        : `State updated: ${outcome.nextState.replaceAll("_", " ")}.`,
+      outcomeMessage(
+        outcome.nextState,
+        command.type === "RUN_SCENARIO"
+          ? scenarioCopy[command.input.scenario].label
+          : undefined,
+      ),
     );
   }
   // Stable identity: the modal effect depends on this, and a new function each

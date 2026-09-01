@@ -1,0 +1,51 @@
+import { describe, expect, it } from "vitest";
+import engineSource from "../core/branch-engine.ts?raw";
+import { outcomeMessage } from "./outcome-message";
+
+/**
+ * The reducer reports a state name for every command and three surfaces show
+ * it: the activity strip, the replay history, and the agent's decision
+ * record. Rendering it raw said "State updated: human edit." for a change to
+ * a component's replicas — the machine's category rather than the reviewer's
+ * action.
+ */
+const reducerStates = [
+  ...new Set(
+    [...engineSource.matchAll(/nextState = "([a-z_]+)"/g)].map(
+      (match) => match[1]!,
+    ),
+  ),
+].filter((state) => state !== "baseline");
+
+describe("what a reviewer is told a command did", () => {
+  it("has words for every state the reducer can report", () => {
+    // Derived from the reducer, so a state added later fails here rather than
+    // reaching a reviewer as an enum.
+    expect(reducerStates.length).toBeGreaterThan(8);
+    for (const state of reducerStates) {
+      const message = outcomeMessage(state);
+      expect(message, `${state} has no sentence`).not.toContain(
+        "State updated",
+      );
+      // A sentence, not a relabelled token.
+      expect(message.length, `${state} is too terse to act on`).toBeGreaterThan(
+        24,
+      );
+      expect(message.endsWith("."), `${state} is not a sentence`).toBe(true);
+    }
+  });
+
+  it("names the scenario when one was run", () => {
+    expect(outcomeMessage("simulated", "Regional outage")).toBe(
+      "Regional outage evidence recalculated deterministically.",
+    );
+    // And still says something useful without one.
+    expect(outcomeMessage("simulated")).toMatch(/deterministically/);
+  });
+
+  it("falls back rather than throwing on a state it has not met", () => {
+    expect(outcomeMessage("something_new")).toBe(
+      "State updated: something new.",
+    );
+  });
+});
