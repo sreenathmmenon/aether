@@ -56,6 +56,32 @@ describe("the interface honours the ARIA it declares", () => {
     expect(appSource).toMatch(/aria-selected=\{[^}]*selectedScenario/);
   });
 
+  it("builds the comparison label from the values it displays", () => {
+    // Each future in the comparison is a button, so its accessible name is
+    // the only thing a screen reader gets — the numbers are rendered in
+    // spans it will not announce separately. A name assembled from its own
+    // literals would drift from the panel silently, which is how this
+    // omitted recovery and cost once already.
+    const start = appSource.indexOf("compare-choice");
+    expect(start).toBeGreaterThan(0);
+    const card = appSource.slice(start, start + 2000);
+    const label = card.slice(
+      card.indexOf("aria-label="),
+      card.indexOf("onClick="),
+    );
+    // Every metric the card shows has to come from the same result object
+    // the label reads, not from a second source.
+    for (const field of [
+      "availability",
+      "rtoMinutes",
+      "monthlyCostUsd",
+      "sloViolations",
+    ])
+      expect(label, `${field} missing from the comparison label`).toContain(
+        `result.${field}`,
+      );
+  });
+
   it("keeps the tab panel bound to the tab that opens it", () => {
     // A tabpanel labelled by a tab that is not the selected one describes the
     // wrong scenario, which is worse than being unlabelled.
