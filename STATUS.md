@@ -1695,3 +1695,16 @@ was already underway again.
   - The optimistic write is covered as the concurrency story it is: two reviewers in one room must not silently overwrite each other, and losing the `WHERE version = $3` turns every conflict into last-write-wins while the endpoint still answers 200. Removing that clause fails the test; moving the id check below the body read fails a different one.
   - Verified end-to-end against the deployed origin with a freshly minted workspace id: the first write returns `{"version":1}`, replaying the same `expectedVersion` returns 409 `STALE_WORKSPACE`, the write at the correct version returns `{"version":2}`, and the state reads back. The concurrency guarantee is proven on the running server, not only in the SQL.
   - It also holds both sides to one contract: the server imports the client's `workspace-contract` rather than keeping a second pattern, so a room name the client will mint is one the server accepts.
+
+## Milestone 121 — A documented claim that was false and checkable
+
+- [x] **M121.1 — Check the numbers a judge could check** `DONE`
+  - Acceptance: no document states a figure about this product that the product contradicts.
+  - Evidence: `docs/WEBMCP_EVALS.md` and `docs/WEBMCP_COMPLIANCE.md` both stated that every tool result stays within a 1,500-character budget. The registry enforces 2,000, and measuring the largest result — the three-future comparison — put it at **1,528 characters**. The claim was false, it was checkable from the repository, and nothing checked it.
+  - `docs/WEBMCP.md` also names 1,500, but that one is the WebMCP guidance itself rather than a claim about Aether. Changing the number there would have misquoted the spec, so it now says which figure is whose: the guidance is 1,500, Aether's own ceiling is `maxToolResultLength`, and the reason it is higher is stated rather than hidden — the comparison degrades in steps rather than being truncated into invalid JSON.
+  - A stale tool count surfaced in the same file: it read "nine tools" for the branch-gated surface, a figure from a recording predating three tools. Rewritten to state what ships — five, ten, twelve — and to say the recording predates the additions rather than leaving a number that reads as current.
+
+- [x] **M121.2 — Extend the guard that should have caught it** `DONE`
+  - Evidence: a drift test already derived true tool counts and rejected any other number written beside the word "tools", but it covered three documents and not `WEBMCP_EVALS.md`, and it checked counts and not the budget. Adding the file caught the "nine tools" claim on the first run.
+  - The budget is now held to `maxToolResultLength` wherever a document states one, so the two cannot drift apart again. It guards its own vacuity: deleting the phrase fails the test rather than passing it, which matters because the easiest way to satisfy a claim check is to delete the claim.
+  - Three breaks confirmed: reverting the budget to 1,500 fails, writing a wrong tool count fails, and removing the budget sentence entirely fails.

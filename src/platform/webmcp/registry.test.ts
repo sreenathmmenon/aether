@@ -16,6 +16,7 @@ import { offlineToolSurface } from "./offline-surface";
 import webmcpDoc from "../../../docs/WEBMCP.md?raw";
 import complianceDoc from "../../../docs/WEBMCP_COMPLIANCE.md?raw";
 import planDoc from "../../../docs/V3_REVERSE_WINNER_PLAN.md?raw";
+import evalsDoc from "../../../docs/WEBMCP_EVALS.md?raw";
 import appSource from "../../app/App.tsx?raw";
 
 type RegisteredTool = {
@@ -159,6 +160,7 @@ describe("Aether WebMCP registry", () => {
       ["docs/WEBMCP.md", webmcpDoc],
       ["docs/WEBMCP_COMPLIANCE.md", complianceDoc],
       ["docs/V3_REVERSE_WINNER_PLAN.md", planDoc],
+      ["docs/WEBMCP_EVALS.md", evalsDoc],
     ] as const) {
       for (const [word, value] of Object.entries(words)) {
         if (!text.includes(`${word} tools`)) continue;
@@ -167,6 +169,33 @@ describe("Aether WebMCP registry", () => {
           `${name} claims "${word} tools"; the registry publishes ${[...truthful].sort((a, b) => a - b).join(", ")}`,
         ).toBe(true);
       }
+    }
+  });
+
+  it("quotes the output budget the registry actually enforces", async () => {
+    // Two documents claimed every result stays within 1,500 characters while
+    // the registry enforced 2,000 — and the largest result, the three-future
+    // comparison, measures 1,528. The claim was false and checkable, and
+    // nothing checked it, because the existing drift test covered tool counts
+    // and not this number.
+    const claimed = [
+      ["docs/WEBMCP_COMPLIANCE.md", complianceDoc],
+      ["docs/WEBMCP_EVALS.md", evalsDoc],
+    ] as const;
+    for (const [name, text] of claimed) {
+      const budgets = [...text.matchAll(/([\d,]+)-character budget/g)].map(
+        (match) => Number(match[1]!.replace(/,/g, "")),
+      );
+      // If the phrase disappears this must fail rather than pass vacuously.
+      expect(
+        budgets.length,
+        `${name} no longer states a budget`,
+      ).toBeGreaterThan(0);
+      for (const budget of budgets)
+        expect(
+          budget,
+          `${name} claims a ${budget}-character budget; the registry enforces ${maxToolResultLength}`,
+        ).toBe(maxToolResultLength);
     }
   });
 
