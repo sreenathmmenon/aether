@@ -1168,9 +1168,11 @@ export function App() {
           <span
             className={`connection ${webMcp.available ? "connection-live" : ""}`}
             title={
-              registeredTools.length
-                ? `Registered right now: ${registeredTools.join(", ")}`
-                : undefined
+              webMcp.available
+                ? registeredTools.length
+                  ? `Registered right now: ${registeredTools.join(", ")}`
+                  : undefined
+                : (webMcp.reason ?? undefined)
             }
           >
             {webMcp.available
@@ -2574,9 +2576,12 @@ export function App() {
                 Enter the decision room →
               </button>
               <small>
+                {/* The reason was computed and never shown, so someone
+                    already running a supported Chrome was told to install
+                    Chrome. Say which of the two situations they are in. */}
                 {webMcp.available
                   ? `WebMCP live · ${toolCount} state-aware tools on this page`
-                  : "Open in ChatGPT's browser, or Chrome 149+, to let an agent drive these tools. Everything below works without one."}
+                  : `${webMcp.reason ?? "WebMCP is unavailable here"}. Everything below works without an agent.`}
               </small>
             </div>
           </div>
