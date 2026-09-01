@@ -887,3 +887,11 @@ was already underway again.
   - Acceptance: an unavailable surface says which situation the reviewer is in.
   - Evidence: the availability check computed a `reason` and the interface never showed it, so every unavailable case read the same — "Open in ChatGPT's browser, or Chrome 149+". Someone already running a supported Chrome, on a page whose origin is not enrolled in the trial, was told to install the browser they were using. The two situations need different actions and were reported identically.
   - The check now distinguishes them, identifying Chromium through `navigator.userAgentData` rather than a user-agent string, and the reason appears in the opening card and on the header indicator instead of being discarded. Verified all three branches against this browser's real brand data: supported reports live, a Chromium build without the trial names the trial, and a non-Chromium browser is told plainly that it does not expose WebMCP.
+
+## Milestone 50 — Both halves of the reproducible run
+
+- [x] **M50.1 — Surface the input fingerprint** `DONE`
+  - Acceptance: a reviewer can tell whether two results were computed from the same architecture.
+  - Evidence: sweeping for more state computed and never shown — the pattern that had the availability reason telling a supported browser to install itself — found `inputHash`. The engine computes it on every run and no surface carried it, in the interface or to an agent, while the provenance tooltip already claimed it identified "the exact input and output it ran on".
+  - It is the half of reproducibility that matters when comparing a result against one recorded earlier: the output fingerprint says what a run produced, the input fingerprint says what it was given. Without it a reviewer sees two results differ and cannot tell whether the architecture or the question changed.
+  - Confirmed it identifies something before surfacing it: a different scenario on the same architecture and a changed architecture under the same scenario both move it, and the same input twice does not. Verified in the browser that both surfaces agree — the panel reads "in 235a4fe2 / out f504d77f" and `inspect_failure_domain` returns `fnv1a-235a4fe2` and `fnv1a-f504d77f` for the same run — and that switching scenario changes the input fingerprint.
