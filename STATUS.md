@@ -1255,3 +1255,15 @@ was already underway again.
 - [x] **M81.2 — Audit the geometry class M80 exposed** `DONE`
   - Evidence: M80's defect was code and test sharing one wrong assumption about where a card sits. `region-bounds.ts` does the same half-node arithmetic, so it was checked next — and is correct, documenting the `translate(-50%, -50%)` centring and reaching half a node in every direction. Confirmed live: all five components sit inside their own region band.
   - The causal trace was checked too, since it positions overlays in the same space. It walks the engine's real chain in order — Primary Ledger, Authentication, API Gateway, Bengaluru Queue, Reconciliation — across seven steps and resets. No change was warranted in either.
+
+## Milestone 82 — The accessibility claims are held by tests
+
+- [x] **M82.1 — Assert the ARIA this interface declares** `DONE`
+  - Acceptance: an accessibility relationship that breaks fails the suite rather than waiting to be noticed by hand.
+  - Evidence: the test environment is `node` with no DOM, so nothing had ever rendered these attributes and checked them. Eight ARIA declarations — two modal dialogs, the scenario tablist, the gate reason linked in M69, the selection state added in M81 — were verified only by browser probes I ran myself. This codebase has already shipped ARIA that was declared and not honoured: a dialog announcing `aria-modal` with no focus trap, and a disabled control whose reason sat on screen unlinked.
+  - Rather than add jsdom and a rendering harness late, the contract is asserted against the shipped component, which is the approach already used for the human-and-agent parity tests. Four tests cover the pairings that break silently: every `aria-describedby` and `aria-labelledby` points at an id that exists, every modal dialog carries both `aria-modal` and a name, the toggles carry state bound to the selection they represent, and the tab panel is labelled by the selected tab rather than a fixed one.
+  - Each assertion was checked against a deliberate break — seven probes, each failing the intended test.
+
+- [x] **M82.2 — Fix a test that passed on what it exists to catch** `DONE`
+  - Evidence: the dialog check first read 400 characters after `role="dialog"`, which reached past the dialog's own tag into the close button's `aria-label` inside it. Deleting the dialog's own accessible name still matched, so the test passed on exactly the defect it was written for. Scoping it to the opening tag makes all three dialog breaks fail it.
+  - Worth recording as the same pattern this project keeps meeting: a test that cannot fail is worse than no test, and the only way to know which one you have is to break the code and watch.
