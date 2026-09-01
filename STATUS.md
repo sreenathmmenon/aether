@@ -815,3 +815,13 @@ was already underway again.
   - Persistence now checks that every entity in a revision is one the engine can read, not merely that the entity map exists. `propertiesOf`, the single accessor every property read passes through, returns an empty set rather than undefined, so a malformed component reaching the engine by any other path produces zeroes instead of throwing partway through a simulation.
   - Verified both layers: the same state is rejected on load, and a component stripped of its properties inside the engine returns 93.96% availability rather than throwing. Verified in production by planting that state in storage and reloading — the page renders the working payment platform with five components and live evidence, and the broken component never appears.
   - Checked and found correct after a probe of mine misread it: a run from a superseded engine is dropped while its branch survives to recompute. The probe counted branch keys rather than runs and reported one; the run count is zero. A test asserts both halves.
+
+## Milestone 42 — Graph shapes a reviewer can actually build
+
+- [x] **M42.1 — Pin the engine against degenerate architectures** `DONE`
+  - Acceptance: no graph a reviewer can construct makes the engine loop or throw.
+  - Evidence: a reviewer describing their own system can produce a cycle, disconnected islands, an orphan with no dependencies, a dependency pointing at a component they later removed, or one naming a region that does not exist. A traversal assuming a tree would loop forever or throw on any of these, and the reviewer would see a blank page instead of evidence.
+  - Probed all six shapes across all four scenarios: the engine already handles every one — cycles terminate, dangling relationships are ignored, orphans still simulate. That behaviour was untested, so twenty-four combinations now assert it, including that no component appears twice in a blast radius.
+  - Confirmed the cycle assertion is load-bearing by removing the traversal's seen-set guard: it fails with "a cycle / regional_outage must not repeat a component: expected 3 to be 4", and the pinned fingerprints fail alongside it.
+  - Verified in production by building a cyclic architecture entirely through WebMCP — alpha calls beta, beta calls gamma, gamma calls alpha. The page stays alive and returns real evidence: 93.40% availability, 30m recovery, $300 monthly, a five-step causal chain, and a reproducible fingerprint.
+  - Checked and found correct rather than changed: a component naming a region that does not exist still fails in a regional outage when it depends on something inside the failed region, which is the honest answer.
