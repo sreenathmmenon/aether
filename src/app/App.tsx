@@ -417,7 +417,7 @@ export function App() {
       return [
         "Name the services, databases, queues, gateways, and regions.",
         "Say which components depend on which other components.",
-        "Ask the agent to build it here; WebMCP will expose modeling tools.",
+        "Build it here yourself, or ask a connected agent to model it through WebMCP.",
       ];
     return [
       briefSeeds.length
@@ -425,7 +425,7 @@ export function App() {
         : "Candidate components will appear from the brief.",
       entities.length
         ? `${entities.length} component${entities.length === 1 ? "" : "s"} already modelled on this canvas.`
-        : "No graph exists yet; the next agent action should create components.",
+        : "No graph yet — build it from this brief, or let an agent create the components.",
       "After the graph exists, Aether can run failure evidence and block unsafe approval.",
     ];
   }, [briefSeeds, entities.length, systemBrief]);
@@ -744,6 +744,79 @@ export function App() {
     setTraceStep(0);
     setMessage(
       "Playing the causal failure trace across the active architecture future.",
+    );
+  }
+  /**
+   * Build the described system without an agent attached. A reviewer in a
+   * plain browser must be able to reach a modelled graph from their own
+   * description; otherwise the entry point depends on narration.
+   */
+  function buildFromBrief() {
+    if (briefSeeds.length === 0) {
+      setComposerNotice("Describe at least one component in the brief first.");
+      return;
+    }
+    const kindFor = (label: string) => {
+      const text = label.toLowerCase();
+      if (/postgres|mysql|database|db|store|warehouse|ledger/.test(text))
+        return "database" as const;
+      if (/kafka|queue|topic|stream|events?/.test(text))
+        return "queue" as const;
+      if (/gateway|ingress|router|edge|cdn|load ?balancer/.test(text))
+        return "gateway" as const;
+      return "service" as const;
+    };
+    let next = state;
+    const created: string[] = [];
+    for (const seed of briefSeeds) {
+      const name = seed.slice(0, 32);
+      const outcome = dispatch(
+        next,
+        {
+          type: "ADD_COMPONENT",
+          input: {
+            branchId: activeBranch.id,
+            name,
+            kind: kindFor(name),
+            regionId: regions[0]?.id ?? "",
+            peakRps: 8000,
+            capacityRps: 10000,
+            monthlyCostUsd: 800,
+          },
+        },
+        humanActor,
+      );
+      if (outcome.ok) {
+        next = outcome.value;
+        created.push(outcome.affectedEntityIds[0]!);
+      }
+    }
+    // Chain them so the graph has real dependencies to propagate along.
+    for (let index = 1; index < created.length; index += 1) {
+      const outcome = dispatch(
+        next,
+        {
+          type: "CONNECT_COMPONENTS",
+          input: {
+            branchId: activeBranch.id,
+            sourceId: created[index - 1]!,
+            targetId: created[index]!,
+            kind: "depends_on",
+          },
+        },
+        humanActor,
+      );
+      if (outcome.ok) next = outcome.value;
+    }
+    if (created.length === 0) {
+      setComposerNotice("Those components already exist on this canvas.");
+      return;
+    }
+    setState(next);
+    setSelectedEntityId(created[0]!);
+    setComposerNotice("");
+    setMessage(
+      `Modelled ${created.length} component${created.length === 1 ? "" : "s"} from your brief. Adjust anything, then create repair futures.`,
     );
   }
   function addComponent(event: FormEvent<HTMLFormElement>) {
@@ -1388,21 +1461,31 @@ export function App() {
                   <li key={step}>{step}</li>
                 ))}
               </ol>
-              <button
-                type="button"
-                onClick={() => {
-                  setNoteBody(
-                    systemBrief.trim()
-                      ? `System brief: ${systemBrief.trim()}`
-                      : "System brief: awaiting architecture description.",
-                  );
-                  setMessage(
-                    "Brief staged as decision context. An agent can now build the graph through WebMCP.",
-                  );
-                }}
-              >
-                Stage brief in decision record
-              </button>
+              <div className="brief-actions">
+                <button
+                  type="button"
+                  className="brief-build"
+                  disabled={briefSeeds.length === 0}
+                  onClick={buildFromBrief}
+                >
+                  Build this architecture
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNoteBody(
+                      systemBrief.trim()
+                        ? `System brief: ${systemBrief.trim()}`
+                        : "System brief: awaiting architecture description.",
+                    );
+                    setMessage(
+                      "Brief staged as decision context. An agent can also build the graph through WebMCP.",
+                    );
+                  }}
+                >
+                  Stage in decision record
+                </button>
+              </div>
             </section>
           )}
           {(branchCount > 0 || ownSystem) && (

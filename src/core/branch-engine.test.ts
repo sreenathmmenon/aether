@@ -706,4 +706,83 @@ describe("Aether command pipeline", () => {
     expect(evidence.availability).toBeGreaterThan(0);
     expect(evidence.monthlyCostUsd).toBe(1600);
   });
+
+  it("turns a plain description into a simulable graph without an agent", () => {
+    // A reviewer in a plain browser must reach a modelled system from their
+    // own words; otherwise the entry point depends on narration.
+    const brief =
+      "Users hit an API gateway, checkout calls fraud scoring, fraud writes to Postgres, events flow through Kafka";
+    const seeds = brief
+      .split(/[\n,.]+/)
+      .map((part) => part.trim())
+      .filter((part) => part.length > 2)
+      .slice(0, 4);
+    expect(seeds).toHaveLength(4);
+
+    const kindFor = (label: string) => {
+      const text = label.toLowerCase();
+      if (/postgres|mysql|database|db|store|warehouse|ledger/.test(text))
+        return "database" as const;
+      if (/kafka|queue|topic|stream|events?/.test(text))
+        return "queue" as const;
+      if (/gateway|ingress|router|edge|cdn|load ?balancer/.test(text))
+        return "gateway" as const;
+      return "service" as const;
+    };
+
+    let state = createInitialState(blankBaseline, "blank");
+    const created: string[] = [];
+    for (const seed of seeds) {
+      const added = dispatch(
+        state,
+        {
+          type: "ADD_COMPONENT",
+          input: {
+            branchId: "branch-baseline",
+            name: seed.slice(0, 32),
+            kind: kindFor(seed),
+            regionId: "region-primary",
+            peakRps: 8000,
+            capacityRps: 10000,
+            monthlyCostUsd: 800,
+          },
+        },
+        human,
+      );
+      if (!added.ok) throw new Error("brief component must be addable");
+      state = added.value;
+      created.push(added.affectedEntityIds[0]!);
+    }
+    for (let index = 1; index < created.length; index += 1) {
+      const linked = dispatch(
+        state,
+        {
+          type: "CONNECT_COMPONENTS",
+          input: {
+            branchId: "branch-baseline",
+            sourceId: created[index - 1]!,
+            targetId: created[index]!,
+            kind: "depends_on",
+          },
+        },
+        human,
+      );
+      if (!linked.ok) throw new Error("brief components must connect");
+      state = linked.value;
+    }
+
+    const graph = deriveGraph(state, state.branches["branch-baseline"]!);
+    // Kinds are inferred from the words, not defaulted to one type.
+    const kinds = Object.values(graph.entities)
+      .filter((entity) => entity.kind !== "region")
+      .map((entity) => entity.kind);
+    expect(kinds).toContain("gateway");
+    expect(kinds).toContain("database");
+    expect(kinds).toContain("queue");
+    expect(Object.keys(graph.relationships)).toHaveLength(3);
+
+    const run = runScenario(graph, "regional_outage", "branch-baseline", 1);
+    expect(run.availability).toBeGreaterThan(0);
+    expect(run.monthlyCostUsd).toBe(3200);
+  });
 });

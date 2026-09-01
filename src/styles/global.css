@@ -1813,3 +1813,20 @@ button {
     transition: none;
   }
 }
+
+/* Building from a brief is the primary action; staging it is secondary. */
+.brief-actions {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 7px;
+}
+.brief-build {
+  background: var(--ink);
+  color: #fff;
+  border: 0;
+  font-weight: 750;
+}
+.brief-build:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}

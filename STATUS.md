@@ -485,6 +485,10 @@ The detailed plan is in `docs/V3_REVERSE_WINNER_PLAN.md`. V3 keeps the challenge
   - Acceptance: the canvas conveys system state visually, not only as text labels.
   - Evidence: an independent audit called the canvas "closer to a wireframe than a product surface" and the page "a vertical stack of near-identical cream sections". Each component now carries a load bar showing peak demand against provisioned capacity, coloured cyan with headroom, amber when tight, and coral when over — so pressure is legible before any number is read. On the payment platform three of five components show as tight, which is the condition the traffic-spike scenario later proves. The canvas also sits on its own ground rather than repeating the surrounding cream, giving the stage visual primacy in the stack, and the account chip that the audit called dead chrome now states who it is and that only they can approve or merge.
 
+- [x] **M15.20 — Close the browser-only dead end on the own-system path** `DONE`
+  - Acceptance: a reviewer with no agent attached can reach a modelled, simulated system from their own description.
+  - Evidence: an independent audit found that describing your own system was "a complete dead end" without a live agent — the brief panel parsed candidate components and then told the reader an agent should do the work. That made the product's headline entry point depend on hackathon-day narration rather than the deployed artifact. A "Build this architecture" action now turns the parsed brief into a real graph through the same validated commands an agent uses, inferring component kind from the words: a four-clause brief mentioning a gateway, a service, Postgres, and Kafka produces a gateway, a service, a database, and a queue, chained by three dependencies and simulating to 93.4% availability at $3,200. Staging the brief as decision context remains available as the secondary action.
+
 ## Milestone 13 — Real-time architecture decision room
 
 - [x] **M13.1 — Define and build the unmistakable collaborative decision-room journey** `DONE`
