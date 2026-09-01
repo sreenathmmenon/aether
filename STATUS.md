@@ -1100,3 +1100,15 @@ was already underway again.
 
 - [x] **M67.2 — Correct a claim about the engine while checking it** `DONE`
   - Evidence: STATUS recorded that "moving the ledger out of the failed region changes the causal chain". Probing it, relocating the ledger changed nothing: `regional_outage` fails whichever region carries the most stateful load, so the failure follows the ledger. That looked like a defect until the causal chain showed what actually happens — relocating the gateway moves it from depth 0, `Mumbai unavailable`, to depth 1, `depends on Authentication`. The engine is right: the component is no longer directly hit, it is reached through its dependency, and availability is unchanged because the impacted share is. The effective repair on this architecture remains replication, which moves availability 93.96 to 97.11 and recovery 46 minutes to 7.
+
+## Milestone 68 — A person can change a component, not only delete it
+
+- [x] **M68.1 — Close the inversion on the editing surface** `DONE`
+  - Acceptance: no property is proposable by an agent and unreachable by the person reviewing it.
+  - Evidence: M63 closed this for creation. The other half stayed open: `propose_architecture_change` accepts five properties on an existing component, and the only edit the interface offered on a selected one was "Remove … from this future". A reviewer who wanted a store replicated had to ask the agent to do what they were not allowed to do themselves — the inverse of the authority this product argues for.
+  - The selected component now carries region, replication, replicas and cost controls, each dispatching the same validated `SET_PROPERTY` command the tool emits, and each shown only where it applies: a database offers replication, a service offers replicas. Capacity was already reachable through the existing deficit-resolving action.
+  - Verified against the deployed origin: selecting Primary Ledger shows "Change Primary Ledger" with move, replication and cost, and setting replication to none moves availability 97.11 to 93.96 — a person changing the model and the engine recomputing it.
+
+- [x] **M68.2 — A parity test for the change surface** `DONE`
+  - Evidence: written as the mirror of the creation-parity test, and it immediately named `monthlyCostUsd` as advertised to agents but unreachable to people — a control I had not thought to add. It reads the propose tool's own enum and the shipped `App.tsx`, so a sixth proposable property added later and forgotten in the interface fails immediately. Removing the region control fails it by name.
+  - A verification worth recording: the first live check set replication to `sync` and saw availability unchanged, which looked like the control doing nothing. It was a genuine no-op — the `highest_resilience` future already seeds `sync` on the unreplicated store, the same trap that produced a wrong conclusion in M61. Setting `none` moved the number, which is the real proof.
