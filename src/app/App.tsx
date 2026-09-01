@@ -18,6 +18,7 @@ import {
   regionRectPercent,
 } from "./region-bounds";
 import { edgeBetween } from "./edge-geometry";
+import { futuresMessage } from "./futures-message";
 import { mergeEvidence } from "@core/evidence-merge";
 import { scenarioNarrative } from "./scenario-copy";
 import { useModalDialog } from "./use-modal-dialog";
@@ -939,6 +940,7 @@ export function App() {
   function createFutures() {
     let next = state;
     let live = 0;
+    const declined: string[] = [];
     (
       [
         ["Lowest cost", "lowest_cost"],
@@ -951,7 +953,12 @@ export function App() {
         { type: "CREATE_BRANCH", input: { name, intent } },
         humanActor,
       );
-      if (!created.ok) return;
+      // A refused intent is dropped silently, so a reviewer saw "2 futures
+      // are live" with no hint that a third had been declined or why.
+      if (!created.ok) {
+        declined.push(name);
+        return;
+      }
       live += 1;
       // Simulate every scenario up front so switching tabs compares
       // like for like instead of showing a future with no evidence. This
@@ -975,11 +982,9 @@ export function App() {
     });
     stateRef.current = mergeEvidence(stateRef.current ?? state, next);
     setState(stateRef.current);
-    setMessage(
-      live === 0
-        ? "No repair futures could be created from this architecture."
-        : `${live === 1 ? "One future is" : `${live} futures are`} live. Select one to inspect causality, cost, and recovery trade-offs.`,
-    );
+    const summary = futuresMessage(live, declined);
+    if (live === 0) refuse(summary);
+    else setMessage(summary);
   }
   function selectScenario(scenario: Scenario) {
     setSelectedScenario(scenario);
