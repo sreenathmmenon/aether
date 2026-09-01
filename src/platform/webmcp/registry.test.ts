@@ -795,6 +795,12 @@ describe("Aether WebMCP registry", () => {
     // named as the prerequisite, and the tools it unlocks are named as such.
     expect(gate?.description).toMatch(/first/i);
     expect(gate?.description).toMatch(/register/i);
+    // And it must not tell an agent to call it first on an empty canvas,
+    // where the engine now refuses a future with nothing to repair. Saying
+    // "call this first to build anything" was true of a seeded system and
+    // false of a blank one, and an agent reading only the description walked
+    // into a refusal the description had promised would work.
+    expect(gate?.description).toMatch(/empty canvas|build components first/i);
   });
 
   it("registers state-aware tools and returns concise structured results", async () => {
