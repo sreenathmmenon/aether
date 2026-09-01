@@ -633,7 +633,10 @@ button {
 .architecture-node {
   position: absolute;
   z-index: 2;
-  width: 146px;
+  /* The shipped systems space components 180 canvas units apart. At 146px a
+     card measured about 177 of those units, leaving a three-unit gap that a
+     dependency edge could not be drawn in at all. */
+  width: 128px;
   min-height: 80px;
   display: grid;
   gap: 4px;
