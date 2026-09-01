@@ -927,3 +927,13 @@ was already underway again.
   - Fixing the shared dispatch wrapper was not enough, which the browser showed: the duplicate-component refusal comes from the component form, which sets its message directly and bypassed it. Three further refusal paths in that form now carry the refused tone, and its inline notice — which only ever carries a refusal — no longer uses the cyan that reads as information, so the success path stops writing into it.
   - Verified in the browser: adding a component reports in the neutral tone, adding it again renders coral with the refused class, and the two differ.
   - A test written for this was removed rather than kept. It asserted a local copy of the mapping rather than the shipped behaviour, which is the duplicated-test-logic pattern this codebase has already been bitten by four times; a test that cannot fail for the right reason is worse than none.
+
+## Milestone 55 — The agent write path, probed end to end in production
+
+- [x] **M55.1 — Confirm the live tool surface behaves as designed** `DONE`
+  - Acceptance: the sequence a real agent follows — discover tools, create a future, build into it — works against the deployed origin, and every failure it can see is one it can act on.
+  - Evidence: a run of timing probes appeared to show writes being lost, tool handles rejected as "not of type 'RegisteredTool'", and the surface re-registering nine times in five seconds on an idle page. Every one of those was an artifact of the probe, not of Aether, and each is recorded here because the wrong conclusion was the tempting one.
+  - Tool object identity changes on every `getTools()` call because the browser mints fresh wrappers; it was never a staleness signal. A handle held across 3.5 seconds and a state change still executed correctly.
+  - The "lost writes" were calls to `add_architecture_component` on a freshly loaded page, where it is deliberately not registered: the baseline branch is merged, so only the five read tools exist until an agent creates a future. Registration went 5 → 12 the moment `create_architecture_branch` succeeded, which is the state-dependent surface working exactly as intended.
+  - The remaining `UnknownError` reproduces only when a write is awaited inside the extension's own `javascript_exec` wrapper, which spans a React re-render. Dispatching the same call and reading the settled promise returns `{"addedEntityId":"entity-detach-one"}` and the component is on the canvas — the tool resolves correctly to a real caller.
+  - No source changed. Every hypothesis dissolved against the deployed origin, and inventing a fix for a defect that does not exist would have been the worse outcome.
