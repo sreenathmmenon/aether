@@ -1550,3 +1550,14 @@ was already underway again.
 
 - [x] **M108.2 — Correct a guard that flagged the fix** `DONE`
   - Evidence: the M107 shadowing test rejected `context.text("Not found", 404)`, because it matched any inline text body. A short status string is a response, not a duplicated document, and the check could not tell them apart. It now bounds the body length instead, which still catches a file inlined into the server — reinstating the `robots.txt` string fails it at forty characters — while allowing a status line.
+
+## Milestone 109 — A message that asserted what it could not know
+
+- [x] **M109.1 — Check the headers the whole feature depends on** `DONE`
+  - Evidence: the deployed origin sends `origin-trial`, `permissions-policy: tools=(self)`, `cross-origin-opener-policy: same-origin` and `cross-origin-embedder-policy: require-corp`. Decoding the token rather than trusting its presence: feature `WebMCP`, origin exactly `https://webmcp-production-38e5.up.railway.app:443`, expiring 2026-11-17 — 76 days out. Nothing to change, and worth knowing rather than assuming.
+
+- [x] **M109.2 — Do not tell a reviewer to fix something that is not broken** `DONE`
+  - Acceptance: the page does not claim a cause it has no way to observe.
+  - Evidence: a Chrome user without the surface was told "this page is not enrolled for it". Nothing in the page can know that. The trial token arrives as a response header, so client code cannot see whether it is absent, expired, or issued for a different origin — and this one does expire. After 2026-11-17 that message would send a reviewer to enrol a page that is already enrolled, which is a dead end with nothing to find.
+  - It now names the three possibilities and points at the DevTools console, where Chrome states the actual reason. The distinction the message exists for is preserved: a non-Chromium browser still gets different advice from a Chromium one, which is what the original design got right.
+  - Verified in the shipped bundle rather than only in source, because this branch cannot be reached from an enrolled browser: the corrected wording is present, the old claim is gone, and the live surface still registers its five tools.
