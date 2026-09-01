@@ -59,14 +59,47 @@ export const briefComponentLimit = 12;
  * brief uses to connect components or to state a figure. Leaving a framing
  * verb in place produces names like "checkout handles" instead of "checkout".
  */
+/**
+ * Words that describe how many of something there are, or frame a list, but
+ * never name a component. "three microservices" and "one MySQL cluster" name
+ * microservices and MySQL.
+ */
+const quantifiers =
+  /\b(?:one|two|three|four|five|six|seven|eight|nine|ten|a|an|the|our|its|several|many|multiple|some|all|both|each|every|couple|few)\b/gi;
+
+/** Phrases that introduce a list or a stack rather than naming a component. */
+const framing =
+  /^(?:stack|architecture|system|setup|infra|infrastructure|components?|services?|middle|overview|design)$/i;
+
 const noise =
   /^(the|a|an|our|we|they|users?|user|and|then|which|that|it|is|are|was|were|hits?|hit|calls?|call|writes?|write|reads?|read|flows?|flow|through|to|from|into|via|by|with|on|in|of|for|handles?|handling|serves?|serving|costs?|costing|peaks?|peaking|runs?|running|sits?|stays?|buffers?|holds?|keeps?|stores?|uses?|has|have|had|about|around|roughly|up)$/i;
 
+/**
+ * Split a brief the way people actually write one.
+ *
+ * Beyond sentences and commas this handles the two shapes that appeared in
+ * every realistic brief tested: an arrow chain (`nginx -> django -> celery`),
+ * which is how engineers sketch a stack, and clauses joined by "which" or
+ * "and" that each introduce another component ("a Node API which reads from
+ * Redis and writes to Postgres"). Without these a five-component stack
+ * collapsed into one node.
+ */
 export function clausesOf(brief: string) {
-  return brief
-    .split(/[\n,.;]+|\bthen\b|\band then\b/i)
-    .map((part) => part.trim())
-    .filter((part) => part.length > 2);
+  return (
+    brief
+      // An arrow is a dependency, and the thing after it is a component.
+      .replace(/\s*(?:->|-->|→|=>)\s*/g, " then calls ")
+      .split(/[\n,.;:]+|\bthen\b|\band then\b|\bwhich\b|\bwhile\b|\bwhereas\b/i)
+      // "reads from Redis and writes to Postgres" is two clauses, but "auth
+      // and catalog" is one list, so only split on "and" before a verb.
+      .flatMap((part) =>
+        part.split(
+          /\band\s+(?=(?:then\s+)?(?:it\s+|they\s+)?(?:writes?|reads?|calls?|publishes?|emits?|consumes?|subscribes?|routes?|proxies|forwards?|pushes?|sends?|queries|invokes?|hits?|depends?|persists?|stores?)\b)/i,
+        ),
+      )
+      .map((part) => part.trim())
+      .filter((part) => part.length > 2)
+  );
 }
 
 /**
@@ -93,7 +126,11 @@ export function withoutMeasurements(clause: string) {
 
 /** Prefer the trailing noun phrase: "fraud writes to Postgres" -> Postgres. */
 export function componentNameFrom(rawClause: string) {
-  const clause = withoutMeasurements(rawClause) || rawClause;
+  const clause = (withoutMeasurements(rawClause) || rawClause)
+    // Count words qualify a component, they do not name one.
+    .replace(quantifiers, " ")
+    .replace(/\s+/g, " ")
+    .trim();
   const words = clause
     .replace(/[^A-Za-z0-9 -]/g, " ")
     .split(/\s+/)
@@ -117,10 +154,26 @@ export function componentNameFrom(rawClause: string) {
 
 export function kindFor(label: string): BriefComponentKind {
   const text = label.toLowerCase();
-  if (/postgres|mysql|database|db|store|warehouse|ledger/.test(text))
+  // Recognise the infrastructure people actually name. A brief that says
+  // "Redis" or "SQS" is describing a store and a queue, and classifying both
+  // as plain services makes the simulation miss the stateful risk entirely.
+  if (
+    /postgres|postgresql|mysql|mariadb|database|\bdb\b|store|warehouse|ledger|redis|memcached|dynamo|mongo|cassandra|elastic|cluster|rds|aurora|bigquery|snowflake|s3|blob|bucket/.test(
+      text,
+    )
+  )
     return "database";
-  if (/kafka|queue|topic|stream|events?/.test(text)) return "queue";
-  if (/gateway|ingress|router|edge|cdn|load ?balancer/.test(text))
+  if (
+    /kafka|queue|topic|stream|events?|sqs|rabbit|rabbitmq|pubsub|kinesis|nats|celery|worker|broker/.test(
+      text,
+    )
+  )
+    return "queue";
+  if (
+    /gateway|ingress|router|edge|cdn|load ?balancer|nginx|envoy|traefik|haproxy|cloudflare|alb|elb|proxy|api ?gw/.test(
+      text,
+    )
+  )
     return "gateway";
   return "service";
 }
@@ -254,6 +307,9 @@ export function parseBrief(brief: string): ParsedBrief {
     }
 
     const name = componentNameFrom(clause);
+    // "our stack:" and "Kafka in the middle" frame a list; they name no
+    // component, and adding one puts a phantom node into the evidence.
+    if (framing.test(name)) continue;
     // The budget counts distinct components, not clauses. A brief describing
     // five components across fifteen sentences is not a truncated brief, and
     // reporting it as one tells the reviewer work was dropped that never was.

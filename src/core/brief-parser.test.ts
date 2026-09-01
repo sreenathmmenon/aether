@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { createInitialState, deriveGraph, dispatch } from "./branch-engine";
 import { blankBaseline } from "../fixtures/blank/baseline";
-import { briefComponentLimit, parseBrief, resolveAlias } from "./brief-parser";
+import {
+  briefComponentLimit,
+  kindFor,
+  parseBrief,
+  resolveAlias,
+} from "./brief-parser";
 import { runScenario } from "@simulation/engine";
 
 const human = { id: "sreenath", kind: "human" as const, displayName: "S" };
@@ -163,6 +168,78 @@ describe("system brief parser", () => {
     );
     expect(parsed.distinctComponents).toBe(1);
     expect(parsed.overflow).toBe(0);
+  });
+
+  it("reads an arrow chain, which is how engineers sketch a stack", () => {
+    // "nginx -> django -> celery -> rabbitmq -> postgres" collapsed into a
+    // single component, so the most compact way anyone describes a system
+    // produced a one-node graph.
+    const parsed = parseBrief(
+      "our stack: nginx -> django -> celery -> rabbitmq -> postgres",
+    );
+    expect(parsed.components.map((c) => c.name)).toEqual([
+      "nginx",
+      "django",
+      "celery",
+      "rabbitmq",
+      "postgres",
+    ]);
+    // The arrow is a dependency, so each component follows the one before it.
+    expect(
+      parsed.components.slice(1).every((c) => c.edgeKind === "calls"),
+    ).toBe(true);
+  });
+
+  it("splits a clause that introduces two components with two verbs", () => {
+    // "a Node API which reads from Redis and writes to Postgres" describes
+    // three components, not one.
+    const parsed = parseBrief(
+      "It calls a Node API which reads from Redis and writes to Postgres",
+    );
+    const names = parsed.components.map((c) => c.name);
+    expect(names).toContain("Redis");
+    expect(names).toContain("Postgres");
+    expect(parsed.components.map((c) => c.edgeKind)).toContain("reads_from");
+    expect(parsed.components.map((c) => c.edgeKind)).toContain("writes_to");
+  });
+
+  it("classifies the infrastructure people actually name", () => {
+    // A brief naming Redis or SQS describes a store and a queue. Calling both
+    // plain services makes the simulation miss the stateful risk entirely.
+    const parsed = parseBrief(
+      "nginx routes to django, django writes to redis, a worker consumes from SQS, results land in S3",
+    );
+    const byName = new Map(parsed.components.map((c) => [c.name, c.kind]));
+    expect(byName.get("redis")).toBe("database");
+    expect(byName.get("SQS")).toBe("queue");
+    expect(byName.get("S3")).toBe("database");
+    // nginx is the first clause's subject, so it arrives as a named source the
+    // interface creates rather than as a clause of its own. Its kind still has
+    // to be right, because that is what the graph will store.
+    expect(parsed.components[0]!.sourceName).toBe("nginx");
+    expect(kindFor("nginx")).toBe("gateway");
+  });
+
+  it("drops words that frame a list rather than naming a component", () => {
+    // "our stack:" and "Kafka in the middle" introduce a description; adding
+    // a node for either puts a phantom into the evidence.
+    const parsed = parseBrief(
+      "our stack: nginx -> postgres. Kafka in the middle. the fraud engine consumes from Kafka",
+    );
+    const names = parsed.components.map((c) => c.name.toLowerCase());
+    expect(names).not.toContain("stack");
+    expect(names).not.toContain("middle");
+    expect(names).toContain("nginx");
+  });
+
+  it("does not treat a count as part of a component name", () => {
+    // "three microservices" and "one MySQL cluster" name microservices and
+    // MySQL, not "three microservices".
+    const parsed = parseBrief(
+      "the gateway routes to three microservices, all sharing one MySQL cluster",
+    );
+    for (const component of parsed.components)
+      expect(component.name).not.toMatch(/\b(?:one|three|all)\b/i);
   });
 
   it("turns a plain description into a simulable graph without an agent", () => {
