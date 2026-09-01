@@ -11,6 +11,7 @@ import {
 import { paymentPlatformBaseline } from "../fixtures/payment-platform/baseline";
 import { aiPlatformBaseline } from "../fixtures/ai-platform/baseline";
 import { blankBaseline } from "../fixtures/blank/baseline";
+import { rideHailingBaseline } from "../fixtures/ride-hailing/baseline";
 import {
   loadRemoteWorkspace,
   saveRemoteWorkspace,
@@ -116,6 +117,13 @@ const systemTemplates = [
     name: "Payment platform",
     summary: "Two regions, one writable ledger on the critical path.",
     graph: paymentPlatformBaseline,
+  },
+  {
+    id: "ride-hailing",
+    name: "Ride-hailing dispatch",
+    summary:
+      "Matching depends on both driver supply and trip state; losing either stops dispatch.",
+    graph: rideHailingBaseline,
   },
   {
     id: "ai-platform",
@@ -998,8 +1006,14 @@ export function App() {
         aria-label="Current decision briefing"
       >
         <div className="brief-incident">
-          <span className="brief-label">01 · Incident</span>
-          <strong>{scenarioCopy[selectedScenario].short}</strong>
+          <span className="brief-label">
+            {unbuilt ? "01 · Starting point" : "01 · Incident"}
+          </span>
+          <strong>
+            {unbuilt
+              ? "Nothing modelled yet"
+              : scenarioCopy[selectedScenario].short}
+          </strong>
           <small>
             {entities.length === 0
               ? "No architecture is committed yet. Build the graph first."
