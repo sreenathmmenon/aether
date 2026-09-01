@@ -1,5 +1,6 @@
 import type { AetherState } from "./branch-engine";
 import { parsePersistedState } from "./persistence";
+import { isValidWorkspaceId } from "./workspace-contract";
 
 const sessionKey = "aether.session.v1";
 
@@ -27,8 +28,39 @@ function createWorkspaceId() {
   return `w-local-${Date.now().toString(36)}`;
 }
 
+/**
+ * A shared room named by the URL, when one is asked for.
+ *
+ * A private workspace stays the default: rooms only exist when someone
+ * deliberately puts one in the address bar and shares that link. The name is
+ * constrained to the shape both persistence endpoints already validate, so a
+ * malformed room can never reach the store.
+ */
+export function roomId(): string | undefined {
+  if (typeof window === "undefined") return undefined;
+  try {
+    const requested = new URLSearchParams(window.location.search)
+      .get("room")
+      ?.trim()
+      .toLowerCase();
+    if (!requested) return undefined;
+    // Strip anything the persistence endpoints would reject. A name that
+    // sanitises away entirely is not a room: treating it as one would put
+    // every such link into a single shared workspace.
+    const name = requested.replace(/[^a-z0-9-]/g, "").slice(0, 40);
+    if (name.length < 2) return undefined;
+    const candidate = `room-${name}`;
+    return isValidWorkspaceId(candidate) ? candidate : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 export function workspaceId(): string {
   if (typeof window === "undefined") return "payment-platform";
+  // An explicit room wins: everyone holding the link works in one workspace.
+  const room = roomId();
+  if (room) return room;
   try {
     const existing = window.localStorage.getItem(sessionKey);
     if (existing) return existing;

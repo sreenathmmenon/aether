@@ -190,6 +190,20 @@ button {
   color: var(--muted);
   font-variant-numeric: tabular-nums;
 }
+/* A shared room: everyone holding this link works in one workspace. */
+.room-chip {
+  padding: 5px 9px;
+  border: 1px solid rgba(47, 106, 191, 0.32);
+  border-radius: 999px;
+  color: var(--blue);
+  background: rgba(47, 106, 191, 0.08);
+  font-size: 12px;
+  font-weight: 800;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .shared-live {
   padding: 5px 8px;
   border: 1px solid rgba(36, 135, 101, 0.25);

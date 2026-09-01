@@ -21,6 +21,7 @@ import { blankBaseline } from "../fixtures/blank/baseline";
 import { rideHailingBaseline } from "../fixtures/ride-hailing/baseline";
 import {
   loadRemoteWorkspace,
+  roomId,
   saveRemoteWorkspace,
 } from "@core/remote-workspace";
 import { getWebMcpAvailability } from "@platform/webmcp/feature-detection";
@@ -277,6 +278,8 @@ export function App() {
     { id: string; x: number; y: number } | undefined
   >(undefined);
   const canvasRef = useRef<HTMLDivElement>(null);
+  // A room is fixed for the life of the page: it comes from the URL.
+  const sharedRoom = useMemo(() => roomId(), []);
   const briefRef = useRef<HTMLTextAreaElement>(null);
   const dragRef = useRef<
     | {
@@ -1212,6 +1215,13 @@ export function App() {
               aria-live="polite"
             >
               <code>{latestCall.name}</code>
+            </span>
+          )}
+          {/* A shared room changes who sees these decisions, so it must be
+              visible rather than implied by a URL parameter nobody reads. */}
+          {sharedRoom && (
+            <span className="room-chip" title={`Shared room · ${sharedRoom}`}>
+              Room · {sharedRoom.replace(/^room-/, "")}
             </span>
           )}
           <span className="shared-live">{syncStatus}</span>
