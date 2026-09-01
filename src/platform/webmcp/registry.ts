@@ -40,6 +40,63 @@ function modelContext(): ModelContext | undefined {
 }
 
 const maxToolResultLength = 1500;
+const modelArchitectureInput = z.object({
+  branchId: z.string().min(1),
+  components: z
+    .array(
+      z.object({
+        key: z
+          .string()
+          .trim()
+          .min(2)
+          .max(24)
+          .regex(/^[A-Za-z0-9][A-Za-z0-9_-]*$/),
+        name: z.string().trim().min(2).max(32),
+        kind: z.enum(["service", "database", "queue", "gateway"]),
+        regionId: z.string().min(1),
+        peakRps: z.number().finite().nonnegative().max(1_000_000).optional(),
+        capacityRps: z
+          .number()
+          .finite()
+          .nonnegative()
+          .max(1_000_000)
+          .optional(),
+        monthlyCostUsd: z
+          .number()
+          .finite()
+          .nonnegative()
+          .max(1_000_000)
+          .optional(),
+      }),
+    )
+    .min(1)
+    .max(6),
+  dependencies: z
+    .array(
+      z.object({
+        sourceKey: z.string().min(1),
+        targetKey: z.string().min(1),
+        kind: z.enum([
+          "calls",
+          "reads_from",
+          "writes_to",
+          "publishes_to",
+          "consumes_from",
+          "routes_to",
+          "depends_on",
+        ]),
+      }),
+    )
+    .max(8)
+    .optional(),
+});
+
+function entityIdForName(name: string) {
+  return `entity-${name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")}`;
+}
 
 function toolResult(value: unknown) {
   const serialized = JSON.stringify(value);
@@ -527,6 +584,167 @@ export function createAetherToolRegistry(
               branchId: parsed.data.branchId,
               addedEntityId: result.affectedEntityIds[0],
               nextAction: "connect_components",
+            });
+          },
+        });
+        await register({
+          name: "model_architecture",
+          description:
+            "Build several components and dependencies from a user brief in one call. Each item still passes through Aether's validated commands and partial failures are returned.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              branchId: { type: "string" },
+              components: {
+                type: "array",
+                minItems: 1,
+                maxItems: 6,
+                items: {
+                  type: "object",
+                  properties: {
+                    key: {
+                      type: "string",
+                      description: "Temporary key used by dependencies.",
+                    },
+                    name: {
+                      type: "string",
+                      description: "Short plain-text component name.",
+                    },
+                    kind: {
+                      type: "string",
+                      enum: ["service", "database", "queue", "gateway"],
+                    },
+                    regionId: { type: "string", enum: regionIds() },
+                    peakRps: { type: "number" },
+                    capacityRps: { type: "number" },
+                    monthlyCostUsd: { type: "number" },
+                  },
+                  required: ["key", "name", "kind", "regionId"],
+                  additionalProperties: false,
+                },
+              },
+              dependencies: {
+                type: "array",
+                maxItems: 8,
+                items: {
+                  type: "object",
+                  properties: {
+                    sourceKey: {
+                      type: "string",
+                      description: "Component key for the dependent source.",
+                    },
+                    targetKey: {
+                      type: "string",
+                      description: "Component key or existing entity ID.",
+                    },
+                    kind: {
+                      type: "string",
+                      enum: [
+                        "calls",
+                        "reads_from",
+                        "writes_to",
+                        "publishes_to",
+                        "consumes_from",
+                        "routes_to",
+                        "depends_on",
+                      ],
+                    },
+                  },
+                  required: ["sourceKey", "targetKey", "kind"],
+                  additionalProperties: false,
+                },
+              },
+            },
+            required: ["branchId", "components"],
+            additionalProperties: false,
+          },
+          annotations: { readOnlyHint: false, untrustedContentHint: true },
+          execute: async (input: unknown) => {
+            const parsed = modelArchitectureInput.safeParse(input);
+            if (!parsed.success)
+              return invalidInput(
+                parsed.error,
+                `Send 1-6 components with key, name, kind, and regionId from: ${regionIds().join(", ")}.`,
+              );
+            let next = snapshot();
+            const keyToId = new Map<string, string>();
+            const created: { key: string; entityId: string }[] = [];
+            const failures: { field: string; message: string }[] = [];
+            for (const [index, component] of parsed.data.components.entries()) {
+              const result = dispatch(
+                next,
+                {
+                  type: "ADD_COMPONENT",
+                  input: {
+                    branchId: parsed.data.branchId,
+                    name: component.name,
+                    kind: component.kind,
+                    regionId: component.regionId,
+                    peakRps: component.peakRps ?? 8000,
+                    capacityRps: component.capacityRps ?? 10000,
+                    monthlyCostUsd: component.monthlyCostUsd ?? 800,
+                  },
+                },
+                agent,
+              );
+              if (!result.ok) {
+                failures.push({
+                  field: `components.${index}`,
+                  message: result.message,
+                });
+                continue;
+              }
+              next = result.value;
+              const entityId = result.affectedEntityIds[0]!;
+              keyToId.set(component.key, entityId);
+              keyToId.set(entityId, entityId);
+              keyToId.set(entityIdForName(component.name), entityId);
+              created.push({ key: component.key, entityId });
+            }
+            for (const id of componentIds()) keyToId.set(id, id);
+            for (const [index, dependency] of (
+              parsed.data.dependencies ?? []
+            ).entries()) {
+              const sourceId = keyToId.get(dependency.sourceKey);
+              const targetId = keyToId.get(dependency.targetKey);
+              if (!sourceId || !targetId) {
+                failures.push({
+                  field: `dependencies.${index}`,
+                  message:
+                    "Unknown component key. Reference a created key or existing entity id.",
+                });
+                continue;
+              }
+              const result = dispatch(
+                next,
+                {
+                  type: "CONNECT_COMPONENTS",
+                  input: {
+                    branchId: parsed.data.branchId,
+                    sourceId,
+                    targetId,
+                    kind: dependency.kind,
+                  },
+                },
+                agent,
+              );
+              if (!result.ok) {
+                failures.push({
+                  field: `dependencies.${index}`,
+                  message: result.message,
+                });
+                continue;
+              }
+              next = result.value;
+            }
+            onState(next);
+            return toolResult({
+              outcome: created.length ? "architecture_modelled" : "no_change",
+              added: created,
+              failures,
+              nextAction: failures.length
+                ? "Correct the named fields, then run model_architecture again."
+                : "run_failure_scenario",
             });
           },
         });

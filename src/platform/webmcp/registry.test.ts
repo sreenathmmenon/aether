@@ -68,6 +68,7 @@ describe("Aether WebMCP registry", () => {
       "inspect_failure_domain",
       "trace_architecture_dependency",
       "add_architecture_component",
+      "model_architecture",
       "connect_components",
       "propose_architecture_change",
       "compare_architecture_futures",
@@ -493,6 +494,87 @@ describe("Aether WebMCP registry", () => {
     registry?.dispose();
   });
 
+  it("models a brief-shaped architecture in one WebMCP call with partial failures", async () => {
+    const tools: RegisteredTool[] = [];
+    let state = createInitialState(blankBaseline, "blank");
+    const registry = createAetherToolRegistry(
+      (next) => {
+        state = next;
+      },
+      undefined,
+      {
+        registerTool: async (tool) => {
+          tools.push(tool as RegisteredTool);
+        },
+      },
+    );
+    const call = async (name: string, input: Record<string, unknown>) => {
+      await registry?.refresh(state);
+      const tool = tools.filter((candidate) => candidate.name === name).at(-1);
+      if (!tool) throw new Error(`${name} was not registered`);
+      return JSON.parse(String(await tool.execute(input))) as Record<
+        string,
+        unknown
+      >;
+    };
+
+    const modelled = await call("model_architecture", {
+      branchId: "branch-baseline",
+      components: [
+        {
+          key: "gateway",
+          name: "Public Gateway",
+          kind: "gateway",
+          regionId: "region-primary",
+        },
+        {
+          key: "orders",
+          name: "Orders Service",
+          kind: "service",
+          regionId: "region-primary",
+          peakRps: 9000,
+          capacityRps: 12000,
+          monthlyCostUsd: 1200,
+        },
+        {
+          key: "inventory",
+          name: "Inventory Db",
+          kind: "database",
+          regionId: "region-secondary",
+          monthlyCostUsd: 2600,
+        },
+      ],
+      dependencies: [
+        { sourceKey: "gateway", targetKey: "orders", kind: "routes_to" },
+        { sourceKey: "orders", targetKey: "inventory", kind: "reads_from" },
+        { sourceKey: "ghost", targetKey: "orders", kind: "calls" },
+      ],
+    });
+
+    expect(modelled).toMatchObject({
+      outcome: "architecture_modelled",
+      added: [
+        { key: "gateway", entityId: "entity-public-gateway" },
+        { key: "orders", entityId: "entity-orders-service" },
+        { key: "inventory", entityId: "entity-inventory-db" },
+      ],
+      failures: [
+        {
+          field: "dependencies.2",
+          message:
+            "Unknown component key. Reference a created key or existing entity id.",
+        },
+      ],
+    });
+    expect(
+      await call("run_failure_scenario", {
+        branchId: "branch-baseline",
+        scenario: "regional_outage",
+      }),
+    ).toMatchObject({ engineVersion: "aether-sim-2" });
+    registry?.dispose();
+  });
+
   it("does not expose build tools on a seeded architecture", async () => {
     const tools: RegisteredTool[] = [];
     const registry = createAetherToolRegistry(() => undefined, undefined, {
@@ -541,10 +623,10 @@ describe("Aether WebMCP registry", () => {
       input: { name: "Repair", intent: "highest_resilience" },
     });
     if (!branched.ok) throw new Error("fixture branch must be created");
-    expect(await surfaceFor(branched.value)).toBe(11);
+    expect(await surfaceFor(branched.value)).toBe(12);
 
     expect(await surfaceFor(createInitialState(blankBaseline, "blank"))).toBe(
-      9,
+      10,
     );
   });
 });
