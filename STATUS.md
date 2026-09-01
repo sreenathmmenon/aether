@@ -1517,3 +1517,16 @@ was already underway again.
   - Both fixed, and verified live: five tags served, titled "Aether — branch it, break it, commit with confidence" with a description naming the agent, the engine and the human gate.
   - Deliberately no `og:image`. This repository ships no share image, and the favicon route returns the SPA fallback rather than a file — a card pointing at a missing image renders worse than one with no image. A test asserts the tags exist, that the description says what the product does, and that no image is referenced until one exists.
   - Worth recording: a probe that renamed `<meta property="og:url"` appeared to show the test passing on a missing tag. Prettier had wrapped the attribute onto its own line, so the probe matched nothing and removed nothing. Re-run against the real formatting, the assertion fails correctly.
+
+## Milestone 106 — The file agents read had a dead link
+
+- [x] **M106.1 — A 404 in the one link an agent follows** `DONE`
+  - Acceptance: the machine-readable description of this page points somewhere real and says something useful.
+  - Evidence: continuing M105's approach of reading served bytes. `llms.txt` linked to `github.com/sreenathmmmenon/aether` — three m's — while `docs/SUBMISSION.md` publishes `sreenathmmenon`. Checked both against GitHub rather than guessing which was right: the submission's resolves 200, the served one 404s. Nothing compared them, so the two drifted apart unnoticed.
+  - The file also said only that Aether is a counterfactual architecture laboratory, which tells a reading agent nothing it can act on. It now names the state-aware surface and its three sizes, says to start with `get_architecture_summary`, and states plainly that no approve, merge, or removal tool is registered in any state.
+  - A test compares the link against the submission's, refuses any GitHub URL the submission does not also carry, and requires the guidance to be present.
+
+- [x] **M106.2 — The fix did not ship, because there were two copies** `DONE`
+  - Evidence: after deploying, the served file was unchanged. The server answered `/llms.txt` from an inline string that shadowed the built file, so editing `public/llms.txt` changed nothing that ships — and the misspelled account lived in the copy nobody edits. Worth noticing rather than assuming the deploy was slow: two checks a minute apart both returned the old content.
+  - The route now reads the built file once at startup, so a missing file is a startup error rather than a request quietly returning the SPA shell. A test refuses any inline copy in the server.
+  - Verified against the deployed origin: the served file carries the new content, and its GitHub link returns 200.
