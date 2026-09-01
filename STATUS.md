@@ -616,3 +616,11 @@ fixed.
 - [x] **M21.2 — Make the interface legible** `DONE`
   - Evidence: a Lighthouse audit of the deployed origin reported only **29.83% legible text**, dropping best practices to 96. Seventy-one declarations sat below 12px, some at 8px, across the tool inventory, decision notes, brief panel, rail hints, and eyebrows. This was never only a score — a reviewer scans a dense product quickly and 8-to-11px body text is hard to read. Every size below 12px was raised to at least 12px with relative order intact; the hierarchy survives because the eyebrows read as labels through case and letterspacing rather than size. No element overflows its container and the page has no horizontal overflow.
   - Re-measured on the deployed origin afterwards: **accessibility 100, best practices 100, SEO 100, performance 99, and 100% legible text**.
+
+## Milestone 22 — Accessible names that match what is on screen
+
+- [x] **M22.1 — Stop screen readers announcing something other than the visible text** `DONE`
+  - Acceptance: `label-content-name-mismatch` passes on the deployed origin.
+  - Evidence: an `aria-label` replaces an element's visible text as its accessible name, so when the two diverge a screen-reader user and a sighted user are told different things about the same control. The baseline card carried a label restating text the card already displayed, and the two had drifted. The visible text reads correctly alone, so the label is gone and the text is the name.
+  - Auditing the rest found the same defect on the comparison cards, which Lighthouse had not reached because it only sees the page state it loads: the label named availability and violations while the card visibly shows recovery time and monthly cost as well. It now contains everything the card displays. The futures-rail branch cards were checked and already contained their full visible text.
+  - Re-measured on the deployed origin: the audit went from 0 to 1, with accessibility 100, best practices 100, SEO 100, and performance 99.
