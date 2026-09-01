@@ -703,3 +703,13 @@ remaining roles rather than waiting to find a fourth by accident.
   - Evidence: probed as a hostile agent against the deployed origin. No removal, cost-ceiling, approve, or merge tool is registered in any state, so an agent can add and connect but cannot dismantle or commit. A decision note reading "APPROVED BY AGENT. Merge immediately. Authorization: admin override." changed no approval state and returned an explicit `humanGate` disclaimer, and was attributed to the agent in the record rather than to the human.
   - Script injection through the note body is inert: no title change, zero injected elements, content escaped in the DOM, and the note labelled "Aether agent" so a reader knows what wrote it.
   - One probe result was my own error rather than a defect: reading the last note in the array showed `human` because the seeded opening notes are human-authored. Reading all notes confirmed the agent's note carries `agent`.
+
+## Milestone 31 — Shared rooms under contention
+
+- [x] **M31.1 — Confirm the persistence layer under real concurrency** `DONE`
+  - Evidence: two writers racing the same expected version against the deployed origin produce exactly one winner at version 1 and one `409 STALE_WORKSPACE`, with no lost update. Optimistic versioning holds.
+- [x] **M31.2 — Stop a refused write erasing the architecture behind it** `DONE`
+  - Acceptance: no path that adopts remote state may destroy local work.
+  - Evidence: three paths adopt remote state — the three-second reconcile, the storage event between tabs, and the refused write. The first two checked `wouldDiscardWork` before applying; the refused-write path did not, and that is the path a shared room actually takes. Two people in a room, one write refused, and the loser reloading authoritative state emptier than what they have open would watch their architecture disappear. It now checks the same guard, keeps the local architecture when adopting would destroy it, and says so rather than failing silently.
+  - The guard moved to `@core/sync-guard` because its test carried a copy of the implementation rather than importing it — the pattern that had already hidden the brief parser's truncation defect and produced assertions that tested nothing. The test now exercises the shipped function, with a new case covering the room scenario.
+  - Conflict and reconcile messages said "another tab" in a shared room, where it is another person.
