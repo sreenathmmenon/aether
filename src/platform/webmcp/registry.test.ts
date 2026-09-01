@@ -3,6 +3,7 @@ import { createInitialState } from "@core/branch-engine";
 import { dispatch } from "@core/branch-engine";
 import { paymentPlatformBaseline } from "../../fixtures/payment-platform/baseline";
 import { blankBaseline } from "../../fixtures/blank/baseline";
+import { rideHailingBaseline } from "../../fixtures/ride-hailing/baseline";
 import { createAetherToolRegistry } from "./registry";
 import { offlineToolSurface } from "./offline-surface";
 
@@ -69,6 +70,60 @@ describe("Aether WebMCP registry", () => {
     ) as { failedDomain: string; outputHash: string };
     expect(dependencyRun.outputHash).not.toBe(inspected.outputHash);
     expect(dependencyRun.failedDomain).toContain("dependent");
+
+    // The decision record must describe the architecture on the page. This
+    // returned "Mumbai payment-path outage" whatever system was loaded, so an
+    // agent working on a reviewer's own system was told about a region and a
+    // domain that had nothing to do with it.
+    const record = JSON.parse(
+      String(
+        await tools
+          .find((tool) => tool.name === "get_decision_record")
+          ?.execute({}),
+      ),
+    ) as { incident: string };
+    expect(record.incident).toContain("Mumbai");
+
+    // And it must be derived, not coincidentally right: a different system
+    // names its own region, and an unmodelled canvas says so plainly.
+    {
+      const rideTools: RegisteredTool[] = [];
+      const rideRegistry = createAetherToolRegistry(() => {}, undefined, {
+        registerTool: async (tool) => {
+          rideTools.push(tool as unknown as RegisteredTool);
+        },
+      });
+      await rideRegistry?.refresh(
+        createInitialState(rideHailingBaseline, "ride-hailing"),
+      );
+      const rideRecord = JSON.parse(
+        String(
+          await rideTools
+            .find((tool) => tool.name === "get_decision_record")
+            ?.execute({}),
+        ),
+      ) as { incident: string };
+      rideRegistry?.dispose();
+      expect(rideRecord.incident).toContain("Core");
+      expect(rideRecord.incident).not.toContain("Mumbai");
+
+      const emptyTools: RegisteredTool[] = [];
+      const emptyRegistry = createAetherToolRegistry(() => {}, undefined, {
+        registerTool: async (tool) => {
+          emptyTools.push(tool as unknown as RegisteredTool);
+        },
+      });
+      await emptyRegistry?.refresh(createInitialState(blankBaseline, "blank"));
+      const emptyRecord = JSON.parse(
+        String(
+          await emptyTools
+            .find((tool) => tool.name === "get_decision_record")
+            ?.execute({}),
+        ),
+      ) as { incident: string };
+      emptyRegistry?.dispose();
+      expect(emptyRecord.incident).toBe("Nothing modelled yet");
+    }
 
     const create = tools.find(
       (tool) => tool.name === "create_architecture_branch",

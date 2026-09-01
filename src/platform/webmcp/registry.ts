@@ -242,9 +242,33 @@ export function createAetherToolRegistry(
           additionalProperties: false,
         },
         annotations: { readOnlyHint: true, untrustedContentHint: false },
-        execute: async () =>
-          toolResult({
-            incident: "Mumbai payment-path outage",
+        execute: async () => {
+          // Name the incident from the architecture on the page. This said
+          // "Mumbai payment-path outage" whatever system was loaded, so an
+          // agent working on a reviewer's own architecture was told about a
+          // region and a domain that had nothing to do with it.
+          const state = snapshot();
+          const branch = state.branches[state.workspace.activeBranchId];
+          const graph = branch
+            ? deriveGraph(state, branch)
+            : state.revisions["revision-baseline"]!.graph;
+          const components = Object.values(graph.entities).filter(
+            (entity) => entity.kind !== "region",
+          );
+          const run = components.length
+            ? runScenario(
+                graph,
+                "regional_outage",
+                state.workspace.activeBranchId,
+                branch?.version ?? 1,
+              )
+            : undefined;
+          return toolResult({
+            incident:
+              run?.causalChain[0]?.cause ??
+              (components.length
+                ? "No failure seeded on this architecture"
+                : "Nothing modelled yet"),
             activeBranch: snapshot().workspace.activeBranchId,
             humanGuardrail: snapshot().workspace.costCeilingUsd
               ? `$${snapshot().workspace.costCeilingUsd} monthly cost ceiling`
@@ -266,7 +290,8 @@ export function createAetherToolRegistry(
                 branchId: event.branchId,
                 outcome: event.result.nextState,
               })),
-          }),
+          });
+        },
       });
       await register({
         name: "get_architecture_summary",
@@ -506,7 +531,7 @@ export function createAetherToolRegistry(
       await register({
         name: "trace_architecture_dependency",
         description:
-          "Read the directed dependency path through the payment architecture for a known component.",
+          "Read the directed dependency path through the architecture on this page for a known component.",
         inputSchema: {
           type: "object",
           properties: {
