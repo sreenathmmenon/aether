@@ -1838,3 +1838,14 @@ was already underway again.
   - **Labels**: a first probe reported two unnamed inputs. Reading the actual markup found every one named, through `label[for]` or `aria-label` — the probe only inspected `aria-label`, `textContent` and `title` and missed associated labels. Probe fault, not a defect.
   - **Console**: silent on load. No errors, no warnings, no leftover debug logging on the deployed origin.
   - **Layout**: five breakpoints down to 720px, and `max-width` rules mean narrower viewports inherit the narrowest handled case rather than falling off it. A probe that set `documentElement.style.width` measured nothing — the root did not reflow, so the 229 "overflowing" elements it reported were simply elements beyond that offset in an unchanged layout. Recorded because the number looked alarming and meant nothing.
+
+## Milestone 134 — A defect I talked myself into, and out of
+
+- [x] **M134.1 — Adversarial input, all handled** `DONE`
+  - Evidence: the agent surface was driven with deliberately hostile input on the deployed origin. A 5,000-character name, a `null` branchId, and an object where a string belongs were each rejected with `INVALID_INPUT`, the failing field named, and a next action. Nothing threw, crashed, or leaked internals.
+
+- [x] **M134.2 — Two wrong conclusions, corrected before shipping either** `DONE`
+  - Evidence recorded because the reasoning was plausible at every step and wrong at the end:
+  - `add_architecture_component` requires `peakRps`, `capacityRps` and `monthlyCostUsd`; `model_architecture` requires only `key`, `name`, `kind`, `regionId`. That looked like two paths to one command disagreeing, so the batch schema was changed to match. **Wrong**: the batch path defaults the three values (`component.peakRps ?? 8000`), so the omission is deliberate ergonomics — an agent can sketch a system without inventing numbers it does not have. The change was reverted.
+  - The component created that way was absent from the traffic-spike blast radius, which looked like confirmation that it was invisible to the engine. **Also wrong**: it appears in `connect_components` as `entity-no-capacity-svc`, so it exists and is fully addressable. It was simply unconnected, and a component wired to nothing is correctly in no failure path.
+  - Both conclusions were checked against the code and the live surface before anything shipped. The cost of being wrong here would have been a schema change making the batch tool harder to use, defended by a comment describing a defect that did not exist.
