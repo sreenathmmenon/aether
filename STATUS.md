@@ -1387,3 +1387,15 @@ was already underway again.
   - All three now call one `keepLocalWork` helper, and a test asserts no `if (discards)` branch can return without it. Both halves were verified against a deliberate break: a silent return fails it, and a helper that claims "Synced" fails it differently.
   - Lint caught the helper being referenced before its declaration once it was shared, which is a real hoisting hazard rather than style. It moved above the effects as a `useCallback`, and the three dependency arrays now name it.
   - Honest limit on the live verification: a background tab reports `document.hidden: true`, so its poll is suspended by design and never reaches the branch. Measuring fetches confirmed zero requests in seven seconds, which is the visibility guard working rather than the fix failing. The change is held by the unit test instead; confirming it in a foreground tab needs a human at the keyboard.
+
+## Milestone 94 — Coming back to a current page
+
+- [x] **M94.1 — Reconcile on return, not on the next tick** `DONE`
+  - Acceptance: a reviewer who switches away and comes back sees the current architecture, not the one from before they left.
+  - Evidence: the poll skips while `document.hidden`, which is right — a background tab should not hammer the endpoint — but nothing rebuilt state when the tab came back. The next interval was the earliest recovery, and browsers throttle a hidden tab's timers, so it could be longer. Measured during the shared-room work: a background tab issued zero requests in seven seconds.
+  - A `visibilitychange` listener now polls the moment the tab is visible again, and is removed on teardown so a remount does not leave another behind. A test holds all three properties, and each fails on its own when broken.
+  - Verified against the deployed origin: with `document.hidden` overridden to report visible, dispatching `visibilitychange` issues an immediate `GET`, and a note a colleague wrote while the tab was hidden — "Reviewed while you were away." — appears in the decision record with the three local futures intact.
+
+- [x] **M94.2 — Close the verification gap M93 left open** `DONE`
+  - Evidence: M93 recorded that a visibility-gated path could not be confirmed from a background tab, because the guard correctly skips. Overriding `document.hidden` with a property descriptor makes the guard observe what it would observe for a reviewer at the keyboard, which is enough to exercise the branch honestly — the guard still runs, it simply sees the state it is written for.
+  - Worth recording as a technique rather than a one-off: the first attempt dispatched `visibilitychange` without the override and correctly produced no request, which looked like a failure and was the guard working. The difference between those two runs is the whole point.
