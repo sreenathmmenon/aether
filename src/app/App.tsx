@@ -180,6 +180,10 @@ export function App() {
   // cycle. The registry composes an agent's write onto this rather than onto
   // a copy the reconcile poll may already have replaced.
   const stateRef = useRef<AetherState | undefined>(undefined);
+  // Assigned during render, not from an effect. A click sequence can dispatch
+  // several writes before React commits and runs effects, and each of those
+  // writes composes onto this — so if it only caught up afterwards, the
+  // second click in a sequence would erase what the first recorded.
   const [state, setState] = useState(() => {
     // A ?system= link must open that system. Reviewers and demos share links,
     // and silently landing on somebody's previous workspace makes the link
@@ -196,6 +200,7 @@ export function App() {
       createInitialState(paymentPlatformBaseline, "payment-platform")
     );
   });
+  stateRef.current = state;
   const [toolCount, setToolCount] = useState(0);
   const [toolCalls, setToolCalls] = useState<ToolCall[]>([]);
   // The newest call, held briefly in the header so agent activity is visible
@@ -907,7 +912,8 @@ export function App() {
       );
       if (outcome.ok) next = outcome.value;
     }
-    setState(mergeEvidence(stateRef.current, next));
+    stateRef.current = mergeEvidence(stateRef.current, next);
+    setState(stateRef.current);
     setMessage(
       "Capacity raised past peak demand. Every scenario recomputed against the new plan.",
     );
@@ -952,7 +958,8 @@ export function App() {
         if (simulated.ok) next = simulated.value;
       }
     });
-    setState(mergeEvidence(stateRef.current, next));
+    stateRef.current = mergeEvidence(stateRef.current, next);
+    setState(stateRef.current);
     setMessage(
       live === 0
         ? "No repair futures could be created from this architecture."
@@ -1095,7 +1102,8 @@ export function App() {
       refuse("Those components already exist on this canvas.");
       return;
     }
-    setState(mergeEvidence(stateRef.current, next));
+    stateRef.current = mergeEvidence(stateRef.current, next);
+    setState(stateRef.current);
     setSelectedEntityId(created[0]!);
     setComposerNotice("");
     // Say plainly what was read and what still has no real numbers, so nobody
