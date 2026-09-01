@@ -1184,3 +1184,12 @@ was already underway again.
 - [x] **M74.2 — Make the boundary probe test its boundary** `DONE`
   - Evidence: fixing the key broke the schema-boundary test, which had been passing partly because the surface did not rebuild. Every write in it persists, so probing one workspace repeatedly eventually hits a uniqueness rule — one future per trade-off, one component per name — rather than the boundary under test. Two workarounds had already accumulated for exactly this.
   - Each probe now runs against its own registry over its own fresh state, so what fails is the boundary and nothing else. Both workarounds were deleted, and the test still passes without them.
+
+## Milestone 75 — Every shipped system can reach the gate
+
+- [x] **M75.1 — Repair every at-risk store, not just the first** `DONE`
+  - Acceptance: the human gate this product argues for can be reached on every system it ships.
+  - Evidence: found by walking the two seeded systems never exercised before. On ride-hailing, creating repair futures and resolving capacity still left approval blocked, with `Trip State recovery point objective is non-zero` outstanding. The `highest_resilience` intent set synchronous replication on the first store with `replicationMode: "none"` and no others, so a system with a second store already at `async` kept a violation the intent is named for removing. Ride-hailing and the AI platform were both dead ends: the future called "highest resilience" could never be approved on its own architecture.
+  - The intent now repairs every datastore that is not already synchronous. A test walks all three shipped systems — create the future, apply the interface's own capacity rule, run all four scenarios, approve — and asserts every scenario is clean. Restricting the repair to the first store again fails it, naming ride-hailing.
+  - Verified against the deployed origin: ride-hailing reaches `Human approve exact plan` enabled, merges with four scenarios at zero violations, and its availability rises to 97.86% because both stores are now repaired. The AI platform reaches approval too, at 97.39%.
+  - Worth noting what improved beyond the fix: on both systems the three futures now read as genuinely different trade-offs — 93.96 / 96.36 / 97.86 on ride-hailing, 94.24 / 96.64 / 97.39 on the AI platform — which is the choice the product asks a reviewer to make.
