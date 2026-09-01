@@ -1,5 +1,29 @@
 # Aether
 
-Evidence-first counterfactual architecture laboratory for branching, testing, and reviewing system designs.
+When an agent proposes a change to a running system, Aether computes what that
+change actually does: branch the architecture, simulate a failure
+deterministically, and keep the commit decision with a human.
 
-- [Product overview](https://github.com/sreenathmmmenon/aether)
+## What an agent can do on this page
+
+This page publishes WebMCP tools through `document.modelContext`. The surface is
+state-aware: a committed architecture registers five read and branch tools, an
+editable canvas registers ten, and twelve once a repair future exists. Component
+and region identifiers in those schemas are enumerated from the live graph, so a
+component added moments ago can be addressed immediately.
+
+Start with `get_architecture_summary`. It returns the components on the page,
+their dependencies, the latest evidence, and the next allowed action. Every tool
+result names a `nextAction`, and every rejection names the field that failed and
+the values that would have worked.
+
+## What an agent cannot do
+
+No approve, merge, or removal tool is registered, in any state. An agent
+proposes and reconfigures; only a human commits a future or reverses one. The
+command layer enforces the same boundary independently of the tool list.
+
+## Links
+
+- [Source](https://github.com/sreenathmmenon/aether)
+- [Live application](https://webmcp-production-38e5.up.railway.app)
