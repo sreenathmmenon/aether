@@ -1860,3 +1860,14 @@ was already underway again.
 - [x] **M135.2 — Assert the direction that breaks silently** `DONE`
   - Evidence: a test already checked that the untrusted tool _does_ carry agent text. Nothing checked the converse — that trusted tools do not — and that is the half a regression takes: a result that starts including note bodies would launder them through an annotation saying the content is safe to act on.
   - Adding `latestNote: state.decisionNotes.at(-1)?.body` to the summary now fails the test. Before this it would have shipped silently, with the annotation still claiming the output was trusted.
+
+## Milestone 136 — Auditing the submission's own claims
+
+- [x] **M136.1 — Check what the package asserts against what ships** `DONE`
+  - Acceptance: nothing in the submission text describes behaviour the product does not have.
+  - Evidence: the Devpost description makes several specific, checkable claims, each verified against the source rather than assumed:
+  - "No removal tool is registered either" — confirmed; twelve tools, none of which removes.
+  - "An agent-actor removal that would reduce the model below two components, or that touches a component three or more dependencies rely on, is refused with the reason named" — confirmed exactly, including that the refusal names the dependency count: `An agent cannot remove X because N dependencies rely on it.` The defence-in-depth claim is real: the tool is absent _and_ the engine refuses the command.
+  - "Official `webmcp-types` compile-time definitions" — confirmed; `webmcp-types@0.1.5` is a dependency and `src/vite-env.d.ts` references it, so `document.modelContext` is type-checked rather than cast.
+  - "Tool surface grows from five to twelve once a repair future exists" — measured live this session at 5, 10, 12, and 7 after a merge.
+  - Repository scale for the record: 252 tests across 33 files, ~8,800 lines of source, 136 milestones, 360 commits.
