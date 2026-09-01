@@ -594,7 +594,11 @@ button {
   z-index: 1;
 }
 .architecture-lines line {
-  stroke-width: 2.3;
+  /* Adjacent components leave roughly twelve pixels between their cards, so
+     a dependency reads as a short connector rather than a long line. Weight
+     and round caps are what make that short segment legible. */
+  stroke-width: 3.4;
+  stroke-linecap: round;
   transition: 0.28s;
 }
 .path-healthy {
