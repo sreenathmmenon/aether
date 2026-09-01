@@ -803,7 +803,13 @@ export function App() {
     // that something had happened. A reviewer has to be able to tell whether
     // the thing they asked for was done.
     if (!outcome.ok) return refuse(outcome.message);
-    setState(outcome.value);
+    // Composed onto the state the page holds, not the one this render closed
+    // over. Approving and merging both dispatch from a value captured before
+    // the scenarios ran, so replacing state wholesale erased the very
+    // evidence the approval required — a merged future reported none.
+    const settled = mergeEvidence(stateRef.current, outcome.value);
+    stateRef.current = settled;
+    setState(settled);
     setMessage(
       outcome.nextState === "simulated" && command.type === "RUN_SCENARIO"
         ? `${scenarioCopy[command.input.scenario].label} evidence recalculated deterministically.`
@@ -901,7 +907,7 @@ export function App() {
       );
       if (outcome.ok) next = outcome.value;
     }
-    setState(next);
+    setState(mergeEvidence(stateRef.current, next));
     setMessage(
       "Capacity raised past peak demand. Every scenario recomputed against the new plan.",
     );
@@ -946,7 +952,7 @@ export function App() {
         if (simulated.ok) next = simulated.value;
       }
     });
-    setState(next);
+    setState(mergeEvidence(stateRef.current, next));
     setMessage(
       live === 0
         ? "No repair futures could be created from this architecture."
@@ -1089,7 +1095,7 @@ export function App() {
       refuse("Those components already exist on this canvas.");
       return;
     }
-    setState(next);
+    setState(mergeEvidence(stateRef.current, next));
     setSelectedEntityId(created[0]!);
     setComposerNotice("");
     // Say plainly what was read and what still has no real numbers, so nobody
