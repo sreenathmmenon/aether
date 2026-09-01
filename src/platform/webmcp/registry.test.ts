@@ -2166,7 +2166,32 @@ describe("Aether WebMCP registry", () => {
         tools.push(tool as unknown as RegisteredTool);
       },
     });
-    await registry?.refresh(createInitialState(blankBaseline, "blank"));
+    // The fullest surface, not the blank canvas. Refreshing a state with no
+    // repair future left the branch-gated tools out of `described`, so a
+    // bounded field on one of them was invisible to this sweep.
+    // A repair future needs something to repair, so the canvas gets a
+    // component before it gets a branch. Falling back silently when either
+    // step failed is what let this sweep run against the smaller surface.
+    const seeded = dispatch(createInitialState(blankBaseline, "blank"), {
+      type: "ADD_COMPONENT",
+      input: {
+        branchId: "branch-baseline",
+        name: "Probe Store",
+        kind: "database",
+        regionId: "region-primary",
+        peakRps: 9000,
+        capacityRps: 15000,
+        monthlyCostUsd: 800,
+      },
+    });
+    if (!seeded.ok) throw new Error(`probe seed: ${seeded.message}`);
+    const blankBranched = dispatch(seeded.value, {
+      type: "CREATE_BRANCH",
+      input: { name: "Boundary probe", intent: "highest_resilience" },
+    });
+    if (!blankBranched.ok)
+      throw new Error(`probe branch: ${blankBranched.message}`);
+    await registry?.refresh(blankBranched.value);
     const described = tools as unknown as {
       name: string;
       inputSchema: {
@@ -2207,6 +2232,32 @@ describe("Aether WebMCP registry", () => {
         intent: "highest_resilience",
       },
     };
+
+    // A tool with bounded fields and no base input is skipped silently, so
+    // this could not tell "nothing to probe here" from "someone added a tool
+    // and forgot". The batch tool's nested bounds went unchecked for exactly
+    // that reason until they were found by a separate sweep.
+    const bounded = (spec: {
+      minLength?: number;
+      maxLength?: number;
+      minimum?: number;
+      maximum?: number;
+    }) =>
+      spec.minLength !== undefined ||
+      spec.maxLength !== undefined ||
+      spec.minimum !== undefined ||
+      spec.maximum !== undefined;
+    const needsProbing = described
+      .filter((tool) =>
+        Object.values(tool.inputSchema.properties).some((spec) =>
+          bounded(spec),
+        ),
+      )
+      .map((tool) => tool.name);
+    // `model_architecture` states its bounds inside an array of components,
+    // which this flat loop cannot express; a dedicated test covers it.
+    const covered = new Set([...Object.keys(baseFor), "model_architecture"]);
+    expect(needsProbing.filter((name) => !covered.has(name))).toEqual([]);
 
     let probed = 0;
     let branchProbes = 0;
