@@ -760,3 +760,12 @@ was already underway again.
   - The prose test count is gone rather than corrected, because a number in a document drifts from the suite it describes and the suite reports its own.
 - [x] **M35.2 — Correct the remaining claims the product had outgrown** `DONE`
   - Evidence: the submission said two worked systems ship, and ride-hailing dispatch makes three. It described the agent build path component-by-component and omitted `model_architecture`, the batch call that most distinguishes the agent path from clicking. The README called synchronization tab-to-tab, which understates a shared room synchronizing people, and its Lighthouse line did not note that the same scores hold at an emulated 412px mobile viewport. Every count was read from the registry or the filesystem before being written.
+
+## Milestone 36 — The first arrival sees the incident
+
+- [x] **M36.1 — Open on the worked incident rather than an empty grid** `DONE`
+  - Acceptance: a reviewer visiting the plain URL sees what the submission says the product opens on.
+  - Evidence: walking the product as a reviewer would, the bare URL opened the blank canvas — an empty grid, four dashes where the metrics go, no incident — while the submission's first line says it opens on a two-region payment platform losing its Mumbai region. The strongest thing the product has to show sat behind a URL parameter no reviewer would type.
+  - A first arrival now opens on that incident; a returning visitor still keeps their own work, because the stored workspace is loaded first and only a visitor with nothing stored gets the seeded system. Both verified in the browser: a cleared browser opens on "Mumbai is down. Choose the repair before traffic peaks." with five components, 93.96% availability, 46m recovery, $6,100 monthly, an active beacon, and an honest five-tool count in intro and header; after switching to "Your own system" and adding a component, reloading the bare URL still shows that component.
+  - Verified in production, where the landing evidence carries fingerprint `fnv1a-f504d77f` — the value the cross-runtime test pins, so the number a reviewer sees first is the one under test.
+  - Measured while here: 267ms to interactive and 570ms to load complete on the deployed origin.
