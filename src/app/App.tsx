@@ -63,6 +63,9 @@ const noteWindow = 8;
 /** How many changes the review diff shows before scrolling. */
 const diffWindow = 10;
 
+/** How many SLO violations the evidence panel shows before scrolling. */
+const violationWindow = 12;
+
 const scenarioOrder = [
   "regional_outage",
   "traffic_spike",
@@ -1819,18 +1822,33 @@ export function App() {
             <code>{evidence.engineVersion}</code>
             <code>{evidence.outputHash}</code>
           </div>
+          {/* A large architecture can breach a hundred SLOs at once. Rendering
+              every one pushed the approval controls off the screen entirely,
+              so this bounds and scrolls like the other records and says what
+              it is holding back. */}
           <div className="violation-list">
             <span className="eyebrow">Causal evidence</span>
             {evidence.sloViolations.length ? (
-              evidence.sloViolations.map((violation) => (
-                <p key={violation}>
-                  <i />
-                  {violation}
-                </p>
-              ))
+              evidence.sloViolations
+                .slice(0, violationWindow)
+                .map((violation) => (
+                  <p key={violation}>
+                    <i />
+                    {violation}
+                  </p>
+                ))
             ) : (
               <p className="no-violation">
                 No SLO violations in {scenarioCopy[selectedScenario].label}.
+              </p>
+            )}
+            {evidence.sloViolations.length > violationWindow && (
+              <p className="replay-earlier">
+                {evidence.sloViolations.length - violationWindow} further{" "}
+                {evidence.sloViolations.length - violationWindow === 1
+                  ? "violation is"
+                  : "violations are"}{" "}
+                counted in this evidence and block approval too.
               </p>
             )}
             {blockingRuns

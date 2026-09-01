@@ -72,7 +72,11 @@ const modelArchitectureInput = z.object({
       }),
     )
     .min(1)
-    .max(6),
+    // The runtime limit and the advertised one must be the same number. The
+    // JSON schema said twelve while this said six, so an agent following the
+    // schema it was given had its call rejected for exceeding a limit the
+    // schema never mentioned.
+    .max(briefComponentLimit),
   dependencies: z
     .array(
       z.object({
@@ -89,7 +93,7 @@ const modelArchitectureInput = z.object({
         ]),
       }),
     )
-    .max(8)
+    .max(briefComponentLimit * 2)
     .optional(),
 });
 

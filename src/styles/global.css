@@ -245,6 +245,10 @@ button {
   background: rgba(47, 106, 191, 0.13);
 }
 /* Every record scrolls rather than hiding what it cannot fit. */
+.violation-list {
+  max-height: 320px;
+  overflow-y: auto;
+}
 .diff-list {
   max-height: 300px;
   overflow-y: auto;
@@ -732,6 +736,10 @@ button {
   color: var(--muted);
   background: rgba(251, 250, 246, 0.92);
   font-size: 12px;
+  /* A large architecture can produce a chain of hundreds. Without a ceiling
+     the strip grows until it covers the canvas it is describing. */
+  max-height: 118px;
+  overflow-y: auto;
 }
 .causal-timeline li {
   display: flex;

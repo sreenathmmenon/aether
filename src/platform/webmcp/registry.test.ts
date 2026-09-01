@@ -1084,4 +1084,59 @@ describe("Aether WebMCP registry", () => {
         .map((tool) => tool.name),
     ).toEqual([]);
   });
+
+  it("accepts every item the schema it advertises allows", async () => {
+    // The JSON schema said twelve components and the runtime validator said
+    // six, so an agent that read the schema it was handed and filled it had
+    // the call rejected for exceeding a limit the schema never mentioned.
+    const tools: RegisteredTool[] = [];
+    const registry = createAetherToolRegistry(() => {}, undefined, {
+      registerTool: async (tool) => {
+        tools.push(tool as unknown as RegisteredTool);
+      },
+    });
+    await registry?.refresh(createInitialState(blankBaseline, "blank"));
+    const model = tools.find((tool) => tool.name === "model_architecture") as
+      | (RegisteredTool & {
+          inputSchema: {
+            properties: {
+              components: { maxItems: number };
+              dependencies: { maxItems: number };
+            };
+          };
+        })
+      | undefined;
+    const limit = model!.inputSchema.properties.components.maxItems;
+    const edgeLimit = model!.inputSchema.properties.dependencies.maxItems;
+
+    // Fill the advertised limits exactly.
+    const components = Array.from({ length: limit }, (_, index) => ({
+      key: `k${index}`,
+      name: `Store ${index}`,
+      kind: "database",
+      regionId: "region-primary",
+      peakRps: 5000,
+      capacityRps: 5200,
+      monthlyCostUsd: 400,
+    }));
+    const dependencies = Array.from({ length: limit - 1 }, (_, index) => ({
+      sourceKey: `k${index}`,
+      targetKey: `k${index + 1}`,
+      kind: "writes_to",
+    }));
+    expect(dependencies.length).toBeLessThanOrEqual(edgeLimit);
+
+    const result = JSON.parse(
+      String(
+        await model!.execute({
+          branchId: "branch-baseline",
+          components,
+          dependencies,
+        }),
+      ),
+    ) as { added?: unknown[]; error?: string; problems?: string[] };
+    expect(result.error, JSON.stringify(result.problems)).toBeUndefined();
+    expect(result.added).toHaveLength(limit);
+    registry?.dispose();
+  });
 });
