@@ -172,6 +172,70 @@ describe("Aether WebMCP registry", () => {
     }
   });
 
+  it("stays inside the size limits its own document states", async () => {
+    // This replaced a test that asserted 30, 500 and 150 as literals. It
+    // enforced the same limits and would have gone on passing if the document
+    // published different ones, which is the drift that matters here.
+    // WEBMCP.md names the guidance: descriptions below 500 characters,
+    // parameter descriptions below 150, names below 30. Nothing checked that
+    // this registry obeys them, and the margins are thin — the longest name
+    // is 29 of 30 and the longest description 442 of 500 — so a single
+    // clarifying sentence would put the product outside the limits its own
+    // document publishes, silently.
+    const registered: RegisteredTool[] = [];
+    const seeded = createInitialState(paymentPlatformBaseline);
+    const branched = dispatch(seeded, {
+      type: "CREATE_BRANCH",
+      input: { name: "Limit probe", intent: "highest_resilience" },
+    });
+    if (!branched.ok) throw new Error("fixture branch must be created");
+    const registry = createAetherToolRegistry(() => {}, undefined, {
+      registerTool: async (tool) => {
+        registered.push(tool as unknown as RegisteredTool);
+      },
+    });
+    await registry?.refresh(branched.value);
+    registry?.dispose();
+    // The richest surface, or this checks the small one and proves little.
+    expect(registered.length).toBeGreaterThan(10);
+
+    // Read the limits from the document rather than restating them, so the
+    // two cannot disagree about what the rule is.
+    const limitFor = (phrase: string) => {
+      const match = webmcpDoc.match(
+        new RegExp(`${phrase} below ([\\d,]+) characters`),
+      );
+      expect(
+        match,
+        `WEBMCP.md no longer states a limit for ${phrase}`,
+      ).not.toBeNull();
+      return Number(match![1]!.replace(/,/g, ""));
+    };
+    const descriptionLimit = limitFor("a tool description");
+    const parameterLimit = limitFor("parameter descriptions");
+    const nameLimit = limitFor("names");
+
+    for (const tool of registered) {
+      const shape = tool as unknown as {
+        name: string;
+        description?: string;
+        inputSchema?: { properties?: Record<string, { description?: string }> };
+      };
+      expect(shape.name.length, shape.name).toBeLessThan(nameLimit);
+      expect(
+        (shape.description ?? "").length,
+        `${shape.name} description`,
+      ).toBeLessThan(descriptionLimit);
+      for (const [field, property] of Object.entries(
+        shape.inputSchema?.properties ?? {},
+      ))
+        expect(
+          (property?.description ?? "").length,
+          `${shape.name}.${field} description`,
+        ).toBeLessThan(parameterLimit);
+    }
+  });
+
   it("quotes the output budget the registry actually enforces", async () => {
     // Two documents claimed every result stays within 1,500 characters while
     // the registry enforced 2,000 — and the largest result, the three-future
@@ -1866,44 +1930,6 @@ describe("Aether WebMCP registry", () => {
     // The journey ends at the human boundary, never at a merge tool.
     expect(comparison.humanGate).toContain("approve and merge");
     expect(tools.some((tool) => /approve|merge/.test(tool.name))).toBe(false);
-    registry?.dispose();
-  });
-
-  it("keeps every tool within the WebMCP metadata limits", async () => {
-    const tools: (RegisteredTool & {
-      description?: string;
-      inputSchema?: {
-        properties?: Record<string, { description?: string }>;
-      };
-    })[] = [];
-    let state = createInitialState(paymentPlatformBaseline);
-    const registry = createAetherToolRegistry(
-      (next) => {
-        state = next;
-      },
-      undefined,
-      {
-        registerTool: async (tool) => {
-          tools.push(tool as (typeof tools)[number]);
-        },
-      },
-    );
-    await registry?.refresh(state);
-    const created = dispatch(state, {
-      type: "CREATE_BRANCH",
-      input: { name: "Resilient", intent: "highest_resilience" },
-    });
-    if (!created.ok) throw new Error("fixture branch must be created");
-    await registry?.refresh(created.value);
-
-    expect(tools.length).toBeGreaterThan(0);
-    for (const tool of tools) {
-      // Names under 30, descriptions under 500, parameters under 150.
-      expect(tool.name.length).toBeLessThan(30);
-      expect((tool.description ?? "").length).toBeLessThan(500);
-      for (const property of Object.values(tool.inputSchema?.properties ?? {}))
-        expect((property.description ?? "").length).toBeLessThan(150);
-    }
     registry?.dispose();
   });
 

@@ -1709,3 +1709,15 @@ was already underway again.
   - The budget is now held to `maxToolResultLength` wherever a document states one, so the two cannot drift apart again. It guards its own vacuity: deleting the phrase fails the test rather than passing it, which matters because the easiest way to satisfy a claim check is to delete the claim.
   - Verified against the deployed origin: every result measured on the live surface sits well inside the enforced ceiling. The 1,528 figure the documents now cite is the full three-future worst case the test constructs, which is the number worth documenting rather than whatever a partly-populated workspace happens to produce.
   - Three breaks confirmed: reverting the budget to 1,500 fails, writing a wrong tool count fails, and removing the budget sentence entirely fails.
+
+## Milestone 122 — Limits enforced against the document that publishes them
+
+- [x] **M122.1 — Measure the margins before trusting them** `DONE`
+  - Acceptance: the metadata limits Aether documents are the limits it is held to.
+  - Evidence: M121 found one false documented figure, so the rest were measured rather than spot-checked. Aether complies with every limit `docs/WEBMCP.md` names, but narrowly: the longest tool name is **29 of 30** characters, the longest description **442 of 500**, the longest parameter description **131 of 150**. Every margin is one clarifying sentence wide.
+  - A test already enforced all three — with `30`, `500` and `150` written as literals. That catches a description growing past the limit, and would have gone on passing if the document published a different number, which is the drift that actually matters when the document is what a judge reads.
+
+- [x] **M122.2 — Read the rule from where it is published** `DONE`
+  - Evidence: the replacement extracts each limit from `docs/WEBMCP.md` by phrase and holds the registry to it, so code and document cannot disagree about what the rule is. The older literal test was deleted rather than left beside it, since two tests enforcing the same three numbers is the duplication this codebase has removed repeatedly.
+  - Breaks confirmed in both directions: pushing a parameter description past 150 fails it, and tightening the document's stated name limit to 20 while the code is unchanged fails it too. The second is the case the deleted test could not catch. Removing a limit sentence from the document fails rather than passing vacuously.
+  - Probe faults recorded: the first attempt parsed `inputSchema` as a JSON string when it is an object, reporting every parameter description as zero length; the second pushed a description 90 characters longer and read the absence of a failure as a weak test, when 246 + 90 is simply still under 500. Both were corrected by measuring rather than concluding.
