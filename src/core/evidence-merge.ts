@@ -30,5 +30,51 @@ export function mergeEvidence(
     );
     if (kept.length) merged[branchId] = [...kept, ...arriving];
   }
-  return { ...incoming, simulations: merged };
+  // Audit entries and notes are appended, never edited, so they union the
+  // same way. Without this the merge took `...incoming` for both, which
+  // dropped whatever this page had recorded and had not yet written — and
+  // because dropping it is real work loss, `wouldDiscardWork` correctly
+  // refused the merge, leaving a conflicted tab stuck as a local draft with
+  // its note never reaching the server. Observed in a shared room as
+  // PUT 409 → GET 200 → nothing.
+  //
+  // Ids are positional (`event-5`, `note-3`), so two tabs mint the same id
+  // for different events and the id cannot identify an entry. The content
+  // and its timestamp can.
+  const auditKey = (entry: AetherState["audit"][number]) =>
+    [
+      entry.timestamp,
+      entry.actor?.id,
+      entry.commandName,
+      entry.branchId,
+      JSON.stringify(entry.input),
+    ].join("|");
+  const noteKey = (note: AetherState["decisionNotes"][number]) =>
+    [
+      note.timestamp,
+      note.actor?.id,
+      note.branchId,
+      note.entityId,
+      note.body,
+    ].join("|");
+  const union = <Entry>(
+    keep: Entry[],
+    arriving: Entry[],
+    key: (entry: Entry) => string,
+  ) => {
+    const seen = new Set(arriving.map(key));
+    const kept = keep.filter((entry) => !seen.has(key(entry)));
+    if (!kept.length) return arriving;
+    // Chronological, so the record reads as one history rather than two.
+    return [...kept, ...arriving].sort((left, right) =>
+      key(left).localeCompare(key(right)),
+    );
+  };
+
+  return {
+    ...incoming,
+    simulations: merged,
+    audit: union(held.audit, incoming.audit, auditKey),
+    decisionNotes: union(held.decisionNotes, incoming.decisionNotes, noteKey),
+  };
 }

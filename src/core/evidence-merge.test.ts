@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { createInitialState, dispatch } from "./branch-engine";
 import { paymentPlatformBaseline } from "../fixtures/payment-platform/baseline";
 import { mergeEvidence } from "./evidence-merge";
+import { wouldDiscardWork } from "./sync-guard";
 
 const human = { id: "s", kind: "human" as const, displayName: "S" };
 
@@ -85,5 +86,68 @@ describe("a write never erases evidence it has not seen", () => {
   it("takes the incoming state whole when nothing is held yet", () => {
     const incoming = withRuns(["regional_outage"]);
     expect(mergeEvidence(undefined, incoming)).toBe(incoming);
+  });
+
+  it("keeps decisions and notes each side recorded independently", () => {
+    // Two reviewers in one room both write. The merge took `...incoming` for
+    // the audit and the notes, so the local half was dropped — and because
+    // that is real work loss, `wouldDiscardWork` refused the merge and the
+    // conflicted tab stayed a local draft with its note never reaching the
+    // server. Observed live as PUT 409 → GET 200 → nothing.
+    const base = createInitialState(paymentPlatformBaseline);
+    const mine = dispatch(base, {
+      type: "ADD_DECISION_NOTE",
+      input: {
+        branchId: "branch-baseline",
+        entityId: "ledger",
+        body: "Mine: replicate the ledger.",
+      },
+    });
+    if (!mine.ok) throw new Error("fixture note must be added");
+    const theirs = dispatch(base, {
+      type: "ADD_DECISION_NOTE",
+      input: {
+        branchId: "branch-baseline",
+        entityId: "gateway",
+        body: "Theirs: raise gateway capacity.",
+      },
+    });
+    if (!theirs.ok) throw new Error("fixture note must be added");
+
+    const merged = mergeEvidence(mine.value, theirs.value);
+    const bodies = merged.decisionNotes.map((note) => note.body);
+    expect(bodies).toContain("Mine: replicate the ledger.");
+    expect(bodies).toContain("Theirs: raise gateway capacity.");
+    // Both commands stay in the record a reviewer audits an approval from.
+    expect(merged.audit.length).toBeGreaterThanOrEqual(
+      Math.max(mine.value.audit.length, theirs.value.audit.length) + 1,
+    );
+
+    // And the merge is now safe to adopt, which is what unblocks the write.
+    expect(wouldDiscardWork(mine.value, merged)).toBe(false);
+    expect(wouldDiscardWork(theirs.value, merged)).toBe(false);
+  });
+
+  it("does not duplicate an entry both sides already hold", () => {
+    // The union is keyed on content and timestamp because ids are positional
+    // — two tabs mint `event-5` for different events — so a shared entry must
+    // not appear twice after a reconcile.
+    const base = createInitialState(paymentPlatformBaseline);
+    const shared = dispatch(base, {
+      type: "ADD_DECISION_NOTE",
+      input: {
+        branchId: "branch-baseline",
+        entityId: "ledger",
+        body: "Both sides saw this one.",
+      },
+    });
+    if (!shared.ok) throw new Error("fixture note must be added");
+    const merged = mergeEvidence(shared.value, shared.value);
+    expect(
+      merged.decisionNotes.filter(
+        (note) => note.body === "Both sides saw this one.",
+      ),
+    ).toHaveLength(1);
+    expect(merged.audit).toHaveLength(shared.value.audit.length);
   });
 });
