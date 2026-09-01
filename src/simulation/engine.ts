@@ -3,7 +3,11 @@ import type {
   ArchitectureGraph,
 } from "@domain/architecture/types";
 
-export type Scenario = "regional_outage" | "traffic_spike" | "database_failure";
+export type Scenario =
+  | "regional_outage"
+  | "traffic_spike"
+  | "database_failure"
+  | "dependency_failure";
 /**
  * The declared availability model.
  *
@@ -277,6 +281,9 @@ function recoveryMinutes(
   // spike drains rather than destroys the stateful path.
   if (scenario === "regional_outage") return worst;
   if (scenario === "traffic_spike") return Math.max(4, Math.round(worst * 0.4));
+  // Losing a shared dependency is a failover, not a rebuild from backup.
+  if (scenario === "dependency_failure")
+    return Math.max(3, Math.round(worst * 0.55));
   return Math.max(3, Math.round(worst * 0.85));
 }
 
@@ -362,6 +369,31 @@ export function runScenario(
         {
           id: primaryDatabase.id,
           cause: `${primaryDatabase.name} unavailable`,
+        },
+      ];
+  }
+
+  if (scenario === "dependency_failure") {
+    // The component the most other components rely on. A region or a database
+    // is not always the worst single loss: a shared gateway, queue, or service
+    // on many critical paths can take more of the system with it, and that is
+    // exactly the dependency an architecture review should surface.
+    const byDependents = operational
+      .map((entity) => ({
+        entity,
+        dependents: dependentsOf(graph, entity.id).length,
+      }))
+      .filter((row) => row.dependents > 0)
+      .sort(
+        (left, right) =>
+          right.dependents - left.dependents ||
+          left.entity.id.localeCompare(right.entity.id),
+      )[0];
+    if (byDependents)
+      seeds = [
+        {
+          id: byDependents.entity.id,
+          cause: `${byDependents.entity.name} unavailable · ${byDependents.dependents} direct ${byDependents.dependents === 1 ? "dependent" : "dependents"}`,
         },
       ];
   }

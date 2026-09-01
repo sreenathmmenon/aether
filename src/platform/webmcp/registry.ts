@@ -9,6 +9,7 @@ import {
 } from "@core/commands";
 import type { AetherState } from "@core/branch-engine";
 import { briefComponentLimit } from "@core/brief-parser";
+import { runScenario } from "@simulation/engine";
 import { deriveGraph, dispatch } from "@core/branch-engine";
 import type { Actor } from "@core/types";
 
@@ -396,7 +397,12 @@ export function createAetherToolRegistry(
               },
               scenario: {
                 type: "string",
-                enum: ["regional_outage", "traffic_spike", "database_failure"],
+                enum: [
+                  "regional_outage",
+                  "traffic_spike",
+                  "database_failure",
+                  "dependency_failure",
+                ],
               },
             },
             required: ["branchId", "scenario"],
@@ -413,7 +419,7 @@ export function createAetherToolRegistry(
             if (!parsed.success)
               return invalidInput(
                 parsed.error,
-                "Supply an existing branchId and a scenario of regional_outage, traffic_spike, or database_failure.",
+                "Supply an existing branchId and a scenario of regional_outage, traffic_spike, database_failure, or dependency_failure.",
               );
             const result = dispatch(
               snapshot(),
@@ -439,7 +445,12 @@ export function createAetherToolRegistry(
           properties: {
             scenario: {
               type: "string",
-              enum: ["regional_outage", "traffic_spike", "database_failure"],
+              enum: [
+                "regional_outage",
+                "traffic_spike",
+                "database_failure",
+                "dependency_failure",
+              ],
               description:
                 "Which failure to simulate against this architecture.",
             },
@@ -449,40 +460,47 @@ export function createAetherToolRegistry(
         },
         annotations: { readOnlyHint: true, untrustedContentHint: false },
         execute: async (input: unknown) => {
-          const scenario = (input as { scenario?: unknown })?.scenario;
-          if (
-            scenario !== "regional_outage" &&
-            scenario !== "traffic_spike" &&
-            scenario !== "database_failure"
-          )
-            return toolResult({
-              error: "INVALID_INPUT",
-              problems: ["scenario: unknown failure scenario"],
-              nextAction:
-                "Choose regional_outage, traffic_spike, or database_failure.",
-            });
-          const failureDomains = {
-            regional_outage: {
-              failedDomain: "Mumbai / ap-south-1",
-              blastRadius: ["gateway", "auth", "ledger", "queue"],
-              decisionVariables: [
-                "replicationMode",
-                "capacityRps",
-                "monthlyCostUsd",
-              ],
-            },
-            traffic_spike: {
-              failedDomain: "18,000 RPS demand burst",
-              blastRadius: ["auth", "queue"],
-              decisionVariables: ["capacityRps", "replicas", "monthlyCostUsd"],
-            },
-            database_failure: {
-              failedDomain: "Primary ledger",
-              blastRadius: ["ledger", "reconciliation"],
-              decisionVariables: ["replicationMode", "monthlyCostUsd"],
-            },
-          }[scenario];
-          return toolResult({ scenario, ...failureDomains });
+          const parsed = runScenarioInput
+            .pick({ scenario: true })
+            .safeParse(input);
+          if (!parsed.success)
+            return invalidInput(
+              parsed.error,
+              "Choose regional_outage, traffic_spike, database_failure, or dependency_failure.",
+            );
+          // Answer from the architecture actually on the page. This returned a
+          // fixed blast radius naming Mumbai and the payment platform's own
+          // components, which was wrong for every other system and disagreed
+          // with the engine the interface shows.
+          const state = snapshot();
+          const branch = state.branches[state.workspace.activeBranchId];
+          const graph = branch
+            ? deriveGraph(state, branch)
+            : state.revisions["revision-baseline"]!.graph;
+          const run = runScenario(
+            graph,
+            parsed.data.scenario,
+            state.workspace.activeBranchId,
+            branch?.version ?? 1,
+          );
+          const named = (id: string) => graph.entities[id]?.name ?? id;
+          return toolResult({
+            scenario: parsed.data.scenario,
+            failedDomain: run.causalChain[0]?.cause ?? "no failure seeded",
+            blastRadius: run.affectedEntityIds.map(named),
+            availability: run.availability,
+            rtoMinutes: run.rtoMinutes,
+            monthlyCostUsd: run.monthlyCostUsd,
+            sloViolations: run.sloViolations,
+            decisionVariables: [
+              "replicationMode",
+              "capacityRps",
+              "replicas",
+              "monthlyCostUsd",
+            ],
+            engineVersion: run.engineVersion,
+            outputHash: run.outputHash,
+          });
         },
       });
       await register({

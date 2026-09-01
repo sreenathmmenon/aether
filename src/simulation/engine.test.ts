@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { paymentPlatformBaseline } from "../fixtures/payment-platform/baseline";
+import { rideHailingBaseline } from "../fixtures/ride-hailing/baseline";
 import { runScenario } from "./engine";
 import type { ArchitectureGraph } from "@domain/architecture/types";
 
@@ -235,5 +236,64 @@ describe("dependency-graph simulation", () => {
     expect(unrepaired.sloViolations).toContain(
       "Primary Ledger has no standby replica",
     );
+  });
+
+  it("fails the most depended-on component, whatever kind it is", () => {
+    // A region or a database is not always the worst single loss. A shared
+    // gateway, queue, or service sitting on many critical paths can take more
+    // of the system with it, and that is the dependency a review must surface.
+    const run = runScenario(
+      rideHailingBaseline,
+      "dependency_failure",
+      "branch-baseline",
+      1,
+    );
+    // Trip State is what the most components stop working without: matching
+    // writes to it and the event stream is published from it. Counting total
+    // edges instead would wrongly name Matching, which only ingest feeds.
+    expect(run.causalChain[0]?.entityId).toBe("trips");
+    expect(run.causalChain[0]?.cause).toContain("dependents");
+    expect(run.affectedEntityIds.length).toBeGreaterThan(1);
+    expect(run.availability).toBeGreaterThan(0);
+    expect(run.availability).toBeLessThan(100);
+  });
+
+  it("distinguishes a shared-dependency loss from a regional outage", () => {
+    // If the two scenarios produced the same answer, the fourth would be
+    // decoration rather than a distinct question about the architecture.
+    const regional = runScenario(
+      rideHailingBaseline,
+      "regional_outage",
+      "branch-baseline",
+      1,
+    );
+    const dependency = runScenario(
+      rideHailingBaseline,
+      "dependency_failure",
+      "branch-baseline",
+      1,
+    );
+    expect(dependency.outputHash).not.toBe(regional.outputHash);
+    expect(dependency.affectedEntityIds).not.toEqual(
+      regional.affectedEntityIds,
+    );
+    // Losing one shared component is a failover, not a regional rebuild.
+    expect(dependency.rtoMinutes).toBeLessThan(regional.rtoMinutes);
+  });
+
+  it("stays deterministic on the new scenario", () => {
+    const first = runScenario(
+      paymentPlatformBaseline,
+      "dependency_failure",
+      "branch-baseline",
+      1,
+    );
+    const second = runScenario(
+      paymentPlatformBaseline,
+      "dependency_failure",
+      "branch-baseline",
+      1,
+    );
+    expect(second).toEqual(first);
   });
 });

@@ -41,9 +41,34 @@ describe("Aether WebMCP registry", () => {
     const inspect = tools.find(
       (tool) => tool.name === "inspect_failure_domain",
     );
-    expect(
+    // The answer comes from the architecture on the page, not a fixed table:
+    // it must name this graph's own components and carry the same evidence
+    // the interface shows, including the reproducible-run fingerprint.
+    const inspected = JSON.parse(
       String(await inspect?.execute({ scenario: "regional_outage" })),
-    ).toContain("Mumbai / ap-south-1");
+    ) as {
+      failedDomain: string;
+      blastRadius: string[];
+      availability: number;
+      sloViolations: string[];
+      engineVersion: string;
+      outputHash: string;
+    };
+    expect(inspected.failedDomain).toContain("Mumbai");
+    expect(inspected.blastRadius).toContain("Primary Ledger");
+    expect(inspected.availability).toBeGreaterThan(0);
+    expect(inspected.availability).toBeLessThan(100);
+    expect(inspected.sloViolations.length).toBeGreaterThan(0);
+    expect(inspected.engineVersion).toBe("aether-sim-2");
+    expect(inspected.outputHash).toMatch(/^fnv1a-[0-9a-f]+$/);
+
+    // A different scenario must produce a different answer, or the tool is
+    // reporting a fixed result regardless of what was asked.
+    const dependencyRun = JSON.parse(
+      String(await inspect?.execute({ scenario: "dependency_failure" })),
+    ) as { failedDomain: string; outputHash: string };
+    expect(dependencyRun.outputHash).not.toBe(inspected.outputHash);
+    expect(dependencyRun.failedDomain).toContain("dependent");
 
     const create = tools.find(
       (tool) => tool.name === "create_architecture_branch",

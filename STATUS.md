@@ -261,12 +261,14 @@ The detailed plan is in `docs/V3_REVERSE_WINNER_PLAN.md`. V3 keeps the challenge
 - [x] **M16.3 — Add a guided system-brief panel** `DONE`
   - Acceptance: the UI invites the reviewer to describe a system, shows the draft plan, and keeps all page text truthful for empty, partial, and complete graphs.
   - Evidence: the empty own-system path now includes a guided system-brief panel in the evidence rail. It invites a reviewer to describe any architecture, lists the modeling plan before a graph exists, converts a fulfillment/analytics brief into candidate component phrases, and can stage that brief into the human decision record. Local browser validation posted the staged brief as the third decision note while the canvas still truthfully reported an unbuilt baseline and local-draft persistence. Live Railway deployment `58abce1a-31f4-43df-9f49-102654dc1e66` shows the same guided panel with WebMCP live and nine editable-state tools.
-- [ ] **M16.4 — Add a batch WebMCP architecture modeling tool** `TODO`
+- [x] **M16.4 — Add a batch WebMCP architecture modeling tool** `DONE`
   - Acceptance: an agent can safely create multiple components and dependencies from a brief through schema-validated commands, with partial failures reported field-by-field.
+  - Evidence: `model_architecture` accepts up to the shipped component budget with dependencies keyed to temporary component keys, routes every item through the same validated `dispatch` path as the human interface, and returns an `added` list beside a `failures` array naming the offending field per item. Its limit derives from `briefComponentLimit`, so the agent path is never narrower than the unassisted one.
 - [ ] **M16.5 — Add proof packs beyond resilience** `TODO`
   - Acceptance: cost shock and security/data-boundary scenarios run on the same graph and can block approval alongside reliability evidence.
-- [ ] **M16.6 — Add a third shipped example outside payments and AI infrastructure** `TODO`
+- [x] **M16.6 — Add a third shipped example outside payments and AI infrastructure** `DONE`
   - Acceptance: the product demonstrates at least three materially different system domains without fixture-specific copy or logic.
+  - Evidence: ride-hailing dispatch ships alongside the payment platform and the inference platform — location ingest, matching, driver supply, trip state, trip events, and surge pricing, where matching depends on both a geospatial store and the trip database so one stateful failure stops dispatch entirely. The engine carries no fixture-specific branching; all three run through the same graph traversal, and `layout.test.ts` asserts the same invariants across all three.
 - [ ] **M16.7 — Upgrade replay into a decision timeline** `TODO`
   - Acceptance: the reviewer can scrub through human actions, agent tool calls, engine-generated evidence, blocked approvals, approvals, commits, and rollback.
 - [ ] **M16.8 — Add optional live room collaboration** `TODO`

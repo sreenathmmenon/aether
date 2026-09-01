@@ -77,6 +77,27 @@ function scenarioNarrative(
     ((components[0]?.properties as { peakRps?: number })?.peakRps ?? 12000) *
       1.5,
   );
+  // The component the most others depend on. This must count dependents the
+  // way the engine does — who stops working when this is lost, respecting
+  // edge direction — not total edge count, or the copy names a different
+  // component than the scenario actually fails.
+  const backward = new Set(["calls", "reads_from", "writes_to", "depends_on"]);
+  const relationships = Object.values(graph.relationships);
+  const mostDependedOn = components
+    .map((entity) => ({
+      entity,
+      dependents: relationships.filter((relation) =>
+        backward.has(relation.kind)
+          ? relation.targetId === entity.id
+          : relation.sourceId === entity.id,
+      ).length,
+    }))
+    .filter((row) => row.dependents > 0)
+    .sort(
+      (left, right) =>
+        right.dependents - left.dependents ||
+        left.entity.id.localeCompare(right.entity.id),
+    )[0]?.entity;
   return {
     regional_outage: {
       label: "Regional outage",
@@ -93,6 +114,11 @@ function scenarioNarrative(
       short: `${database?.name ?? "Primary database"} lost`,
       agent:
         "Replication mode is the decisive trade-off: async lowers recovery time, sync eliminates the recovery-point gap.",
+    },
+    dependency_failure: {
+      label: `${mostDependedOn?.name ?? "Shared dependency"} failure`,
+      short: `${mostDependedOn?.name ?? "Shared dependency"} lost`,
+      agent: `${mostDependedOn?.name ?? "The shared dependency"} carries more of this architecture than any other component. Removing the shared reliance matters more here than making that one component faster.`,
     },
   };
 }

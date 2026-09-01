@@ -77,7 +77,12 @@ export const removeComponentInput = z.object({
 
 export const runScenarioInput = z.object({
   branchId: z.string().min(1),
-  scenario: z.enum(["regional_outage", "traffic_spike", "database_failure"]),
+  scenario: z.enum([
+    "regional_outage",
+    "traffic_spike",
+    "database_failure",
+    "dependency_failure",
+  ]),
 });
 
 export const setCostCeilingInput = z.object({
