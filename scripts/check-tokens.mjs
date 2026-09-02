@@ -337,6 +337,30 @@ for (const [, url] of shipped.matchAll(/url\("([^"]+\.woff2)"\)/g)) {
   }
 }
 
+/**
+ * A `var(--name)` that no token defines resolves to nothing and takes the
+ * whole declaration with it, silently. `padding: 0 var(--space-10)` on the
+ * decision strip left two of three cells with no padding at all and their
+ * text butted against the dividers -- the scale runs 32 then 48, and there
+ * is no `--space-10`. Nothing in the build said so.
+ */
+const definedTokens = new Set(
+  [...shipped.matchAll(/^\s*(--[a-z0-9-]+)\s*:/gm)].map(([, name]) => name),
+);
+const undefinedTokens = [
+  ...new Set(
+    [...global.matchAll(/var\((--[a-z0-9-]+)/g)]
+      .map(([, name]) => name)
+      .filter((name) => !definedTokens.has(name)),
+  ),
+].sort();
+if (undefinedTokens.length) {
+  console.error(
+    `global.css uses ${undefinedTokens.join(", ")}, which tokens.css does not define; each resolves to nothing and drops its whole declaration.`,
+  );
+  process.exit(1);
+}
+
 console.log(
   `design system holds (${exempted} justified exception${exempted === 1 ? "" : "s"})`,
 );

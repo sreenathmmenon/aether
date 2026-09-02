@@ -1532,7 +1532,13 @@ export function App() {
                 // know is what the agent may do to their system right now.
                 // The count stays because it is the thing that visibly
                 // changes, but it is now attached to a verb.
-                `Your agent can do ${toolCount} things here`
+                //
+                // The count itself moved to the decision strip, where it sets
+                // large in the agent colour and visibly changes as the
+                // journey moves. Repeating it here said the same fact twice,
+                // 420px apart, so the chip went back to being what it
+                // actually is: the live connection indicator.
+                "Agent connected"
               : "No agent connected"}
           </span>
           {toolDelta !== undefined && (

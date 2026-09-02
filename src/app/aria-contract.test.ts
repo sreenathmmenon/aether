@@ -541,8 +541,20 @@ describe("the interface honours the ARIA it declares", () => {
     expect(literals, "developer vocabulary returned to the chip").not.toMatch(
       /WebMCP|state-aware|tools registered/i,
     );
-    // Both halves read the same live count rather than a second source.
-    expect(chip.match(/toolCount/g)?.length ?? 0).toBeGreaterThanOrEqual(2);
+    // The count now sets large in the decision strip, where it visibly
+    // changes as the journey moves; repeating it in the chip said the same
+    // fact twice, 420px apart. What must never come back is a *second
+    // source* for it -- a hardcoded number that can drift from the live one.
+    // The accessible name still carries the count, because a screen reader
+    // has no strip to look at.
+    expect(chip).toContain("toolCount");
+    const rendered = literals.replace(
+      /Agent connected|No agent connected/g,
+      "",
+    );
+    expect(rendered, "a hardcoded tool count returned to the chip").not.toMatch(
+      /\b\d+\s+(things|tools)\b/i,
+    );
   });
 
   it("shows the surface changing, not only announces it", () => {

@@ -445,11 +445,24 @@ button {
      four systems sets at 378px and the longest eyebrow at 369px, so the
      facts each hold one line with room rather than wrapping in a strip
      that has 800px to spare beside them. */
-  grid-template-columns: minmax(0, 26rem) minmax(0, 26rem) max-content;
+  /* Content-sized, not equal thirds. Equal columns gave "A repair future"
+     the same 365px as "No repair future yet", so the short fact sat in a
+     half-empty cell while the long ones wrapped to two lines beside 200px
+     of empty space. Each fact takes the width its own sentence needs. */
+  grid-template-columns: repeat(3, max-content);
   justify-content: start;
-  gap: var(--space-12);
+  /* Spacing lives here, not here *and* in each cell's padding: the two
+     compounded into a 40px gap after the first fact and ~90px after the
+     second, so the dividers floated at inconsistent distances. */
+  gap: 0;
   align-items: baseline;
-  padding: var(--space-6) var(--space-12);
+  /* 159px of band to carry three short facts, each in a 110px cell holding
+     two lines -- air, not information, and it pushed the canvas (the actual
+     product) to 641px on a 679px fold. The label sits inline with its value
+     now and the band takes a third of the height, so a reviewer meets the
+     architecture on the first screen instead of scrolling past a summary of
+     it. */
+  padding: var(--space-3) var(--space-12);
   border-bottom: 1px solid var(--border);
   background: linear-gradient(
     180deg,
@@ -457,19 +470,24 @@ button {
     transparent
   );
 }
-.brief-state,
 /* The agent's reach, in the row a reviewer reads before scrolling. The
    count is the thing that changes as the journey moves, so it carries the
    agent colour and the display face while the sentence around it stays
-   quiet. */
-.brief-reach {
-  padding-left: var(--space-8);
-  border-left: 1px solid var(--border);
-}
+   quiet. Its divider and padding come from the shared cell rule -- declaring
+   them again here put two borders and two paddings between the same pair of
+   facts. */
 .brief-reach strong {
   display: flex;
   align-items: baseline;
   gap: var(--space-2);
+}
+.brief-reach strong {
+  /* The count sets at 32px inside an 18px line box, which forced the
+     sentence onto a second line while the cell had width to spare. The line
+     box takes the figure's height so the number keeps its weight and the
+     fact stays on one line. */
+  line-height: 1;
+  white-space: nowrap;
 }
 .brief-reach em {
   font-family: var(--font-display);
@@ -480,15 +498,11 @@ button {
   font-variant-numeric: tabular-nums;
   color: var(--agent-text);
 }
-.brief-waiting {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.brief-waiting {
-  padding-left: 40px;
-  border-left: 1px solid var(--border);
-}
+/* Was `flex-direction: column`, left over from when every fact stacked its
+   label over its value. With the other two inline it dropped this value a
+   line below its neighbours and left the row's dividers ragged. The divider
+   and the padding now come from the shared cell rule, so there is exactly
+   one of each between any two facts. */
 .brief-state strong,
 .brief-waiting strong {
   font-size: 16px;
@@ -497,11 +511,19 @@ button {
   color: var(--ink);
 }
 .decision-brief > div {
-  display: grid;
-  gap: 4px;
-  min-height: 110px;
-  padding: 20px 32px;
+  /* Was a 110px floor with 20px/32px padding around two short lines: 159px
+     of band to carry three facts, which pushed the canvas -- the actual
+     product -- to 641px on a 679px fold. Label beside value on one line, no
+     floor, so the reviewer meets the architecture on the first screen. */
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  min-width: 0;
+  padding: 0 var(--space-8);
   border-right: 1px solid var(--border);
+}
+.decision-brief > div:first-child {
+  padding-left: var(--space-12);
 }
 .decision-brief > div:last-child {
   border-right: 0;
@@ -513,6 +535,7 @@ button {
   background: linear-gradient(90deg, rgb(0 169 155 / 0.06), transparent);
 }
 .brief-label {
+  flex: none;
   color: var(--human);
   font-size: 12px;
   font-weight: 650;
