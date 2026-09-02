@@ -3,6 +3,7 @@ import demo from "../../docs/DEMO.md?raw";
 import submission from "../../docs/SUBMISSION.md?raw";
 import appSource from "./App.tsx?raw";
 import readme from "../../README.md?raw";
+import gateSource from "./gate-reason.ts?raw";
 import engineSource from "@simulation/engine?raw";
 import baselineSource from "../fixtures/payment-platform/baseline.ts?raw";
 import { createInitialState, dispatch } from "@core/branch-engine";
@@ -267,8 +268,23 @@ describe("the demo script quotes what the product reports", () => {
     ].length;
     expect(components, "the seeded architecture changed size").toBe(5);
     // The gate reason the script quotes states this count twice.
-    expect(demo.replace(/\s+/g, " ")).toContain(
+    const flat = demo.replace(/\s+/g, " ");
+    expect(flat).toContain(
       `${components} of ${components} components simulated`,
     );
+    // And the script quotes a clause the helper can actually produce. A
+    // rehearsal caught it quoting "Recomputed after your edits" when running
+    // every scenario fresh at the repaired version yields "First run on this
+    // future" — the clause describes the displayed run's scope, not whether
+    // edits happened.
+    for (const clause of [
+      "First run on this future",
+      "Recomputed after your edits",
+    ])
+      expect(
+        gateSource,
+        `the script quotes "${clause}" but the helper no longer produces it`,
+      ).toContain(clause);
+    expect(flat).toContain("First run on this future");
   });
 });

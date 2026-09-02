@@ -104,7 +104,13 @@ Raise reconciliation, re-run all four scenarios one at a time.
 
 The reason changes to:
 
-> "Evidence is current and clean · Recomputed after your edits · 5 of 5 components simulated"
+> "Evidence is current and clean · First run on this future · 5 of 5 components simulated"
+
+(The second clause describes the _displayed run's_ scope, not the edits.
+Running every scenario fresh at the repaired version makes each one a first
+run at that version, so this reads "First run on this future". If you
+re-run only the scenario you were already looking at, it reads "Recomputed
+after your edits" instead. Either is correct; do not be thrown by it.)
 
 and **`Human approve exact plan`** becomes enabled.
 

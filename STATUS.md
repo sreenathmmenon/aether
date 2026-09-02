@@ -2222,3 +2222,12 @@ was already underway again.
   - Evidence: four documented figures this session turned out to be wrong — the 1,500-character output budget, a stale "nine tools", a shot plan whose central instruction was impossible, and a README undercounting the shipped systems by a third. Each was checkable from the repository, and each was found by accident rather than by looking.
   - Every remaining countable claim across `README.md` and `docs/` was enumerated and checked. The tool counts were already guarded by the registry drift test; the shipped-system count was closed in M171. The two left — four scenarios and five components — are correct, and are now derived from the engine's scenario set and the seeded fixture rather than restated.
   - Miscounting components in the script now fails. The class is closed: figures in the film's script, the README, and the submission are all held to what the product reports.
+
+## Milestone 173 — Rehearsing the film caught the script quoting itself wrong
+
+- [x] **M173.1 — Walk it end to end as a recorder would** `DONE`
+  - Acceptance: every line the script quotes is what the page shows during the walk.
+  - Evidence: the script was rehearsed against the deployed origin from a cleared workspace, following it literally. Everything through the gate opening matched verbatim — the modal heading, `WebMCP live · 5 state-aware tools`, the Mumbai headline, `93.96% availability · 1 violation`, `Primary Ledger has no standby replica`, the jump to twelve tools, the refusal at `1 scenario reports violations`, and the revealed `Reconciliation capacity deficit: 2,000 RPS`.
+  - One line did not. The script quoted the gate as reading `Recomputed after your edits`; the walk produced `First run on this future`. Both are real, and the difference is not arbitrary: the clause describes the **displayed run's scope**, not whether edits happened. Running every scenario fresh at the repaired version makes each a first run _at that version_. A recorder following the script would have seen a sentence that did not match and wondered what they had done wrong.
+  - Corrected to what the walk produced, with the distinction written in so neither reading is a surprise on camera. A test now holds the script to clauses `gate-reason.ts` can actually produce — renaming one fails two tests.
+  - This is the argument for rehearsing rather than writing from memory: the figures were all derived and correct, and the one thing a derivation could not check was whether the sentence appears in the situation the script puts the recorder in.
