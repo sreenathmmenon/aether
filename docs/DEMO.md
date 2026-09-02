@@ -83,8 +83,11 @@ violation are computed from the dependency graph._
 
 Click **`✦ Create repair futures`**. Wait about two seconds.
 
-Three futures appear — lowest cost at 93.96%, fastest recovery at 96.36%,
-highest resilience at 97.11% — and the header chip changes to
+Three futures appear, and each states the axis it optimises rather than a
+column of the same number — **`Lowest cost · $5,920 / month`**, **`Fastest
+recovery · 12m recovery`**, **`Highest resilience · 97.11% availability`**.
+Point at that: the cheap future is not a worse version of the safe one, it
+is a different answer to the same failure. The header chip changes to
 **`WebMCP live · 13 state-aware tools`**.
 
 Say it plainly: _this is the second time the surface has grown on camera —

@@ -12,6 +12,7 @@ import baselineSource from "../fixtures/payment-platform/baseline.ts?raw";
 import { createInitialState, dispatch } from "@core/branch-engine";
 import { paymentPlatformBaseline } from "../fixtures/payment-platform/baseline";
 import { deriveGraph } from "@core/branch-engine";
+import { futureHeadline } from "./future-headline";
 import { runScenario } from "@simulation/engine";
 
 /**
@@ -67,18 +68,21 @@ describe("the demo script quotes what the product reports", () => {
       const run = runScenario(
         // The card shows the regional-outage figure, which is what the film
         // reads out as each future appears.
-        state.revisions[branch.baseRevisionId]!.graph,
+        deriveGraph(state, branch),
         "regional_outage",
         branch.id,
         branch.version,
       );
-      void run;
+      // Each card leads with the axis its intent optimises, so the script
+      // has to quote what the screen will actually show. It used to quote
+      // three availability figures, which was right when every card
+      // reported availability and wrong the moment they stopped.
+      const headline = futureHeadline(branch.name, run);
+      expect(
+        demo,
+        `the script no longer quotes "${headline}" for ${branch.name}`,
+      ).toContain(headline);
     }
-    // The figures the script quotes for the three cards.
-    for (const availability of ["93.96", "96.36", "97.11"])
-      expect(demo, `the script no longer quotes ${availability}%`).toContain(
-        availability,
-      );
   });
 
   it("states the bottleneck chain the film walks through", () => {
