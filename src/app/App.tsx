@@ -39,6 +39,7 @@ import { loadSummary } from "./load-summary";
 import { reconcileMessage } from "./reconcile-message";
 import { mergeEvidence } from "@core/evidence-merge";
 import { visibleNotes } from "./opening-notes";
+import { useOverflowFade } from "./use-overflow-fade";
 import { scenarioNarrative } from "./scenario-copy";
 import { useModalDialog } from "./use-modal-dialog";
 import { syncExplanation, syncTone } from "./sync-status";
@@ -723,6 +724,12 @@ export function App() {
   }, [state]);
   useEffect(() => () => registryRef.current?.dispose(), []);
   // Both dialogs declare aria-modal, so both must behave like one.
+  // Scrolling regions report whether they actually overflow, so the bottom
+  // fade that says "this continues" only appears where it is true.
+  useOverflowFade(
+    ".intelligence-panel, .future-rail, .thread-notes, .replay-list, .decision-replay ol",
+    [state, selectedScenario],
+  );
   const compareRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!latestCall) return;

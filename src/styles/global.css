@@ -596,20 +596,19 @@ button {
   max-height: 78vh;
   overflow-y: auto;
 }
+/* Only where the content actually overflows -- CSS cannot detect that, so
+   the panel reports it via `data-overflowing`. A fade on a panel that fits
+   dims its last line for nothing: the agent's "93.96% availability · 46m
+   recovery" sat 14px above the edge inside a 16px fade, on a panel with
+   nothing to scroll to. */
+[data-overflowing="true"] {
+  /* prettier-ignore */
+  mask-image: linear-gradient(to bottom, #000 calc(100% - var(--space-4)), transparent 100%); /* off-scale: a mask's black is opacity, not a colour -- it never renders */
+}
 .future-rail,
 .intelligence-panel {
   padding: var(--space-6);
   background: var(--surface-sunken);
-  /* These scroll -- 2085px of evidence in a 530px panel -- but a trackpad
-     draws no scrollbar, so a sentence cut at the edge read as broken rather
-     than as continuing. A static fade says the content runs on.
-     Deliberately not scroll-driven: `mask-image` does not interpolate
-     between a gradient and `none`, and driving a registered length off a
-     scroll timeline did not animate here either. Always-on is honest --
-     there is almost always more evidence below -- and it degrades to
-     nothing rather than to a permanently dimmed last line. */
-  /* prettier-ignore */
-  mask-image: linear-gradient(to bottom, #000 calc(100% - var(--space-6)), transparent 100%); /* off-scale: a mask's black is opacity, not a colour -- it never renders */
 }
 .future-rail {
   border-right: 1px solid var(--border);

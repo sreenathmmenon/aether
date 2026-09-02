@@ -365,6 +365,43 @@ if (undefinedTokens.length) {
   process.exit(1);
 }
 
+/**
+ * The bottom fade on a scrolling panel must be conditional.
+ *
+ * Applied unconditionally it dims the last line of a panel that fits: the
+ * agent's "93.96% availability · 46m recovery" sat 14px above the edge
+ * inside a 16px fade, with nothing to scroll to. CSS cannot ask whether an
+ * element overflows, so each panel reports it and the mask keys off that.
+ */
+const fadeRule = global.indexOf('[data-overflowing="true"]');
+if (
+  fadeRule === -1 ||
+  !global.slice(fadeRule, global.indexOf("}", fadeRule)).includes("mask-image")
+) {
+  console.error(
+    'the overflow fade must be declared on [data-overflowing="true"], so it appears only where content actually overflows',
+  );
+  process.exit(1);
+}
+for (const selector of [
+  ".thread-notes",
+  ".replay-list",
+  ".future-rail",
+  ".intelligence-panel",
+]) {
+  let at = global.indexOf(`${selector} {`);
+  while (at !== -1) {
+    const block = global.slice(at, global.indexOf("}", at));
+    if (block.includes("mask-image")) {
+      console.error(
+        `${selector} masks unconditionally; a fade on a panel that fits dims its last line for nothing`,
+      );
+      process.exit(1);
+    }
+    at = global.indexOf(`${selector} {`, at + 1);
+  }
+}
+
 console.log(
   `design system holds (${exempted} justified exception${exempted === 1 ? "" : "s"})`,
 );
