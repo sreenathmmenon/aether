@@ -3,6 +3,7 @@ import { createInitialState, dispatch } from "./branch-engine";
 import { blankBaseline } from "../fixtures/blank/baseline";
 import { paymentPlatformBaseline } from "../fixtures/payment-platform/baseline";
 import { wouldDiscardWork } from "./sync-guard";
+import { mergeEvidence } from "./evidence-merge";
 
 const human = { id: "s", kind: "human" as const, displayName: "S" };
 
@@ -36,6 +37,48 @@ describe("shared state never destroys local work", () => {
     expect(wouldDiscardWork(built, idleTab)).toBe(true);
     // The reverse is welcome: a richer workspace may arrive.
     expect(wouldDiscardWork(idleTab, built)).toBe(false);
+  });
+
+  it("refuses an update that would undo a human approval", () => {
+    // Approving changes no component, no branch and no run, and its audit
+    // entry is unioned back in by `mergeEvidence` -- so incoming state that
+    // had lost the approval passed every check the guard made, and the
+    // reconcile adopted it. Measured on the live origin: the approval landed
+    // and was gone again inside 250ms. It is the one act this product exists
+    // to protect.
+    const seeded = createInitialState(paymentPlatformBaseline);
+    const branched = dispatch(seeded, {
+      type: "CREATE_BRANCH",
+      input: { name: "Repair", intent: "highest_resilience" },
+    });
+    if (!branched.ok) throw new Error("fixture branch must be created");
+    const branch = branched.value.branches["branch-highest_resilience"]!;
+    const ran = dispatch(branched.value, {
+      type: "RUN_SCENARIO",
+      input: { branchId: branch.id, scenario: "regional_outage" },
+    });
+    if (!ran.ok) throw new Error("scenario must run");
+    const approved = dispatch(
+      ran.value,
+      {
+        type: "APPROVE_BRANCH",
+        input: {
+          branchId: branch.id,
+          branchVersion: ran.value.branches[branch.id]!.version,
+        },
+      },
+      human,
+    );
+    if (!approved.ok) throw new Error(`approve: ${approved.message}`);
+
+    // The candidate is the *merge*, because that is what every adoption path
+    // actually installs -- and `mergeEvidence` takes branches wholesale from
+    // the incoming state, so the approval is exactly what it drops.
+    const merged = mergeEvidence(approved.value, ran.value);
+    expect(merged.branches[branch.id]!.status).not.toBe("approved");
+    expect(wouldDiscardWork(approved.value, merged)).toBe(true);
+    // And the reverse still arrives freely.
+    expect(wouldDiscardWork(ran.value, approved.value)).toBe(false);
   });
 
   it("refuses an update that would drop recorded evidence", () => {

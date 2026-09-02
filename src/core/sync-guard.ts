@@ -32,6 +32,22 @@ export function wouldDiscardWork(
         (total, runs) => total + runs.length,
         0,
       ),
+      // A human decision is the least replaceable thing in this workspace,
+      // and nothing above sees it: approving changes no component, no
+      // branch, no run, and its audit entry is unioned back in by
+      // `mergeEvidence`. Incoming state that had lost an approval passed
+      // every check and the reconcile adopted it -- measured on the live
+      // origin, the approval landed and was gone again inside 250ms. That
+      // is the one act this whole product exists to protect.
+      // Not the baseline: it ships `merged` because it is the committed
+      // architecture, not because anybody approved it -- and on a blank
+      // canvas the first component flips it to `proposed`, which would read
+      // as a decision being lost by the very act of doing work.
+      decided: Object.entries(candidate.branches).filter(
+        ([id, branch]) =>
+          id !== "branch-baseline" &&
+          (branch.status === "approved" || branch.status === "merged"),
+      ).length,
     };
   };
   const here = built(current);
@@ -39,5 +55,6 @@ export function wouldDiscardWork(
   if (there.components < here.components) return true;
   if (there.branches < here.branches) return true;
   if (there.runs < here.runs) return true;
+  if (there.decided < here.decided) return true;
   return there.audit < here.audit;
 }
