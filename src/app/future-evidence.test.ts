@@ -79,6 +79,19 @@ describe("what a future card reports as its evidence", () => {
     expect(cardResult(stale, 1, "regional_outage")).toBeDefined();
   });
 
+  it("never lets the comparison show a stale run either", () => {
+    // The comparison holds the scenario fixed and varies the future, so
+    // matching the selected scenario is right there. Showing a run from an
+    // older version is not.
+    const compare = appSource.slice(
+      appSource.indexOf('className="compare-grid"'),
+    );
+    expect(
+      compare.slice(0, 900),
+      "the comparison can show evidence for a version that no longer exists",
+    ).toContain("run.branchVersion === branch.version");
+  });
+
   it("is the rule the card actually applies", () => {
     const rail = appSource.slice(
       appSource.indexOf('<div className="future-stack">'),

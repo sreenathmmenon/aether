@@ -3174,8 +3174,16 @@ export function App() {
             </h2>
             <div className="compare-grid">
               {futures.map((branch) => {
+                // Matching the selected scenario is right here, unlike the
+                // rail card: a comparison holds the scenario fixed and varies
+                // the future, so falling back per card would compare unlike
+                // things. The version filter is needed all the same -- a run
+                // recorded before an edit describes an architecture that no
+                // longer exists.
                 const result = state.simulations[branch.id]?.find(
-                  (run) => run.scenario === selectedScenario,
+                  (run) =>
+                    run.scenario === selectedScenario &&
+                    run.branchVersion === branch.version,
                 );
                 return (
                   <button
