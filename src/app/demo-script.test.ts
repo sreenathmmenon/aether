@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import demo from "../../docs/DEMO.md?raw";
+import submission from "../../docs/SUBMISSION.md?raw";
 import { createInitialState, dispatch } from "@core/branch-engine";
 import { paymentPlatformBaseline } from "../fixtures/payment-platform/baseline";
 import { deriveGraph } from "@core/branch-engine";
@@ -164,5 +165,26 @@ describe("the demo script quotes what the product reports", () => {
     expect(quoted("https://webmcp-production-38e5\\.up\\.railway\\.app")).toBe(
       "https://webmcp-production-38e5.up.railway.app",
     );
+  });
+
+  it("keeps one plan for how the film is shot", () => {
+    // Two documents describing the same recording drift, and this pair
+    // already had: the submission's shot plan said "select the clean
+    // future" when no future is clean on creation, so the film as planned
+    // could not have been recorded. The submission now points at the script
+    // rather than restating it.
+    const flat = submission.replace(/\s+/g, " ");
+    expect(flat, "the submission no longer points at the script").toContain(
+      "docs/DEMO.md",
+    );
+    // No second timeline here. A shot plan reads as timestamps, and a
+    // duplicate one is how the two came apart in the first place.
+    const timeline = submission.match(/\*\*\d:\d\d[–-]\d:\d\d/g) ?? [];
+    expect(
+      timeline,
+      "the submission has grown a second shot plan; DEMO.md is the one",
+    ).toHaveLength(0);
+    // And the claim that misled is recorded rather than quietly deleted.
+    expect(flat).toContain("no future is clean");
   });
 });

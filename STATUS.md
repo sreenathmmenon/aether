@@ -2182,3 +2182,11 @@ was already underway again.
 - [x] **M167.3 — The figures cannot drift from the product** `DONE`
   - Evidence: a script that quotes numbers is worse than a narrative if they go stale — the take is wrong in a way nobody notices until it is published. Every figure the script states is now derived from the same engine the page uses: the baseline availability and its violation, the three futures' figures, the spike deficits by name, and the third bottleneck **after** performing the two repairs that reveal it. Quoting a wrong baseline or a wrong revealed deficit each fails.
   - The formatter reflows prose, so a quoted phrase can be split across a line break — the assertions match whitespace-collapsed text, which was found by the first version failing on `5 state-aware tools` for that reason alone.
+
+## Milestone 168 — One plan for the film, not two
+
+- [x] **M168.1 — The submission's shot plan carried the defect DEMO.md just lost** `DONE`
+  - Acceptance: one document describes how the film is recorded.
+  - Evidence: `docs/SUBMISSION.md` held a second seven-step timeline, and step six said "select the clean future, approve, merge" — the same instruction M167 found impossible, because creating the futures simulates each against all four scenarios and every one carries violations. Two documents disagreeing about how to shoot the film is worse than one being wrong: whichever is read second wins, and neither is marked as stale.
+  - The submission now points at the script rather than restating it, and records the claim that misled rather than quietly deleting it — a reader who saw the old plan should be able to find out what happened to it.
+  - A test keeps them from diverging again: the submission must reference `docs/DEMO.md`, must contain no second timeline, and must keep the correction. Adding a duplicate shot plan fails it.

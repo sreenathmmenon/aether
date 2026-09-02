@@ -28,13 +28,21 @@ Agent authority is bounded at both ends. No approve or merge tool is registered 
 
 ## Three-minute capture plan
 
-1. **0:00–0:20 — Stakes and comprehension.** Open the Mumbai decision room. In one view, point to the outage, Aether’s recommendation, Sreenath’s cost constraint, and the explicit human gate.
-2. **0:20–0:45 — Your own system.** Switch to “Your own system”, an empty canvas, and describe an architecture out loud. The agent calls `add_architecture_component` and `connect_components`, the graph appears, and the deterministic engine immediately reports availability, recovery, and cost for a system that did not exist a moment ago.
-3. **0:45–1:15 — A state-aware surface.** Return to the seeded payment platform and show the tool list changing with context: five read and branch tools on a committed architecture, ten on an editable canvas, twelve once a repair future exists. Create the highest-resilience future and run regional-outage and database-failure simulations.
-4. **1:15–1:45 — Three futures.** Create lowest-cost and fastest-recovery alternatives, then compare deterministic availability, recovery, cost, and violations.
-5. **1:45–2:15 — Human correction.** Add a component and wire it in, then lock the derived cost ceiling. Record why the constraint matters and show the evidence and the blast radius recomputing around the change.
-6. **2:15–2:45 — Human gate and replay.** Replay the human and agent command history. Show that the costly future becomes ineligible for approval; select the clean future, approve, merge, and expose rollback.
-7. **2:45–3:00 — Close.** Show the decision record beside the live Railway URL and say: “Architecture decisions should be provable, shared, and reversible.”
+`docs/DEMO.md` holds the recordable script: every step walked against the
+deployed origin, every quoted figure derived from the same engine the page
+uses, and both first-take hazards written in. It is the single source for
+how the film is shot — a second plan here would drift from it, and an
+earlier version of this section already had: it said "select the clean
+future, approve, merge" when **no future is clean** on creation, because
+each is simulated against all four scenarios and every one carries
+violations.
+
+The arc the script actually walks is stronger than that. Highest resilience
+resolves the regional outage, a traffic spike still breaches on two
+capacity deficits, and repairing those reveals a third on reconciliation
+that was hidden behind them — the model finding the next constraint rather
+than declaring victory, which is the difference between a diagram and a
+simulation.
 
 ## Screenshot checklist
 
