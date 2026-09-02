@@ -1133,7 +1133,23 @@ button {
   font-size: 12px;
 }
 .metric-grid strong {
+  /* Figures a reviewer compares across futures -- 93.96% against 97.11%,
+     $5,920 against $8,694. Tabular numerals make the digits line up
+     column-wise, so the difference is visible as shape before it is read as
+     a number. This is the reason the mono face ships at all. */
+  font-family: var(--font-mono);
   font-size: 16px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+/* The same rule wherever a figure is meant to be compared rather than read
+   in prose: the rail cards, the comparison grid, and the run fingerprints. */
+.future-card small,
+.compare-choice strong,
+.compare-choice small,
+.baseline-card small {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
 }
 .critical {
   color: var(--failure-text);
@@ -1549,21 +1565,32 @@ button {
   grid-row: span 2;
   align-self: center;
   padding: 4px;
-  color: var(--ink);
-  font-size: 12px;
+  /* Measured across all four fills rather than assumed: no single ink
+     clears them. Page ink fails on agent teal and branch amber; light ink
+     fails on human blue. The soft tint paired with the role's text variant
+     clears every one at 4.8-5.15, which is what the soft tokens are for.
+     Colour is set per role below. */
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-label);
   text-transform: uppercase;
 }
 .impact-capacity {
-  background: var(--agent);
+  color: var(--agent-text);
+  background: var(--agent-soft);
 }
 .impact-resilience {
-  background: var(--verified);
+  color: var(--verified-text);
+  background: var(--verified-soft);
 }
 .impact-cost {
-  background: var(--branch);
+  color: var(--branch-text);
+  background: var(--branch-soft);
 }
 .impact-topology {
-  background: var(--human);
+  color: var(--human-text);
+  background: var(--human-soft);
 }
 .diff-item span,
 .diff-item del {
@@ -2382,14 +2409,20 @@ button {
   letter-spacing: 0.01em;
   animation: tool-delta-in 0.45s cubic-bezier(0.22, 1, 0.36, 1);
 }
+/* The badge that announces the agent gaining reach measured 3.59:1 -- the
+   same fill-versus-text collision as the impact badges, on the one element
+   whose whole job is to be noticed. The agent colour is used rather than
+   the verified green, because this event is the machine's authority
+   changing, not something passing. */
 .tool-delta-up {
-  color: var(--surface-sunken);
-  background: var(--verified);
+  color: var(--agent-text);
+  background: var(--agent-soft);
   box-shadow: var(--lift-2);
 }
 .tool-delta-down {
-  color: var(--surface-sunken);
-  background: var(--ink-muted);
+  color: var(--ink-muted);
+  background: var(--surface-sunken);
+  border: 1px solid var(--border);
 }
 @keyframes tool-delta-in {
   from {
