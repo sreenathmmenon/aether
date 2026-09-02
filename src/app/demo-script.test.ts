@@ -4,6 +4,7 @@ import submission from "../../docs/SUBMISSION.md?raw";
 import appSource from "./App.tsx?raw";
 import readme from "../../README.md?raw";
 import gateSource from "./gate-reason.ts?raw";
+import reducerSource from "@core/branch-engine?raw";
 import compliance from "../../docs/WEBMCP_COMPLIANCE.md?raw";
 import engineSource from "@simulation/engine?raw";
 import baselineSource from "../fixtures/payment-platform/baseline.ts?raw";
@@ -379,5 +380,35 @@ describe("the demo script quotes what the product reports", () => {
         `"${requirement}" has no checkable evidence, only a label`,
       ).toBeGreaterThan(60);
     }
+  });
+
+  it("tells the build story with claims the suite backs", () => {
+    // The "what we learned" section names specific defects and specific
+    // guards. Prose about testing is the easiest place to overclaim, so the
+    // three things it asserts are held to the code: five human-only
+    // commands, an evidence-version filter, and a derived-list guard.
+    const flat = submission.replace(/\s+/g, " ");
+    expect(flat).toContain("What we learned building it");
+
+    // Five human-only commands, counted from the reducer rather than the
+    // prose — the section says "every one of the five".
+    const humanOnly = [
+      ...reducerSource.matchAll(/command\.type === "([A-Z_]+)"/g),
+    ]
+      .map((match) => ({ name: match[1]!, at: match.index }))
+      .filter(({ at }, index, all) => {
+        const end = all[index + 1]?.at ?? reducerSource.length;
+        return reducerSource.slice(at, end).includes('actor.kind !== "human"');
+      });
+    expect(humanOnly).toHaveLength(5);
+    expect(flat, "the section miscounts the human-only commands").toContain(
+      "five human-only commands",
+    );
+
+    // The evidence-version filter it describes still exists.
+    expect(
+      reducerSource,
+      "the section describes an evidence filter the reducer no longer has",
+    ).toContain("run.branchVersion === branch.version");
   });
 });

@@ -61,6 +61,44 @@ simulation.
 4. Component-anchored human/agent discussion, replayable history, approval gate, merge, and rollback.
 5. The same journey on the second seeded system, showing nothing is fixture-specific.
 
+## What we learned building it
+
+The hard part was not registering tools. It was making a claim about an
+agent's authority that survives being checked.
+
+"No approve tool is registered" is easy to write and easy to believe. What
+made it true was deleting the assumption and testing for it: every one of
+the five human-only commands was opened to an agent actor, one at a time,
+to confirm each fails a test independently rather than being covered by one
+assertion that happens to catch the pair everyone thinks of. Removing the
+check on `ROLLBACK_MERGE` alone had broken nothing.
+
+The same method found a subtler class. Approval requires evidence, and
+evidence is tied to a branch version — but nothing enforced that a run
+gathered against version 1 could not satisfy an approval of version 3. The
+gate would have reopened on evidence describing an architecture the
+reviewer had already changed. That is the exact failure the gate exists to
+prevent, and it was invisible to a suite that only tested the parts.
+
+A recurring lesson, which cost four separate investigations before it was
+named: **a test that derives its scope or its expected value from the code
+under test can be disarmed by the very change it exists to catch.** One
+test built its list of edit commands by searching for the line it then
+asserted on, so mutating a command removed it from the list and the
+mutation exempted itself.
+
+## What is next
+
+The engine is the interesting part to extend. Failure propagates along
+typed relationship edges today; the same walk supports partial degradation,
+retry and timeout budgets, and cascading saturation rather than binary
+loss. Aether Architecture Lab is one domain package on a core — command
+pipeline, branch isolation, deterministic evidence, bounded agent
+authority, human-only commit — that is not specific to architecture. A
+schema change, a pricing model, or an infrastructure migration are the same
+shape: an agent proposes, something computes the consequence, and a person
+decides on the evidence.
+
 ## Verifiable standards evidence
 
 - Top-level imperative `document.modelContext.registerTool` integration.
