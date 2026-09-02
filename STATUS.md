@@ -2375,4 +2375,5 @@ was already underway again.
   - Acceptance: no money figure is written unformatted in either surface.
   - Evidence: M188 fixed one raw interpolation, so the rest were swept rather than assumed clean. The engine formats every figure in its violation text, the interface has none unformatted, and the tool surface had exactly the one already fixed.
   - The rule is now enforced across both files: a `$${…}` interpolation must run through `toLocaleString` or `toFixed`. Reverting the guardrail to a raw value fails two tests.
+  - Verified against the deployed origin: after locking a ceiling, `get_decision_record` reads `$8,700 monthly cost ceiling` and the page reads `Cost ceiling locked · $8,700`. Both surfaces describe the guardrail identically.
   - Recorded as the small end of a class this session kept finding: an agent and a reviewer describing the same workspace differently. It appeared in the numbers themselves (M184, M186) and in how one of them was written (M188). All three were one path doing something the other did not.
