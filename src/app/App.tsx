@@ -21,6 +21,7 @@ import { edgeBetween } from "./edge-geometry";
 import { capacityChoices } from "./capacity-choices";
 import { actorName, reviewerId, reviewerName } from "./reviewer-identity";
 import { futuresMessage } from "./futures-message";
+import { futureHeadline } from "./future-headline";
 import { gateReason } from "./gate-reason";
 import { outcomeMessage } from "./outcome-message";
 import {
@@ -1679,7 +1680,7 @@ export function App() {
                   <button
                     className={`future-card ${branch.id === activeBranch.id ? "future-card-active" : ""}`}
                     key={branch.id}
-                    aria-label={`${branch.status} ${branch.name}${result ? ` — ${result.availability.toFixed(2)}% availability` : " — awaiting evidence"} — ${branch.id === activeBranch.id ? "Viewing" : "Inspect"}`}
+                    aria-label={`${branch.status} ${branch.name} — ${futureHeadline(branch.name, result)} — ${branch.id === activeBranch.id ? "Viewing" : "Inspect"}`}
                     onClick={() =>
                       setState({
                         ...state,
@@ -1692,11 +1693,12 @@ export function App() {
                   >
                     <span className="future-kicker">{branch.status}</span>
                     <strong>{branch.name}</strong>
-                    <small>
-                      {result
-                        ? `${result.availability.toFixed(2)}% availability`
-                        : "Awaiting evidence"}
-                    </small>
+                    {/* Each future leads with the axis it optimises. Every
+                        card reported availability, so "Lowest cost" -- the one
+                        intent that deliberately trades availability away for
+                        spend -- showed a figure identical to the baseline and
+                        read as a future that did nothing. */}
+                    <small>{futureHeadline(branch.name, result)}</small>
                     <b>
                       {branch.id === activeBranch.id ? "Viewing" : "Inspect"}
                     </b>
