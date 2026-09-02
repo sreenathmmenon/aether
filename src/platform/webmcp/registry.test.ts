@@ -545,6 +545,64 @@ describe("Aether WebMCP registry", () => {
     })();
   });
 
+  it("shows an agent the same cost ceiling the reviewer set", async () => {
+    // A guardrail a person locks is part of the evidence. Both registry
+    // call sites omitted it, so a future $3,792 over a locked ceiling
+    // reported no ceiling violation to an agent while the reviewer's panel
+    // showed one — the two paths disagreeing about the same run, which is
+    // the opposite of the claim that they work one typed model.
+    const registered: RegisteredTool[] = [];
+    let state = createInitialState(paymentPlatformBaseline);
+    const registry = createAetherToolRegistry(
+      (next) => {
+        state = next;
+      },
+      undefined,
+      {
+        registerTool: async (tool) => {
+          registered.push(tool as unknown as RegisteredTool);
+        },
+      },
+    );
+    const branched = dispatch(state, {
+      type: "CREATE_BRANCH",
+      input: { name: "Ceiling probe", intent: "highest_resilience" },
+    });
+    if (!branched.ok) throw new Error("fixture branch must be created");
+    const human = { id: "s", kind: "human" as const, displayName: "S" };
+    // A ceiling the future already exceeds, set the way a person sets it.
+    const locked = dispatch(
+      branched.value,
+      { type: "SET_COST_CEILING", input: { amountUsd: 1000 } },
+      human,
+    );
+    if (!locked.ok) throw new Error("fixture ceiling must be settable");
+    expect(locked.value.workspace.costCeilingUsd).toBe(1000);
+
+    registered.length = 0;
+    await registry?.refresh(locked.value);
+    const inspect = registered
+      .filter((tool) => tool.name === "inspect_failure_domain")
+      .at(-1);
+    expect(inspect, "inspect_failure_domain is not registered").toBeDefined();
+    const result = JSON.parse(
+      String(
+        await inspect!.execute({
+          branchId: "branch-highest_resilience",
+          scenario: "regional_outage",
+        }),
+      ),
+    ) as { monthlyCostUsd: number; sloViolations: string[] };
+
+    // The run has to actually exceed the ceiling, or this asserts nothing.
+    expect(result.monthlyCostUsd).toBeGreaterThan(1000);
+    expect(
+      result.sloViolations.filter((entry) => /cost ceiling/i.test(entry)),
+      "an agent sees no ceiling violation the reviewer's panel reports",
+    ).not.toHaveLength(0);
+    registry?.dispose();
+  });
+
   it("registers no write tool on a branch a person discarded", async () => {
     // A rolled-back repair is discarded, and `canEditModel` refuses it — but
     // nothing tested that, so removing the check broke no test. The reducer

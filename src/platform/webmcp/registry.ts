@@ -422,6 +422,7 @@ export function createAetherToolRegistry(
                 "regional_outage",
                 state.workspace.activeBranchId,
                 branch?.version ?? 1,
+                state.workspace.costCeilingUsd,
               )
             : undefined;
           return toolResult({
@@ -714,11 +715,17 @@ export function createAetherToolRegistry(
           const state = snapshot();
           const branch = state.branches[state.workspace.activeBranchId];
           const graph = activeGraph(state);
+          // The workspace cost ceiling is part of the evidence, and omitting
+          // it made the agent's view disagree with the reviewer's: a future
+          // $3,792 over a locked ceiling reported no ceiling violation here
+          // while the panel showed one. Both paths run the same engine, so
+          // they have to be given the same inputs.
           const run = runScenario(
             graph,
             parsed.data.scenario,
             state.workspace.activeBranchId,
             branch?.version ?? 1,
+            state.workspace.costCeilingUsd,
           );
           const named = (id: string) => graph.entities[id]?.name ?? id;
           return toolResult({

@@ -2319,3 +2319,13 @@ was already underway again.
   - Untested, again: repointing the button at a different reducer command broke nothing.
   - Now covered on the properties that matter. The note is anchored to whatever the reviewer had selected — that is what makes it a comment on a component rather than a loose remark — and stamped with the evidence at the time of writing, without which a note read months later says what someone thought and not what they saw. An empty note is refused with a reason. Removing the anchor or the evidence stamp each fail.
   - Four consecutive walks have now found untested paths: the capacity control, the re-run instruction, the brief builder, the share flow, and this. Every one is a path a judge takes and no test did.
+
+## Milestone 184 — A guardrail the agent could not see
+
+- [x] **M184.1 — The two paths disagreed about the same run** `DONE`
+  - Acceptance: an agent and a reviewer see the same evidence for the same scenario.
+  - Evidence: walking the guardrail found the control behaves correctly — `Lock cost ceiling at $8,700` appears once a repair future exists, locks with one click, is recorded in the replay as `locked a cost ceiling`, and is carried into the gate reason as `· human cost ceiling $8,700` so a reviewer always sees the constraint beside the decision.
+  - Then the engine was asked directly. A future costing **$12,492 against a locked $8,700 ceiling** — $3,792 over — returned **no ceiling violation** to an agent, while the reviewer's panel reported one. Both registry call sites omitted `costCeilingUsd` when calling `runScenario`; the engine enforces it, the interface passes it, the tools did not.
+  - That is the submission's central claim inverted. "People and agents work the same typed model" is false if the model is given different inputs depending on who asks, and an agent reasoning about whether a future is approvable would have concluded it was.
+  - Both call sites now pass the ceiling. A test locks one the future already exceeds, confirms the run genuinely exceeds it, and requires the agent's `sloViolations` to contain the breach. Omitting the argument again fails.
+  - A probe fault recorded: the first test set `costCeilingUsd` when the command's field is `amountUsd`, so the ceiling silently was not set and the assertion failed for the wrong reason. Reading the reducer rather than guessing the shape settled it.
