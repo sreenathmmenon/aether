@@ -151,3 +151,54 @@ describe("a write never erases evidence it has not seen", () => {
     expect(merged.audit).toHaveLength(shared.value.audit.length);
   });
 });
+
+describe("the sync guard sees a branch's own edits", () => {
+  const agent = { id: "a", kind: "agent" as const, displayName: "A" };
+
+  it("refuses remote state holding an older copy of a branch", () => {
+    // A repair adds operations to an existing branch. It does not change the
+    // component count, the branch count or the run count, and the audit
+    // entries behind it are unioned in by `mergeEvidence` so that does not
+    // shrink either -- so incoming state carrying an older copy of the branch
+    // passed every check the guard made. The reconcile adopted it: an agent's
+    // repair loop reached version 6 with 11 operations on the deployed origin
+    // and snapped back to version 3 with 8 about two seconds later, taking
+    // the approval that rested on those edits with it.
+    let stale = createInitialState(paymentPlatformBaseline);
+    const branched = dispatch(stale, {
+      type: "CREATE_BRANCH",
+      input: { name: "Highest resilience", intent: "highest_resilience" },
+    });
+    if (!branched.ok) throw new Error("fixture branch must be created");
+    stale = branched.value;
+
+    let repaired = stale;
+    for (const value of [11000, 12000, 13000]) {
+      const written = dispatch(
+        repaired,
+        {
+          type: "SET_PROPERTY",
+          input: {
+            branchId: "branch-highest_resilience",
+            entityId: "ledger",
+            property: "capacityRps",
+            value,
+          },
+        },
+        agent,
+      );
+      if (!written.ok) throw new Error(`repair: ${written.message}`);
+      repaired = written.value;
+    }
+
+    // The three signals the guard already had are all unchanged or restored.
+    const merged = mergeEvidence(repaired, stale);
+    expect(Object.keys(merged.branches)).toHaveLength(
+      Object.keys(repaired.branches).length,
+    );
+    expect(merged.audit.length).toBeGreaterThanOrEqual(repaired.audit.length);
+
+    // Only the operation count is behind, and that has to be enough.
+    expect(wouldDiscardWork(repaired, merged)).toBe(true);
+  });
+});
