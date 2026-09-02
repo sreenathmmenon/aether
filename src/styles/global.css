@@ -128,7 +128,7 @@ button {
   background: rgba(193, 74, 60, 0.09);
 }
 .header-call-rejected code {
-  color: var(--coral);
+  color: var(--coral-text);
 }
 @keyframes header-call-in {
   from {
@@ -270,7 +270,7 @@ button {
   padding: 5px 8px;
   border: 1px solid rgba(36, 135, 101, 0.25);
   border-radius: 999px;
-  color: var(--green);
+  color: var(--green-text);
   background: rgba(36, 135, 101, 0.07);
   font-size: 12px;
   font-weight: 800;
@@ -278,7 +278,7 @@ button {
 /* Not saved anywhere durable: the strongest signal the header carries. */
 .sync-at-risk {
   border-color: rgba(217, 93, 79, 0.4);
-  color: var(--coral);
+  color: var(--coral-text);
   background: rgba(217, 93, 79, 0.09);
 }
 /* Held locally, not yet durable. */
@@ -430,7 +430,7 @@ button {
   background: rgba(255, 255, 255, 0.35);
 }
 .future-card-active {
-  border-color: var(--cyan);
+  border-color: var(--cyan-text);
   box-shadow:
     inset 3px 0 var(--cyan),
     0 7px 18px rgba(17, 36, 64, 0.05);
@@ -456,7 +456,7 @@ button {
   position: absolute;
   top: 14px;
   right: 12px;
-  color: var(--cyan);
+  color: var(--cyan-text);
   font-size: 12px;
 }
 .create-future-button {
@@ -474,7 +474,7 @@ button {
   cursor: pointer;
 }
 .create-future-button span {
-  color: var(--cyan);
+  color: var(--cyan-text);
   font-size: 15px;
 }
 .reset-link {
@@ -673,7 +673,7 @@ button {
   font-size: 12px;
 }
 .architecture-node.node-affected {
-  border-color: var(--coral);
+  border-color: var(--coral-text);
   background: linear-gradient(180deg, #fff6f4 0%, var(--panel) 62%);
   box-shadow:
     0 0 0 1px rgba(217, 93, 79, 0.35),
@@ -735,7 +735,7 @@ button {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: var(--coral);
+  color: var(--coral-text);
   font-weight: 750;
   font-size: 12px;
 }
@@ -882,7 +882,7 @@ button {
 .agent-narrative span {
   display: block;
   margin-bottom: 5px;
-  color: var(--cyan);
+  color: var(--cyan-text);
   font-size: 12px;
   font-weight: 850;
   letter-spacing: 0.1em;
@@ -914,7 +914,7 @@ button {
   font-size: 12px;
 }
 .simulation-provenance span {
-  color: var(--cyan);
+  color: var(--cyan-text);
   font-weight: 850;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -936,10 +936,10 @@ button {
   font-size: 16px;
 }
 .critical {
-  color: var(--coral);
+  color: var(--coral-text);
 }
 .safe {
-  color: var(--green);
+  color: var(--green-text);
 }
 .violation-list {
   margin-top: 18px;
@@ -962,7 +962,7 @@ button {
   background: var(--coral);
 }
 .violation-list .no-violation {
-  color: var(--green);
+  color: var(--green-text);
 }
 .system-brief-panel {
   display: grid;
@@ -1370,7 +1370,7 @@ button {
   font-size: 12px;
 }
 .diff-item ins {
-  color: var(--green);
+  color: var(--green-text);
   font-weight: 800;
   text-decoration: none;
 }
@@ -1405,9 +1405,9 @@ button {
   cursor: not-allowed;
 }
 .review-actions .rollback-button {
-  color: var(--coral);
+  color: var(--coral-text);
   background: #fff;
-  border-color: var(--coral);
+  border-color: var(--coral-text);
 }
 /* A refusal must not read like a confirmation. The strip sits on the dark
    ground, so this lifts rather than darkens. */
@@ -1426,7 +1426,7 @@ button {
 }
 .activity-strip .eyebrow {
   margin: 0;
-  color: var(--cyan);
+  color: var(--cyan-text);
 }
 .activity-strip p {
   margin: 0;
@@ -1518,11 +1518,11 @@ button {
   line-height: 1.4;
 }
 .compare-choice b {
-  color: var(--coral);
+  color: var(--coral-text);
   font-size: 12px;
 }
 .selected-choice {
-  border-color: var(--cyan);
+  border-color: var(--cyan-text);
   box-shadow: inset 3px 0 var(--cyan);
 }
 .compare-foot {
@@ -1812,7 +1812,7 @@ button {
 }
 .tool-feed .eyebrow {
   margin-bottom: 9px;
-  color: var(--cyan);
+  color: var(--cyan-text);
 }
 .tool-feed ol {
   display: grid;
@@ -1829,7 +1829,7 @@ button {
   animation: tool-call-in 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .tool-feed li.tool-call-rejected {
-  border-left-color: var(--coral);
+  border-left-color: var(--coral-text);
 }
 .tool-feed code {
   color: var(--ink);
@@ -1864,7 +1864,7 @@ button {
     0 10px 24px -16px rgba(236, 142, 45, 0.6);
 }
 .architecture-node.node-degraded small {
-  color: #a4641a;
+  color: var(--amber-text);
 }
 
 /* Architects add their own components, so the model is theirs to shape. */
@@ -2008,7 +2008,7 @@ button {
   border-left-color: var(--ink);
 }
 .decision-replay li.replay-agent {
-  border-left-color: var(--cyan);
+  border-left-color: var(--cyan-text);
 }
 .decision-replay li strong::before {
   content: "";
@@ -2024,7 +2024,7 @@ button {
   color: var(--ink);
 }
 .decision-replay li.replay-agent strong {
-  color: var(--cyan);
+  color: var(--cyan-text);
 }
 .decision-replay li small {
   padding: 1px 7px;
@@ -2042,7 +2042,7 @@ button {
   background: rgba(17, 167, 184, 0.13);
 }
 .decision-replay li.impact-guardrail small {
-  color: #a4641a;
+  color: var(--amber-text);
   background: rgba(236, 142, 45, 0.15);
 }
 
@@ -2080,7 +2080,7 @@ button {
   align-items: flex-start;
   gap: 7px;
   margin: 7px 0 0;
-  color: #a4641a;
+  color: var(--amber-text);
   font-size: 12px;
   line-height: 1.45;
 }

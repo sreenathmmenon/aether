@@ -12,7 +12,11 @@
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   --ink: #112440;
-  --muted: #66748a;
+  /* Measured against the warm page ground on the deployed page: this sat at
+     4.17:1, just under the 4.5 AA threshold, across fourteen pieces of
+     secondary text. Six points darker clears it at 4.54 and is
+     indistinguishable at a glance. */
+  --muted: #606e84;
   --line: #d7d9d2;
   --paper: #f3f0e9;
   --panel: #fbfaf6;
@@ -21,4 +25,13 @@
   --orange: #ec8e2d;
   --coral: #d95d4f;
   --green: #248765;
+  /* Text-only variants of the accent colours. The accents themselves are
+     also used as fills, where a background does not have to meet text
+     contrast, so darkening the token would change the interface to fix a
+     problem only the text has. These are the minimum darkening that reaches
+     4.5:1 on the page ground: cyan was the worst at 2.55:1. */
+  --cyan-text: #007889;
+  --coral-text: #bf4335;
+  --green-text: #197c5a;
+  --amber-text: #9e5e14;
 }
