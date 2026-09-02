@@ -24,7 +24,14 @@ export type AetherState = {
   simulations: Record<BranchId, ScenarioResult[]>;
 };
 
-const human: Actor = { id: "sreenath", kind: "human", displayName: "Sreenath" };
+// A role rather than a person: this product has no accounts, and naming one
+// developer told everybody else in a shared room that the decision was not
+// theirs to make.
+const human: Actor = {
+  id: "reviewer",
+  kind: "human",
+  displayName: "Reviewer",
+};
 const agent: Actor = {
   id: "aether-agent",
   kind: "agent",

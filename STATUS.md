@@ -2409,3 +2409,12 @@ was already underway again.
   - **A refusal is now the most legible line in the feed.** `create_architecture_branch refused — That architecture future already exists.` The product telling an agent no, in front of the person who will decide, is the strongest single thing this interface can show, and it used to render as an argument echo like everything else.
   - Verified on the deployed origin: both lines render with distinct accepted and refused styling, the consequence first and the tool name kept as a quiet third line — a reviewer wants what happened, an engineer wants to know which tool did it.
   - Guarded so a tool added later cannot fall back to reciting arguments: every name the registry publishes must have a description, asserted against the registry's own source. An unfamiliar tool degrades honestly to its request rather than inventing an outcome it cannot read.
+
+## Milestone 194 — A product that named one person
+
+- [x] **M194.1 — Eight instances of the author's name in shipped copy** `DONE`
+  - Acceptance: nothing a reviewer or an agent reads names a specific person.
+  - Evidence: the adversarial review scored _product legibility_ lowest of any dimension, at 4.5–6.5, and this was the clearest reason. The interface said `Only Sreenath can set guardrails, approve, or merge` — including in a shared room, where a second person who opened the link was told on screen that the decision was not theirs to make. The collaboration feature contradicted itself.
+  - It reached further than the interface. `get_decision_record`'s tool description told an **agent** the same thing, and the reducer's default human actor carried the name into every audit entry, so the replay a judge reads was attributed to a person they have never met.
+  - All of it is now a role. `Reviewer` in the interface, `the human reviewer` in what an agent reads, one module deciding it so the views cannot disagree — and when the product grows accounts, one place changes.
+  - Guarded: no shipped source may name a person in copy a reviewer or an agent reads. Reintroducing the name fails.

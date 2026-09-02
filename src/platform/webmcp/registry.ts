@@ -1372,7 +1372,7 @@ export function createAetherToolRegistry(
                     // ends at the human, and saying so is the honest answer.
                     "Report the trade-off. Only a human approves a future.",
               humanGate:
-                "Only Sreenath can approve and merge a branch in the visible Aether UI.",
+                "Only the human reviewer can approve and merge a branch, in the visible Aether UI.",
             });
             // Three fully simulated futures reached 1,898 characters of a
             // 2,000 budget, so one more scenario or a longer violation string

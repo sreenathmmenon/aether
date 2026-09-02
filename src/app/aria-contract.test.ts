@@ -197,6 +197,22 @@ describe("the interface honours the ARIA it declares", () => {
     expect(handler).toContain("decision-relevant note");
   });
 
+  it("names a role, not a person, anywhere a second reviewer can read", () => {
+    // Eight instances of the author's name shipped in the interface,
+    // including the copy someone sees after joining a shared room — where
+    // they were told on screen that only somebody else could approve. A
+    // product with no accounts naming one developer reads as one
+    // developer's tool, which is exactly what it is trying not to be.
+    for (const [name, source] of [
+      ["App.tsx", appSource],
+      ["registry.ts", registrySource],
+    ] as const)
+      expect(
+        source,
+        `${name} names a person in copy a reviewer or an agent reads`,
+      ).not.toMatch(/Sreenath/);
+  });
+
   it("hands a reviewer a shareable room in two clicks", () => {
     // The collaboration claim is only real if a judge can find it. Walking
     // it: "Open a shared review" mints a room and rewrites the URL, then

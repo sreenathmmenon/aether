@@ -19,6 +19,7 @@ import {
 } from "./region-bounds";
 import { edgeBetween } from "./edge-geometry";
 import { capacityChoices } from "./capacity-choices";
+import { actorName, reviewerId, reviewerName } from "./reviewer-identity";
 import { futuresMessage } from "./futures-message";
 import { gateReason } from "./gate-reason";
 import { outcomeMessage } from "./outcome-message";
@@ -91,13 +92,13 @@ const scenarioOrder = [
 ] as const satisfies readonly Scenario[];
 
 const humanActor = {
-  id: "sreenath",
+  id: reviewerId,
   kind: "human" as const,
-  displayName: "Sreenath",
+  displayName: reviewerName,
 };
 /**
  * Evidence the product computes on the reviewer's behalf is not a human
- * decision. Attributing it to Sreenath would make the replay -- whose whole
+ * decision. Attributing it to the reviewer would make the replay -- whose whole
  * purpose is showing who decided what -- claim he ran nine simulations he
  * never chose individually.
  */
@@ -176,12 +177,6 @@ const commandLabels: Record<string, { label: string; impact: string }> = {
   ROLLBACK_MERGE: { label: "rolled back the merge", impact: "gate" },
   ADD_DECISION_NOTE: { label: "recorded decision context", impact: "note" },
 };
-
-/** One place decides how an actor is named, so the views cannot disagree. */
-function actorName(kind: "human" | "agent" | "system") {
-  if (kind === "human") return "Sreenath";
-  return kind === "agent" ? "Aether agent" : "Aether engine";
-}
 
 function display(value: string | number | boolean) {
   return typeof value === "number" ? value.toLocaleString() : String(value);
@@ -1479,8 +1474,8 @@ export function App() {
           </span>
           <span
             className="human-chip"
-            title="Sreenath — the only actor who can approve or merge"
-            aria-label="Signed in as Sreenath, the only actor who can approve or merge"
+            title={`${reviewerName} — the only actor who can approve or merge`}
+            aria-label={`Signed in as the ${reviewerName.toLowerCase()}, the only actor who can approve or merge`}
           >
             S
           </span>
@@ -1543,7 +1538,7 @@ export function App() {
                 ? `Review ${activeBranch.name}`
                 : "Create repair futures"}
           </strong>
-          <small>Sreenath + Aether · shared, auditable</small>
+          <small>{reviewerName} + Aether · shared, auditable</small>
         </div>
       </section>
       <section
@@ -1587,7 +1582,10 @@ export function App() {
               ? "Exact plan approved — ready to commit"
               : "Evidence and explicit approval required"}
           </strong>
-          <small>Only Sreenath can set guardrails, approve, or merge.</small>
+          <small>
+            Only the {reviewerName.toLowerCase()} can set guardrails, approve,
+            or merge.
+          </small>
         </div>
       </section>
       <section
@@ -2738,7 +2736,8 @@ export function App() {
                 <p className="tool-gate">
                   No approve or merge tool is registered, and an agent cannot
                   dismantle the system or remove a heavily depended-on
-                  component. Only Sreenath can commit a future.
+                  component. Only the {reviewerName.toLowerCase()} can commit a
+                  future.
                 </p>
               </>
             )}
@@ -2834,7 +2833,7 @@ export function App() {
             )}
             <form className="note-composer" onSubmit={postDecisionNote}>
               <label htmlFor="decision-note">
-                Record Sreenath’s decision note
+                Record the {reviewerName.toLowerCase()}’s decision note
                 {selectedEntity ? ` · ${selectedEntity.name}` : ""}
               </label>
               <div>
