@@ -196,6 +196,34 @@ if (offences.length) {
 }
 
 /**
+ * The stage has to actually respond, and it has to remain perceivable
+ * without motion. Checked here because the classes live in the stylesheet,
+ * which a `?raw` import returns empty for in the test environment.
+ */
+for (const cls of ["canvas-opening", "canvas-settling"]) {
+  // The rule that animates, not the reduced-motion fallback that mentions
+  // the same class. Checking for the name anywhere let the animation be
+  // deleted while the fallback kept the check passing.
+  if (!new RegExp(`\\.${cls}[^{]*\\{[^}]*animation:\\s*canvas-`).test(global)) {
+    console.error(
+      `.${cls} has no rule, so the canvas does not answer when the agent's reach changes.`,
+    );
+    process.exit(1);
+  }
+}
+// There are several reduced-motion blocks; the fallback may be in any of
+// them, and slicing from the last one checked the wrong block entirely.
+const reduced = [...global.matchAll(/@media \(prefers-reduced-motion[^{]*\{/g)]
+  .map(({ index }) => global.slice(index, global.indexOf("\n}", index)))
+  .join("\n");
+if (!reduced.includes("canvas-opening")) {
+  console.error(
+    "the canvas response has no reduced-motion fallback; a state change must stay perceivable without animation.",
+  );
+  process.exit(1);
+}
+
+/**
  * A @font-face pointing at a file that was never added renders in the
  * fallback stack with nothing failing anywhere — the page just quietly loses
  * its typeface. Checked from disk, because a CSS `?raw` import returns empty

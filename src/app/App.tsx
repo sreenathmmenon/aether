@@ -239,6 +239,18 @@ export function App() {
     const timer = window.setTimeout(() => setToolDelta(undefined), 4000);
     return () => window.clearTimeout(timer);
   }, [toolCount]);
+  /**
+   * How the stage answers a change in the agent's reach. Kept out of the JSX
+   * attribute deliberately: a ternary containing `>` inside the tag reads as
+   * the end of the element to anything parsing the source, including the
+   * test that checks every landmark is named.
+   */
+  const canvasResponse =
+    toolDelta === undefined
+      ? ""
+      : toolDelta > 0
+        ? "canvas-opening"
+        : "canvas-settling";
   const [toolCalls, setToolCalls] = useState<ToolCall[]>([]);
   // The newest call, held briefly in the header so agent activity is visible
   // in the opening viewport rather than only in the panel a screen below.
@@ -1760,8 +1772,14 @@ export function App() {
             Reset this system
           </button>
         </aside>
+        {/* The surface expanding is the one thing that proves
+            state-dependent registration, and it was a digit swapping in a
+            header chip. The stage itself now answers: when the agent's
+            authority grows it opens and its edge lights; when a commit
+            closes the write surface it settles. A reviewer feels the machine
+            gaining and losing reach without reading a number. */}
         <section
-          className="canvas-stage"
+          className={`canvas-stage ${canvasResponse}`.trim()}
           aria-label="Interactive architecture canvas"
         >
           <div className="canvas-toolbar">

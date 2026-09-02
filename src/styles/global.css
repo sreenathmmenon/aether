@@ -571,6 +571,59 @@ button {
   --verified-text: var(--verified-on-structure);
   --branch-text: var(--branch-on-structure);
 }
+/* The stage answering the agent.
+ *
+ * The product's whole claim is that an agent's authority is state-dependent
+ * and visible. That was a number changing in a header chip. When the surface
+ * grows, the stage opens: its edge takes the agent colour and lights, and
+ * the ground lifts. When a commit closes the write surface, it settles back.
+ *
+ * This is motion expressing system behaviour rather than decorating it,
+ * which is the rule the contract sets: the animation is driven by the real
+ * registration count, so it cannot play when nothing happened.
+ */
+@keyframes canvas-open {
+  0% {
+    box-shadow: var(--lift-3);
+  }
+  45% {
+    box-shadow:
+      var(--lift-3),
+      0 0 0 2px var(--agent),
+      0 0 64px -8px var(--agent);
+  }
+  100% {
+    box-shadow: var(--lift-3);
+  }
+}
+@keyframes canvas-settle {
+  0% {
+    box-shadow:
+      var(--lift-3),
+      0 0 0 2px var(--human);
+  }
+  100% {
+    box-shadow: var(--lift-3);
+  }
+}
+.canvas-opening {
+  animation: canvas-open 1400ms var(--ease);
+}
+.canvas-settling {
+  animation: canvas-settle 900ms var(--ease);
+}
+@media (prefers-reduced-motion: reduce) {
+  /* The state change still has to be perceivable without motion, so the
+     edge holds its colour instead of pulsing. */
+  .canvas-opening,
+  .canvas-settling {
+    animation: none;
+    box-shadow:
+      var(--lift-3),
+      0 0 0 2px var(--agent);
+  }
+}
+
 /* Text drawn on the canvas runs the opposite ladder to the rest of the
    page: brightened to reach contrast rather than darkened. */
 .canvas-stage .eyebrow,
