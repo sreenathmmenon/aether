@@ -2033,3 +2033,12 @@ was already underway again.
   - It is purely decorative; the button's meaning is entirely in its words. But unmarked it was doing two wrong things at once — announced before the label, so a screen reader reads "✦ Build system first", and counted as text by a contrast check it can never meet. `aria-hidden="true"` fixes both, and is the correct answer rather than darkening an ornament.
   - A test now requires every decorative glyph span to carry the attribute, so a future one cannot ship announced. Removing it fails.
   - Verified against the deployed origin: the onboarding modal and the blank canvas both measure zero contrast failures with the glyph correctly hidden. Across every state reachable this session — seeded decision room, modal, blank canvas, merged architecture — accessibility now holds on all four dimensions checked: visible focus, named landmarks, a sound heading outline, and full AA text contrast.
+
+## Milestone 153 — The label beside every change a human approves
+
+- [x] **M153.1 — Four impact labels, none of them tested** `DONE`
+  - Acceptance: every change in the approval diff carries the right kind of impact.
+  - Evidence: the diff renders `<b class="impact-topology">topology</b>` beside each change in the review dock, so a reviewer reads whether a change is topology, cost, capacity or resilience while deciding to approve. Mutation testing found all four structural labels could be changed to anything with no test failing.
+  - The property-derived labels were already covered — mislabelling `monthlyCostUsd` or `replicationMode` fails. What was not covered is the four hardcoded `"topology"` labels for adding, removing, connecting and moving a component.
+  - A first attempt covered only `add_entity` and left three still mutable, which the re-run caught. The test now exercises all four operations and asserts every label is one the interface has a style for — an unrecognised value would render as an unstyled word beside a decision.
+  - The field names had to be read rather than guessed: a dependency change reads as `routes to Bengaluru Queue`, built from the relationship kind, not a fixed word like "dependency". The first version asserted the guess and failed for that reason.
