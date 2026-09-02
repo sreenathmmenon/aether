@@ -294,13 +294,8 @@ button {
   width: 33px;
   height: 33px;
   border-radius: 50%;
-  color: var(--void);
-  background: linear-gradient(180deg, var(--blue), #3d84f0);
-  border-radius: 999px;
-  box-shadow: var(--glow-blue);
-  transition:
-    transform 140ms ease,
-    box-shadow 140ms ease;
+  color: var(--ink);
+  background: var(--raised);
   font-weight: 800;
 }
 .hero-bar {
@@ -1836,14 +1831,18 @@ button {
   border-top: 1px solid var(--line);
 }
 .intro-start {
-  padding: 13px 22px;
+  padding: 13px 24px;
   border: 0;
-  color: var(--ink);
-  background: var(--raised);
+  border-radius: 999px;
+  color: var(--void);
+  background: linear-gradient(180deg, var(--blue), #3d84f0);
+  box-shadow: var(--glow-blue);
   font-size: 13px;
   font-weight: 750;
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition:
+    transform 140ms ease,
+    box-shadow 140ms ease;
 }
 .intro-start:hover,
 .intro-start:focus-visible {
