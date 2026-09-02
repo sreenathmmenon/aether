@@ -580,8 +580,10 @@ button {
 }
 .future-card > small {
   font-family: var(--font-display);
+  /* Figures hold one line at the display step; "Awaiting evidence" is a
+     sentence in the same slot, so it steps down rather than overflowing the
+     card. */
   font-size: var(--text-xl);
-  /* The figure is one thing, so it holds one line. */
   white-space: nowrap;
   display: flex;
   align-items: baseline;
@@ -612,6 +614,12 @@ button {
 .baseline-card small {
   color: var(--ink-muted);
   font-size: var(--text-xs);
+}
+.future-card > small:not(:has(i)) {
+  font-size: var(--text-base);
+  font-weight: var(--weight-normal);
+  letter-spacing: 0;
+  color: var(--ink-muted);
 }
 .future-card > small i {
   /* What the figure measures, sized as the label it is. */
