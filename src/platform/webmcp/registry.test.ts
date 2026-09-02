@@ -185,6 +185,95 @@ describe("Aether WebMCP registry", () => {
     registry?.dispose();
   });
 
+  it("offers no write tool a branch that is no longer writable", async () => {
+    // `writableBranchIds()` appears in six tool schemas and each is a
+    // separate opportunity to drift. M145 covers the discarded case for one
+    // of them; mutation found the other five could offer *any* branch,
+    // including a merged one — a committed architecture presented to an
+    // agent as somewhere to write.
+    const registered: RegisteredTool[] = [];
+    let state = createInitialState(paymentPlatformBaseline);
+    const registry = createAetherToolRegistry(
+      (next) => {
+        state = next;
+      },
+      undefined,
+      {
+        registerTool: async (tool) => {
+          registered.push(tool as unknown as RegisteredTool);
+        },
+      },
+    );
+    const human = { id: "s", kind: "human" as const, displayName: "S" };
+    const branched = dispatch(state, {
+      type: "CREATE_BRANCH",
+      input: { name: "Writable probe", intent: "highest_resilience" },
+    });
+    if (!branched.ok) throw new Error("fixture branch must be created");
+    const simulated = dispatch(branched.value, {
+      type: "RUN_SCENARIO",
+      input: {
+        branchId: "branch-highest_resilience",
+        scenario: "regional_outage",
+      },
+    });
+    if (!simulated.ok) throw new Error("fixture scenario must run");
+    const repair = simulated.value.branches["branch-highest_resilience"]!;
+    const approved = dispatch(
+      simulated.value,
+      {
+        type: "APPROVE_BRANCH",
+        input: { branchId: repair.id, branchVersion: repair.version },
+      },
+      human,
+    );
+    if (!approved.ok) throw new Error("fixture approval must work");
+    const merged = dispatch(
+      approved.value,
+      {
+        type: "MERGE_BRANCH",
+        input: { branchId: repair.id, branchVersion: repair.version },
+      },
+      human,
+    );
+    if (!merged.ok) throw new Error("fixture merge must work");
+    expect(merged.value.branches[repair.id]?.status).toBe("merged");
+
+    // A second future keeps write tools registered, so the enums exist to
+    // be checked — with no writable branch at all they would vanish and
+    // this would assert nothing.
+    const second = dispatch(merged.value, {
+      type: "CREATE_BRANCH",
+      input: { name: "Still open", intent: "lowest_cost" },
+    });
+    if (!second.ok) throw new Error("fixture second branch must be created");
+
+    registered.length = 0;
+    await registry?.refresh(second.value);
+    registry?.dispose();
+
+    const enums = registered
+      .map(
+        (tool) =>
+          (
+            tool as unknown as {
+              name: string;
+              inputSchema?: {
+                properties?: { branchId?: { enum?: string[] } };
+              };
+            }
+          ).inputSchema?.properties?.branchId?.enum,
+      )
+      .filter((values): values is string[] => Array.isArray(values));
+    // Several tools carry the enum, or the loop below proves little.
+    expect(enums.length).toBeGreaterThan(3);
+    for (const values of enums)
+      expect(
+        values,
+        "a merged branch is offered as a write target",
+      ).not.toContain(repair.id);
+  });
+
   it("rejects an unknown trace target in the shape an agent branches on", () => {
     // The comment beside this rejection explains a real defect — a component
     // advertised as traceable and then refused as unknown — but nothing

@@ -2127,3 +2127,12 @@ was already underway again.
   - One survivor: the `trace_architecture_dependency` rejection for an unknown component. Its comment explains a real defect it fixes — a component advertised as traceable and then refused as unknown — but nothing tested the reply, so its error code could be changed to anything. An agent branching on `INVALID_INPUT` to correct its own call would read a different code and give up.
   - Now covered by both halves: the code an agent branches on, and the hint naming the valid components so the correction takes one more call rather than a guess. Changing either fails.
   - Verified against the deployed origin: an unknown target returns `{"error":"INVALID_INPUT","problems":["entityId: unknown architecture component"],"nextAction":"Choose one of: gateway, auth, ledger, queue, reconciliation."}`, and a valid one returns the real dependency path.
+
+## Milestone 163 — A committed architecture offered as a write target
+
+- [x] **M163.1 — Six enums, one of them covered** `DONE`
+  - Acceptance: no write tool offers a branch that can no longer be written to.
+  - Evidence: `writableBranchIds()` appears in six tool schemas, and each is a separate opportunity to drift. M145 covered the discarded case for one of them. Mutation found the other five could be replaced with every branch in the workspace — offering an agent a **merged** branch, a committed architecture, as somewhere to write.
+  - The reducer would refuse those writes, so this is advertising rather than damage — but it is the state-aware claim inverted: the surface would say an agent may edit a decision that has already been made.
+  - The test approves and merges a repair, creates a second future so write tools stay registered and the enums exist to be checked, then requires no `branchId` enum anywhere to contain the merged branch. All six mutations are now killed.
+  - Also killed in the same sweep: leaving note bodies untrimmed in tool results.
