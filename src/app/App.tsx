@@ -469,6 +469,13 @@ export function App() {
     ];
   }, [evidence, scenarioCopy, selectedScenario]);
   const tracing = traceStep >= 0;
+  /**
+   * Whether there is a failure path to walk. The two bookend steps exist
+   * whatever the state, so their presence is not evidence of anything: a
+   * trace is real only when the engine found a causal chain through actual
+   * components.
+   */
+  const traceable = (evidence.causalChain ?? []).length > 0;
   // While tracing, only the entities revealed so far are lit.
   const tracedEntityIds = useMemo(() => {
     if (!tracing) return undefined;
@@ -1828,7 +1835,23 @@ export function App() {
                 </button>
               ))}
             </div>
-            <button className="trace-control" onClick={playTrace}>
+            {/* On an empty canvas the chain is empty and only the two
+                hardcoded bookends remain, so the control announced "Playing
+                the causal failure trace across the active architecture
+                future" and counted "Tracing 1/2" for a system with no
+                components -- ending on a fabricated 0.00% availability.
+                There is nothing to trace until a failure has a path through
+                something. */}
+            <button
+              className="trace-control"
+              onClick={playTrace}
+              disabled={!traceable}
+              title={
+                traceable
+                  ? undefined
+                  : "Model a system and run a scenario to trace its failure path."
+              }
+            >
               {tracing
                 ? `Tracing ${Math.min(traceStep + 1, traceSteps.length)}/${traceSteps.length}`
                 : "Play causal trace"}

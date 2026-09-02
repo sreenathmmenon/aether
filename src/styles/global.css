@@ -589,8 +589,16 @@ button {
   font-weight: 800;
   cursor: pointer;
 }
-.trace-control:hover,
-.trace-control:focus-visible {
+/* Without this the control looked live while doing nothing, which is worse
+   than a control that plainly cannot be used yet. */
+.trace-control:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+  border-color: var(--line);
+  color: var(--muted);
+}
+.trace-control:not(:disabled):hover,
+.trace-control:not(:disabled):focus-visible {
   color: var(--ink);
   background: var(--raised);
 }

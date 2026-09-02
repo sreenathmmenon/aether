@@ -117,4 +117,20 @@ if (covered === 0) {
   process.exit(1);
 }
 
+/**
+ * A control that can be disabled must look disabled. `.trace-control` is
+ * disabled when there is no causal chain to walk, and without a rule for that
+ * state it looked live while doing nothing. Checked here rather than in a
+ * test because a CSS `?raw` import returns empty under the test environment,
+ * so an assertion there would pass whatever the stylesheet said.
+ */
+for (const selector of [".trace-control"]) {
+  if (!global.includes(`${selector}:disabled`)) {
+    console.error(
+      `${selector} can be disabled and has no :disabled rule, so it looks live while doing nothing`,
+    );
+    process.exit(1);
+  }
+}
+
 console.log(`tokens agree (${pairs.length} colours)`);
