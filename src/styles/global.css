@@ -2623,13 +2623,22 @@ button {
   color: var(--ink-muted);
   font-size: var(--text-xs);
 }
+/* The entry's whole thesis: an agent cannot ship a change here, and not
+   because a control is greyed out -- because the capability was never
+   published. It was the quietest line in the panel. */
 .tool-gate {
-  margin: 8px 0 0;
-  padding-top: 8px;
-  border-top: 1px solid rgb(22 32 46 / 0.1);
-  color: var(--ink-muted);
-  font-size: 12px;
-  line-height: 1.45;
+  margin: var(--space-3) 0 0;
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--verified-soft);
+  color: var(--verified-text);
+  font-size: var(--text-xs);
+  line-height: var(--leading-normal);
+}
+.tool-gate b {
+  display: block;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
 }
 /* Approval needs every scenario clean, so blockers from the scenarios that
    are not on screen must still be visible. */

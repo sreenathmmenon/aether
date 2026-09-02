@@ -2900,7 +2900,9 @@ export function App() {
                     a reader can count. What it cannot show is that this is
                     absence rather than a disabled state, which is the whole
                     claim, so that is all this says now. */}
-                <p className="tool-gate">Not gated — absent.</p>
+                <p className="tool-gate">
+                  <b>No approve tool. No merge tool.</b> Not disabled — absent.
+                </p>
               </>
             )}
           </div>
