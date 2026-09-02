@@ -19,19 +19,52 @@ step needs a pause to look right on camera, the pause is written in.
 
 ## The 170-second film
 
-### 0:00–0:20 — The premise, before anything is clicked
+The film opens on the thing neither a person nor an agent can do alone. A
+human cannot turn a spoken paragraph into a modelled system; an agent
+cannot approve anything, by design. Together they can, and that loop is the
+product.
 
-The onboarding dialog is already the pitch. Read the heading aloud:
+### 0:00–0:25 — Speak a system into existence
 
-> "Your agent can propose a system change. Aether proves what it does."
+Open **`?system=blank`** — an empty canvas. The headline is already the
+premise:
 
-Three numbered steps are on screen — agent proposes, engine proves, only
-you commit. The header already reads **`WebMCP live · 5 state-aware
-tools`**, so the claim is live before the demo starts.
+> "Describe your system. Aether proves what a failure does to it."
 
-Click **`Enter the decision room →`**.
+Describe an architecture out loud, in the words you'd use to a colleague:
 
-### 0:20–0:40 — A real incident with real evidence
+> "An edge gateway routes to an orders API, and the orders API writes to an
+> orders store with no standby."
+
+The agent calls `model_architecture` once. Measured on the deployed origin:
+**three components and two dependencies in 2.3 seconds**, and the activity
+feed says what happened rather than which function ran —
+
+> **Built 3 components from the brief**
+
+Nothing was clicked. There is no form for this, and there could not be.
+
+### 0:25–0:50 — And the engine proves something about it
+
+Ask for a repair future and a failure simulation. The feed fills in as the
+agent works:
+
+> **Branched a highest resilience future** · next: run_failure_scenario
+> **Simulated database failure** · 98.23% available · clean
+
+The header chip moves from **10 state-aware tools** to **12** as the repair
+future appears — the surface growing because the state did.
+
+Say it plainly: _that architecture did not exist twenty seconds ago, and
+those numbers are computed from its dependency graph, not generated._
+
+### 0:50–1:05 — Now the same product, on a system that matters
+
+Switch to the seeded payment platform. Everything from here is the same
+loop against a real incident — which is the point: nothing is special-cased
+to the example.
+
+### 1:05–1:20 — A real incident with real evidence
 
 The headline reads:
 
@@ -41,12 +74,12 @@ Point at three things in one sweep:
 
 - **`CURRENT · Baseline breach · 93.96% availability · 1 violation`**
 - The causal evidence panel: **`Primary Ledger has no standby replica`**
-- The human guardrail: **`Only Sreenath can set guardrails, approve, or merge.`**
+- The human guardrail: **`Only the reviewer can set guardrails, approve, or merge.`**
 
 Say: _nothing here is generated text — the availability figure and the
 violation are computed from the dependency graph._
 
-### 0:40–1:00 — The surface grows with the state
+### 1:20–1:35 — Three futures, one click
 
 Click **`✦ Create repair futures`**. Wait about two seconds.
 
@@ -59,7 +92,7 @@ state changed. The agent can now do things it could not do a moment ago._
 
 This is the single most important frame in the film. Let it sit.
 
-### 1:00–1:25 — The gate refuses first
+### 1:35–1:55 — The gate refuses first
 
 Select **Highest resilience**. The approve control is **disabled**, and
 the reason beside it reads:
@@ -74,7 +107,7 @@ outage — 97.11% and no violations there — but a traffic spike breaches:_
 
 _Approval requires every current scenario clean, not the convenient one._
 
-### 1:25–1:55 — Repair, and find the next constraint
+### 1:55–2:25 — Repair, and find the next constraint
 
 Raise capacity on the ledger, then on authentication. **Pause between each
 edit and the re-run** — an edit invalidates the evidence, and running a
@@ -100,7 +133,7 @@ cannot look at a green panel and miss what is blocking you.
 
 Raise reconciliation, re-run all four scenarios one at a time.
 
-### 1:55–2:20 — The gate opens, and only for a person
+### 2:25–2:45 — The gate opens, and only for a person
 
 The reason changes to:
 
@@ -119,45 +152,35 @@ tools are registered and not one of them can commit this._
 
 Click approve. The record entry is the whole thesis in one row:
 
-> "Sreenath approved the exact plan — 4 clean scenarios · worst 97.11%"
+> "Reviewer approved the exact plan — 4 clean scenarios · worst 97.11%"
 
-A named person, the evidence they had, and the worst case they accepted.
+The actor, the evidence they had, and the worst case they accepted.
 Then commit. The surface **shrinks to seven tools**: a committed
 architecture is read-only to an agent. **`Rollback this merge`** appears
 as a human control.
 
-### 2:20–2:35 — The record
+### 2:45–2:55 — The record
 
 Open the replay. Every command is attributed and in order —
 `RUN_SCENARIO → APPROVE_BRANCH → MERGE_BRANCH` — human and agent actions
 in one auditable history.
 
-### 2:35–2:50 — Close
+### 2:55–3:00 — Close
 
 > "Aether does not draw architecture. It lets humans and agents test
 > futures before committing them. Architecture decisions should be
 > provable, shared, and reversible."
 
-## The whole film works without an agent
+## The seeded incident also works without an agent
 
-Every step above can be done with clicks and dropdowns alone — select a
-component, change its capacity, click the scenario tab to re-run it. That
-matters for two reasons: a judge who opens the live URL with no agent
-connected can still reach every beat, and the WebMCP surface is then
-demonstrably an _equal_ path rather than the only one. The same validated
-commands run either way, and the record attributes each to whoever ran it.
-
-If you have an agent connected, use it — narrating a repair and watching
-the graph change is the stronger shot. But nothing in the film depends on
-it.
-
-## If you have thirty more seconds
-
-Switch the system dropdown to **Your own system** — an empty canvas — and
-describe an architecture out loud. One `model_architecture` call turns a
-brief into a graph, and the same deterministic engine proves consequences
-on a system that did not exist a moment earlier. Nothing is special-cased
-to the seeded fixture.
+The opening needs one — describing a system aloud is the whole point of it.
+Everything from 1:05 onward can be done with clicks and dropdowns alone:
+select a component, change its capacity, click the scenario tab to re-run
+it. That matters because a judge who opens the live URL with no agent
+connected still reaches every beat after the opening, and because it shows
+the WebMCP surface is an _equal_ path rather than a parallel one. The same
+validated commands run either way, and the record attributes each to
+whoever ran it.
 
 ## Must be visible
 

@@ -2419,3 +2419,17 @@ was already underway again.
   - All of it is now a role. `Reviewer` in the interface, `the human reviewer` in what an agent reads, one module deciding it so the views cannot disagree — and when the product grows accounts, one place changes.
   - Verified against the deployed origin: the page reads `Only the reviewer can set guardrails, approve, or merge.` and no person is named anywhere a reviewer or an agent can read.
   - Guarded: no shipped source may name a person in copy a reviewer or an agent reads. Reintroducing the name fails.
+
+## Milestone 195 — Leading with what neither actor can do alone
+
+- [x] **M195.1 — The film buried its own argument** `DONE`
+  - Acceptance: the opening shows something impossible without both a human and an agent.
+  - Evidence: the film opened on a seeded incident and dropdowns, and reached "describe your own system" as an optional thirty-second coda. That ordering is why _agent value shown_ scored 5–6: a viewer met the product as a click-driven tool and only later heard that an agent could also drive it.
+  - The opening is now the blank canvas. Rehearsed on the deployed origin before writing it: one `model_architecture` call built **three components and two dependencies in 2.3 seconds**, and the feed narrated it as `Built 3 components from the brief`. Branching and simulating followed, reading `Branched a highest resilience future · next: run_failure_scenario` and `Simulated database failure · 98.23% available · clean`.
+  - A human cannot turn a spoken paragraph into a modelled system; an agent cannot approve anything, by design. Opening there states the thesis in twenty-five seconds instead of arguing it for three minutes.
+  - The surface now grows **twice on camera** — ten to twelve on the reviewer's own system, five to twelve on the seeded one — which is a stronger demonstration of state-dependent registration than one transition.
+
+- [x] **M195.2 — The script had gone stale against the product** `DONE`
+  - Evidence: rewriting it surfaced that the script still quoted `Only Sreenath can set guardrails` and `Sreenath approved the exact plan` — copy M194 had already removed. A recorder following it would have read a line aloud that does not appear on screen.
+  - Both corrected, and guarded: the script may not name a person, and the sentence it quotes must be one the interface builds. A first version of that assertion embedded the formatter's line wrapping and failed on a reflow rather than a real change, so it matches whitespace-collapsed text.
+  - The ordering is guarded too: removing the agent-first opening fails two tests.

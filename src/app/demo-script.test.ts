@@ -160,9 +160,13 @@ describe("the demo script quotes what the product reports", () => {
     // Prose is reflowed by the formatter, so a phrase can be split across a
     // line break — match on the whitespace-collapsed text.
     const flat = demo.replace(/\s+/g, " ");
+    // The film now opens on the blank canvas, where the surface is ten, and
+    // reaches the seeded system's five later — both transitions are shown,
+    // so both counts have to be quoted.
     for (const phrase of [
-      "5 state-aware tools",
+      "10 state-aware tools",
       "12 state-aware tools",
+      "five to twelve",
       "shrinks to seven tools",
     ])
       expect(flat, `the script no longer says "${phrase}"`).toContain(phrase);
@@ -418,5 +422,47 @@ describe("the demo script quotes what the product reports", () => {
       reducerSource,
       "the section describes an evidence filter the reducer no longer has",
     ).toContain("run.branchVersion === branch.version");
+  });
+
+  it("quotes the interface as it currently reads", () => {
+    // The script quoted "Only Sreenath can set guardrails" and "Sreenath
+    // approved the exact plan" for a while after the product stopped saying
+    // either — a recorder following it would have read a line aloud that
+    // does not appear on screen. The docs are held to the same rule the
+    // interface is.
+    const flat = demo.replace(/\s+/g, " ");
+    expect(flat, "the script names a person the product does not").not.toMatch(
+      /Sreenath/,
+    );
+    // And the sentence it quotes is one the interface builds. Matched on
+    // whitespace-collapsed text, because the formatter wraps JSX copy and a
+    // literal newline in the expectation makes this fail on a reflow rather
+    // than a real change.
+    expect(appSource.replace(/\s+/g, " ")).toContain(
+      "can set guardrails, approve, or merge",
+    );
+    expect(flat).toContain("can set guardrails, approve, or merge");
+  });
+
+  it("leads with what neither actor can do alone", () => {
+    // The adversarial review scored "agent value shown" at 5-6 because the
+    // film opened on a seeded incident and dropdowns, burying the one thing
+    // that needs both actors. The opening is now the blank canvas.
+    const opening = demo.slice(
+      demo.indexOf("## The 170-second film"),
+      demo.indexOf("### 1:05"),
+    );
+    expect(opening, "the film no longer opens on the blank canvas").toContain(
+      "?system=blank",
+    );
+    expect(opening).toContain("model_architecture");
+    // The claim that makes it worth opening there.
+    expect(opening.replace(/\s+/g, " ")).toMatch(
+      /neither a person nor an agent can do alone/,
+    );
+    // And the seeded incident comes after it, not before.
+    expect(demo.indexOf("?system=blank")).toBeLessThan(
+      demo.indexOf("Mumbai is down"),
+    );
   });
 });
