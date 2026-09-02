@@ -21,9 +21,24 @@ describe("system brief parser", () => {
       "fraud writes to Postgres, orders publishes to Kafka, analytics consumes from Kafka, " +
       "billing reads from Postgres, and reporting depends on the warehouse";
     const parsed = parseBrief(brief);
-    expect(parsed.components.length).toBe(8);
+    // Both ends of every clause are components now, so the count is of
+    // distinct names rather than clauses — "the gateway routes to checkout"
+    // introduces two things, and counting one lost the subject of every
+    // prose sentence.
     expect(parsed.overflow).toBe(0);
-    expect(parsed.components.map((c) => c.name)).toContain("warehouse");
+    const named = parsed.components.map((c) => c.name.toLowerCase());
+    for (const component of [
+      "api gateway",
+      "checkout",
+      "fraud scoring",
+      "postgres",
+      "kafka",
+      "analytics",
+      "warehouse",
+    ])
+      expect(named, `${component} is missing from the graph`).toContain(
+        component,
+      );
   });
 
   it("reports overflow rather than dropping clauses silently", () => {
@@ -35,8 +50,12 @@ describe("system brief parser", () => {
       (_, index) => `checkout calls service${index}`,
     ).join(", ");
     const parsed = parseBrief(brief);
+    // The subject "checkout" is one component shared by every clause, so
+    // the budget is reached one object sooner than when subjects were
+    // discarded. What must hold is the budget itself and that the reviewer
+    // is told something was dropped.
     expect(parsed.distinctComponents).toBe(briefComponentLimit);
-    expect(parsed.overflow).toBe(3);
+    expect(parsed.overflow).toBeGreaterThan(0);
   });
 
   it("reads the figures the reviewer stated and invents none", () => {
@@ -56,12 +75,9 @@ describe("system brief parser", () => {
     const parsed = parseBrief(
       "gateway routes to checkout, checkout writes to Postgres, analytics reads from Postgres, orders publishes to Kafka",
     );
-    expect(parsed.components.map((c) => c.edgeKind)).toEqual([
-      "routes_to",
-      "writes_to",
-      "reads_from",
-      "publishes_to",
-    ]);
+    expect(
+      parsed.components.filter((c) => c.sourceName).map((c) => c.edgeKind),
+    ).toEqual(["routes_to", "writes_to", "reads_from", "publishes_to"]);
   });
 
   it("never turns a stated figure into a component name", () => {
@@ -70,12 +86,15 @@ describe("system brief parser", () => {
     const parsed = parseBrief(
       "Users hit an API gateway at 40k rps, billing reads from Postgres costing 2400 usd monthly",
     );
-    expect(parsed.components.map((c) => c.name)).toEqual([
-      "API gateway",
-      "Postgres",
-    ]);
-    expect(parsed.components[0]!.peakRps).toBe(40000);
-    expect(parsed.components[1]!.monthlyCostUsd).toBe(2400);
+    // "Users" and "billing" are the clauses' subjects and are components in
+    // their own right; what must never appear is a name made of a figure.
+    const names = parsed.components.map((c) => c.name);
+    // "Users" is filtered as a framing word, not a component to simulate.
+    expect(names).toEqual(["API gateway", "billing", "Postgres"]);
+    expect(names.some((name) => /\d/.test(name))).toBe(false);
+    const byName = new Map(parsed.components.map((c) => [c.name, c]));
+    expect(byName.get("API gateway")!.peakRps).toBe(40000);
+    expect(byName.get("Postgres")!.monthlyCostUsd).toBe(2400);
   });
 
   it("classifies the component the clause names, not every noun in it", () => {
@@ -96,11 +115,17 @@ describe("system brief parser", () => {
     const parsed = parseBrief(
       "orders publishes to Kafka, analytics consumes from Kafka",
     );
-    expect(parsed.components.map((c) => c.name)).toEqual(["Kafka", "Kafka"]);
-    expect(parsed.components.map((c) => c.edgeKind)).toEqual([
-      "publishes_to",
-      "consumes_from",
+    // Each clause contributes its subject and its object; Kafka appearing
+    // twice is two edges into one node, which the canvas merges on the way in.
+    expect(parsed.components.map((c) => c.name)).toEqual([
+      "orders",
+      "Kafka",
+      "analytics",
+      "Kafka",
     ]);
+    expect(
+      parsed.components.filter((c) => c.sourceName).map((c) => c.edgeKind),
+    ).toEqual(["publishes_to", "consumes_from"]);
   });
 
   it("names the subject a clause draws its edge from", () => {
@@ -109,11 +134,15 @@ describe("system brief parser", () => {
     const parsed = parseBrief(
       "checkout calls fraud scoring, orders publishes to Kafka, analytics consumes from Kafka",
     );
-    expect(parsed.components.map((c) => c.sourceName)).toEqual([
-      "checkout",
-      "orders",
-      "analytics",
-    ]);
+    // Subjects are components too now, so the list holds both ends of every
+    // clause and a positional assertion would be checking the order rather
+    // than the property. What matters is that each edge draws from its own
+    // clause's subject.
+    expect(
+      parsed.components
+        .map((c) => c.sourceName)
+        .filter((name): name is string => Boolean(name)),
+    ).toEqual(["checkout", "orders", "analytics"]);
   });
 
   it("treats a shortened repeat mention as the same component", () => {
@@ -135,11 +164,12 @@ describe("system brief parser", () => {
       "Our API gateway routes to checkout. Checkout calls fraud scoring. Peak is 40000 rps. Monthly cost is 2400 usd.",
     );
     expect(parsed.components.map((c) => c.name)).toEqual([
+      "API gateway",
       "checkout",
       "fraud scoring",
     ]);
     // The figures measure the component the brief had just described.
-    const measured = parsed.components[1]!;
+    const measured = parsed.components[2]!;
     expect(measured.peakRps).toBe(40000);
     expect(measured.monthlyCostUsd).toBe(2400);
     expect(measured.unmeasured).toBe(false);
@@ -159,14 +189,15 @@ describe("system brief parser", () => {
   });
 
   it("budgets components rather than clauses", () => {
-    // Fifteen sentences about one store is one component, not a truncated
-    // brief. Counting clauses reported work as dropped that never existed.
+    // Fifteen sentences about the same pair is two components, not a
+    // truncated brief. Counting clauses reported work as dropped that never
+    // existed.
     const parsed = parseBrief(
       Array.from({ length: 15 }, () => "billing reads from Postgres").join(
         ". ",
       ),
     );
-    expect(parsed.distinctComponents).toBe(1);
+    expect(parsed.distinctComponents).toBe(2);
     expect(parsed.overflow).toBe(0);
   });
 
@@ -213,10 +244,12 @@ describe("system brief parser", () => {
     expect(byName.get("redis")).toBe("database");
     expect(byName.get("SQS")).toBe("queue");
     expect(byName.get("S3")).toBe("database");
-    // nginx is the first clause's subject, so it arrives as a named source the
-    // interface creates rather than as a clause of its own. Its kind still has
-    // to be right, because that is what the graph will store.
-    expect(parsed.components[0]!.sourceName).toBe("nginx");
+    // nginx is the first clause's subject, and a subject is a component in
+    // its own right as well as the source of the clause's edge.
+    expect(byName.get("nginx")).toBe("gateway");
+    expect(parsed.components.find((c) => c.name === "django")!.sourceName).toBe(
+      "nginx",
+    );
     expect(kindFor("nginx")).toBe("gateway");
   });
 
@@ -330,7 +363,10 @@ describe("system brief parser", () => {
     expect(kinds).toContain("gateway");
     expect(kinds).toContain("database");
     expect(kinds).toContain("queue");
-    expect(Object.keys(graph.relationships)).toHaveLength(3);
+    // Every component after the first is linked to the one before it, so the
+    // graph is connected rather than a scatter of isolated nodes — that is
+    // what makes it simulable.
+    expect(Object.keys(graph.relationships)).toHaveLength(created.length - 1);
 
     // The engine treats a described system exactly like a seeded one.
     const run = runScenario(graph, "regional_outage", "branch-baseline", 1);

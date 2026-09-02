@@ -348,6 +348,45 @@ export function parseBrief(brief: string): ParsedBrief {
       overflow += 1;
       continue;
     }
+    // A clause's subject is a component too. "An API gateway routes to an
+    // orders service" introduces *two* things, and the subject was captured
+    // only as an edge source — so every prose brief silently lost its first
+    // component, while arrow chains, where each name is an object in turn,
+    // came out whole. The blank canvas invites prose, so this was the first
+    // thing a reviewer describing their own system hit.
+    const subject = subjectNameFrom(clause);
+    if (
+      subject &&
+      !framing.test(subject) &&
+      !components.some(
+        (component) => component.name.toLowerCase() === subject.toLowerCase(),
+      ) &&
+      subject.toLowerCase() !== name.toLowerCase() &&
+      // An alias for something already on the canvas is that component, not
+      // a new one: a brief says "the API gateway" then "the gateway".
+      !resolveAlias(
+        subject,
+        components.map((component) => component.name),
+      ) &&
+      // A subject counts against the budget like any other component, or a
+      // brief of many prose sentences quietly outgrows the limit the
+      // reviewer was promised.
+      distinct.size < briefComponentLimit
+    )
+      components.push({
+        name: subject,
+        kind: kindFor(subject),
+        peakRps: 0,
+        capacityRps: 0,
+        monthlyCostUsd: 0,
+        unmeasured: true,
+        // A subject has no outgoing edge of its own; the clause's edge
+        // belongs to the object it points at, which carries this subject as
+        // its sourceName.
+        edgeKind: "depends_on",
+        sourceName: undefined,
+      });
+
     components.push({
       name,
       // Classify the component this clause names, not every noun mentioned
