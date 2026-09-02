@@ -2377,3 +2377,14 @@ was already underway again.
   - The rule is now enforced across both files: a `$${…}` interpolation must run through `toLocaleString` or `toFixed`. Reverting the guardrail to a raw value fails two tests.
   - Verified against the deployed origin: after locking a ceiling, `get_decision_record` reads `$8,700 monthly cost ceiling` and the page reads `Cost ceiling locked · $8,700`. Both surfaces describe the guardrail identically.
   - Recorded as the small end of a class this session kept finding: an agent and a reviewer describing the same workspace differently. It appeared in the numbers themselves (M184, M186) and in how one of them was written (M188). All three were one path doing something the other did not.
+
+## Milestone 190 — The comparison sweep, finished
+
+- [x] **M190.1 — Every agent-facing read checked against the page** `DONE`
+  - Acceptance: nothing an agent reads disagrees with what a reviewer sees.
+  - Evidence: the method that found M184, M186 and M188 was run to exhaustion across the remaining tools, and the rest agree:
+    - `inspect_failure_domain`'s causal chain matches the canvas exactly — the three depth-0 components read `Direct failure` and the depth-1 and depth-2 ones read `Degraded downstream`, same blast radius, same ordering.
+    - `get_architecture_summary`'s component list, dependency count and regions match the canvas.
+    - `compare_architecture_futures` matches all three future cards on name, status and availability.
+    - `get_decision_record` matches the replay's command sequence.
+  - Reported as no further findings. The three defects the method did find were all one path giving the engine different arguments than another, and that specific failure is now guarded by test rather than by remembering to look.
