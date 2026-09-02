@@ -39,6 +39,54 @@ const agent: Actor = {
 };
 
 /**
+ * Refuse a write that would push monthly cost past a locked ceiling.
+ *
+ * `SET_COST_CEILING` is human-only, and the ceiling fed `runScenario` and
+ * nothing else -- so it coloured the evidence after the fact while an agent
+ * could still set one component to $50,000 under an $8,700 cap and get a
+ * success back. A guardrail that reports rather than refuses is not a
+ * guardrail.
+ *
+ * The refusal names the ceiling, the total the change would reach, and what
+ * would fit, so a model can correct itself in one step.
+ */
+function wouldBreachCeiling(
+  state: AetherState,
+  branch: Branch,
+  graph: ArchitectureGraph,
+  changes: { entityId: string; property: string; value: unknown }[],
+) {
+  const ceiling = state.workspace.costCeilingUsd;
+  if (!ceiling) return undefined;
+  const costOf = (entity: { properties: unknown }) => {
+    const cost = (entity.properties as { monthlyCostUsd?: number })
+      .monthlyCostUsd;
+    return typeof cost === "number" ? cost : 0;
+  };
+  const components = Object.values(graph.entities).filter(
+    (entity) => entity.kind !== "region",
+  );
+  let total = components.reduce((sum, entity) => sum + costOf(entity), 0);
+  for (const change of changes) {
+    if (change.property !== "monthlyCostUsd") continue;
+    const next = Number(change.value);
+    if (!Number.isFinite(next)) continue;
+    const current = graph.entities[change.entityId];
+    total += next - (current ? costOf(current) : 0);
+  }
+  if (total <= ceiling) return undefined;
+  const headroom = Math.max(
+    0,
+    ceiling -
+      (total - changes.reduce((sum, c) => sum + Number(c.value ?? 0), 0)),
+  );
+  return commandFailure(
+    "NOT_AVAILABLE",
+    `This change would put monthly cost at $${total.toLocaleString()}, past the $${ceiling.toLocaleString()} ceiling the reviewer locked. Keep this component at or below $${headroom.toLocaleString()}, or ask the reviewer to raise the ceiling — only they can.`,
+  );
+}
+
+/**
  * The next free note number. Ids must be stable and unique for the lifetime
  * of a record -- the note list keys on them and evidence merge dedupes on
  * them -- so this reads the highest number already issued rather than
@@ -527,6 +575,19 @@ export function dispatch(
             .join(", ")}.`,
         );
     }
+    // A locked ceiling has to bind the write, not just colour the evidence
+    // afterwards. It fed `runScenario` and nothing else, so an agent could
+    // set one component to $50,000 under a $8,700 cap, get a success back,
+    // and leave the reviewer to notice in a violation later -- which makes
+    // the guardrail a report rather than a limit.
+    const overBudget = wouldBreachCeiling(next, branch, graph, [
+      {
+        entityId: command.input.entityId,
+        property: command.input.property,
+        value: command.input.value,
+      },
+    ]);
+    if (overBudget) return overBudget;
     branch.operations.push({
       kind: "set_property",
       entityId: command.input.entityId,
@@ -656,6 +717,16 @@ export function dispatch(
           y = candidateY;
           break outer;
         }
+    // A new component's cost counts against the ceiling the same way an
+    // edit to an existing one does.
+    const newComponentOverBudget = wouldBreachCeiling(next, branch, graph, [
+      {
+        entityId: entityId,
+        property: "monthlyCostUsd",
+        value: command.input.monthlyCostUsd,
+      },
+    ]);
+    if (newComponentOverBudget) return newComponentOverBudget;
     branch.operations.push({
       kind: "add_entity",
       entityId,

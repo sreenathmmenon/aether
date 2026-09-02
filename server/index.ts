@@ -44,6 +44,10 @@ app.use("*", async (context, next) => {
   context.header("Cross-Origin-Opener-Policy", "same-origin");
   context.header("Cross-Origin-Embedder-Policy", "require-corp");
   context.header("Permissions-Policy", "tools=(self)");
+  // Keep this origin in its own agent cluster. WebMCP's tool surface is
+  // origin-scoped, and `?0` would let a same-site document opt the origin
+  // out of that isolation -- so the affirmative value is the one to send.
+  context.header("Origin-Agent-Cluster", "?1");
   if (webMcpOriginTrialToken)
     context.header("Origin-Trial", webMcpOriginTrialToken);
   context.header("X-Content-Type-Options", "nosniff");
