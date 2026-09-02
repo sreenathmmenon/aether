@@ -1901,3 +1901,15 @@ was already underway again.
   - **Every one was killed.** Opening each of the five human-only commands to an agent actor individually — `APPROVE_BRANCH`, `MERGE_BRANCH`, `ROLLBACK_MERGE`, `REMOVE_COMPONENT`, `SET_COST_CEILING` — fails a test in each case, so the gate is enforced command by command rather than by one assertion that happens to cover the pair everyone tests.
   - Also killed: letting approval ignore SLO violations, raising the agent removal dependency limit from three to three hundred, removing the removal floor, widening the capacity-deficit cap, removing the tool output budget, rounding simulation results to one decimal place instead of two, dropping the lost-runs check from the sync guard, accepting a workspace whose audit is not an array, and unbounding the edge trim.
   - Two mutations were skipped rather than counted as passes, because their pattern was not unique in the file — `actor.kind !== "human"` appears five times. They were then applied per command block instead, which is how all five came to be verified separately.
+
+## Milestone 140 — A test that exempted the bug it was written to catch
+
+- [x] **M140.1 — Four of five edit commands could mark a branch approved** `DONE`
+  - Acceptance: "any edit invalidates approval" holds for every edit command.
+  - Evidence: mutation testing found that making `MOVE_ENTITY`, `ADD_COMPONENT`, `CONNECT_COMPONENTS` or `REMOVE_COMPONENT` set `branch.status = "approved"` instead of `"proposed"` broke no test. The existing test covered `SET_PROPERTY` alone, so a submission claim was enforced for one command in five — and an edit that kept its approval would let a changed plan be merged on evidence gathered before the change.
+
+- [x] **M140.2 — The first fix could not fail** `DONE`
+  - Evidence: the new test derived its list of edit commands by finding reducer blocks containing `branch.status = "proposed"` — the exact line it then asserts on. Mutating a command's status assignment therefore _removed that command from the list_, so the mutation exempted itself from scrutiny and the test passed. Four of five mutations still survived, with the test in place and running.
+  - Chasing that took several wrong turns worth recording: the mutation was confirmed to produce `status=approved` in isolation while the suite stayed green, the extraction was confirmed to return all five commands **unmutated**, and one measurement was invalid because `git checkout` had discarded the uncommitted test — the run that produced it was measuring a suite without it. Printing `editCommands` _under mutation_ is what finally showed the list had silently shrunk to four.
+  - The list now derives from `branch.operations.push`, which is what makes a command an edit, and is independent of the property being asserted. All five status mutations and all five version mutations are now killed.
+  - The general lesson, recorded because it will recur: a test that derives its own scope from the code under test can be disarmed by the very change it exists to catch. The derivation and the assertion must key on different properties.

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import reducerSource from "./branch-engine.ts?raw";
 import { createInitialState, deriveGraph, dispatch } from "./branch-engine";
 import { paymentPlatformBaseline } from "../fixtures/payment-platform/baseline";
 import { blankBaseline } from "../fixtures/blank/baseline";
@@ -77,6 +78,111 @@ describe("Aether command pipeline", () => {
       human,
     );
     expect(staleMerge).toMatchObject({ ok: false, code: "STALE_REVISION" });
+  });
+
+  it("invalidates approval after every kind of edit, not only a property change", () => {
+    // Mutation testing found this: the test above covers SET_PROPERTY alone,
+    // and making any of the other four edit commands mark the branch
+    // `approved` instead of `proposed` broke nothing. "Any edit invalidates
+    // approval" is a submission claim that was enforced for one command in
+    // five. The commands are read from the reducer so a sixth is covered the
+    // day it is added rather than the day someone remembers this test.
+    // The list is derived from what makes a command an edit — it pushes an
+    // operation onto the branch — and deliberately *not* from the
+    // `branch.status = "proposed"` line this test asserts on. Deriving it
+    // from that line made the test self-defeating: breaking a command's
+    // status assignment also removed it from the list, so the mutation
+    // exempted itself and the test passed. Verified by re-running the same
+    // mutation after this change.
+    const source = reducerSource;
+    const editCommands = [
+      ...new Set(
+        [...source.matchAll(/command\.type === "([A-Z_]+)"/g)]
+          .map((match) => ({ name: match[1]!, at: match.index }))
+          .filter(({ at }, index, all) => {
+            const end = all[index + 1]?.at ?? source.length;
+            return source.slice(at, end).includes("branch.operations.push");
+          })
+          .map(({ name }) => name),
+      ),
+    ];
+    expect(editCommands.length).toBeGreaterThan(3);
+
+    const edits: Record<string, Record<string, unknown>> = {
+      SET_PROPERTY: {
+        entityId: "queue",
+        property: "capacityRps",
+        value: 18000,
+      },
+      MOVE_ENTITY: { entityId: "queue", x: 40, y: 40 },
+      ADD_COMPONENT: {
+        name: "Invalidation probe",
+        kind: "service",
+        regionId: "region-mumbai",
+        peakRps: 10,
+        capacityRps: 20,
+        monthlyCostUsd: 5,
+      },
+      CONNECT_COMPONENTS: {
+        sourceId: "gateway",
+        targetId: "queue",
+        kind: "routes_to",
+      },
+      REMOVE_COMPONENT: { entityId: "reconciliation" },
+    };
+
+    for (const command of editCommands) {
+      const input = edits[command];
+      expect(input, `${command} has no edit fixture`).toBeDefined();
+
+      const simulated = dispatch(branchState(), {
+        type: "RUN_SCENARIO",
+        input: {
+          branchId: "branch-highest_resilience",
+          scenario: "regional_outage",
+        },
+      });
+      if (!simulated.ok) throw new Error("fixture simulation must work");
+      const approved = dispatch(
+        simulated.value,
+        {
+          type: "APPROVE_BRANCH",
+          input: { branchId: "branch-highest_resilience", branchVersion: 1 },
+        },
+        human,
+      );
+      if (!approved.ok) throw new Error("fixture approval must work");
+
+      const edited = dispatch(
+        approved.value,
+        {
+          type: command,
+          input: { branchId: "branch-highest_resilience", ...input },
+        } as Parameters<typeof dispatch>[1],
+        human,
+      );
+      if (!edited.ok)
+        throw new Error(`${command} must apply: ${edited.message}`);
+      const branch = edited.value.branches["branch-highest_resilience"]!;
+
+      // The approval is gone, and the version moved so a merge quoting the
+      // approved version is refused rather than committing an edited plan.
+      expect(branch.status, `${command} left the branch approved`).toBe(
+        "proposed",
+      );
+      expect(branch.version, `${command} did not move the version`).toBe(2);
+      expect(
+        dispatch(
+          edited.value,
+          {
+            type: "MERGE_BRANCH",
+            input: { branchId: "branch-highest_resilience", branchVersion: 1 },
+          },
+          human,
+        ),
+        `${command} allowed a merge at the approved version`,
+      ).toMatchObject({ ok: false, code: "STALE_REVISION" });
+    }
   });
 
   it("requires current clean deterministic evidence before a human approval", () => {
