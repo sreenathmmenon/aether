@@ -1984,6 +1984,18 @@ button {
 .note-human small {
   color: var(--human-text);
 }
+/* Content this workspace did not verify. It wore the human's blue -- the
+   colour of the authority it is imitating -- which is precisely what an
+   injected instruction wants. It reads as the failure colour instead, and
+   the reader can see the claim and the fact that nothing can act on it at
+   the same time. */
+.note-unverified {
+  border-left-color: var(--failure);
+  background: var(--failure-soft);
+}
+.note-unverified small {
+  color: var(--failure-text);
+}
 .note-composer {
   margin-top: 12px;
   padding-top: 12px;

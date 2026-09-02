@@ -3241,11 +3241,22 @@ export function App() {
               )}
               {activeNotes.map((note) => (
                 <article
-                  className={`decision-note note-${note.actor.kind}`}
+                  className={`decision-note note-${note.actor.kind}${
+                    note.actor.id === "unknown-participant"
+                      ? " note-unverified"
+                      : ""
+                  }`}
                   key={note.id}
                 >
                   <div>
-                    <strong>{actorName(note.actor.kind)}</strong>
+                    {/* A note carries who wrote it. Naming by kind alone put
+                        an unverified participant's words under the same
+                        "Reviewer" label as the person whose approval the
+                        product is protecting -- which is exactly the
+                        confusion an injected instruction relies on. */}
+                    <strong>
+                      {note.actor.displayName ?? actorName(note.actor.kind)}
+                    </strong>
                     <span>
                       {note.entityId
                         ? `Anchored to ${graph.entities[note.entityId]?.name ?? note.entityId}`
