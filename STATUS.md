@@ -2360,3 +2360,11 @@ was already underway again.
   - Evidence: M184 and M186 both came from comparing the agent's view with the page's, field by field — the tools omitted the workspace cost ceiling, and the panel displayed a superseded run. Both were the same shape: one path passing the engine different arguments than another. That comparison was a technique someone had to remember to apply.
   - It is now a test. Every `runScenario` call in `App.tsx` and `registry.ts` must pass the workspace ceiling, with template loading excluded because no workspace — and therefore no ceiling — exists at that point. Dropping it from the baseline card fails; dropping it from the agent's inspect fails three tests.
   - A probe fault recorded, and it is the second time a fixed-width window has produced a false finding: matching 260 characters after `runScenario(` truncated the baseline call before its ceiling argument and reported a defect that was not there. Matching balanced parentheses instead reads the whole call however it is formatted.
+
+## Milestone 188 — Continuing the comparison across the read tools
+
+- [x] **M188.1 — Two tools agree, one description did not** `DONE`
+  - Acceptance: an agent and a reviewer describe the same workspace the same way.
+  - Evidence: the comparison was continued past the numbers. `compare_architecture_futures` and the future cards agree exactly on all three futures — name, status and availability. `get_decision_record` and the replay agree on the command sequence.
+  - One difference: the agent read the guardrail as `$8700 monthly cost ceiling` while the page shows `$8,700` everywhere. Raw interpolation where every other money figure in the codebase uses `toLocaleString()`. Small, but it is the same shape as M184 and M186 — two descriptions of one thing that do not match — and a judge comparing the two surfaces sees it.
+  - Fixed and tested. The typecheck caught a real subtlety on the way: the guard and the use were separate `snapshot()` calls, so TypeScript could not narrow the optional through the second one; binding to the `state` already in scope resolved it rather than adding a cast.

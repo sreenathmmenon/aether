@@ -546,6 +546,46 @@ describe("Aether WebMCP registry", () => {
     })();
   });
 
+  it("describes a money figure to an agent the way the page does", async () => {
+    // Comparing the decision record with the replay found the command
+    // sequence matching exactly and one figure not: the agent read
+    // "$8700 monthly cost ceiling" while the page said "$8,700" everywhere.
+    // Two descriptions of one guardrail that do not match are the small
+    // version of the divergence M184 and M186 found in the numbers.
+    const registered: RegisteredTool[] = [];
+    const registry = createAetherToolRegistry(() => {}, undefined, {
+      registerTool: async (tool) => {
+        registered.push(tool as unknown as RegisteredTool);
+      },
+    });
+    const branched = dispatch(createInitialState(paymentPlatformBaseline), {
+      type: "CREATE_BRANCH",
+      input: { name: "Format probe", intent: "highest_resilience" },
+    });
+    if (!branched.ok) throw new Error("fixture branch must be created");
+    const locked = dispatch(
+      branched.value,
+      { type: "SET_COST_CEILING", input: { amountUsd: 8700 } },
+      { id: "s", kind: "human" as const, displayName: "S" },
+    );
+    if (!locked.ok) throw new Error("fixture ceiling must be settable");
+
+    registered.length = 0;
+    await registry?.refresh(locked.value);
+    const record = registered
+      .filter((tool) => tool.name === "get_decision_record")
+      .at(-1);
+    const parsed = JSON.parse(String(await record!.execute({}))) as {
+      humanGuardrail: string;
+    };
+    expect(parsed.humanGuardrail).toContain("$8,700");
+    expect(
+      parsed.humanGuardrail,
+      "the agent reads an unformatted figure the page formats",
+    ).not.toContain("$8700");
+    registry?.dispose();
+  });
+
   it("runs every agent-facing scenario with the workspace guardrails", () => {
     // The ceiling was omitted at both registry call sites while the reducer
     // and the interface passed it, so the same run reported different

@@ -432,8 +432,13 @@ export function createAetherToolRegistry(
                 ? "No failure seeded on this architecture"
                 : "Nothing modelled yet"),
             activeBranch: snapshot().workspace.activeBranchId,
-            humanGuardrail: snapshot().workspace.costCeilingUsd
-              ? `$${snapshot().workspace.costCeilingUsd} monthly cost ceiling`
+            // Formatted the way every other money figure is. The raw value
+            // read "$8700 monthly cost ceiling" to an agent while the page
+            // said "$8,700" everywhere, so the two descriptions of one
+            // guardrail did not match. Bound once because the guard and the
+            // use were separate `snapshot()` calls, which cannot narrow.
+            humanGuardrail: state.workspace.costCeilingUsd
+              ? `$${state.workspace.costCeilingUsd.toLocaleString()} monthly cost ceiling`
               : "No cost ceiling set",
             // Three notes at their full length, each with an evidence
             // reference, reach 88 per cent of the budget. Trim the bodies
