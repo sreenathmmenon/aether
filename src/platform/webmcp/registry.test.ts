@@ -261,6 +261,58 @@ describe("Aether WebMCP registry", () => {
     expect(single).toEqual(batch);
   });
 
+  it("advertises as required exactly what it refuses without", async () => {
+    // The JSON Schema `required` list is advisory — emptying all eleven of
+    // them still rejects an empty call, because Zod is the real validator.
+    // Checked rather than assumed, and it means the risk is not a hole but a
+    // disagreement: a schema that under-declares sends a model into a
+    // rejection it was told to expect success from, and one that
+    // over-declares makes it supply fields the tool would have defaulted.
+    const registered: RegisteredTool[] = [];
+    const registry = createAetherToolRegistry(() => {}, undefined, {
+      registerTool: async (tool) => {
+        registered.push(tool as unknown as RegisteredTool);
+      },
+    });
+    const branched = dispatch(createInitialState(paymentPlatformBaseline), {
+      type: "CREATE_BRANCH",
+      input: { name: "Required probe", intent: "highest_resilience" },
+    });
+    if (!branched.ok) throw new Error("fixture branch must be created");
+    await registry?.refresh(branched.value);
+
+    let checked = 0;
+    for (const tool of registered) {
+      const schema = (
+        tool as unknown as {
+          inputSchema?: { required?: string[]; properties?: object };
+        }
+      ).inputSchema;
+      const required = schema?.required ?? [];
+      if (!required.length) continue;
+      checked += 1;
+
+      // An empty call must name every advertised field as a problem, or the
+      // schema is asking for something the validator does not insist on.
+      const rejection = JSON.parse(String(await tool.execute({}))) as {
+        error?: string;
+        problems?: string[];
+      };
+      expect(rejection.error, `${tool.name} accepted an empty call`).toBe(
+        "INVALID_INPUT",
+      );
+      const named = (rejection.problems ?? []).join(" ");
+      for (const field of required)
+        expect(
+          named,
+          `${tool.name} advertises ${field} as required but does not refuse without it`,
+        ).toContain(field);
+    }
+    // Several tools declare required fields, or this proves nothing.
+    expect(checked).toBeGreaterThan(4);
+    registry?.dispose();
+  });
+
   it("refuses fields it does not advertise, in every schema", async () => {
     // `additionalProperties: false` is what turns a typo into a named
     // rejection rather than a silently ignored field — an agent that writes

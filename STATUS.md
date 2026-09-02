@@ -2158,3 +2158,11 @@ was already underway again.
   - Evidence: this is what turns a typo into a named rejection rather than a silently ignored field — an agent writing `capacity` instead of `capacityRps` learns which is which. Mutation found it could be loosened on `get_decision_record` with nothing failing.
   - A first version of the test filtered to schemas with properties, which left exactly that tool uncovered: it takes none. Strictness still matters there — it is what rejects a call carrying stray arguments instead of ignoring them. Now every registered tool is checked, and all fourteen sites are killed.
   - Verified against the deployed origin: sending `capacity` in place of `capacityRps` returns `capacityRps: Invalid input: expected number, received undefined` with a next action naming the valid regions, so the typo is corrected in one more call rather than silently ignored.
+
+## Milestone 166 — The schema and the validator, held to each other
+
+- [x] **M166.1 — Eleven survivors that were not a hole** `DONE`
+  - Evidence: emptying every JSON Schema `required` list left all eleven mutations surviving. Checked rather than concluded: with **all** of them emptied at once, an empty call is still rejected naming each missing field, because **Zod is the real validator** and `required` is advisory metadata that helps a model form a correct call.
+  - So the risk is not a hole but a disagreement. A schema that under-declares sends a model into a rejection it was told to expect success from; one that over-declares makes it supply fields the tool would have defaulted — the same class as the `model_architecture` case reverted in M134, where the omission was deliberate ergonomics.
+  - The test now calls every tool with an empty object and requires each advertised `required` field to appear by name in the refusal. Adding `replicas` to a required list — a field Zod treats as optional — fails it.
+  - This is the first survivor set this session that was correct as it stood. Recorded as such: eleven mutations survived, none of them a defect, and the test that came out of it guards a different property than the one being probed.
