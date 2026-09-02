@@ -1698,11 +1698,24 @@ button {
   color: var(--human);
   font-weight: 650;
 }
+/* Who said it. The palette carries authorship -- blue is a person, teal is
+   the machine -- and the human note was using generic ink, so the one place
+   the two voices sit side by side did not use the distinction the whole
+   colour system was built for. The tint makes it readable at a glance
+   rather than requiring the name to be read. */
 .note-agent {
   border-left: 3px solid var(--agent);
+  background: var(--agent-soft);
+}
+.note-agent small {
+  color: var(--agent-text);
 }
 .note-human {
-  border-left: 3px solid var(--ink);
+  border-left: 3px solid var(--human);
+  background: var(--human-soft);
+}
+.note-human small {
+  color: var(--human-text);
 }
 .note-composer {
   margin-top: 12px;
