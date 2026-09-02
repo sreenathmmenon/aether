@@ -185,6 +185,83 @@ describe("Aether WebMCP registry", () => {
     registry?.dispose();
   });
 
+  it("enumerates live components in every tool that references one", async () => {
+    // Five tool schemas enumerate component ids from the live graph, which
+    // is what lets an agent operate on something a person added moments
+    // earlier. Mutation found three could be emptied with nothing failing —
+    // both ends of `connect_components` and the target of
+    // `propose_architecture_change`, which are exactly the tools an agent
+    // uses to wire and tune a system it has just built.
+    const registered: RegisteredTool[] = [];
+    let state = createInitialState(paymentPlatformBaseline);
+    const registry = createAetherToolRegistry(
+      (next) => {
+        state = next;
+      },
+      undefined,
+      {
+        registerTool: async (tool) => {
+          registered.push(tool as unknown as RegisteredTool);
+        },
+      },
+    );
+    const branched = dispatch(state, {
+      type: "CREATE_BRANCH",
+      input: { name: "Enum probe", intent: "highest_resilience" },
+    });
+    if (!branched.ok) throw new Error("fixture branch must be created");
+    // A component added after load, which is the case these enums exist for.
+    const added = dispatch(branched.value, {
+      type: "ADD_COMPONENT",
+      input: {
+        branchId: "branch-highest_resilience",
+        name: "Enum probe svc",
+        kind: "service",
+        regionId: "region-mumbai",
+        peakRps: 100,
+        capacityRps: 200,
+        monthlyCostUsd: 50,
+      },
+    });
+    if (!added.ok) throw new Error("fixture component must be added");
+
+    registered.length = 0;
+    await registry?.refresh(added.value);
+    registry?.dispose();
+
+    const shapes = registered.map(
+      (tool) =>
+        tool as unknown as {
+          name: string;
+          inputSchema?: {
+            properties?: Record<string, { enum?: string[] }>;
+          };
+        },
+    );
+    // Every tool that names a component, by the field it uses.
+    const references: [string, string][] = [
+      ["connect_components", "sourceId"],
+      ["connect_components", "targetId"],
+      ["propose_architecture_change", "entityId"],
+      ["add_decision_note", "entityId"],
+      ["trace_architecture_dependency", "entityId"],
+    ];
+    for (const [name, field] of references) {
+      const tool = shapes.filter((candidate) => candidate.name === name).at(-1);
+      expect(tool, `${name} is not registered`).toBeDefined();
+      const values = tool!.inputSchema?.properties?.[field]?.enum;
+      expect(values, `${name}.${field} enumerates nothing`).toBeDefined();
+      expect(
+        values!.length,
+        `${name}.${field} is empty, so the tool has no valid target`,
+      ).toBeGreaterThan(1);
+      expect(
+        values,
+        `${name}.${field} cannot reach a component added after load`,
+      ).toContain("entity-enum-probe-svc");
+    }
+  });
+
   it("offers no write tool a branch that is no longer writable", async () => {
     // `writableBranchIds()` appears in six tool schemas and each is a
     // separate opportunity to drift. M145 covers the discarded case for one

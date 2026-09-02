@@ -2137,3 +2137,12 @@ was already underway again.
   - The test approves and merges a repair, creates a second future so write tools stay registered and the enums exist to be checked, then requires no `branchId` enum anywhere to contain the merged branch. All six mutations are now killed.
   - Verified against the deployed origin through a real approval and commit: with one future merged and another open, all six write tools offer only `branch-lowest_cost`. The committed architecture appears in no `branchId` enum anywhere on the live surface.
   - Also killed in the same sweep: leaving note bodies untrimmed in tool results.
+
+## Milestone 164 — Enumerating what an agent can actually reach
+
+- [x] **M164.1 — Three component enums could be emptied silently** `DONE`
+  - Acceptance: every tool that names a component enumerates the live graph, including components added after load.
+  - Evidence: five tool schemas enumerate component ids, which is what lets an agent operate on something a person added moments earlier — one of the submission's specific claims. Mutation found three could be emptied with nothing failing: both ends of `connect_components` and the target of `propose_architecture_change`, which are exactly the tools an agent uses to wire and tune a system it has just built.
+  - An empty enum is worse than a wrong one. The tool stays registered and advertised while having no valid target at all, so an agent asked to connect two components it can see has nothing to name.
+  - The test adds a component after load and requires each of the five references — by tool and by field — to enumerate more than one option and to include the new component. All five mutations are now killed.
+  - Also killed in the same sweep: leaving superseded registrations un-aborted, at both call sites.
