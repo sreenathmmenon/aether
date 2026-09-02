@@ -600,7 +600,12 @@ export function dispatch(
     const placed = Object.values(graph.entities).filter(
       (entity) => entity.kind !== "region",
     );
-    const columns = [90, 270, 450, 630, 810];
+    // Positions are the centre of a node, and a node is about 230 units wide
+    // on this 1000-unit canvas -- so a first column at 90 put its left edge
+    // at -25 and the canvas clipped it. Measured on an agent-built system:
+    // "Edge Gateway" sat at -17px and was cut mid-word. Every column clears
+    // its own half-width, and the last one clears the right edge too.
+    const columns = [140, 300, 460, 620, 780];
     const rows = [190, 340, 60];
     const clear = (cx: number, cy: number) =>
       placed.every(
