@@ -196,6 +196,33 @@ if (offences.length) {
 }
 
 /**
+ * A grid with more children than places.
+ *
+ * The review dock declared three columns and held four children, so the
+ * decision controls wrapped into the 250px first column while 972px sat
+ * empty beside them. Auto-placement fails silently -- nothing throws and no
+ * test sees it -- so the grid has to name its areas explicitly.
+ */
+const dockRule = global.slice(
+  global.indexOf(".review-dock {"),
+  global.indexOf("}", global.indexOf(".review-dock {")),
+);
+if (!dockRule.includes("grid-template-areas")) {
+  console.error(
+    ".review-dock places its children automatically; with four children in three columns that silently wraps the decision controls into the narrowest column. Name the areas.",
+  );
+  process.exit(1);
+}
+for (const area of ["head", "diff", "earlier", "actions"]) {
+  if (!new RegExp(`grid-area:\\s*${area};`).test(global)) {
+    console.error(
+      `.review-dock names the grid area "${area}" but nothing claims it, so a child is auto-placed.`,
+    );
+    process.exit(1);
+  }
+}
+
+/**
  * A vivid fill under light text.
  *
  * This exact collision has now been found and fixed five separate times: the
