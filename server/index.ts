@@ -92,6 +92,77 @@ app.get("/api/workspaces/:id", async (context) => {
   });
 });
 
+/**
+ * Read a live source on the reviewer's behalf.
+ *
+ * A browser cannot fetch a status page or a metrics endpoint directly --
+ * CORS forbids it -- so the claim that an agent gathers live evidence has to
+ * be served from somewhere that can actually reach the network. This is that
+ * somewhere.
+ *
+ * The allowlist is deliberate. A proxy that forwards any URL a page hands it
+ * is an open relay, and this one is reachable by anybody who loads the site.
+ */
+const liveSources: Record<string, { url: string; name: string }> = {
+  // Atlassian Statuspage publishes this shape at a stable path, and a great
+  // many real services run on it -- so the reading is a real reading.
+  github: {
+    url: "https://www.githubstatus.com/api/v2/summary.json",
+    name: "GitHub status",
+  },
+  npm: {
+    url: "https://status.npmjs.org/api/v2/summary.json",
+    name: "npm status",
+  },
+  cloudflare: {
+    url: "https://www.cloudflarestatus.com/api/v2/summary.json",
+    name: "Cloudflare status",
+  },
+};
+
+app.get("/api/live/:source", async (context) => {
+  const source = liveSources[context.req.param("source")];
+  if (!source) return context.json({ error: "UNKNOWN_SOURCE" }, 404);
+  try {
+    // A slow upstream must not hold a request open: the interface is waiting
+    // on this to tell a reviewer whether the reading arrived.
+    const response = await fetch(source.url, {
+      signal: AbortSignal.timeout(5000),
+      headers: { accept: "application/json" },
+    });
+    if (!response.ok)
+      return context.json(
+        { error: "SOURCE_UNAVAILABLE", source: source.name },
+        502,
+      );
+    const payload = (await response.json()) as {
+      status?: { description?: string };
+      components?: { name: string; status: string }[];
+    };
+    const components = (payload.components ?? []).slice(0, 12);
+    return context.json({
+      source: source.name,
+      endpoint: source.url,
+      readAt: new Date().toISOString(),
+      status: payload.status?.description ?? "unknown",
+      // What a war room actually wants: which parts are healthy right now.
+      components: components.map((component) => ({
+        name: component.name,
+        status: component.status,
+      })),
+      operational: components.filter(
+        (component) => component.status === "operational",
+      ).length,
+      total: components.length,
+    });
+  } catch {
+    return context.json(
+      { error: "SOURCE_UNREACHABLE", source: source.name },
+      504,
+    );
+  }
+});
+
 app.put("/api/workspaces/:id", async (context) => {
   // Check the cheap things first: a bad id or an oversized body must be
   // refused before the payload is parsed into memory.

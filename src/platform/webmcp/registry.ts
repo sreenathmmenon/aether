@@ -518,6 +518,64 @@ export function createAetherToolRegistry(
         },
       });
       await register({
+        name: "read_live_source",
+        description:
+          "Read a live status source and report what is operational right now. Use this to ground the architecture in observed conditions rather than assumed ones. Returns the source, the moment it was read, and each component's current status.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            source: {
+              type: "string",
+              enum: ["github", "npm", "cloudflare"],
+              description:
+                "Which public status source to read. Each is a real Statuspage endpoint.",
+            },
+          },
+          required: ["source"],
+          additionalProperties: false,
+        },
+        // It reaches the network but changes nothing here, and what comes
+        // back is written by somebody else -- so it is read-only, and its
+        // content is untrusted.
+        annotations: { readOnlyHint: true, untrustedContentHint: true },
+        execute: async (input) => {
+          const requested = (input as { source?: unknown }).source;
+          const sources = ["github", "npm", "cloudflare"];
+          // The schema says `source` is required, so the tool has to refuse
+          // without it rather than quietly picking one -- an agent correcting
+          // itself needs to be told which field failed and what would work.
+          if (typeof requested !== "string" || !sources.includes(requested))
+            return JSON.stringify({
+              error: "INVALID_INPUT",
+              problems: [
+                `source: expected one of ${sources.map((name) => `"${name}"`).join("|")}`,
+              ],
+              nextAction: `Choose ${sources.join(", ")}.`,
+            });
+          const source = requested;
+          try {
+            const response = await fetch(`/api/live/${source}`, {
+              headers: { accept: "application/json" },
+            });
+            const payload = (await response.json()) as Record<string, unknown>;
+            if (!response.ok)
+              return JSON.stringify({
+                error: "SOURCE_UNAVAILABLE",
+                problems: [`${source} did not answer.`],
+                nextAction:
+                  "Try another source, or continue with stated figures.",
+              });
+            return JSON.stringify(payload);
+          } catch {
+            return JSON.stringify({
+              error: "SOURCE_UNREACHABLE",
+              problems: [`${source} could not be reached from this page.`],
+              nextAction: "Continue with stated figures.",
+            });
+          }
+        },
+      });
+      await register({
         name: "get_architecture_summary",
         description:
           "Read the active branch, its evidence, and the next allowed action. An empty architecture means the user has not described their system yet.",

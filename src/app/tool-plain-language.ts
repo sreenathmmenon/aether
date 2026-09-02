@@ -14,6 +14,7 @@
  */
 const phrases: Record<string, string> = {
   get_decision_record: "Read the decision record",
+  read_live_source: "Read a live status source",
   get_architecture_summary: "Read the architecture",
   inspect_failure_domain: "Inspect what a failure reaches",
   trace_architecture_dependency: "Trace a dependency",

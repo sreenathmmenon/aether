@@ -149,6 +149,20 @@ export function narrateCall(
         did: `Traced ${text(args.entityId) ?? "a dependency"}`,
         effect: text(data.entity),
       };
+    case "read_live_source": {
+      // The point of the reading is what it found, and when.
+      const source = text(data.source) ?? "a live source";
+      const status = text(data.status);
+      const operational = data.operational;
+      const total = data.total;
+      return {
+        did: `Read ${source}`,
+        effect:
+          typeof operational === "number" && typeof total === "number"
+            ? `${status ?? "read"} · ${operational}/${total} operational`
+            : status,
+      };
+    }
     case "get_architecture_summary":
       return { did: "Read the architecture" };
     case "get_decision_record":

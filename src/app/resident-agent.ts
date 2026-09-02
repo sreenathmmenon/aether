@@ -41,6 +41,14 @@ export function reviewPlan(branchId: string): AgentStep[] {
       settle: 900,
     },
     {
+      // A war room's first move is to find out what is actually true right
+      // now, from a source outside the room.
+      say: "Reading a live status source",
+      tool: "read_live_source",
+      input: { source: "github" },
+      settle: 1200,
+    },
+    {
       say: "Tracing what the regional outage reaches",
       tool: "inspect_failure_domain",
       input: { scenario: "regional_outage" },

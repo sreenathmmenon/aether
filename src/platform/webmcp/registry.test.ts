@@ -293,7 +293,7 @@ describe("Aether WebMCP registry", () => {
 
     // Each transition re-registers, and a zero here means the cache decided
     // nothing changed when the whole write surface had to close.
-    expect(seen, `surfaces were ${seen.join(",")}`).toEqual([5, 13, 8]);
+    expect(seen, `surfaces were ${seen.join(",")}`).toEqual([6, 14, 9]);
     for (const name of afterMerge)
       expect(name, `${name} survives a merge`).not.toMatch(
         /^(add_|connect_|model_|run_failure)/,
@@ -2004,7 +2004,7 @@ describe("Aether WebMCP registry", () => {
     registry?.dispose();
 
     // Five then twelve, with nothing in between.
-    expect(counts).toEqual([5, 13]);
+    expect(counts).toEqual([6, 14]);
     expect(counts).not.toContain(0);
   });
 
@@ -2288,6 +2288,7 @@ describe("Aether WebMCP registry", () => {
     await registry?.refresh(state);
     expect(tools.map((tool) => tool.name)).toEqual([
       "get_decision_record",
+      "read_live_source",
       "get_architecture_summary",
       "create_architecture_branch",
       "inspect_failure_domain",
@@ -2396,8 +2397,9 @@ describe("Aether WebMCP registry", () => {
     // nextAction names are already registered when the agent reads them. No
     // further refresh is needed, and asking for one changes nothing.
     await registry?.refresh(state);
-    expect(tools.map((tool) => tool.name).slice(-13)).toEqual([
+    expect(tools.map((tool) => tool.name).slice(-14)).toEqual([
       "get_decision_record",
+      "read_live_source",
       "get_architecture_summary",
       "create_architecture_branch",
       "add_decision_note",
@@ -3007,7 +3009,7 @@ describe("Aether WebMCP registry", () => {
       paymentPlatformBaseline,
       "payment-platform",
     );
-    expect(await surfaceFor(seeded)).toBe(5);
+    expect(await surfaceFor(seeded)).toBe(6);
     // The interface lists this surface to reviewers whose browser exposes no
     // WebMCP, so a hand-maintained copy drifting from the registry would show
     // them capabilities the page does not actually publish.
@@ -3030,10 +3032,10 @@ describe("Aether WebMCP registry", () => {
       input: { name: "Repair", intent: "highest_resilience" },
     });
     if (!branched.ok) throw new Error("fixture branch must be created");
-    expect(await surfaceFor(branched.value)).toBe(13);
+    expect(await surfaceFor(branched.value)).toBe(14);
 
     expect(await surfaceFor(createInitialState(blankBaseline, "blank"))).toBe(
-      10,
+      11,
     );
 
     // Once a future is committed the architecture is read-only again, and the
@@ -3377,6 +3379,7 @@ describe("Aether WebMCP registry", () => {
     expect(committed.map((tool) => tool.name).sort()).toEqual(
       [
         "get_decision_record",
+        "read_live_source",
         "get_architecture_summary",
         "inspect_failure_domain",
         "trace_architecture_dependency",
@@ -3385,7 +3388,7 @@ describe("Aether WebMCP registry", () => {
     );
 
     const own = await surface(createInitialState(blankBaseline, "blank"));
-    expect(own).toHaveLength(10);
+    expect(own).toHaveLength(11);
 
     const branched = dispatch(
       createInitialState(paymentPlatformBaseline, "payment-platform"),
@@ -3396,7 +3399,7 @@ describe("Aether WebMCP registry", () => {
     );
     if (!branched.ok) throw new Error("fixture branch must be created");
     const withFuture = await surface(branched.value);
-    expect(withFuture).toHaveLength(13);
+    expect(withFuture).toHaveLength(14);
 
     // Two claims the submission makes about authority and honesty.
     expect(
@@ -3747,7 +3750,7 @@ describe("Aether WebMCP registry", () => {
     let state = createInitialState(blankBaseline, "blank");
     await registry?.refresh(state);
     const surfaceSize = live;
-    expect(surfaceSize).toBe(10);
+    expect(surfaceSize).toBe(11);
 
     for (let index = 0; index < 5; index += 1) {
       const added = dispatch(

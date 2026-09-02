@@ -171,8 +171,8 @@ describe("the demo script quotes what the product reports", () => {
     for (const phrase of [
       "10 state-aware tools",
       "13 state-aware tools",
-      "five to thirteen",
-      "shrinks to eight tools",
+      "six to fourteen",
+      "shrinks to nine tools",
     ])
       expect(flat, `the script no longer says "${phrase}"`).toContain(phrase);
   });
