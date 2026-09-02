@@ -2247,3 +2247,11 @@ was already underway again.
   - It is now four numbered steps with the exact console lines and what each should print. Two details matter and were easy to get wrong: the flag must be set to **Default**, not Enabled, because Enabled turns the API on everywhere and masks precisely what the check establishes; and step three checks an **unrelated origin** returns `undefined`, without which step two proves nothing.
   - The expected values were confirmed live before shipping them — `typeof document.modelContext` is `"object"` and a fresh workspace reports five tools. A procedure that tells a reader to expect the wrong number teaches them to distrust a correct result.
   - What it establishes beyond what is already verified: the `Origin-Trial` header is served and decodes to this exact origin, both checked, but only a flag-disabled profile shows Chrome **accepted** it. Quoting a wrong count or dropping the negative control each fails a test.
+
+## Milestone 176 — The audit document had the defect it exists to catch
+
+- [x] **M176.1 — Two stale rows in the compliance table** `DONE`
+  - Acceptance: every row states what is currently true and measurable.
+  - Evidence: the end-to-end row said the canonical journey passes for **"both seeded systems"** when three ship — the same undercount M171 found in the README, in the document whose whole purpose is to be audited. All three were walked live before widening the claim: the AI inference platform completes the journey identically, five tools to twelve on branching, byte-identical repeated runs, and clean evidence on a six-component graph.
+  - The Chrome row described the deployed surface as "the V3 editable surface" — a version name rather than a measurement, and stale. It now states what was read back from the live origin: five tools growing to twelve as a repair future is created and shrinking to seven once one is committed, with the token decoding to this exact origin and its expiry checked at server startup.
+  - Both are guarded. Reverting the count fails, and so does describing the surface by version name again.

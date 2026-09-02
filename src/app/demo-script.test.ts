@@ -334,4 +334,27 @@ describe("the demo script quotes what the product reports", () => {
       "example.com",
     );
   });
+
+  it("counts the seeded systems in the compliance evidence too", () => {
+    // A compliance row said the canonical journey passes for "both seeded
+    // systems" when three ship — the same undercount M171 found in the
+    // README, in the document that exists to be audited. All three were
+    // walked live before the claim was widened.
+    const templates = [
+      ...appSource.matchAll(/id: "(blank|[a-z-]+)",\s*\n\s*name: "/g),
+    ].map((match) => match[1]!);
+    const seeded = templates.filter((id) => id !== "blank");
+    expect(seeded.length).toBe(3);
+    const flat = compliance.replace(/\s+/g, " ");
+    expect(
+      flat,
+      "the compliance evidence undercounts the seeded systems",
+    ).not.toContain("both seeded systems");
+    expect(flat).toContain("all three seeded systems");
+    // And no vague status text where a measured one belongs.
+    expect(
+      flat,
+      "a compliance row still describes the surface by version name",
+    ).not.toContain("V3 editable surface");
+  });
 });
