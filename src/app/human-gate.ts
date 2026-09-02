@@ -12,9 +12,18 @@ export const humanOnlyCommands = [
   "APPROVE_BRANCH",
   "MERGE_BRANCH",
   "ROLLBACK_MERGE",
-  "REMOVE_COMPONENT",
   "SET_COST_CEILING",
 ] as const;
+
+/**
+ * Refused to an agent only in some states, so it cannot be counted with the
+ * four above. An agent may remove a component it added by mistake; the
+ * reducer stops it when the removal would take the system below two
+ * components, or when three or more dependencies rely on the one being
+ * removed. Counting it as absolute made the page claim five commands were
+ * refused to any non-human actor, which is one more than is true.
+ */
+export const conditionallyHumanCommands = ["REMOVE_COMPONENT"] as const;
 
 /**
  * Check the claim against the live surface rather than asserting it: read the

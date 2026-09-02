@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 import appSource from "./App.tsx?raw";
 import reducerSource from "@core/branch-engine.ts?raw";
-import { gateHolds, humanOnlyCommands } from "./human-gate";
+import {
+  conditionallyHumanCommands,
+  gateHolds,
+  humanOnlyCommands,
+} from "./human-gate";
 
 /**
  * The page tells a reviewer which decisions no agent can take. That sentence
@@ -21,10 +25,37 @@ describe("the human gate the page describes", () => {
       })
       .map(({ name }) => name);
 
+    // The scrape finds every command with an actor check, but two shapes hide
+    // behind that: a bare refusal, and one guarded by conditions. Only the
+    // first can be described as refused to any non-human actor.
+    const unconditional = enforced.filter((name) => {
+      const at = reducerSource.indexOf(`command.type === "${name}"`);
+      const check = reducerSource.indexOf('actor.kind !== "human"', at);
+      // A bare gate refuses immediately; a conditional one opens a block and
+      // refuses only inside it. MERGE_BRANCH adds "|| branch.status !==
+      // 'approved'" before the return -- still absolute, because that clause
+      // only adds a requirement, so the test looks for the block rather than
+      // for an immediately adjacent return.
+      const after = reducerSource.slice(
+        check,
+        reducerSource.indexOf("return commandFailure", check),
+      );
+      return !after.includes("{");
+    });
+
     expect(
-      [...new Set(enforced)].sort(),
+      [...new Set(unconditional)].sort(),
       "the page would describe a gate the reducer does not enforce",
     ).toEqual([...humanOnlyCommands].sort());
+
+    // And the conditional one is still gated -- just not absolutely, which is
+    // why it is named separately rather than dropped.
+    const conditional = enforced.filter(
+      (name) => !unconditional.includes(name),
+    );
+    expect([...new Set(conditional)].sort()).toEqual([
+      ...conditionallyHumanCommands,
+    ]);
   });
 
   it("reads the live surface rather than trusting the claim", () => {

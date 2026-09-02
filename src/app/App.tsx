@@ -3148,7 +3148,8 @@ export function App() {
               <b>Yours alone.</b> None of the {toolCount} tools registered for
               an agent on this page can approve, commit, or roll back —{" "}
               {humanOnlyCommands.length} commands are refused to any actor that
-              is not human.
+              is not human, and removing a component a system depends on needs
+              you too.
             </p>
           )}
         </div>
