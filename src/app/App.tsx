@@ -708,8 +708,21 @@ export function App() {
           setLatestCall(call);
         },
       ) ?? undefined;
-    stateRef.current = state;
-    void registryRef.current?.refresh(state);
+    // Never move the shared state backwards. `stateRef` is advanced by every
+    // write, while `state` is React's render value, which can be older than
+    // what a burst of tool calls has already recorded. Adopting it blindly
+    // handed the registry a stale copy, and the next commit rebased onto it:
+    // a repair loop tracked correctly to version 5 and then silently dropped
+    // to version 3 about two seconds later, erasing two of an agent's
+    // property changes and taking the approval that rested on them with it.
+    //
+    // Every successful command appends exactly one audit entry, so its
+    // length is this workspace's monotonic clock.
+    const held = stateRef.current;
+    const settled =
+      held && held.audit.length > state.audit.length ? held : state;
+    stateRef.current = settled;
+    void registryRef.current?.refresh(settled);
   }, [state]);
   useEffect(() => () => registryRef.current?.dispose(), []);
   // Both dialogs declare aria-modal, so both must behave like one.
