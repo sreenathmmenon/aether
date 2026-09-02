@@ -186,5 +186,12 @@ describe("the demo script quotes what the product reports", () => {
     ).toHaveLength(0);
     // And the claim that misled is recorded rather than quietly deleted.
     expect(flat).toContain("no future is clean");
+    // The description tells a reader what they will watch happen, not only
+    // what the product can do — the bottleneck chain is the most compelling
+    // thing in it and appeared nowhere in the prose a judge reads first.
+    expect(
+      flat,
+      "the description no longer says what the reviewer will see happen",
+    ).toContain("third bottleneck");
   });
 });

@@ -24,6 +24,15 @@ The model is yours in the strongest sense: describe your own architecture and th
 
 WebMCP is not a bolt-on chat box; it is how a reviewer's own system gets into the product at all. The page exposes narrow, state-aware imperative tools that grow from five to twelve once a repair future exists, and component identifiers in those schemas are enumerated from the live graph, so an agent can operate on something a person added moments earlier. Every agent mutation runs the same validated command path as a human click and lands in the replayable record. Rejected calls name the fields that failed and the values that would succeed, so a model can correct itself.
 
+What that buys is visible in about ninety seconds. The strongest repair —
+highest resilience — resolves the regional outage the product opens on, and
+is still refused for approval: a traffic spike breaches it on two capacity
+deficits. Raise those, re-run, and a third bottleneck appears on
+reconciliation that was hidden behind the first two. The engine finds the
+next constraint instead of declaring victory, which is the difference
+between a diagram and a simulation, and it is why the approval gate refuses
+before it opens rather than rubber-stamping the best-looking option.
+
 Agent authority is bounded at both ends. No approve or merge tool is registered — not gated, absent — so an agent can never ship a change. It also cannot dismantle the system it was asked to repair: no removal tool is registered either, so an agent adds and reconfigures but never deletes. The engine holds the same line underneath — an agent-actor removal that would reduce the model below two components, or that touches a component three or more dependencies rely on, is refused with the reason named — so the guarantee does not rest on the tool list alone. Approval additionally requires every simulated scenario on the current branch version to be clean, and any edit invalidates it. Language models propose; Aether proves; people decide.
 
 ## Three-minute capture plan

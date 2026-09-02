@@ -2190,3 +2190,11 @@ was already underway again.
   - Evidence: `docs/SUBMISSION.md` held a second seven-step timeline, and step six said "select the clean future, approve, merge" — the same instruction M167 found impossible, because creating the futures simulates each against all four scenarios and every one carries violations. Two documents disagreeing about how to shoot the film is worse than one being wrong: whichever is read second wins, and neither is marked as stale.
   - The submission now points at the script rather than restating it, and records the claim that misled rather than quietly deleting it — a reader who saw the old plan should be able to find out what happened to it.
   - A test keeps them from diverging again: the submission must reference `docs/DEMO.md`, must contain no second timeline, and must keep the correction. Adding a duplicate shot plan fails it.
+
+## Milestone 169 — What the reviewer will see happen
+
+- [x] **M169.1 — The description listed capabilities and never named a moment** `DONE`
+  - Acceptance: the prose a judge reads first says what they will watch, not only what the product can do.
+  - Evidence: every claim in the Devpost description was verified accurate in M136 and still holds. What it lacked was the thing that actually persuades — the bottleneck chain M167 discovered was the strongest material in the product and appeared nowhere in the text a judge reads before watching anything.
+  - Added in ninety seconds' worth: the strongest repair resolves the opening outage and is **still refused**, a spike breaches it on two capacity deficits, and repairing those reveals a third on reconciliation hidden behind them. That is also the clearest argument for why the gate refuses before it opens rather than rubber-stamping the best-looking option.
+  - Verified against the deployed origin before shipping the claim: on a cleared workspace the regional outage is clean, the spike reports `Primary Ledger capacity deficit: 4,500 RPS` and `Authentication capacity deficit: 4,000 RPS`, and raising both reveals `Reconciliation capacity deficit: 2,000 RPS`. The description asserts nothing the product does not do.
