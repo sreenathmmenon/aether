@@ -2160,7 +2160,10 @@ export function App() {
             {activeSimulation
               ? scenarioCopy[selectedScenario].agent
               : entities.length === 0
-                ? "Nothing is modelled yet. Add the components of your system and I will show you what a regional failure costs."
+                ? // Named the regional outage whatever tab was selected, so
+                  // it offered to price a failure the reviewer was not
+                  // looking at.
+                  `Nothing is modelled yet. Add the components of your system and I will show you what a ${scenarioCopy[selectedScenario].label.toLowerCase()} costs.`
                 : scenarioCopy[selectedScenario].agent}
           </p>
           {/* An empty canvas has no measurements. Rendering 0.00% in red reads
