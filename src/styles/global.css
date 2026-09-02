@@ -1,6 +1,12 @@
 * {
   box-sizing: border-box;
 }
+/* The browser's default bold is 700, which is outside the two-weight ramp,
+   so any <b> or <strong> without an explicit rule fell off the scale. */
+b,
+strong {
+  font-weight: var(--weight-bold);
+}
 body {
   margin: 0;
   min-width: 320px;
@@ -20,7 +26,7 @@ button {
 :where(button, a[href], input, select, textarea, [tabindex]):focus-visible {
   outline: 2px solid var(--human);
   outline-offset: 2px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
 }
 .aether-shell {
   min-height: 100vh;
@@ -99,7 +105,7 @@ button {
   align-items: center;
   gap: 8px;
   padding: 4px 8px;
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   border: 1px solid rgb(27 77 255 / 0.3);
   background: rgb(27 77 255 / 0.09);
   animation: header-call-in 260ms ease-out;
@@ -162,7 +168,7 @@ button {
   width: min(430px, 78%);
   padding: 24px 28px;
   border: 1px solid rgb(22 32 46 / 0.11);
-  border-radius: 12px;
+  border-radius: var(--radius);
   background: var(--surface-raised);
   box-shadow: 0 16px 40px rgb(22 32 46 / 0.08);
   text-align: center;
@@ -187,7 +193,7 @@ button {
   margin-top: 4px;
   padding: 8px 16px;
   border: none;
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   color: var(--surface-sunken);
   background: var(--human);
   font-size: 12px;
@@ -228,7 +234,7 @@ button {
 .room-chip {
   padding: 4px 8px;
   border: 1px solid rgb(27 77 255 / 0.32);
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   color: var(--human);
   background: rgb(27 77 255 / 0.08);
   font-size: 12px;
@@ -247,7 +253,7 @@ button {
 .room-invite {
   padding: 8px 12px;
   border: 1px solid rgb(27 77 255 / 0.32);
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   color: var(--human);
   background: rgb(27 77 255 / 0.07);
   font-size: 12px;
@@ -288,7 +294,7 @@ button {
 .shared-live {
   padding: 4px 8px;
   border: 1px solid rgb(15 144 128 / 0.25);
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   color: var(--verified-text);
   background: rgb(15 144 128 / 0.07);
   font-size: 12px;
@@ -777,7 +783,7 @@ button {
   gap: 4px;
   padding: 4px;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius);
   background: var(--surface-sunken);
 }
 .scenario-tabs button {
@@ -907,10 +913,10 @@ button {
 /* Position comes from the components each region contains, so these carry
    only the colour that distinguishes one failure domain from another. */
 .region-box-mumbai {
-  border-radius: 10px;
+  border-radius: var(--radius);
 }
 .region-box-blr {
-  border-radius: 10px;
+  border-radius: var(--radius);
   border-color: rgb(15 144 128 / 0.3);
   background: rgb(15 144 128 / 0.025);
 }
@@ -1107,7 +1113,7 @@ button {
   margin: 0;
   padding: 8px 12px;
   border: 1px solid rgb(22 32 46 / 0.12);
-  border-radius: 8px;
+  border-radius: var(--radius);
   list-style: none;
   color: var(--ink-muted);
   background: var(--surface-raised);
@@ -2473,7 +2479,7 @@ button {
 }
 .decision-replay li small {
   padding: 1px 8px;
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   background: rgb(22 32 46 / 0.06);
   font-size: 12px;
   letter-spacing: 0.03em;
@@ -2703,7 +2709,7 @@ button {
   align-items: center;
   margin-left: 8px;
   padding: 2px 8px;
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   font-size: 12px;
   font-weight: 650;
   font-variant-numeric: tabular-nums;
