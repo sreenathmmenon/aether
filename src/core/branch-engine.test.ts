@@ -185,6 +185,52 @@ describe("Aether command pipeline", () => {
     }
   });
 
+  it("refuses an approval quoting a version the branch has moved past", () => {
+    // Mutation testing found this: the equivalent check on merge is tested
+    // and the one on approve was not. It is what stops a person approving a
+    // plan while looking at an older version of it — the request carries the
+    // version the reviewer saw, and if the branch has moved since, the thing
+    // being approved is not the thing on their screen.
+    const simulated = dispatch(branchState(), {
+      type: "RUN_SCENARIO",
+      input: {
+        branchId: "branch-highest_resilience",
+        scenario: "regional_outage",
+      },
+    });
+    if (!simulated.ok) throw new Error("fixture scenario must run");
+    const edited = dispatch(
+      simulated.value,
+      {
+        type: "SET_PROPERTY",
+        input: {
+          branchId: "branch-highest_resilience",
+          entityId: "queue",
+          property: "capacityRps",
+          value: 15000,
+        },
+      },
+      human,
+    );
+    if (!edited.ok) throw new Error("fixture edit must apply");
+    const branch = edited.value.branches["branch-highest_resilience"]!;
+    // The edit moved the version, or this asserts nothing.
+    expect(branch.version).toBe(2);
+
+    const stale = dispatch(
+      edited.value,
+      {
+        type: "APPROVE_BRANCH",
+        input: { branchId: branch.id, branchVersion: 1 },
+      },
+      human,
+    );
+    expect(stale).toMatchObject({ ok: false, code: "STALE_REVISION" });
+    expect(edited.value.branches["branch-highest_resilience"]?.status).not.toBe(
+      "approved",
+    );
+  });
+
   it("requires current clean deterministic evidence before a human approval", () => {
     const state = branchState();
     const beforeSimulation = dispatch(

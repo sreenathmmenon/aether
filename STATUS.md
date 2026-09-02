@@ -2092,3 +2092,11 @@ was already underway again.
 - [x] **M158.2 — The endpoint that says whether decisions are durable** `DONE`
   - Evidence: `/health` could be hardcoded to report `postgres` while running on the in-memory fallback — the one thing that endpoint exists not to do, since it is what a reviewer checks to see whether their decisions survive. It now has to derive the value from `ensureStorage`, and an unreachable database has to answer `degraded` with 503 rather than `ok`.
   - Nine server mutations have now been applied across M157 and M158; every one is killed.
+
+## Milestone 159 — Approving a version the branch had moved past
+
+- [x] **M159.1 — The stale-version guard on approve, untested** `DONE`
+  - Acceptance: an approval quoting an outdated branch version is refused.
+  - Evidence: mutation testing found the check on `APPROVE_BRANCH` could be removed with nothing failing, while the identical check on `MERGE_BRANCH` was covered. It is what stops a person approving a plan while looking at an older version of it — the request carries the version the reviewer saw, and if the branch has moved since, the thing being approved is not the thing on their screen.
+  - The test simulates, edits to move the version, asserts the version actually moved, then approves at the old one and requires `STALE_REVISION` with the branch left unapproved. Removing the check fails it.
+  - Also killed in the same sweep: a region being accepted as a dependency source, an empty repair future being creatable, and a merge at a stale version.
