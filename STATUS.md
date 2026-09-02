@@ -2804,3 +2804,18 @@ Two of the three references ship a light ground; Vercel — the supposedly dark 
   - The sentence the product exists to make was 12px muted text behind a hairline. It is now a block framing the decision, with "Yours alone." in the display face, and reads "Your agent can do 13 things here. Approving, committing and rolling back are not among them, and nor is removing anything your system depends on."
   - Its test checked only that the element existed, so it would have passed with the claim saying anything. It now holds the copy to what the reducer refuses and rejects protocol vocabulary.
   - One layout defect the new block made visible: `min-width` on flex items does not stop them shrinking, so the diff row compressed every card and truncated the component names it existed to show.
+
+## Milestone 227 — Walking the redesign across every system and state
+
+- [x] **M227.1 — The approve button, at the moment it becomes usable** `DONE`
+  - Walking the full journey on the deployed origin found the single most important control on the page at **1.10:1** — light ink on the vivid `--verified` fill, which is 3.61:1 even at best. An earlier bulk edit had also flattened its gradient into two identical stops.
+  - Now the deeper `--verified-text` as ground with white on it (5.67:1), inverting on hover to dark ink on the vivid fill (4.67:1). Both states measured.
+- [x] **M227.2 — The collision is now caught as a class, not an instance** `DONE`
+  - **This was the fifth time the same defect was found and fixed**: the node kind labels, a numbered chip, four impact badges, the `+8` badge announcing the agent gaining reach, and the approve button. Every one was found by rendering a state and measuring it — which means the sixth was waiting in whichever state nobody rendered.
+  - The gate now refuses the pattern: light text on `--verified`, `--agent` or `--branch` cannot reach 4.5:1, so those fills carry dark ink or the deeper `-text` value becomes the ground. `--human` and `--failure` are dark enough and are not flagged — checked at 5.38:1, not assumed. Verified against the exact defect that shipped, gradient form included.
+- [x] **M227.3 — The canvas CTA had neither state right** `DONE`
+  - The blank canvas is the state a reviewer meets first, and its "Build this architecture" button sat at 3.12:1 while looking fully live but inert. Two causes: it lives inside the canvas scope, where `--surface-sunken` is redefined to the midnight ground, so its light ink resolved to dark ink on vivid blue; and it had no `:disabled` rule at all — the same defect already fixed on the trace control.
+  - Enabled 5.91:1, disabled 6.37:1 with a `not-allowed` cursor.
+- [x] **M227.4 — Every system, every state** `DONE`
+  - Swept payment platform, ride-hailing, AI platform and the blank canvas — at arrival, after branching, after repair, after approval and after commit. **Zero text below AA in every state.** The blank canvas was built from both a prose brief and an arrow chain, producing the right components each way.
+  - Each system yields its own trade-off spread — ride-hailing reads `$18,970 / month · 9m recovery · 97.86% availability` — so nothing is special-cased to the fixture the redesign was built against.
