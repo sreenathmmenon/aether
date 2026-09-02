@@ -840,8 +840,8 @@ button {
   display: grid;
   grid-template-columns: 1fr max-content;
   grid-template-areas:
-    "label label"
-    "tabs trace";
+    "label trace"
+    "tabs tabs";
   align-items: center;
   gap: var(--space-3) var(--space-4);
   padding: var(--space-4) var(--space-6);
@@ -858,10 +858,18 @@ button {
 }
 .scenario-tabs {
   grid-area: tabs;
-  /* The full width of the bar now, so four scenario names fit without one
-     scrolling out of sight. */
+  /* Twice now this was fought by tightening padding, which is treating the
+     symptom: the tabs shared their row with the trace control, so the four
+     scenario names had 438px of a 654px bar and the selected one -- the tab
+     a reviewer is actually reading -- was clipped mid-word at 1274px. The
+     row is theirs alone now, and the trace sits up beside the label. The
+     tabs are the primary way to interrogate the model; the trace is one
+     button. And the names still fit their row exactly on two of the four
+     systems, so one longer component name would clip again: the strip wraps
+     to a second line rather than scrolling. A segmented control on two rows
+     still reads as one control; a name cut mid-word reads as broken. */
   max-width: 100%;
-  overflow-x: auto;
+  flex-wrap: wrap;
   /* A segmented control: the track recedes and the selected segment lifts.
      The substitution left this on the border colour, which is brighter than
      every surface around it, so the tab strip read as the loudest thing on
