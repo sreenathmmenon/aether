@@ -165,9 +165,9 @@ describe("the demo script quotes what the product reports", () => {
     // so both counts have to be quoted.
     for (const phrase of [
       "10 state-aware tools",
-      "12 state-aware tools",
-      "five to twelve",
-      "shrinks to seven tools",
+      "13 state-aware tools",
+      "five to thirteen",
+      "shrinks to eight tools",
     ])
       expect(flat, `the script no longer says "${phrase}"`).toContain(phrase);
   });

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { recommendFuture } from "@core/recommendation";
 import { narrateCall } from "./call-summary";
 import {
   addComponentInput,
@@ -1282,6 +1283,25 @@ export function createAetherToolRegistry(
             });
           },
         });
+        await register({
+          // The read tools all returned state and left an agent to work the
+          // trade-off out of a table of numbers. So it could act fast and had
+          // nothing to *say* — it could not tell the person who decides which
+          // future the evidence favours or what taking it costs. The product
+          // already computes this to enable a button and again to refuse a
+          // command; neither answer was reachable from a tool.
+          name: "recommend_architecture_future",
+          description:
+            "Read which repair future the current deterministic evidence favours, why, and what accepting it costs against the cheapest alternative. Returns the same readiness judgement the approval gate enforces, so a recommendation is never one a human cannot act on. Recommending is not approving: no tool can commit a future.",
+          inputSchema: {
+            type: "object",
+            properties: {},
+            additionalProperties: false,
+          },
+          annotations: { readOnlyHint: true, untrustedContentHint: false },
+          execute: async () => toolResult(recommendFuture(snapshot())),
+        });
+
         await register({
           name: "compare_architecture_futures",
           description:

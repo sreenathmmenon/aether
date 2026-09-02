@@ -118,6 +118,23 @@ export function narrateCall(
         effect: blast ? `${blast} components in the blast radius` : undefined,
       };
     }
+    case "recommend_architecture_future": {
+      const recommended = text(data.recommended);
+      const standings = Array.isArray(data.standings)
+        ? data.standings.length
+        : undefined;
+      return {
+        did: recommended
+          ? `Recommended ${recommended.replace(/^branch-/, "").replace(/_/g, " ")}`
+          : "Weighed the futures",
+        // The reason, not the verdict: watching an agent recommend without
+        // saying why is watching it guess.
+        effect:
+          text(data.because) ??
+          text(data.nextAction) ??
+          (standings ? `${standings} futures on the evidence` : undefined),
+      };
+    }
     case "compare_architecture_futures": {
       const futures = Array.isArray(data.futures)
         ? data.futures.length

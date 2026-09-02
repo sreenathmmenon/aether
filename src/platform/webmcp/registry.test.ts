@@ -179,7 +179,7 @@ describe("Aether WebMCP registry", () => {
 
     // Each transition re-registers, and a zero here means the cache decided
     // nothing changed when the whole write surface had to close.
-    expect(seen, `surfaces were ${seen.join(",")}`).toEqual([5, 12, 7]);
+    expect(seen, `surfaces were ${seen.join(",")}`).toEqual([5, 13, 8]);
     for (const name of afterMerge)
       expect(name, `${name} survives a merge`).not.toMatch(
         /^(add_|connect_|model_|run_failure)/,
@@ -1864,7 +1864,7 @@ describe("Aether WebMCP registry", () => {
     registry?.dispose();
 
     // Five then twelve, with nothing in between.
-    expect(counts).toEqual([5, 12]);
+    expect(counts).toEqual([5, 13]);
     expect(counts).not.toContain(0);
   });
 
@@ -2256,7 +2256,7 @@ describe("Aether WebMCP registry", () => {
     // nextAction names are already registered when the agent reads them. No
     // further refresh is needed, and asking for one changes nothing.
     await registry?.refresh(state);
-    expect(tools.map((tool) => tool.name).slice(-12)).toEqual([
+    expect(tools.map((tool) => tool.name).slice(-13)).toEqual([
       "get_decision_record",
       "get_architecture_summary",
       "create_architecture_branch",
@@ -2268,6 +2268,7 @@ describe("Aether WebMCP registry", () => {
       "model_architecture",
       "connect_components",
       "propose_architecture_change",
+      "recommend_architecture_future",
       "compare_architecture_futures",
     ]);
     const note = tools.find((tool) => tool.name === "add_decision_note");
@@ -2889,7 +2890,7 @@ describe("Aether WebMCP registry", () => {
       input: { name: "Repair", intent: "highest_resilience" },
     });
     if (!branched.ok) throw new Error("fixture branch must be created");
-    expect(await surfaceFor(branched.value)).toBe(12);
+    expect(await surfaceFor(branched.value)).toBe(13);
 
     expect(await surfaceFor(createInitialState(blankBaseline, "blank"))).toBe(
       10,
@@ -3255,7 +3256,7 @@ describe("Aether WebMCP registry", () => {
     );
     if (!branched.ok) throw new Error("fixture branch must be created");
     const withFuture = await surface(branched.value);
-    expect(withFuture).toHaveLength(12);
+    expect(withFuture).toHaveLength(13);
 
     // Two claims the submission makes about authority and honesty.
     expect(

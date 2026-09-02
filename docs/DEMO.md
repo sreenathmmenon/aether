@@ -85,10 +85,12 @@ Click **`✦ Create repair futures`**. Wait about two seconds.
 
 Three futures appear — lowest cost at 93.96%, fastest recovery at 96.36%,
 highest resilience at 97.11% — and the header chip changes to
-**`WebMCP live · 12 state-aware tools`**.
+**`WebMCP live · 13 state-aware tools`**.
 
-Say it plainly: _the tool surface went from five to twelve because the
-state changed. The agent can now do things it could not do a moment ago._
+Say it plainly: _this is the second time the surface has grown on camera —
+ten to thirteen on the reviewer's own system, five to thirteen here. The
+agent can do things it could not do a moment ago, because the state
+changed._
 
 This is the single most important frame in the film. Let it sit.
 
@@ -147,15 +149,15 @@ after your edits" instead. Either is correct; do not be thrown by it.)
 
 and **`Human approve exact plan`** becomes enabled.
 
-Say: _no approve tool exists for the agent. Not gated — absent. Twelve
-tools are registered and not one of them can commit this._
+Say: _no approve tool exists for the agent. Not gated — absent. Thirteen
+tools are registered — one of them *recommends* a future — and not one can commit this._
 
 Click approve. The record entry is the whole thesis in one row:
 
 > "Reviewer approved the exact plan — 4 clean scenarios · worst 97.11%"
 
 The actor, the evidence they had, and the worst case they accepted.
-Then commit. The surface **shrinks to seven tools**: a committed
+Then commit. The surface **shrinks to eight tools**: a committed
 architecture is read-only to an agent. **`Rollback this merge`** appears
 as a human control.
 
