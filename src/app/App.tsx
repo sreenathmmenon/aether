@@ -1692,9 +1692,20 @@ export function App() {
           ) : (
             <div className="future-stack">
               {futures.map((branch) => {
-                const result = state.simulations[branch.id]?.find(
-                  (run) => run.scenario === selectedScenario,
+                // The card looked only for the scenario currently selected,
+                // so a future with four recorded runs read "Awaiting
+                // evidence" the moment the reviewer switched tabs -- and it
+                // said so beside an evidence panel showing a real figure for
+                // that same future. It also ignored branchVersion, so a run
+                // recorded before an edit was shown as if it still applied.
+                // Prefer the selected scenario, fall back to any current run,
+                // and never show one belonging to an older version.
+                const current = (state.simulations[branch.id] ?? []).filter(
+                  (run) => run.branchVersion === branch.version,
                 );
+                const result =
+                  current.find((run) => run.scenario === selectedScenario) ??
+                  current[current.length - 1];
                 return (
                   <button
                     className={`future-card ${branch.id === activeBranch.id ? "future-card-active" : ""}`}
