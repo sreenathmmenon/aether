@@ -2355,3 +2355,40 @@ button {
   border-radius: 50% 50% 2px 2px;
   background: var(--orange);
 }
+
+/* The surface growing is the one thing that proves state-dependent
+   registration, and it was a digit silently changing in the header. This
+   marks the transition itself: a reviewer who blinks still sees that
+   something changed, and can look up to find what. */
+.tool-delta {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 6px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+  animation: tool-delta-in 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.tool-delta-up {
+  color: var(--void);
+  background: var(--green);
+  box-shadow: var(--glow-green);
+}
+.tool-delta-down {
+  color: var(--void);
+  background: var(--muted);
+}
+@keyframes tool-delta-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.9);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tool-delta {
+    animation: none;
+  }
+}

@@ -514,6 +514,27 @@ describe("the interface honours the ARIA it declares", () => {
     expect(chip.match(/toolCount/g)?.length ?? 0).toBeGreaterThanOrEqual(2);
   });
 
+  it("shows the surface changing, not only announces it", () => {
+    // State-dependent registration is what this submission is built on, and
+    // the surface growing five to thirteen was a digit silently swapping in
+    // the header. A screen reader was told; a reviewer watching the page had
+    // to be looking at the number to notice the one thing that proves the
+    // claim.
+    expect(appSource, "the transition is no longer shown").toContain(
+      "tool-delta",
+    );
+    // Only a real change, and never the first render arriving from zero —
+    // otherwise every load flashes "+5" for a surface that did not grow.
+    expect(appSource).toMatch(
+      /if \(!before \|\| before === toolCount\) return;/,
+    );
+    // The badge is decorative: the chip beside it is already a polite live
+    // region carrying the same fact, and announcing both says it twice.
+    expect(appSource).toMatch(
+      /className=\{`tool-delta[\s\S]{0,80}aria-hidden="true"/,
+    );
+  });
+
   it("announces the surface changing, which is the claim proving itself", () => {
     // Five tools becoming twelve when a repair future exists is the
     // state-dependent registration a judge is asked to look for, and it

@@ -221,6 +221,24 @@ export function App() {
     );
   });
   const [toolCount, setToolCount] = useState(0);
+  /**
+   * The surface growing is the claim this submission is built on, and it was
+   * a number silently swapping in the header. A reviewer had to be watching
+   * the digit to notice the one thing that proves state-dependent
+   * registration, so the transition is now shown rather than merely
+   * announced.
+   */
+  const [toolDelta, setToolDelta] = useState<number>();
+  const previousToolCount = useRef(0);
+  useEffect(() => {
+    const before = previousToolCount.current;
+    previousToolCount.current = toolCount;
+    // Only a real change, and never the first render arriving from zero.
+    if (!before || before === toolCount) return;
+    setToolDelta(toolCount - before);
+    const timer = window.setTimeout(() => setToolDelta(undefined), 4000);
+    return () => window.clearTimeout(timer);
+  }, [toolCount]);
   const [toolCalls, setToolCalls] = useState<ToolCall[]>([]);
   // The newest call, held briefly in the header so agent activity is visible
   // in the opening viewport rather than only in the panel a screen below.
@@ -1434,6 +1452,14 @@ export function App() {
                 `WebMCP live · ${toolCount} state-aware tools`
               : "WebMCP not detected"}
           </span>
+          {toolDelta !== undefined && (
+            <span
+              className={`tool-delta tool-delta-${toolDelta > 0 ? "up" : "down"}`}
+              aria-hidden="true"
+            >
+              {toolDelta > 0 ? `+${toolDelta}` : toolDelta}
+            </span>
+          )}
           {/* Visible but not announced. The tool feed below is already a
               polite live region carrying the same call with its arguments, so
               marking this one too made a screen reader say every agent call
