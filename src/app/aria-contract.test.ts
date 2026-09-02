@@ -47,6 +47,28 @@ describe("the interface honours the ARIA it declares", () => {
       );
   });
 
+  it("keeps one h1 and skips no heading level", () => {
+    // Measured on the deployed page: four headings, one h1, no skips. The
+    // page has eleven landmarks and only four headings, which is fine
+    // *because* every region carries a landmark name — the outline is
+    // reachable that way. What must not happen is the h1 multiplying or a
+    // level being skipped, which breaks the outline in both modes at once.
+    const levels = [...appSource.matchAll(/<h([1-6])[\s>]/g)].map((match) =>
+      Number(match[1]),
+    );
+    expect(levels.length).toBeGreaterThan(2);
+    expect(
+      levels.filter((level) => level === 1),
+      "the page has more than one h1",
+    ).toHaveLength(1);
+    // No h3 without an h2 before it, and so on.
+    for (const level of levels)
+      expect(
+        levels.some((other) => other === level - 1) || level === 1,
+        `an h${level} appears with no h${level - 1} anywhere`,
+      ).toBe(true);
+  });
+
   it("gives every modal dialog an accessible name", () => {
     // A dialog announced only as "dialog" tells a screen reader nothing about
     // what it interrupted the page for.

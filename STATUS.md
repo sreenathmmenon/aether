@@ -1993,3 +1993,11 @@ was already underway again.
   - Both are now named with `aria-labelledby` pointing at the eyebrow text already on screen — `Live architecture decision room` and `Architecture futures` — rather than a second string that could drift from what the section says.
   - A test now requires every `<section>` and `<aside>` in the source to carry a name, so a new one cannot ship unnamed. Removing either name fails it.
   - Verified against the deployed origin: all eleven `section` and `aside` landmarks now carry a name, reading as a navigable outline of the decision room — briefing, studio, futures, canvas, evidence, history, discussion, replay, review, activity.
+
+## Milestone 149 — The heading outline, checked and left alone
+
+- [x] **M149.1 — Verify rather than assume the second navigation mode** `DONE`
+  - Acceptance: heading structure is sound, and where it is sparse, nothing is unreachable.
+  - Evidence: measured on the deployed page — four headings, exactly one `h1`, no skipped levels. Eleven landmarks against four headings looked like a gap, so each region was checked individually: **every region without a heading carries a landmark name**, so the outline is fully reachable, just through landmarks rather than headings.
+  - Deliberately not "fixed". Promoting the eyebrow labels to headings would change visual weight across the interface to add a redundant path to information already navigable, and the eyebrows are what the landmark names now point at — converting them would mean maintaining both.
+  - What is pinned instead is the part that breaks both modes at once: a second `h1`, or a skipped level. Changing an `h2` to an `h4` now fails.
