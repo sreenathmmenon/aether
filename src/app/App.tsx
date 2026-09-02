@@ -719,6 +719,22 @@ export function App() {
         (count, names) => {
           setToolCount(count);
           if (names.length) setRegisteredTools(names);
+          // The panel claims to show what an agent may do here, so it has to
+          // read what the browser actually holds rather than what this page
+          // believes it registered. If those ever disagree, the disagreement
+          // is the bug worth seeing -- and after a commit the panel and
+          // ChatGPT must drop the same tools in the same tick.
+          void (async () => {
+            try {
+              const live = await document.modelContext?.getTools?.();
+              if (Array.isArray(live) && live.length)
+                setRegisteredTools(
+                  live.map((tool: { name: string }) => tool.name),
+                );
+            } catch {
+              // A browser without the read side keeps the registry's list.
+            }
+          })();
         },
         undefined,
         (call) => {
