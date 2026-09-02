@@ -35,7 +35,13 @@ describe("the file an agent reads about this page", () => {
     const routed = [
       ...serverSource.matchAll(/app\.get\("\/([a-z.]+\.txt)"/g),
     ].map((match) => match[1]!);
-    expect(routed.length).toBeGreaterThan(0);
+    // Both files must actually be routed, named rather than counted. The
+    // derivation reads the server's own routes, so renaming a route removed
+    // that file from scrutiny and this passed while nothing served it —
+    // found by mutation, and the same self-exempting shape as the edit-command
+    // list in the reducer tests.
+    for (const file of ["llms.txt", "robots.txt"])
+      expect(routed, `/${file} is not served`).toContain(file);
     for (const file of routed)
       expect(
         serverSource,

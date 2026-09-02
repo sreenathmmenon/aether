@@ -1913,3 +1913,13 @@ was already underway again.
   - Chasing that took several wrong turns worth recording: the mutation was confirmed to produce `status=approved` in isolation while the suite stayed green, the extraction was confirmed to return all five commands **unmutated**, and one measurement was invalid because `git checkout` had discarded the uncommitted test — the run that produced it was measuring a suite without it. Printing `editCommands` _under mutation_ is what finally showed the list had silently shrunk to four.
   - The list now derives from `branch.operations.push`, which is what makes a command an edit, and is independent of the property being asserted. All five status mutations and all five version mutations are now killed.
   - The general lesson, recorded because it will recur: a test that derives its own scope from the code under test can be disarmed by the very change it exists to catch. The derivation and the assertion must key on different properties.
+
+## Milestone 141 — Auditing the other tests that derive their own scope
+
+- [x] **M141.1 — Look for the same shape elsewhere** `DONE`
+  - Acceptance: no test can be disarmed by the change it exists to catch.
+  - Evidence: M140's defect was a test deriving its scope from the property it asserts on. Nine test files in this suite read source with `?raw` and derive lists that way, so each was mutation-tested rather than inspected.
+  - `human-gate.test.ts` has the identical shape — it derives the human-only commands by finding `actor.kind !== "human"` and then asserts on that check — but it already carries an explicit backstop list of the five decision commands, with a comment saying dropping a check "would otherwise shrink humanOnly and pass this vacuously". That is why all five of those mutations died. The pattern was already understood here; the reducer test simply did not carry the same guard.
+  - Killed: removing the asset-route terminator, and pointing an `aria-describedby` at an id that does not exist.
+  - **Survived**: renaming the `/robots.txt` route. The `llms-txt` test derives which text files are served from the server's own routes, so renaming one removed it from scrutiny — the test's property ("each served file is read from `dist/`") stayed true while nothing served the file at all.
+  - Fixed by naming both files rather than counting them: `llms.txt` and `robots.txt` must each appear in the routes. Renaming either now fails. Verified live — both return 200 from the deployed origin, 23 and 1,297 bytes.
