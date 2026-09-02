@@ -2388,3 +2388,13 @@ was already underway again.
     - `compare_architecture_futures` matches all three future cards on name, status and availability.
     - `get_decision_record` matches the replay's command sequence.
   - Reported as no further findings. The three defects the method did find were all one path giving the engine different arguments than another, and that specific failure is now guarded by test rather than by remembering to look.
+
+## Milestone 191 — Capacity options sized for one system only
+
+- [x] **M191.1 — A dead end on ride-hailing that payment platform never shows** `DONE`
+  - Acceptance: the capacity control can repair a spike breach on every shipped system.
+  - Evidence: walking the human path on ride-hailing — the same walk that worked on the payment platform — found the repair impossible. Its traffic spike breaches on `Matching capacity deficit: 14,000 RPS` and `Location Ingest capacity deficit: 9,000 RPS`, and choosing the **largest** offered option made it worse: the deficit became **39,000 RPS**.
+  - The cause: the options were a hardcoded `10,000 / 14,000 / 20,000 / 30,000` ladder, sized for the payment platform. Ride-hailing runs from 12,000 to 60,000 RPS, so setting the 60,000 RPS ingest gateway to 30,000 **halved** its capacity. The control could only make that system worse, and a judge walking it with no agent reached a dead end.
+  - The steps are now multiples of the component's own peak demand, which is what a deficit is measured against, and reach past the spike multiplier — otherwise a reviewer can pick every value on the list and still be refused approval.
+  - Held to that across all three fixtures: every component with stated demand must be offered a value that absorbs a spike, and the largest option must never be below what the component already has. Restoring the fixed ladder fails both.
+  - The signature took two attempts: a component's properties are a union that includes regions, which carry neither figure, so the parameter reads both defensively rather than asserting a shape the type system does not have.

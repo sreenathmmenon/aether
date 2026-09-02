@@ -18,6 +18,7 @@ import {
   regionRectPercent,
 } from "./region-bounds";
 import { edgeBetween } from "./edge-geometry";
+import { capacityChoices } from "./capacity-choices";
 import { futuresMessage } from "./futures-message";
 import { gateReason } from "./gate-reason";
 import { outcomeMessage } from "./outcome-message";
@@ -2401,7 +2402,16 @@ export function App() {
                       }}
                     >
                       <option value="">Capacity…</option>
-                      {[10000, 14000, 20000, 30000].map((rps) => (
+                      {/* Derived from this component's own peak demand
+                          rather than fixed. A hardcoded 10k–30k ladder was
+                          sized for the payment platform and useless on
+                          ride-hailing, which runs at 12k–60k: setting the
+                          largest option on a 60,000 RPS gateway *halved* its
+                          capacity and turned a 9,000 deficit into 39,000.
+                          A traffic spike multiplies demand, so the headroom
+                          steps have to cover it or no option repairs a
+                          spike breach. */}
+                      {capacityChoices(selectedEntity).map((rps) => (
                         <option key={rps} value={rps}>
                           {rps.toLocaleString()} RPS
                         </option>
