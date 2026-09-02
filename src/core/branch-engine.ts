@@ -601,17 +601,29 @@ export function dispatch(
       (entity) => entity.kind !== "region",
     );
     // Positions are the centre of a node, and a node is about 230 units wide
-    // on this 1000-unit canvas -- so a first column at 90 put its left edge
-    // at -25 and the canvas clipped it. Measured on an agent-built system:
-    // "Edge Gateway" sat at -17px and was cut mid-word. Every column clears
-    // its own half-width, and the last one clears the right edge too.
-    const columns = [140, 300, 460, 620, 780];
-    const rows = [190, 340, 60];
+    // on this 1000-unit canvas. Two things follow, both found on an
+    // agent-built system: a first column at 90 put the card's left edge at
+    // -17px and clipped "Edge Gateway" mid-word, and five columns at a
+    // 160-unit pitch sat cards 70 units inside each other -- butted edge to
+    // edge with their names truncated to "Checkout Edg".
+    //
+    // Four columns at a 250-unit pitch: every card clears both canvas edges
+    // and its neighbours. A fifth component takes the next row, which is
+    // what the rows exist for.
+    const columns = [130, 380, 630, 880];
+    // Rows clear a card's height (110 units) with room to spare, and the top
+    // row clears the canvas edge by half of it.
+    const rows = [190, 330, 60];
+    // A card is about 230 x 110 units on this 1000-unit canvas, so two of
+    // them clear each other only beyond those distances. The thresholds were
+    // 150 x 120 -- 80 units short horizontally -- and a fifth component
+    // wrapping to the second row landed on top of the first: "Settlement
+    // Worker" overlapped "Checkout Edge" on an agent-built system.
     const clear = (cx: number, cy: number) =>
       placed.every(
         (entity) =>
-          Math.abs(entity.position.x - cx) > 150 ||
-          Math.abs(entity.position.y - cy) > 120,
+          Math.abs(entity.position.x - cx) >= 230 ||
+          Math.abs(entity.position.y - cy) >= 110,
       );
     let x = columns[0]!;
     let y = rows[0]!;

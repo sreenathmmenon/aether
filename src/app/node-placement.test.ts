@@ -39,6 +39,23 @@ describe("agent-placed components stay on the canvas", () => {
     }
   });
 
+  it("keeps neighbouring columns from overlapping each other", () => {
+    // Clearing the canvas edges is not enough. Five columns at a 160-unit
+    // pitch each cleared both edges and still sat 70 units inside their
+    // neighbour: cards butted edge to edge with their names truncated to
+    // "Checkout Edg" and "Basket Servic".
+    const match = engineSource.match(/const columns = \[([\d, ]+)\]/);
+    if (!match) throw new Error("placement columns are not where they were");
+    const columns = match[1]!.split(",").map((value) => Number(value.trim()));
+    for (let index = 1; index < columns.length; index += 1) {
+      const pitch = columns[index]! - columns[index - 1]!;
+      expect(
+        pitch,
+        `columns ${columns[index - 1]} and ${columns[index]} overlap`,
+      ).toBeGreaterThanOrEqual(nodeHalfWidth * 2);
+    }
+  });
+
   it("keeps every placement row clear of both edges", () => {
     const match = engineSource.match(/const rows = \[([\d, ]+)\]/);
     if (!match) throw new Error("placement rows are not where they were");
