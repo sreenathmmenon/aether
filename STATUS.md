@@ -2481,3 +2481,16 @@ was already underway again.
   - It now opens on the stake: _"When an agent proposes a change to a live system, nothing checks it. Aether computes what it would do."_ over _"For the team that owns the incident."_ The lede names the failure mode — the suggestion arrives with confidence, the tools that would verify it live somewhere else, and the decision gets made on persuasion.
   - The header carried the same problem in miniature: `Counterfactual review` and `Agent-modeled proof room` are internal vocabulary in the line a judge reads first. They now say what state you are in — `Before it ships`, or `Your system`.
   - The primary action is now the only glowing thing on the screen, on a card that lifts off the page rather than sitting flush against it.
+
+## Milestone 200 — Guarding the roles a theme inversion crosses
+
+- [x] **M200.1 — Layout defects the substitution left** `DONE`
+  - Evidence: the canvas stage is the middle column of a three-column grid, so it stretched to match the tallest sibling — **1591px of stage around a 578px graph** on the first screen a judge sees. It now scrolls its own content, and the page shortened from roughly 2,800px to 1,796px.
+  - The scenario tabs sat on `--line`, brighter than every surface around them, so the tab strip read as the loudest thing on the canvas. It is now a segmented control: the track recedes, the selected segment lifts.
+
+- [x] **M200.2 — Make the failure class impossible rather than fixing instances** `DONE`
+  - Acceptance: a token used in the wrong role fails the gate.
+  - Evidence: three rounds of breakage all had one shape — a token used in the wrong role. White _backgrounds_ became the text colour; the border colour became a surface. Each rendered a pale block carrying the dark text of its light-mode design, and each was found by screenshot rather than by test.
+  - The gate now refuses `--ink` or `--muted` as a surface for text, and `--line` as a text colour. It found one more instance on its first run.
+  - Two corrections while writing it, both recorded: a loose pattern flagged `border-color: var(--line)`, which is exactly right, so it matches the `color` property alone; and `--muted` as a fill on a 7px status dot is legitimate, so it is flagged only on rules that also set text.
+  - **102 text elements measured on the deployed page, zero failing AA** — the dark palette's worst ratio is 6.80:1 against a 4.5 threshold, comfortably better than the light theme ever managed.
