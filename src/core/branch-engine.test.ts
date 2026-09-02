@@ -185,6 +185,66 @@ describe("Aether command pipeline", () => {
     }
   });
 
+  it("lets an agent edit invalidate a human approval", () => {
+    // The asymmetry that makes the gate work: an agent cannot approve, but
+    // it can change the plan — and when it does, the human approval must not
+    // survive. Every invalidation test dispatches as a human, so the agent
+    // path was covered only by inspection until this. Confirmed live: an
+    // agent `propose_architecture_change` closed the gate with "This future
+    // changed after its last run."
+    const simulated = dispatch(branchState(), {
+      type: "RUN_SCENARIO",
+      input: {
+        branchId: "branch-highest_resilience",
+        scenario: "regional_outage",
+      },
+    });
+    if (!simulated.ok) throw new Error("fixture scenario must run");
+    const approved = dispatch(
+      simulated.value,
+      {
+        type: "APPROVE_BRANCH",
+        input: { branchId: "branch-highest_resilience", branchVersion: 1 },
+      },
+      human,
+    );
+    if (!approved.ok) throw new Error("fixture approval must work");
+    expect(approved.value.branches["branch-highest_resilience"]?.status).toBe(
+      "approved",
+    );
+
+    // No actor argument: `dispatch` defaults to the agent, which is how
+    // every registered tool reaches the reducer.
+    const agentEdit = dispatch(approved.value, {
+      type: "SET_PROPERTY",
+      input: {
+        branchId: "branch-highest_resilience",
+        entityId: "queue",
+        property: "capacityRps",
+        value: 15000,
+      },
+    });
+    expect(agentEdit.ok, "an agent must be able to propose a change").toBe(
+      true,
+    );
+    if (!agentEdit.ok) throw new Error("unreachable");
+    const branch = agentEdit.value.branches["branch-highest_resilience"]!;
+    expect(branch.status, "an agent edit left the approval standing").toBe(
+      "proposed",
+    );
+    // And the human cannot merge what they approved before the change.
+    expect(
+      dispatch(
+        agentEdit.value,
+        {
+          type: "MERGE_BRANCH",
+          input: { branchId: branch.id, branchVersion: 1 },
+        },
+        human,
+      ),
+    ).toMatchObject({ ok: false, code: "STALE_REVISION" });
+  });
+
   it("counts only evidence gathered against the version being approved", () => {
     // Mutation testing found the version filter on stored runs could be
     // dropped entirely: a scenario run against version 1 would then satisfy

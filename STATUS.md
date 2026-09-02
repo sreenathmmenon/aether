@@ -2110,3 +2110,11 @@ was already underway again.
   - The test approves cleanly at version 1, edits to move the branch to version 2, confirms the run is still stored so it is the version that disqualifies it rather than its absence, then requires the approval to be refused as `NOT_AVAILABLE` with a message naming the missing current scenario.
   - Verified against the deployed origin: approval was eligible on clean evidence, and an agent edit through `propose_architecture_change` closed the gate immediately, reading `This future changed after its last run. Re-run a scenario to make approval eligible.` The rule holds against an agent-initiated change, not only a human one.
   - Sixteen reducer mutations have now been applied across M139, M140, M159 and M160; every one is killed.
+
+## Milestone 161 — The asymmetry that makes the gate work
+
+- [x] **M161.1 — An agent cannot approve, but it can invalidate one** `DONE`
+  - Acceptance: a human approval does not survive an agent's change to the plan.
+  - Evidence: noticed while verifying M160 live — the gate closed on an agent-initiated `propose_architecture_change`, not a human edit. Checking the suite found every invalidation test dispatches as a human, so the agent path was covered only by inspection.
+  - This is the asymmetry the whole design rests on. An agent proposing a change it cannot approve is the point; an agent proposing a change that leaves a _previous_ approval standing would let it ship something no one agreed to.
+  - The test dispatches with no actor argument, which is how every registered tool reaches the reducer, and requires the edit to succeed, the status to fall back to `proposed`, and a human merge at the approved version to be refused as `STALE_REVISION`. Making `SET_PROPERTY` leave the status alone fails this and one other test.
