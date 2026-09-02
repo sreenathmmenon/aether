@@ -49,4 +49,38 @@ if (
   process.exit(1);
 }
 
+// A theme inversion is not a colour swap. Three rounds of real breakage
+// came from tokens used in the wrong role: white *backgrounds* became the
+// text colour, and the border colour became a surface — each rendering a
+// pale block carrying the dark text of its light-mode design. These are
+// the two roles that cannot be crossed.
+const misuse = [
+  [
+    /background(-color)?:\s*var\(--ink\)/g,
+    "--ink is a text colour, not a surface",
+  ],
+  // `color:` only — `border-color: var(--line)` is exactly right, and a
+  // loose match flagged it as a defect.
+  [
+    /(^|[;{]\s*)color:\s*var\(--line\)\s*;/gm,
+    "--line is a border, not a text colour",
+  ],
+  // --muted as a fill is legitimate on a dot a few pixels across; it is a
+  // surface only when something sits on top of it, which a 7px dot cannot
+  // have. Flag it only on rules that also set a text colour.
+  [
+    /color:\s*var\(--[a-z-]+\);[^}]*background(-color)?:\s*var\(--muted\)/g,
+    "--muted is a text colour, not a surface for text",
+  ],
+];
+let crossed = 0;
+for (const [pattern, why] of misuse) {
+  const hits = global.match(pattern) ?? [];
+  for (const hit of hits) {
+    console.error(`${hit.trim()} — ${why}`);
+    crossed += 1;
+  }
+}
+if (crossed) process.exit(1);
+
 console.log(`tokens agree (${pairs.length} colours)`);
