@@ -114,6 +114,124 @@ describe("Aether WebMCP registry", () => {
     expect(undocumented).toEqual([]);
   });
 
+  it("registers no write tool on a branch a person discarded", async () => {
+    // A rolled-back repair is discarded, and `canEditModel` refuses it — but
+    // nothing tested that, so removing the check broke no test. The reducer
+    // refuses discarded branches in five places, so the damage is bounded to
+    // advertising tools that always fail; an agent asked to continue a
+    // rejected repair would call them and learn nothing from the refusals.
+    const registered: RegisteredTool[] = [];
+    let state = createInitialState(paymentPlatformBaseline);
+    const registry = createAetherToolRegistry(
+      (next) => {
+        state = next;
+      },
+      undefined,
+      {
+        registerTool: async (tool) => {
+          registered.push(tool as unknown as RegisteredTool);
+        },
+      },
+    );
+    const human = { id: "s", kind: "human" as const, displayName: "S" };
+    const branched = dispatch(state, {
+      type: "CREATE_BRANCH",
+      input: { name: "Discard probe", intent: "highest_resilience" },
+    });
+    if (!branched.ok) throw new Error("fixture branch must be created");
+    const simulated = dispatch(branched.value, {
+      type: "RUN_SCENARIO",
+      input: {
+        branchId: "branch-highest_resilience",
+        scenario: "regional_outage",
+      },
+    });
+    if (!simulated.ok) throw new Error("fixture scenario must run");
+    const repair = simulated.value.branches["branch-highest_resilience"]!;
+    const approved = dispatch(
+      simulated.value,
+      {
+        type: "APPROVE_BRANCH",
+        input: { branchId: repair.id, branchVersion: repair.version },
+      },
+      human,
+    );
+    if (!approved.ok) throw new Error("fixture approval must work");
+    const merged = dispatch(
+      approved.value,
+      {
+        type: "MERGE_BRANCH",
+        input: { branchId: repair.id, branchVersion: repair.version },
+      },
+      human,
+    );
+    if (!merged.ok) throw new Error("fixture merge must work");
+    const rolledBack = dispatch(
+      merged.value,
+      { type: "ROLLBACK_MERGE", input: { branchId: repair.id } },
+      human,
+    );
+    if (!rolledBack.ok) throw new Error("fixture rollback must work");
+    expect(rolledBack.value.branches[repair.id]?.status).toBe("discarded");
+
+    // Make the discarded branch the active one, which is the state a
+    // reviewer is left in immediately after rolling a repair back.
+    const active = {
+      ...rolledBack.value,
+      workspace: { ...rolledBack.value.workspace, activeBranchId: repair.id },
+    };
+    registered.length = 0;
+    await registry?.refresh(active);
+    registry?.dispose();
+
+    const names = registered.map((tool) => tool.name);
+    // There is a surface, or this asserts nothing.
+    expect(names.length).toBeGreaterThan(3);
+
+    // The check is the branch enum, not the tool name. A first version
+    // asserted no write tool is registered at all and failed on
+    // `propose_architecture_change` — correctly, because that tool is scoped
+    // by `writableBranchIds()` and the other two futures are still editable.
+    // What must not happen is the discarded branch appearing as a target.
+    for (const tool of registered) {
+      const schema = (
+        tool as unknown as {
+          name: string;
+          inputSchema?: { properties?: { branchId?: { enum?: string[] } } };
+        }
+      ).inputSchema;
+      const targets = schema?.properties?.branchId?.enum;
+      if (!targets) continue;
+      expect(
+        targets,
+        `${tool.name} offers the discarded branch as a target`,
+      ).not.toContain(repair.id);
+    }
+    // And the way forward is still open: a rejected repair is replaced.
+    expect(names).toContain("create_architecture_branch");
+
+    // With the discarded branch as the *only* future, `canEditModel` is what
+    // closes the write surface — the branch-enum check above cannot, because
+    // there is no other writable branch to notice its absence. Removing that
+    // check alone otherwise breaks nothing.
+    const onlyDiscarded = {
+      ...active,
+      branches: { [repair.id]: active.branches[repair.id]! },
+    };
+    const soleRegistry = createAetherToolRegistry(() => {}, undefined, {
+      registerTool: async (tool) => {
+        registered.push(tool as unknown as RegisteredTool);
+      },
+    });
+    registered.length = 0;
+    await soleRegistry?.refresh(onlyDiscarded);
+    soleRegistry?.dispose();
+    for (const name of registered.map((tool) => tool.name))
+      expect(name, `${name} writes to a discarded-only workspace`).not.toMatch(
+        /^(add_|connect_|model_|run_failure|propose_)/,
+      );
+  });
+
   it("quotes surface sizes the registry actually publishes", async () => {
     // These counts are written out in prose across the documents, where they
     // drift silently: the plan still said nine and eleven long after the

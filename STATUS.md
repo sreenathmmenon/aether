@@ -1952,3 +1952,13 @@ was already underway again.
   - `eslint` then caught `upstreamOf` as orphaned, so the helper went with it — the gate finding the second half of a deletion is exactly what it is for.
   - Verified against the deployed origin on a cleared workspace: the evidence panel and `inspect_failure_domain` both report the single sentence `Primary Ledger has no standby replica` at `aether-sim-5` with availability 93.96%, identical to before the removal. Deleting unreachable code changed nothing a reviewer sees, which is the correct outcome.
   - A test now holds the surviving sentence: exactly one standby-replica violation, naming the ledger, and zero of the removed kind. Dropping the surviving violation fails three tests.
+
+## Milestone 145 — The state after a rollback, unguarded
+
+- [x] **M145.1 — A discarded branch could still offer write tools** `DONE`
+  - Acceptance: a repair a person rolled back accepts no further agent writes.
+  - Evidence: mutation testing found that removing the discarded-branch check from `canEditModel` broke no test. That is the state a reviewer is left in immediately after rolling a repair back, and nothing covered it.
+  - The damage is bounded rather than dangerous: the reducer refuses discarded branches in five places, so an agent would get tools that always fail. Bounded is not the same as harmless — an agent asked to continue a rejected repair would call them and learn nothing from the refusals.
+  - Two guards hold this, and each needed its own case. `writableBranchIds()` keeps the discarded branch out of every write tool's `branchId` enum, which is what matters while other futures remain editable. `canEditModel` closes the surface entirely when the discarded branch is the **only** future — the enum check cannot catch that, because there is no other writable branch whose absence would be noticed. Both are now covered and both mutations are killed.
+  - A first assertion was too broad and failed on `propose_architecture_change`, correctly: that tool is scoped by `writableBranchIds()`, so it is right to register while other futures are editable. The check is the branch enum, not the tool name.
+  - Also killed in the same sweep: removing the summary component cap, the batch failure cap, and the schema problem cap.
