@@ -21,7 +21,7 @@ import { edgeBetween } from "./edge-geometry";
 import { capacityChoices } from "./capacity-choices";
 import { actorName, reviewerId, reviewerName } from "./reviewer-identity";
 import { futuresMessage } from "./futures-message";
-import { futureHeadline } from "./future-headline";
+import { futureHeadline, futureHeadlineParts } from "./future-headline";
 import { gateReason } from "./gate-reason";
 import { outcomeMessage } from "./outcome-message";
 import {
@@ -1771,7 +1771,15 @@ export function App() {
                         intent that deliberately trades availability away for
                         spend -- showed a figure identical to the baseline and
                         read as a future that did nothing. */}
-                    <small>{futureHeadline(branch.name, result)}</small>
+                    {/* The figure is what a reviewer compares; the unit is a
+                        label. As one string at display size it overflowed
+                        the column. */}
+                    <small>
+                      {futureHeadlineParts(branch.name, result).value}
+                      {futureHeadlineParts(branch.name, result).unit && (
+                        <i>{futureHeadlineParts(branch.name, result).unit}</i>
+                      )}
+                    </small>
                     <b>
                       {branch.id === activeBranch.id ? "Viewing" : "Inspect"}
                     </b>

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import appSource from "./App.tsx?raw";
 import engineSource from "@core/branch-engine.ts?raw";
-import { futureHeadline } from "./future-headline";
+import { futureHeadline, futureHeadlineParts } from "./future-headline";
 
 describe("what a repair future leads with", () => {
   const evidence = {
@@ -50,12 +50,24 @@ describe("what a repair future leads with", () => {
     // The visible figure and the aria-label were built separately, so a
     // screen reader could be told a different number from the one on screen.
     const rail = appSource.slice(appSource.indexOf("className={`future-card"));
-    const card = rail.slice(0, 1400);
-    expect(card).toContain("futureHeadline(branch.name, result)");
+    // Wide enough to reach the figure: the aria-label and the split form
+    // together push it past a 1400-character window.
+    const card = rail.slice(0, 2200);
+    // The visible card sets the figure at display size and its unit as a
+    // label, so it uses the split form; the accessible name reads the
+    // sentence. Both derive from the same source, which is what has to
+    // hold -- a second source is how the two would drift.
+    expect(card).toContain("futureHeadlineParts(branch.name, result)");
     expect(
-      card.match(/futureHeadline\(branch\.name, result\)/g)?.length,
-      "the card and its aria-label must quote the same figure",
-    ).toBe(2);
+      card,
+      "the accessible name no longer quotes the same figure",
+    ).toContain("futureHeadline(branch.name, result)");
+    expect(
+      futureHeadline("Lowest cost", evidence),
+      "the sentence and the split form disagree",
+    ).toBe(
+      `${futureHeadlineParts("Lowest cost", evidence).value} ${futureHeadlineParts("Lowest cost", evidence).unit}`,
+    );
     expect(
       card,
       "the card went back to reporting availability for every intent",

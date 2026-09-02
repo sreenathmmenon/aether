@@ -26,10 +26,33 @@ export function futureHeadline(
   branchName: string,
   evidence: FutureEvidence | undefined,
 ) {
-  if (!evidence) return "Awaiting evidence";
+  const parts = futureHeadlineParts(branchName, evidence);
+  return parts.unit ? `${parts.value} ${parts.unit}` : parts.value;
+}
+
+/**
+ * The same headline split into the figure and what it measures.
+ *
+ * The card sets the figure at display size, and "97.11% availability" as one
+ * string overflowed its column -- the number is the thing being compared and
+ * the unit is a label, so they take different weights rather than the same
+ * one. `futureHeadline` still returns the sentence for accessible names and
+ * for the demo script, which quote it as prose.
+ */
+export function futureHeadlineParts(
+  branchName: string,
+  evidence: FutureEvidence | undefined,
+): { value: string; unit?: string } {
+  if (!evidence) return { value: "Awaiting evidence" };
   if (branchName === "Lowest cost")
-    return `$${Math.round(evidence.monthlyCostUsd).toLocaleString()} / month`;
+    return {
+      value: `$${Math.round(evidence.monthlyCostUsd).toLocaleString()}`,
+      unit: "/ month",
+    };
   if (branchName === "Fastest recovery")
-    return `${evidence.rtoMinutes}m recovery`;
-  return `${evidence.availability.toFixed(2)}% availability`;
+    return { value: `${evidence.rtoMinutes}m`, unit: "recovery" };
+  return {
+    value: `${evidence.availability.toFixed(2)}%`,
+    unit: "availability",
+  };
 }
