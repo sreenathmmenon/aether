@@ -213,7 +213,22 @@ if (!dockRule.includes("grid-template-areas")) {
   );
   process.exit(1);
 }
-for (const area of ["head", "diff", "earlier", "actions"]) {
+// Derived from the rule rather than restated: the dock declared "earlier"
+// as its own row, which was empty whenever there was no history to report,
+// so that note moved into the diff column. A hardcoded list would have kept
+// demanding an area the grid no longer names.
+const declaredAreas = [
+  ...new Set(
+    (dockRule.match(/grid-template-areas:[^;]*;/)?.[0] ?? "")
+      .match(/"[^"]*"/g)
+      ?.flatMap((row) => row.replace(/"/g, "").trim().split(/\s+/)) ?? [],
+  ),
+].filter(Boolean);
+if (declaredAreas.length === 0) {
+  console.error(".review-dock declares no grid areas to check.");
+  process.exit(1);
+}
+for (const area of declaredAreas) {
   if (!new RegExp(`grid-area:\\s*${area};`).test(global)) {
     console.error(
       `.review-dock names the grid area "${area}" but nothing claims it, so a child is auto-placed.`,

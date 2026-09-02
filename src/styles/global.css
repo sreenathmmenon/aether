@@ -276,7 +276,11 @@ button {
   overflow-y: auto;
 }
 .replay-earlier {
-  grid-area: earlier;
+  /* Sits with the diff it annotates rather than claiming a grid row that
+     is empty whenever there is no history to report. */
+  grid-area: diff;
+  align-self: end;
+  justify-self: end;
   margin: 8px 0 0;
   color: var(--ink-muted);
   font-size: 12px;
@@ -1582,9 +1586,13 @@ button {
      approve control and the guarantee are the most important things on the
      page and were cramped into a corner by an off-by-one. */
   grid-template-columns: 250px 1fr 280px;
-  grid-template-areas:
-    "head diff actions"
-    "head earlier actions";
+  /* One row. The two-row form put `diff` above `earlier` and let the
+     decision column span both -- but `earlier` only renders once there is
+     history, so on a fresh baseline row two was empty and the diff column
+     sat 46px tall inside a 283px dock. The earlier-changes note is a
+     footnote to the diff, so it belongs inside that column rather than in
+     a row of its own. */
+  grid-template-areas: "head diff actions";
   align-items: stretch;
   min-height: 124px;
   border-top: 1px solid var(--border);
@@ -1613,14 +1621,27 @@ button {
   font-size: 12px;
 }
 .diff-list {
+  /* The dock is as tall as the decision column needs, and this cell
+     stretched to match -- so on a baseline with no changes to show, 210px
+     of empty white sat across 972px. It hugs its content instead, and the
+     row's own min-height keeps the dock from collapsing. */
+  /* The dock is as tall as the decision column needs -- the guarantee alone
+     is 171px -- so on a baseline with no changes to show, 212px of white
+     sat across 972px. `align-self: start` only moved the gap below this
+     cell rather than removing it, so the cell centres its content in the
+     height it is given instead, and the empty band becomes breathing room
+     around the message rather than a hole beneath it. */
   grid-area: diff;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   overflow: auto;
-  padding: 16px 20px;
+  padding: var(--space-4) var(--space-6);
 }
 .diff-list > p {
+  /* The empty-state sentence is the only child here; centring it turns the
+     column into a deliberate space rather than a stranded line of text. */
+  margin: auto;
   color: var(--ink-muted);
   font-size: 12px;
 }
