@@ -98,6 +98,10 @@ export const aiPlatformBaseline: ArchitectureGraph = {
       id: "evaluations",
       kind: "queue",
       name: "Eval Queue",
+      // Eval Queue and Analytics sat 130 units apart on the same row while a
+      // card is ~216 wide, so they overlapped. Analytics moves left onto the
+      // free column instead: a card is 144 units tall, and a third row would
+      // not clear the one above it inside a 700-unit canvas.
       position: { x: 700, y: 430 },
       properties: {
         regionId: "region-oregon",
@@ -114,7 +118,7 @@ export const aiPlatformBaseline: ArchitectureGraph = {
       id: "analytics",
       kind: "service",
       name: "Analytics",
-      position: { x: 830, y: 430 },
+      position: { x: 180, y: 430 },
       properties: {
         regionId: "region-oregon",
         peakRps: 6000,

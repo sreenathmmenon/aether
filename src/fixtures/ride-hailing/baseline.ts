@@ -86,7 +86,10 @@ export const rideHailingBaseline: ArchitectureGraph = {
       id: "trips",
       kind: "database",
       name: "Trip State",
-      position: { x: 740, y: 90 },
+      // y=90 left only 130 units to Driver Supply at 220, and the cards are
+      // ~110 tall plus their shadow: they overlapped by 8px on screen. The
+      // top row is 60, which puts 160 units between them.
+      position: { x: 740, y: 60 },
       properties: {
         regionId: "region-core",
         peakRps: 18000,

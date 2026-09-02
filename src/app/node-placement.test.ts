@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import engineSource from "@core/branch-engine.ts?raw";
 import { canvasWidth } from "./region-bounds";
+import { paymentPlatformBaseline } from "../fixtures/payment-platform/baseline";
+import { rideHailingBaseline } from "../fixtures/ride-hailing/baseline";
+import { aiPlatformBaseline } from "../fixtures/ai-platform/baseline";
 
 /**
  * The rendered half-width of a component card, in canvas units.
@@ -13,6 +16,45 @@ import { canvasWidth } from "./region-bounds";
  * while the card still hangs off the edge.
  */
 const nodeHalfWidth = 115;
+
+/**
+ * The rendered height of a card, in canvas units. Measured the same way and
+ * for the same reason: 82px in a 401px canvas over a 700-unit height is 144,
+ * not the 104 `defaultNodeExtent` declares. A separation judged against the
+ * smaller number passes while the cards still touch on screen -- which is
+ * how "Eval Queue" and "Analytics" shipped overlapping.
+ */
+const nodeHeight = 144;
+
+describe("every shipped system lays out without collisions", () => {
+  // The agent's placement grid is guarded below, but the seeded fixtures
+  // carry hand-written positions that nothing checked: ride-hailing shipped
+  // "Trip State" 130 units above "Driver Supply", and with cards ~110 units
+  // tall they overlapped by 8px on screen.
+  const systems = {
+    "payment-platform": paymentPlatformBaseline,
+    "ride-hailing": rideHailingBaseline,
+    "ai-platform": aiPlatformBaseline,
+  };
+
+  for (const [name, graph] of Object.entries(systems)) {
+    it(`keeps ${name}'s components clear of each other`, () => {
+      const components = Object.values(graph.entities).filter(
+        (entity) => entity.kind !== "region",
+      );
+      for (let i = 0; i < components.length; i += 1) {
+        for (let j = i + 1; j < components.length; j += 1) {
+          const a = components[i]!;
+          const b = components[j]!;
+          const apart =
+            Math.abs(a.position.x - b.position.x) >= nodeHalfWidth * 2 ||
+            Math.abs(a.position.y - b.position.y) >= nodeHeight;
+          expect(apart, `${a.name} overlaps ${b.name}`).toBe(true);
+        }
+      }
+    });
+  }
+});
 
 describe("agent-placed components stay on the canvas", () => {
   it("keeps every placement column clear of both edges", () => {
