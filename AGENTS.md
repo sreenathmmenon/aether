@@ -65,6 +65,11 @@ They must exactly be `Sreenath` and `sreenathmmmenon@gmail.com`. Do not add `Co-
 
 ## UX system
 
+**The design system is [`DESIGN.md`](DESIGN.md)** — colour roles, the type
+ramp, the spacing scale, and what the build refuses. It is enforced by
+`npm run gate`. This section states the intent; that file states the values,
+and prose alone is why the product once drifted to 87 hardcoded colours.
+
 Aim for operational clarity and material warmth: mineral-ivory surfaces, midnight structural ink, architectural blue, cyan-to-orange transitions for branch state, coral for failure propagation, and green for verified state. Motion must express causal behavior along actual dependency edges.
 
 Do not use generic purple AI glows, glassmorphism, oversized rounded cards, a wall of dashboard tiles, pill overload, a floating chatbot as the primary interaction, or decorative animation unrelated to system behavior. Create original components; Razorpay and Sarvam are directional references, not a source of copied assets or branding.
