@@ -1252,15 +1252,22 @@ button {
     box-shadow: 0 0 0 5px rgb(217 61 66 / 0.16);
   }
 }
+/* A hint about dragging, positioned in a corner that a component can
+   occupy -- on ride-hailing the Trip State card sits under it. It is
+   guidance rather than content, so it recedes to the bottom edge where the
+   graph does not reach and stays out of the way of the thing it describes. */
 .canvas-hint {
   position: absolute;
-  top: 16px;
-  right: 16px;
-  padding: 8px 8px;
-  color: var(--ink-muted);
-  background: var(--surface-raised);
-  border: 1px solid var(--border);
-  font-size: 12px;
+  right: var(--space-4);
+  bottom: var(--space-4);
+  z-index: 3;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--structure-border);
+  border-radius: var(--radius-full);
+  color: var(--structure-muted);
+  background: color-mix(in oklab, var(--structure) 88%, transparent);
+  font-size: var(--text-xs);
+  pointer-events: none;
 }
 .evidence-heading {
   display: flex;
