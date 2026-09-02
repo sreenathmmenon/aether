@@ -1145,6 +1145,19 @@ button {
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
+/* A caveat, not an alarm: the figures are real arithmetic on assumed inputs,
+   so this qualifies them rather than warning about them. Amber is the branch
+   role -- a state that is neither verified nor failing. */
+.assumed-figures {
+  margin: 0 0 var(--space-3);
+  padding: var(--space-3);
+  border-left: 2px solid var(--branch);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  background: var(--branch-soft);
+  color: var(--branch-text);
+  font-size: var(--text-xs);
+  line-height: var(--leading-normal);
+}
 .metric-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

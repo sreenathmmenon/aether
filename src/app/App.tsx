@@ -504,6 +504,26 @@ export function App() {
   const futures = Object.values(state.branches).filter(
     (branch) => branch.id !== "branch-baseline",
   );
+  /**
+   * Components carrying no stated traffic figures.
+   *
+   * A prose brief that names no numbers creates every component unmeasured,
+   * and the engine still computes availability, recovery and cost from
+   * defaults. The interface said so once, in the transient status strip, and
+   * that message was overwritten by the next action -- so a reviewer was
+   * left with figures that look measured on a system nobody measured, on a
+   * product whose entire claim is that a decision rests on evidence.
+   *
+   * Derived from the graph rather than remembered from the parse, so it
+   * stays true as components are added or given figures.
+   */
+  const unmeasuredComponents = Object.values(graph.entities)
+    .filter((entity) => entity.kind !== "region")
+    .filter((entity) => {
+      const props = entity.properties as { peakRps?: number };
+      return !props.peakRps;
+    })
+    .map((entity) => entity.name);
   const entities = Object.values(graph.entities).filter(
     (entity) => entity.kind !== "region",
   );
@@ -2188,6 +2208,26 @@ export function App() {
                   `Nothing is modelled yet. Add the components of your system and I will show you what a ${scenarioCopy[selectedScenario].label.toLowerCase()} costs.`
                 : scenarioCopy[selectedScenario].agent}
           </p>
+          {/* Figures computed from defaults must say so, beside the figures
+              themselves. A prose brief that names no numbers creates every
+              component unmeasured and the engine still returns availability,
+              recovery and cost -- which read as measured facts. The parse
+              said so once in the status strip and the next action overwrote
+              it. This is derived from the graph, so it lasts exactly as long
+              as the condition does. */}
+          {!unbuilt && unmeasuredComponents.length > 0 && (
+            <p className="assumed-figures">
+              Computed from defaults —{" "}
+              {unmeasuredComponents.length === entities.length
+                ? "no component"
+                : `${unmeasuredComponents.length} of ${entities.length} components`}{" "}
+              {unmeasuredComponents.length === entities.length ? "has" : "have"}{" "}
+              stated traffic. Set peak and capacity on{" "}
+              {unmeasuredComponents.slice(0, 2).join(", ")}
+              {unmeasuredComponents.length > 2 ? " and others" : ""} to measure
+              this system rather than assume it.
+            </p>
+          )}
           {/* An empty canvas has no measurements. Rendering 0.00% in red reads
               as a total outage rather than as an absence of data, which is a
               false claim on the first screen of the reviewer's own system. */}
