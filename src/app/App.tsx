@@ -2091,8 +2091,16 @@ export function App() {
               }
             />
           </div>
+          {/* This sentence is computed from the graph by scenarioNarrative,
+              deterministically, with no agent involved — it renders the same
+              on a page where no agent has ever connected. Labelling it "Agent
+              read" credited an agent for the engine's work and told a
+              reviewer something untrue about who produced the reasoning, on
+              the one page whose entire claim is that the human/agent boundary
+              is legible. "Engine read" is also the stronger claim: it is
+              reproducible, which an agent's opinion is not. */}
           <p className="agent-narrative">
-            <span>Agent read</span>
+            <span>Engine read</span>
             {activeSimulation
               ? scenarioCopy[selectedScenario].agent
               : entities.length === 0
