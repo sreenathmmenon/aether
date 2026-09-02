@@ -1932,3 +1932,12 @@ was already underway again.
   - `outcome-message.test.ts` derives the reducer's states from `nextState = "..."`. A count guard alone would not notice one state collapsing into another, which keeps the count plausible while removing the renamed state from scrutiny. It now names five states explicitly, and collapsing `human_edit` into `simulated` fails it.
   - `human-gate.test.ts` derives tool-dispatched commands from the exact shape `{ type: "X", input:`. Reformatting a call site was checked first and does **not** break it — the regex tolerates whitespace — but a shape the regex cannot see does, and then "no tool reaches a human-only command" would pass against a list that had quietly lost entries. It now names four commands an agent legitimately reaches; making one invisible to the regex fails it.
   - The rule this settles, since it has now cost three investigations: **the derivation and the assertion must key on different properties, and a derived list must name a few members as well as count them.**
+
+## Milestone 143 — Four guards, one test, three of them untested
+
+- [x] **M143.1 — Isolate each dimension of the work-loss guard** `DONE`
+  - Acceptance: every check in `wouldDiscardWork` fails a test when removed.
+  - Evidence: a wider mutation sweep found three survivors, all in `sync-guard.ts` — the function that stops a shared room overwriting a reviewer's work, and the one M129 depended on. Removing the component check, the branch check or the audit check individually broke nothing; only the runs check was genuinely covered.
+  - The cause is a familiar shape: the existing cases build components, branches and audit entries **together**, so any one surviving check catches the loss and the other three are never exercised. The test was proving the combination, not the guard.
+  - Each dimension is now isolated — a workspace missing exactly one component, exactly one branch, exactly one audit entry, or its runs — plus the case that matters in the other direction: an identical workspace must not be treated as loss, or every reconciliation would be refused. All four mutations are now killed.
+  - Also killed in the same sweep, needing no change: removing the merge dedupe, renaming the workspace size cap, ignoring replication in the latency model, miscounting hidden replay entries, always restoring a `?system=` link, and accepting any shape as persisted state.

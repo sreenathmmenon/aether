@@ -154,4 +154,66 @@ describe("shared state never destroys local work", () => {
       ),
     ).toBe(false);
   });
+
+  it("catches each kind of loss on its own, not only all of them together", () => {
+    // Mutation testing found that removing the component, branch or audit
+    // check individually broke nothing: the existing cases build components,
+    // branches and audit entries at once, so any single surviving check
+    // catches them and the other three are never exercised. This isolates
+    // each dimension so the guard is tested rather than its combination.
+    const base = createInitialState(paymentPlatformBaseline);
+
+    // Fewer components, everything else equal.
+    const lostComponent = structuredClone(base);
+    const baseline = lostComponent.branches["branch-baseline"]!;
+    const revision = lostComponent.revisions[baseline.baseRevisionId]!;
+    delete revision.graph.entities["reconciliation"];
+    expect(
+      wouldDiscardWork(base, lostComponent),
+      "a lost component is not detected",
+    ).toBe(true);
+
+    // Fewer branches, everything else equal.
+    const withBranch = dispatch(base, {
+      type: "CREATE_BRANCH",
+      input: { name: "Guard probe", intent: "highest_resilience" },
+    });
+    if (!withBranch.ok) throw new Error("fixture branch must be created");
+    const lostBranch = structuredClone(withBranch.value);
+    delete lostBranch.branches["branch-highest_resilience"];
+    expect(
+      wouldDiscardWork(withBranch.value, lostBranch),
+      "a lost branch is not detected",
+    ).toBe(true);
+
+    // Fewer audit entries, everything else equal — the record a reviewer
+    // audits an approval from, and the one a conflicted tab holds while the
+    // server has not seen it.
+    const lostAudit = structuredClone(withBranch.value);
+    lostAudit.audit = lostAudit.audit.slice(0, -1);
+    expect(
+      wouldDiscardWork(withBranch.value, lostAudit),
+      "a lost audit entry is not detected",
+    ).toBe(true);
+
+    // Fewer runs, which was the only dimension already covered.
+    const simulated = dispatch(withBranch.value, {
+      type: "RUN_SCENARIO",
+      input: {
+        branchId: "branch-highest_resilience",
+        scenario: "regional_outage",
+      },
+    });
+    if (!simulated.ok) throw new Error("fixture scenario must run");
+    const lostRun = structuredClone(simulated.value);
+    lostRun.simulations = {};
+    expect(
+      wouldDiscardWork(simulated.value, lostRun),
+      "a lost run is not detected",
+    ).toBe(true);
+
+    // And an identical workspace is never treated as loss, or every
+    // reconciliation would be refused.
+    expect(wouldDiscardWork(base, structuredClone(base))).toBe(false);
+  });
 });
