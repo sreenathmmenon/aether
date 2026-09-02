@@ -138,6 +138,19 @@ in one auditable history.
 > futures before committing them. Architecture decisions should be
 > provable, shared, and reversible."
 
+## The whole film works without an agent
+
+Every step above can be done with clicks and dropdowns alone — select a
+component, change its capacity, click the scenario tab to re-run it. That
+matters for two reasons: a judge who opens the live URL with no agent
+connected can still reach every beat, and the WebMCP surface is then
+demonstrably an _equal_ path rather than the only one. The same validated
+commands run either way, and the record attributes each to whoever ran it.
+
+If you have an agent connected, use it — narrating a repair and watching
+the graph change is the stronger shot. But nothing in the film depends on
+it.
+
 ## If you have thirty more seconds
 
 Switch the system dropdown to **Your own system** — an empty canvas — and
