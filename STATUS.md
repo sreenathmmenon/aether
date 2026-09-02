@@ -1962,3 +1962,15 @@ was already underway again.
   - Two guards hold this, and each needed its own case. `writableBranchIds()` keeps the discarded branch out of every write tool's `branchId` enum, which is what matters while other futures remain editable. `canEditModel` closes the surface entirely when the discarded branch is the **only** future — the enum check cannot catch that, because there is no other writable branch whose absence would be noticed. Both are now covered and both mutations are killed.
   - A first assertion was too broad and failed on `propose_architecture_change`, correctly: that tool is scoped by `writableBranchIds()`, so it is right to register while other futures are editable. The check is the branch enum, not the tool name.
   - Also killed in the same sweep: removing the summary component cap, the batch failure cap, and the schema problem cap.
+
+## Milestone 146 — The cache behind the state-aware claim, never exercised
+
+- [x] **M146.1 — Every test used a fresh registry, so the cache was untested** `DONE`
+  - Acceptance: one registry, driven through a lifecycle, rebuilds its surface at each transition.
+  - Evidence: registration is cached on a capability key, and **every** existing test builds a new registry per state — which never exercises the cache at all. Mutating the key's five components found three could be frozen with no test failing.
+  - The editability component is genuinely load-bearing, and its failure is severe: with it frozen, the merge produced **no re-registration** — surfaces went `5, 12, 0` instead of `5, 12, 7` — so the page kept advertising twelve write tools against a committed architecture. That is the state-aware claim failing in the place a judge is most likely to look.
+  - A test now drives one registry through committed → repair future → merged and asserts the surfaces are exactly `[5, 12, 7]`, with no write tool surviving the merge. Freezing editability now fails it.
+
+- [x] **M146.2 — Two survivors that are redundant, not untested** `DONE`
+  - Evidence: the template and region components of the key also survived mutation, and were checked rather than assumed to need tests. Switching template on one registry gives `5, 10` **with or without** the template component, because editability and the component-id list already change when the template does. And no command adds a region — regions come only from the template — so `regionIds()` can never change while `componentIds()` stays fixed.
+  - Both are defensive and inert. Recorded as such rather than papered over with a test that would assert nothing, and left in place rather than removed, because a future template with regions but no components would make them load-bearing.

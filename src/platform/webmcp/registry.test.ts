@@ -114,6 +114,77 @@ describe("Aether WebMCP registry", () => {
     expect(undocumented).toEqual([]);
   });
 
+  it("rebuilds the surface across a lifecycle, on one registry", async () => {
+    // Registration is cached on a capability key, and every other test here
+    // uses a fresh registry per state — which never exercises the cache.
+    // Mutation testing found three of the key's five components could be
+    // frozen without breaking anything: with editability removed the merge
+    // produced *no* re-registration at all, so the page went on advertising
+    // twelve write tools against a committed architecture. That is the
+    // state-aware claim failing in the one place it is most visible.
+    const seen: number[] = [];
+    let names: string[] = [];
+    const registry = createAetherToolRegistry(() => {}, undefined, {
+      registerTool: async (tool) => {
+        names.push((tool as unknown as { name: string }).name);
+      },
+    });
+    const snapshot = async (next: AetherState) => {
+      names = [];
+      await registry?.refresh(next);
+      seen.push(names.length);
+      return names;
+    };
+    const human = { id: "s", kind: "human" as const, displayName: "S" };
+
+    const committed = createInitialState(paymentPlatformBaseline);
+    await snapshot(committed);
+    const branched = dispatch(committed, {
+      type: "CREATE_BRANCH",
+      input: { name: "Lifecycle probe", intent: "highest_resilience" },
+    });
+    if (!branched.ok) throw new Error("fixture branch must be created");
+    await snapshot(branched.value);
+
+    const simulated = dispatch(branched.value, {
+      type: "RUN_SCENARIO",
+      input: {
+        branchId: "branch-highest_resilience",
+        scenario: "regional_outage",
+      },
+    });
+    if (!simulated.ok) throw new Error("fixture scenario must run");
+    const repair = simulated.value.branches["branch-highest_resilience"]!;
+    const approved = dispatch(
+      simulated.value,
+      {
+        type: "APPROVE_BRANCH",
+        input: { branchId: repair.id, branchVersion: repair.version },
+      },
+      human,
+    );
+    if (!approved.ok) throw new Error("fixture approval must work");
+    const merged = dispatch(
+      approved.value,
+      {
+        type: "MERGE_BRANCH",
+        input: { branchId: repair.id, branchVersion: repair.version },
+      },
+      human,
+    );
+    if (!merged.ok) throw new Error("fixture merge must work");
+    const afterMerge = await snapshot(merged.value);
+
+    // Each transition re-registers, and a zero here means the cache decided
+    // nothing changed when the whole write surface had to close.
+    expect(seen, `surfaces were ${seen.join(",")}`).toEqual([5, 12, 7]);
+    for (const name of afterMerge)
+      expect(name, `${name} survives a merge`).not.toMatch(
+        /^(add_|connect_|model_|run_failure)/,
+      );
+    registry?.dispose();
+  });
+
   it("registers no write tool on a branch a person discarded", async () => {
     // A rolled-back repair is discarded, and `canEditModel` refuses it — but
     // nothing tested that, so removing the check broke no test. The reducer
