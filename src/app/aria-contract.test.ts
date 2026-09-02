@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import appSource from "./App.tsx?raw";
+import registrySource from "../platform/webmcp/registry.ts?raw";
 
 /**
  * The test environment has no DOM, so nothing rendered these attributes and
@@ -80,6 +81,54 @@ describe("the interface honours the ARIA it declares", () => {
       expect(attributes, "a decorative glyph is announced as text").toContain(
         'aria-hidden="true"',
       );
+  });
+
+  it("lets a person change every property an agent can", () => {
+    // Capacity was agent-only: `propose_architecture_change` could set it
+    // and the property editor could not. The film's whole arc is repairing
+    // three capacity deficits, so a reviewer with no agent connected watched
+    // the gate refuse with nothing on the page able to satisfy it.
+    //
+    // The list is read from the tool schema rather than restated, so a
+    // property added for agents is covered the day it is added.
+    const enumBlock = registrySource.slice(
+      registrySource.indexOf('name: "propose_architecture_change"'),
+      registrySource.indexOf('name: "compare_architecture_futures"'),
+    );
+    const properties = [
+      ...enumBlock.matchAll(
+        /"(replicas|capacityRps|monthlyCostUsd|replicationMode|regionId)"/g,
+      ),
+    ].map((match) => match[1]!);
+    const agentCanSet = [...new Set(properties)];
+    // The extraction has to see them, or this passes over an empty list.
+    expect(agentCanSet.length).toBeGreaterThan(3);
+
+    // Each one needs a control a person operates, not merely a dispatch
+    // somewhere in the file — `capacityRps` is also set by an automated
+    // repair helper, so matching every `property:` in the source passed
+    // while the editor had no capacity control at all. Pair each labelled
+    // control with the property its handler sets.
+    // Measured rather than guessed: every control's handler reaches its
+    // `property:` within about 410 characters, and the labels are "Change
+    // …" plus "Move to region". A 400-character window found only two of
+    // five and looked like a real gap.
+    const humanCanSet = new Set(
+      [
+        ...appSource.matchAll(
+          /aria-label="(?:Change [^"]+|Move to region)"[\s\S]{0,500}?property: "([a-zA-Z]+)"/g,
+        ),
+      ].map((match) => match[1]!),
+    );
+    // Every property an agent can set has a control, so the sets match in
+    // size too — a spare pairing would mean the window had run into the
+    // next control's handler.
+    expect(humanCanSet.size).toBe(agentCanSet.length);
+    for (const property of agentCanSet)
+      expect(
+        humanCanSet,
+        `an agent can set ${property} and a person cannot`,
+      ).toContain(property);
   });
 
   it("gives every modal dialog an accessible name", () => {

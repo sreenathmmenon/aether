@@ -2359,6 +2359,38 @@ export function App() {
                         <option value="sync">Sync standby</option>
                       </select>
                     )}
+                    {/* Capacity was the one property a person could not
+                        change. An agent could, through
+                        `propose_architecture_change`, so the demo's whole
+                        arc — three capacity deficits found and repaired —
+                        was unreachable to a reviewer with no agent
+                        connected: the gate refuses and nothing on the page
+                        can satisfy it. The options span the deficits the
+                        seeded systems actually produce, so a repair is one
+                        click rather than a guess. */}
+                    <select
+                      aria-label="Change capacity"
+                      value=""
+                      onChange={(event) => {
+                        if (!event.target.value) return;
+                        apply({
+                          type: "SET_PROPERTY",
+                          input: {
+                            branchId: activeBranch.id,
+                            entityId: selectedEntity.id,
+                            property: "capacityRps",
+                            value: Number(event.target.value),
+                          },
+                        });
+                      }}
+                    >
+                      <option value="">Capacity…</option>
+                      {[10000, 14000, 20000, 30000].map((rps) => (
+                        <option key={rps} value={rps}>
+                          {rps.toLocaleString()} RPS
+                        </option>
+                      ))}
+                    </select>
                     <select
                       aria-label="Change monthly cost"
                       value=""
