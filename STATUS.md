@@ -2368,3 +2368,11 @@ was already underway again.
   - Evidence: the comparison was continued past the numbers. `compare_architecture_futures` and the future cards agree exactly on all three futures — name, status and availability. `get_decision_record` and the replay agree on the command sequence.
   - One difference: the agent read the guardrail as `$8700 monthly cost ceiling` while the page shows `$8,700` everywhere. Raw interpolation where every other money figure in the codebase uses `toLocaleString()`. Small, but it is the same shape as M184 and M186 — two descriptions of one thing that do not match — and a judge comparing the two surfaces sees it.
   - Fixed and tested. The typecheck caught a real subtlety on the way: the guard and the use were separate `snapshot()` calls, so TypeScript could not narrow the optional through the second one; binding to the `state` already in scope resolved it rather than adding a cast.
+
+## Milestone 189 — The formatting rule, swept and guarded
+
+- [x] **M189.1 — One raw figure, or a pattern?** `DONE`
+  - Acceptance: no money figure is written unformatted in either surface.
+  - Evidence: M188 fixed one raw interpolation, so the rest were swept rather than assumed clean. The engine formats every figure in its violation text, the interface has none unformatted, and the tool surface had exactly the one already fixed.
+  - The rule is now enforced across both files: a `$${…}` interpolation must run through `toLocaleString` or `toFixed`. Reverting the guardrail to a raw value fails two tests.
+  - Recorded as the small end of a class this session kept finding: an agent and a reviewer describing the same workspace differently. It appeared in the numbers themselves (M184, M186) and in how one of them was written (M188). All three were one path doing something the other did not.

@@ -84,6 +84,26 @@ describe("the interface honours the ARIA it declares", () => {
       );
   });
 
+  it("formats every money figure the same way in both surfaces", () => {
+    // One raw interpolation made an agent read "$8700" where the page said
+    // "$8,700". Both surfaces describe the same workspace, so a figure
+    // written by hand in either drifts from the other silently.
+    for (const [name, source] of [
+      ["App.tsx", appSource],
+      ["registry.ts", registrySource],
+    ] as const) {
+      const raw = [...source.matchAll(/\$\$\{([^}]{1,80})\}/g)].filter(
+        ([, expression]) =>
+          !expression.includes("toLocaleString") &&
+          !expression.includes("toFixed"),
+      );
+      expect(
+        raw.map(([, expression]) => expression),
+        `${name} interpolates an unformatted money figure`,
+      ).toEqual([]);
+    }
+  });
+
   it("gives the engine the same inputs wherever a run is computed", () => {
     // Two defects in a row came from comparing the agent's view with the
     // page's: the tools omitted the cost ceiling, and the panel displayed a
