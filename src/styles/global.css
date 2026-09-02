@@ -459,7 +459,13 @@ button {
      is not approvable yet" -- the three facts needed 1305px in a 1280px
      window and the third was cut at the edge. `auto` still sizes to the
      sentence when there is room and shrinks only when there is not. */
-  grid-template-columns: repeat(3, auto);
+  /* `max-content` never yields, so once the copy grew the three facts needed
+     1305px in a 1280px window and the third was cut at the edge. Plain
+     `auto` fixed the clipping but divides the leftover evenly, so the
+     longest fact still wrapped while the short one sat in space it did not
+     need. `fit-content` sizes to the sentence and yields in proportion to
+     how much each one is actually asking for. */
+  grid-template-columns: repeat(3, fit-content(100%));
   justify-content: start;
   /* Spacing lives here, not here *and* in each cell's padding: the two
      compounded into a 40px gap after the first fact and ~90px after the

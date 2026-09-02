@@ -1704,7 +1704,12 @@ export function App() {
               : branchCount === 0
                 ? "No repair future yet"
                 : activeBranch.status === "merged"
-                  ? `${activeBranch.name} is committed to the architecture`
+                  ? // "is committed to the architecture" said in nine words
+                    // what four say: this strip is already about the
+                    // architecture, and the longer phrasing was the one
+                    // sentence that could not fit a 1280px window on one
+                    // line.
+                    `${activeBranch.name} is committed`
                   : activeBranch.status === "approved"
                     ? `${activeBranch.name} is approved, not yet committed`
                     : approvalEligible
