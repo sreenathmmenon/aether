@@ -2711,8 +2711,13 @@ export function App() {
               <ol>
                 {toolCalls.map((call) => (
                   <li key={call.id} className={`tool-call-${call.outcome}`}>
+                    {/* What the agent did, then what the engine computed
+                        because of it. The tool name is kept as the quiet
+                        second line: a reviewer wants the consequence, an
+                        engineer wants to know which tool produced it. */}
+                    <strong>{call.summary}</strong>
+                    {call.effect && <small>{call.effect}</small>}
                     <code>{call.name}</code>
-                    <small>{call.summary}</small>
                   </li>
                 ))}
               </ol>

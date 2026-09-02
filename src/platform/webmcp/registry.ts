@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { narrateCall } from "./call-summary";
 import {
   addComponentInput,
   connectComponentsInput,
@@ -32,7 +33,10 @@ export type ToolRegistry = {
 export type ToolCall = {
   id: number;
   name: string;
+  /** What the call did, in the words a person would use. */
   summary: string;
+  /** The consequence the engine computed, when there was one. */
+  effect?: string;
   outcome: "ok" | "rejected";
   at: number;
 };
@@ -324,14 +328,6 @@ export function createAetherToolRegistry(
   }
 
   /** Describe a call for the activity feed without leaking raw payloads. */
-  function summarize(input: unknown) {
-    if (!input || typeof input !== "object") return "no arguments";
-    const entries = Object.entries(input as Record<string, unknown>)
-      .filter(([, value]) => value !== undefined)
-      .slice(0, 3)
-      .map(([key, value]) => `${key}: ${String(value).slice(0, 28)}`);
-    return entries.length ? entries.join(" · ") : "no arguments";
-  }
 
   async function register(tool: WebMcpTool) {
     const controller = new AbortController();
@@ -344,10 +340,16 @@ export function createAetherToolRegistry(
       ) => {
         const result = await inner(input, options);
         callSequence += 1;
+        // Described by what it did rather than what was asked. The feed
+        // echoed the arguments, so watching an agent work read as a
+        // function log — the one screen where a person sees an agent
+        // operating on their architecture told them nothing about it.
+        const narration = narrateCall(tool.name, input, String(result));
         onToolCall?.({
           id: callSequence,
           name: tool.name,
-          summary: summarize(input),
+          summary: narration.did,
+          effect: narration.effect,
           outcome: String(result).includes('"error"') ? "rejected" : "ok",
           at: Date.now(),
         });

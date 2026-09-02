@@ -14,6 +14,7 @@ import {
 import { runScenario } from "@simulation/engine";
 import { offlineToolSurface } from "./offline-surface";
 import registrySource from "./registry.ts?raw";
+import type { ToolCall } from "./registry";
 import webmcpDoc from "../../../docs/WEBMCP.md?raw";
 import complianceDoc from "../../../docs/WEBMCP_COMPLIANCE.md?raw";
 import planDoc from "../../../docs/V3_REVERSE_WINNER_PLAN.md?raw";
@@ -2529,7 +2530,9 @@ describe("Aether WebMCP registry", () => {
 
   it("reports every agent tool call to the interface", async () => {
     const tools: RegisteredTool[] = [];
-    const calls: { name: string; outcome: string; summary: string }[] = [];
+    // The registry's own type, so a field added to a reported call is
+    // available here rather than silently invisible to this test.
+    const calls: ToolCall[] = [];
     const registry = createAetherToolRegistry(
       () => undefined,
       undefined,
@@ -2554,9 +2557,24 @@ describe("Aether WebMCP registry", () => {
       name: "inspect_failure_domain",
       outcome: "ok",
     });
-    expect(calls[0]?.summary).toContain("regional_outage");
-    // A rejected call is distinguishable from a successful one.
+    // The summary describes what the call *did*, not the arguments it was
+    // sent. Echoing the input made the one screen where a person watches an
+    // agent operate on their architecture read as a function log.
+    expect(calls[0]?.summary).toMatch(/^Inspected/);
+    expect(calls[0]?.summary).toContain("regional outage");
+    expect(
+      calls[0]?.summary,
+      "the feed still echoes raw arguments",
+    ).not.toContain("scenario:");
+    // And the consequence the engine computed, which is the reason to watch.
+    expect(calls[0]?.effect, "the call reports no consequence").toBeDefined();
+    expect(calls[0]?.effect).toMatch(/blast radius/);
+
+    // A rejected call is distinguishable from a successful one, and says
+    // what was wrong rather than only that something was.
     expect(calls[1]?.outcome).toBe("rejected");
+    expect(calls[1]?.summary).toContain("refused");
+    expect(calls[1]?.effect, "a refusal explains nothing").toBeTruthy();
     registry?.dispose();
   });
 
