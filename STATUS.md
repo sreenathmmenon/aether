@@ -1983,3 +1983,12 @@ was already underway again.
   - A test now places two cards a realistic distance apart and requires a usable line actually be drawn between them, while still stopping short of both. Raising the gap fails it.
   - Everything else in the sweep was killed: an origin-trial token that never expires, a reversed shift-tab direction in the focus trap, and a changed default component kind in the brief parser. Two deliberate no-op mutations survived, as they must — a mutation that changes nothing is a control, not a gap, and including them is what makes the surviving-versus-killed distinction meaningful.
   - Across this session's sweeps: **forty-one mutations applied**, seven genuine gaps found and closed, two survivors judged redundant rather than untested, and three no-op controls confirmed to survive.
+
+## Milestone 148 — Two landmarks a screen reader could not name
+
+- [x] **M148.1 — Check what a DOM test would have caught** `DONE`
+  - Acceptance: the rendered page has no structural accessibility faults.
+  - Evidence: there is no DOM test environment in this project, and adding one this late would be a large change for less benefit than the source-reading tests and live browser checks have already delivered. So the deployed page was inspected directly for the faults a shallow render would catch: duplicate ids, nested interactive elements, unlabelled buttons, unnamed landmarks.
+  - Clean on the first three. **Thirteen landmarks, ten named**: the incident headline (`section.hero-bar`) and the futures list (`aside.future-rail`) were announced as an unnamed "region" and "complementary" to anyone navigating by landmark. `main` and `header` are unique on the page and correctly need no name.
+  - Both are now named with `aria-labelledby` pointing at the eyebrow text already on screen — `Live architecture decision room` and `Architecture futures` — rather than a second string that could drift from what the section says.
+  - A test now requires every `<section>` and `<aside>` in the source to carry a name, so a new one cannot ship unnamed. Removing either name fails it.

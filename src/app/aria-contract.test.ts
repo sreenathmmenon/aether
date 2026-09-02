@@ -32,6 +32,21 @@ describe("the interface honours the ARIA it declares", () => {
       );
   });
 
+  it("names every landmark that is one of several of its kind", () => {
+    // Measured on the deployed page: thirteen landmarks, ten named. A
+    // screen-reader user navigating by landmark heard an unnamed "region"
+    // for the incident headline and an unnamed "complementary" for the
+    // futures rail. `main` and `header` are unique on the page and need no
+    // name; a `section` or `aside` among several does.
+    const landmarks = [...appSource.matchAll(/<(section|aside)\s([^>]*)>/g)];
+    // There are several of each, or this asserts nothing.
+    expect(landmarks.length).toBeGreaterThan(6);
+    for (const [, tag, attributes] of landmarks)
+      expect(attributes, `a <${tag}> landmark has no accessible name`).toMatch(
+        /aria-label(?:ledby)?=/,
+      );
+  });
+
   it("gives every modal dialog an accessible name", () => {
     // A dialog announced only as "dialog" tells a screen reader nothing about
     // what it interrupted the page for.

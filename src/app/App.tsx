@@ -1469,9 +1469,16 @@ export function App() {
           </span>
         </div>
       </header>
-      <section className="hero-bar">
+      {/* Named by the eyebrow already on screen rather than a second string:
+          a screen-reader user navigating by landmark heard "region" here and
+          "complementary" for the futures rail, with no indication of what
+          either held. Pointing at visible text keeps the name in sync with
+          what the section actually says. */}
+      <section className="hero-bar" aria-labelledby="hero-bar-name">
         <div>
-          <p className="eyebrow">Live architecture decision room</p>
+          <p className="eyebrow" id="hero-bar-name">
+            Live architecture decision room
+          </p>
           <h1>
             {/* The headline is the reviewer's current question, not a fixed
                 banner. Leaving it on "choose the repair" after they had
@@ -1571,9 +1578,11 @@ export function App() {
         id="workspace"
         aria-label="Aether architecture studio"
       >
-        <aside className="future-rail">
+        <aside className="future-rail" aria-labelledby="future-rail-name">
           <div className="rail-heading">
-            <p className="eyebrow">Architecture futures</p>
+            <p className="eyebrow" id="future-rail-name">
+              Architecture futures
+            </p>
             <span>{branchCount}/3</span>
           </div>
           <button
