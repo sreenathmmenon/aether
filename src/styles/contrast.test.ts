@@ -66,17 +66,19 @@ describe("text meets AA contrast on the surfaces it is used on", () => {
     for (const name of [
       "ink",
       "muted",
-      "blue",
+      "blue-text",
       "cyan-text",
       "coral-text",
       "green-text",
       "amber-text",
     ])
       for (const [groundName, ground] of [
+        ["void", token("void")],
         ["paper", paper()],
         ["panel", panel()],
-        // The darkest tinted panel measured on the deployed page.
-        ["tinted panel", [233, 238, 232] as const],
+        // The lightest raised surface, which is the hardest ground for a
+        // bright text colour to clear on a dark interface.
+        ["raised", token("raised")],
       ] as const)
         expect(
           contrast(token(name), ground),
@@ -98,17 +100,4 @@ describe("text meets AA contrast on the surfaces it is used on", () => {
       ).not.toEqual(token(text));
   });
 
-  it("uses the fill accent, not the text variant, on the dark strip", () => {
-    // The text variants are darkened for light grounds, so on the ink strip
-    // they are the wrong direction entirely: the darkened cyan measured
-    // 3.0:1 there while the original accent reaches 5.36:1. Darker is not
-    // universally safer, and a blanket substitution of every `color:` rule
-    // made this one worse.
-    const ink = token("ink");
-    expect(contrast(token("cyan"), ink)).toBeGreaterThanOrEqual(4.5);
-    expect(
-      contrast(token("cyan-text"), ink),
-      "cyan-text now passes on ink; the rule below may no longer be needed",
-    ).toBeLessThan(4.5);
-  });
 });

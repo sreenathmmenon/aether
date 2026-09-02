@@ -5,7 +5,7 @@ body {
   margin: 0;
   min-width: 320px;
   color: var(--ink);
-  background: #f5f3ee;
+  background: var(--panel);
   font-family: Inter, ui-sans-serif, system-ui, sans-serif;
 }
 button {
@@ -86,7 +86,7 @@ button {
   height: 7px;
   margin-right: 7px;
   border-radius: 50%;
-  background: #9ba7b3;
+  background: var(--muted);
 }
 .connection-live::before {
   background: var(--green);
@@ -169,7 +169,7 @@ button {
 }
 .canvas-empty strong {
   color: var(--ink);
-  font-family: var(--serif, Georgia, serif);
+  font-family: inherit;
   font-size: 19px;
   line-height: 1.25;
 }
@@ -188,7 +188,7 @@ button {
   padding: 9px 17px;
   border: none;
   border-radius: 999px;
-  color: #fbfaf6;
+  color: var(--panel);
   background: var(--ink);
   font-size: 13px;
   font-weight: 750;
@@ -293,7 +293,7 @@ button {
   width: 33px;
   height: 33px;
   border-radius: 50%;
-  color: #fff;
+  color: var(--ink);
   background: var(--ink);
   font-weight: 800;
 }
@@ -316,7 +316,7 @@ button {
 .hero-bar h1 {
   max-width: 620px;
   margin: 0;
-  font-family: Georgia, serif;
+  font-family: inherit;
   font-size: 38px;
   letter-spacing: -0.04em;
   line-height: 1.04;
@@ -344,7 +344,7 @@ button {
   display: grid;
   grid-template-columns: 0.85fr 1.25fr 1fr;
   border-bottom: 1px solid var(--line);
-  background: #fff;
+  background: var(--ink);
 }
 .decision-brief > div {
   display: grid;
@@ -370,7 +370,7 @@ button {
   text-transform: uppercase;
 }
 .decision-brief strong {
-  font-family: Georgia, serif;
+  font-family: inherit;
   font-size: 17px;
   line-height: 1.15;
 }
@@ -406,7 +406,7 @@ button {
   width: 26px;
   height: 20px;
   background: var(--ink);
-  color: #fff;
+  color: var(--ink);
   font-size: 12px;
 }
 .baseline-card,
@@ -434,7 +434,7 @@ button {
   box-shadow:
     inset 3px 0 var(--cyan),
     0 7px 18px rgba(17, 36, 64, 0.05);
-  background: #fff;
+  background: var(--ink);
 }
 .future-kicker {
   color: var(--blue);
@@ -467,7 +467,7 @@ button {
   gap: 8px;
   padding: 13px 8px;
   border: 0;
-  color: #fff;
+  color: var(--ink);
   background: var(--ink);
   font-size: 12px;
   font-weight: 750;
@@ -489,7 +489,7 @@ button {
 }
 .canvas-stage {
   overflow: hidden;
-  background: #eef1f4;
+  background: var(--line);
 }
 .canvas-toolbar {
   display: flex;
@@ -511,7 +511,7 @@ button {
   display: flex;
   gap: 4px;
   padding: 4px;
-  background: #ece9e1;
+  background: var(--line);
 }
 .scenario-tabs button {
   min-height: 38px;
@@ -525,7 +525,7 @@ button {
 }
 .scenario-tabs .scenario-active {
   color: var(--ink);
-  background: #fff;
+  background: var(--ink);
   box-shadow: 0 2px 5px rgba(17, 36, 64, 0.08);
 }
 .trace-control {
@@ -540,7 +540,7 @@ button {
 }
 .trace-control:hover,
 .trace-control:focus-visible {
-  color: #fff;
+  color: var(--ink);
   background: var(--ink);
 }
 .canvas-world {
@@ -550,7 +550,7 @@ button {
   touch-action: none;
   /* The canvas is the stage, so it sits on its own ground rather than
      repeating the cream of every surrounding panel. */
-  background-color: #eef1f4;
+  background-color: var(--line);
   background-image:
     linear-gradient(rgba(17, 36, 64, 0.055) 1px, transparent 1px),
     linear-gradient(90deg, rgba(17, 36, 64, 0.055) 1px, transparent 1px);
@@ -645,10 +645,10 @@ button {
   display: grid;
   gap: 4px;
   padding: 11px;
-  border: 1px solid #cbd3d7;
+  border: 1px solid var(--muted);
   transform: translate(-50%, -50%);
   color: var(--ink);
-  background: #fbfaf6;
+  background: var(--panel);
   box-shadow: 0 9px 25px rgba(17, 36, 64, 0.08);
   text-align: left;
   cursor: grab;
@@ -674,7 +674,7 @@ button {
 }
 .architecture-node.node-affected {
   border-color: var(--coral-text);
-  background: linear-gradient(180deg, #fff6f4 0%, var(--panel) 62%);
+  background: linear-gradient(180deg, var(--raised) 0%, var(--panel) 62%);
   box-shadow:
     0 0 0 1px rgba(217, 93, 79, 0.35),
     0 10px 24px -14px rgba(217, 93, 79, 0.75);
@@ -848,7 +848,7 @@ button {
 }
 .evidence-heading h2 {
   margin: 0;
-  font-family: Georgia, serif;
+  font-family: inherit;
   font-size: 25px;
   letter-spacing: -0.03em;
 }
@@ -924,7 +924,7 @@ button {
   color: #314156;
   border: 1px solid rgba(17, 167, 184, 0.24);
   border-radius: 2px;
-  background: #fff;
+  background: var(--ink);
   font-family: "SFMono-Regular", Consolas, monospace;
   font-size: 12px;
 }
@@ -971,13 +971,13 @@ button {
   padding: 16px;
   border: 1px solid rgba(47, 111, 177, 0.28);
   background:
-    linear-gradient(135deg, rgba(47, 111, 177, 0.1), transparent 58%), #fffdf8;
+    linear-gradient(135deg, rgba(47, 111, 177, 0.1), transparent 58%), var(--raised);
   box-shadow: inset 3px 0 0 var(--blue);
 }
 .system-brief-panel strong {
   display: block;
   margin-bottom: 4px;
-  font-family: Georgia, serif;
+  font-family: inherit;
   font-size: 17px;
   line-height: 1.1;
 }
@@ -992,7 +992,7 @@ button {
   resize: vertical;
   border: 1px solid var(--line);
   padding: 11px;
-  background: #fff;
+  background: var(--ink);
   color: var(--ink);
   font: inherit;
   font-size: 12.5px;
@@ -1015,7 +1015,7 @@ button {
   border: 1px solid var(--blue);
   padding: 10px 12px;
   background: var(--blue);
-  color: #fff;
+  color: var(--ink);
   font-size: 12px;
   font-weight: 850;
   letter-spacing: 0.01em;
@@ -1041,7 +1041,7 @@ button {
   padding: 10px 11px;
   border: 1px solid rgba(17, 36, 64, 0.3);
   color: var(--ink);
-  background: #fff;
+  background: var(--ink);
   box-shadow: 0 1px 0 rgba(17, 36, 64, 0.16);
   font-size: 12px;
   font-weight: 750;
@@ -1062,7 +1062,7 @@ button {
 .human-actions button:hover:not(:disabled),
 .human-actions button:focus-visible:not(:disabled) {
   border-color: var(--blue);
-  background: #f7fbff;
+  background: var(--raised);
   box-shadow: 0 2px 0 rgba(32, 104, 191, 0.32);
   transform: translateY(-1px);
 }
@@ -1111,7 +1111,7 @@ button {
 }
 .decision-room {
   border-bottom: 1px solid var(--line);
-  background: #fbfaf6;
+  background: var(--panel);
 }
 .decision-room-head {
   display: flex;
@@ -1124,7 +1124,7 @@ button {
 .decision-room-head h2 {
   max-width: 560px;
   margin: 0;
-  font-family: Georgia, serif;
+  font-family: inherit;
   font-size: 25px;
   letter-spacing: -0.03em;
 }
@@ -1179,7 +1179,7 @@ button {
 .decision-note {
   padding: 11px 13px;
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--ink);
 }
 .decision-note > div {
   display: flex;
@@ -1232,14 +1232,14 @@ button {
   padding: 10px 11px;
   border: 1px solid var(--line);
   color: var(--ink);
-  background: #fff;
+  background: var(--ink);
   font: inherit;
   font-size: 12.5px;
 }
 .note-composer button {
   padding: 0 12px;
   border: 1px solid var(--ink);
-  color: #fff;
+  color: var(--ink);
   background: var(--ink);
   font-size: 12px;
   font-weight: 800;
@@ -1265,7 +1265,7 @@ button {
   place-items: center;
   width: 20px;
   height: 20px;
-  color: #fff;
+  color: var(--ink);
   background: var(--blue);
   border-radius: 50%;
   font-size: 12px;
@@ -1300,7 +1300,7 @@ button {
   min-height: 124px;
   border-top: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
-  background: #fff;
+  background: var(--ink);
 }
 .review-head {
   padding: 20px 26px;
@@ -1308,7 +1308,7 @@ button {
 }
 .review-head h2 {
   margin: 0;
-  font-family: Georgia, serif;
+  font-family: inherit;
   font-size: 20px;
 }
 .review-head h2 span {
@@ -1346,7 +1346,7 @@ button {
   grid-row: span 2;
   align-self: center;
   padding: 3px;
-  color: #fff;
+  color: var(--ink);
   font-size: 12px;
   text-transform: uppercase;
 }
@@ -1391,13 +1391,13 @@ button {
   padding: 10px;
   border: 1px solid var(--ink);
   background: var(--ink);
-  color: #fff;
+  color: var(--ink);
   font-size: 12.5px;
   font-weight: 800;
   cursor: pointer;
 }
 .review-actions .approve-button {
-  background: #fff;
+  background: var(--ink);
   color: var(--ink);
 }
 .review-actions .approve-button:disabled {
@@ -1406,13 +1406,13 @@ button {
 }
 .review-actions .rollback-button {
   color: var(--coral-text);
-  background: #fff;
+  background: var(--ink);
   border-color: var(--coral-text);
 }
 /* A refusal must not read like a confirmation. The strip sits on the dark
    ground, so this lifts rather than darkens. */
 .message-refused {
-  color: #ffb3a7;
+  color: var(--coral-text);
   font-weight: 650;
 }
 .activity-strip {
@@ -1422,7 +1422,7 @@ button {
   gap: 14px;
   padding: 14px 30px;
   background: var(--ink);
-  color: #c6d1df;
+  color: var(--ink);
 }
 .activity-strip .eyebrow {
   margin: 0;
@@ -1444,11 +1444,11 @@ button {
   list-style: none;
 }
 .activity-strip li {
-  color: #9baabc;
+  color: var(--muted);
   font-size: 12px;
 }
 .activity-strip b {
-  color: #fff;
+  color: var(--ink);
   font-size: 12px;
   letter-spacing: 0.08em;
 }
@@ -1468,7 +1468,7 @@ button {
   max-height: 92vh;
   overflow: auto;
   padding: 32px;
-  background: #fbfaf6;
+  background: var(--panel);
   box-shadow: 0 28px 75px rgba(0, 0, 0, 0.25);
 }
 .close-modal {
@@ -1487,7 +1487,7 @@ button {
 .compare-modal h2 {
   max-width: 440px;
   margin: 0 0 24px;
-  font-family: Georgia, serif;
+  font-family: inherit;
   font-size: 31px;
   letter-spacing: -0.04em;
 }
@@ -1502,7 +1502,7 @@ button {
   padding: 16px;
   border: 1px solid var(--line);
   color: var(--ink);
-  background: #fff;
+  background: var(--ink);
   text-align: left;
   cursor: pointer;
 }
@@ -1512,7 +1512,7 @@ button {
   font-weight: 800;
 }
 .compare-choice strong {
-  font-family: Georgia, serif;
+  font-family: inherit;
   font-size: 29px;
 }
 .compare-choice small {
@@ -1718,7 +1718,7 @@ button {
 }
 .intro-card h2 {
   margin: 0 0 14px;
-  font-family: Georgia, serif;
+  font-family: inherit;
   font-size: 33px;
   line-height: 1.08;
   letter-spacing: -0.035em;
@@ -1784,7 +1784,7 @@ button {
 .intro-start {
   padding: 13px 22px;
   border: 0;
-  color: #fff;
+  color: var(--ink);
   background: var(--ink);
   font-size: 13px;
   font-weight: 750;
@@ -1861,7 +1861,7 @@ button {
    secondary damage, so the origin of a failure stays visually distinct. */
 .architecture-node.node-degraded {
   border-color: rgba(236, 142, 45, 0.75);
-  background: linear-gradient(180deg, #fff8ef 0%, var(--panel) 62%);
+  background: linear-gradient(180deg, var(--raised) 0%, var(--panel) 62%);
   box-shadow:
     0 0 0 1px rgba(236, 142, 45, 0.25),
     0 10px 24px -16px rgba(236, 142, 45, 0.6);
@@ -1898,7 +1898,7 @@ button {
   min-width: 0;
   padding: 6px 8px;
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--ink);
   color: var(--ink);
   font: inherit;
   font-size: 12px;
@@ -1924,7 +1924,7 @@ button {
   min-height: 32px;
   padding: 6px 8px;
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--ink);
   color: var(--ink);
   font: inherit;
   font-size: 12px;
@@ -1956,7 +1956,7 @@ button {
 .component-composer button {
   padding: 0 14px;
   border: 0;
-  color: #fff;
+  color: var(--ink);
   background: var(--ink);
   font-size: 12px;
   font-weight: 700;
@@ -1988,7 +1988,7 @@ button {
   min-height: 34px;
   padding: 6px 8px;
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--ink);
   color: var(--ink);
   font: inherit;
   font-size: 12px;
@@ -2175,7 +2175,7 @@ button {
 }
 .brief-build {
   background: var(--ink);
-  color: #fff;
+  color: var(--ink);
   border: 0;
   font-weight: 750;
 }

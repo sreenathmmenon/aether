@@ -1,26 +1,29 @@
 /**
  * The colours text is drawn in, and the grounds it sits on.
  *
- * Declared here rather than parsed back out of the stylesheet so the contrast
- * test measures values it can see at compile time. `tokens.css` is held to
- * these by a test in the same folder, so the two cannot drift apart.
+ * Declared here rather than parsed back out of the stylesheet so the
+ * contrast test measures values it can see at compile time. A gate script
+ * holds `tokens.css` to these, so the two cannot drift apart.
  *
- * Every text colour meets 4.5:1 against both grounds. The accent colours are
- * also used as fills, where a background does not have to meet text contrast,
- * so each has a text-only variant at the minimum darkening that reaches the
- * threshold — `--cyan` was the worst at 2.55:1.
+ * The interface moved from a cream page to a dark ground, which inverts the
+ * whole ladder: on paper a text colour is darkened to reach contrast, and
+ * here it is brightened. Every value below is measured against the darkest
+ * ground it is drawn on.
  */
 export const textTokens = `
-  --ink: #112440;
-  --muted: #5e6c82;
-  --paper: #f3f0e9;
-  --panel: #fbfaf6;
-  --blue: #2068bf;
-  --cyan: #11a7b8;
-  --coral: #d95d4f;
-  --green: #248765;
-  --cyan-text: #007687;
-  --coral-text: #b93e30;
-  --green-text: #177a58;
-  --amber-text: #9c5c12;
+  --ink: #e8edf7;
+  --muted: #9aabc6;
+  --void: #070b14;
+  --paper: #0b1120;
+  --panel: #121b2e;
+  --raised: #17223a;
+  --blue: #5b9dff;
+  --cyan: #2dd4de;
+  --coral: #ff6b5e;
+  --green: #2fd39b;
+  --blue-text: #85b8ff;
+  --cyan-text: #5fe3ea;
+  --coral-text: #ff8f85;
+  --green-text: #5fdfb4;
+  --amber-text: #ffc078;
 `;

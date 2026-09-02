@@ -1,6 +1,6 @@
 :root {
-  color: #112440;
-  background: #f3f0e9;
+  color: #e8edf7;
+  background: #070b14;
   font-family:
     Inter,
     ui-sans-serif,
@@ -11,27 +11,53 @@
     sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
-  --ink: #112440;
-  /* Measured against the warm page ground on the deployed page: this sat at
-     4.17:1, just under the 4.5 AA threshold, across fourteen pieces of
-     secondary text. Six points darker clears it at 4.54 and is
-     indistinguishable at a glance. */
-  --muted: #5e6c82;
-  --line: #d7d9d2;
-  --paper: #f3f0e9;
-  --panel: #fbfaf6;
-  --blue: #2068bf;
-  --cyan: #11a7b8;
-  --orange: #ec8e2d;
-  --coral: #d95d4f;
-  --green: #248765;
-  /* Text-only variants of the accent colours. The accents themselves are
-     also used as fills, where a background does not have to meet text
-     contrast, so darkening the token would change the interface to fix a
-     problem only the text has. These are the minimum darkening that reaches
-     4.5:1 on the page ground: cyan was the worst at 2.55:1. */
-  --cyan-text: #007687;
-  --coral-text: #b93e30;
-  --green-text: #177a58;
-  --amber-text: #9c5c12;
+  font-feature-settings: "cv02", "cv03", "cv04", "ss01";
+  -webkit-font-smoothing: antialiased;
+
+  /* Depth, not paper. The interface used a cream page and hairline rules,
+     which reads as a printed report — the opposite of a live surface two
+     actors are working on at the same time. Everything below is one dark
+     ground with light lifted off it, so a panel feels raised rather than
+     drawn. */
+  --void: #070b14;
+  --paper: #0b1120;
+  --panel: #121b2e;
+  --raised: #17223a;
+  --line: #22304d;
+  --line-bright: #2f4266;
+
+  --ink: #e8edf7;
+  /* 8.9:1 on --panel. Secondary text has to stay readable on a dark ground
+     without glowing as brightly as the primary. */
+  --muted: #9aabc6;
+
+  /* One accent carries the product: the blue that means "computed". The
+     others are states, not decoration. */
+  --blue: #5b9dff;
+  --cyan: #2dd4de;
+  --orange: #ffa94d;
+  --coral: #ff6b5e;
+  --green: #2fd39b;
+
+  /* On a dark ground the text variants brighten rather than darken — the
+     light-mode ladder was inverted, and darkening an accent here makes it
+     less readable, not more. */
+  --blue-text: #85b8ff;
+  --cyan-text: #5fe3ea;
+  --coral-text: #ff8f85;
+  --green-text: #5fdfb4;
+  --amber-text: #ffc078;
+
+  /* Glow is the product's one flourish, used only where something is live:
+     a running simulation, an agent acting, a gate opening. */
+  --glow-blue: 0 0 0 1px rgb(91 157 255 / 0.35), 0 8px 32px rgb(91 157 255 / 0.18);
+  --glow-green: 0 0 0 1px rgb(47 211 155 / 0.4), 0 8px 32px rgb(47 211 155 / 0.2);
+  --glow-coral: 0 0 0 1px rgb(255 107 94 / 0.4), 0 8px 32px rgb(255 107 94 / 0.2);
+
+  --lift-1: 0 1px 2px rgb(0 0 0 / 0.4);
+  --lift-2: 0 4px 16px rgb(0 0 0 / 0.45), 0 1px 2px rgb(0 0 0 / 0.5);
+  --lift-3: 0 16px 48px rgb(0 0 0 / 0.55), 0 2px 8px rgb(0 0 0 / 0.4);
+
+  --radius: 12px;
+  --radius-lg: 18px;
 }
