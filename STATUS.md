@@ -1970,6 +1970,7 @@ was already underway again.
   - Evidence: registration is cached on a capability key, and **every** existing test builds a new registry per state — which never exercises the cache at all. Mutating the key's five components found three could be frozen with no test failing.
   - The editability component is genuinely load-bearing, and its failure is severe: with it frozen, the merge produced **no re-registration** — surfaces went `5, 12, 0` instead of `5, 12, 7` — so the page kept advertising twelve write tools against a committed architecture. That is the state-aware claim failing in the place a judge is most likely to look.
   - A test now drives one registry through committed → repair future → merged and asserts the surfaces are exactly `[5, 12, 7]`, with no write tool surviving the merge. Freezing editability now fails it.
+  - Verified against the deployed origin through a real human approval and commit: the surface reads `5, 12, 7` with zero write tools remaining after the merge, matching the test exactly.
 
 - [x] **M146.2 — Two survivors that are redundant, not untested** `DONE`
   - Evidence: the template and region components of the key also survived mutation, and were checked rather than assumed to need tests. Switching template on one registry gives `5, 10` **with or without** the template component, because editability and the component-id list already change when the template does. And no command adds a region — regions come only from the template — so `regionIds()` can never change while `componentIds()` stays fixed.
