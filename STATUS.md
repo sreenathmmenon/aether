@@ -2330,3 +2330,14 @@ was already underway again.
   - Both call sites now pass the ceiling. A test locks one the future already exceeds, confirms the run genuinely exceeds it, and requires the agent's `sloViolations` to contain the breach. Omitting the argument again fails.
   - Verified against the deployed origin: locking the ceiling and pushing the ledger to $9,000/month makes `inspect_failure_domain` report `Human cost ceiling exceeded: $12,492 > $8,700` — the same sentence the reviewer sees, from the same run.
   - A probe fault recorded: the first test set `costCeilingUsd` when the command's field is `amountUsd`, so the ceiling silently was not set and the assertion failed for the wrong reason. Reading the reducer rather than guessing the shape settled it.
+
+## Milestone 185 — Auditing the class, not just the two call sites
+
+- [x] **M185.1 — Where else could the two views diverge?** `DONE`
+  - Acceptance: no agent-facing scenario run omits a workspace guardrail.
+  - Evidence: M184 fixed two call sites; the question was whether more existed. Every `runScenario` call in the codebase was audited rather than assumed:
+    - The **reducer's** stored run passes the ceiling, so recorded evidence has always been correct — the divergence was only in what the tools computed on demand.
+    - The **interface's** template load correctly omits it, because no ceiling can exist before the workspace it belongs to does.
+    - The **two registry sites** were the whole gap, and both are fixed.
+  - The rule is now enforced for the tool surface, since that is where the divergence was: dropping the ceiling from either agent-facing run fails. A third tool added later that runs a scenario is covered on the day it is written.
+  - Recorded as the shape worth remembering: the engine, the reducer and the interface all handled the guardrail correctly, and the defect lived entirely in what the _agent_ was given. A claim that two paths share a model is only as good as the arguments each path passes it.

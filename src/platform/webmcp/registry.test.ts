@@ -13,6 +13,7 @@ import {
 } from "./registry";
 import { runScenario } from "@simulation/engine";
 import { offlineToolSurface } from "./offline-surface";
+import registrySource from "./registry.ts?raw";
 import webmcpDoc from "../../../docs/WEBMCP.md?raw";
 import complianceDoc from "../../../docs/WEBMCP_COMPLIANCE.md?raw";
 import planDoc from "../../../docs/V3_REVERSE_WINNER_PLAN.md?raw";
@@ -543,6 +544,26 @@ describe("Aether WebMCP registry", () => {
       expect(rejection.nextAction).toContain("ledger");
       registry?.dispose();
     })();
+  });
+
+  it("runs every agent-facing scenario with the workspace guardrails", () => {
+    // The ceiling was omitted at both registry call sites while the reducer
+    // and the interface passed it, so the same run reported different
+    // evidence depending on who asked. Auditing the call sites rather than
+    // fixing the two found: the reducer's stored run is correct, and the
+    // interface's template load correctly omits it because no ceiling can
+    // exist before a workspace does. This holds the tool surface to the
+    // rule, since that is where the divergence was.
+    const calls = [
+      ...registrySource.matchAll(/runScenario\(([\s\S]{0,220}?)\)/g),
+    ];
+    // There are calls to check, or this passes over a refactor.
+    expect(calls.length).toBeGreaterThan(1);
+    for (const [, args] of calls)
+      expect(
+        args,
+        "an agent-facing scenario run omits the workspace cost ceiling",
+      ).toContain("costCeilingUsd");
   });
 
   it("shows an agent the same cost ceiling the reviewer set", async () => {
