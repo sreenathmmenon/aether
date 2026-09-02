@@ -423,10 +423,15 @@ button {
   font-size: 14px;
 }
 .decision-brief {
-  display: flex;
-  gap: 40px;
+  /* Three facts across the row a reviewer reads before scrolling: what has
+     failed, what the decision waits on, and what the agent may do. As a
+     flex row with the third pushed right by auto margin, the first two
+     bunched at the left and the row read as unbalanced. */
+  display: grid;
+  grid-template-columns: 1fr 1fr max-content;
+  gap: var(--space-12);
   align-items: baseline;
-  padding: 16px 40px;
+  padding: var(--space-6) var(--space-12);
   border-bottom: 1px solid var(--border);
   background: linear-gradient(
     180deg,
@@ -435,6 +440,28 @@ button {
   );
 }
 .brief-state,
+/* The agent's reach, in the row a reviewer reads before scrolling. The
+   count is the thing that changes as the journey moves, so it carries the
+   agent colour and the display face while the sentence around it stays
+   quiet. */
+.brief-reach {
+  padding-left: var(--space-8);
+  border-left: 1px solid var(--border);
+}
+.brief-reach strong {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+.brief-reach em {
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-style: normal;
+  font-weight: var(--weight-light);
+  letter-spacing: var(--tracking-tight);
+  font-variant-numeric: tabular-nums;
+  color: var(--agent-text);
+}
 .brief-waiting {
   display: flex;
   flex-direction: column;

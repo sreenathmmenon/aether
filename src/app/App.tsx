@@ -1659,6 +1659,19 @@ export function App() {
                     : "Evidence"}
           </strong>
         </div>
+        {/* The third fact in the row a reviewer reads before scrolling: what
+            the machine may do to their system right now. It is the number
+            that visibly changes as the journey moves -- five on a committed
+            architecture, thirteen once a repair future is open, eight after
+            a commit -- and it was only ever a chip in the header. */}
+        {webMcp.available && (
+          <div className="brief-reach">
+            <span className="brief-label">Your agent</span>
+            <strong>
+              <em>{toolCount}</em> things it may do here
+            </strong>
+          </div>
+        )}
       </section>
       <section
         className="studio"
