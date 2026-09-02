@@ -2613,3 +2613,16 @@ was already underway again.
   - Two stale refs kept the check failing after the rewrite — `refs/original/` from filter-branch and the backup tag — because the check scans `--all`. Both were cleared once the rewrite was verified.
   - **The gate now passes end to end for the first time**: format, lint, typecheck, tokens, 341 tests, build, authorship.
   - Left for the owner, deliberately: every commit hash changed, so `origin/main` has diverged and still holds the old history. Publishing it needs a force-push, which is not a call to make unasked.
+
+## Milestone 212 — Refusals that named a problem and no way out
+
+- [x] **M212.1 — An agent told its branch was wrong, never which one was right** `DONE`
+  - Acceptance: a refusal that rejects a branch names the branches the agent could use.
+  - Evidence: found calling `propose_architecture_change` against the live origin with a branch outside the schema's published enum. The reducer refused it correctly — `"This branch cannot be changed."` — but that is exactly the value an agent reaches for when its view of the surface is one step stale: a branch merged or rolled back since it last read the tools. It was handed the problem and no way out of it.
+  - The registry already computes the writable branches for the schema enum, so the refusal now returns them: `"Use one of: branch-lowest_cost, branch-fastest_recovery."` When none is writable it says to create one rather than listing nothing. This mirrors the guard already in place for unknown component IDs (`"Choose one of: …"`), so both failure shapes behave the same way — which was the point of routing every engine rejection through one translation.
+  - **Not a defect, and worth stating plainly:** the schema enum is advisory and the reducer is the enforcement. The reducer held. What was weak was the quality of the refusal, not the boundary.
+- [x] **M212.2 — The same dead end on a second message** `DONE`
+  - Evidence: `"Unknown architecture branch."`, raised by `RUN_SCENARIO` and `ADD_DECISION_NOTE`, had the identical shape. Both refusals now hand back the writable branches.
+  - One correction of my own, recorded: the first test for this aimed at `propose_architecture_change`, which never produces that message — `SET_PROPERTY` looks the branch up and answers `"This branch cannot be changed."` instead. The assertion therefore passed with the fix removed and proved nothing. Caught by mutating the fix away and seeing **zero** failures rather than one. The test now calls `run_failure_scenario`, which does raise it, and removing the fix fails.
+- [x] **M212.3 — How the Chrome API takes arguments** `DONE`
+  - Evidence: `document.modelContext.executeTool` takes the tool object and a **JSON string**, not a name and an object. Several earlier probes in this session failed with "Failed to parse input arguments" and one with a transient error, which looked like tool defects and were not. Recorded so the next live probe starts from the working form.
