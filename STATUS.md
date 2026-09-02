@@ -2472,3 +2472,12 @@ was already underway again.
 - [x] **M198.3 — Removing what the product already shows** `DONE`
   - Evidence: a three-column explainer — `01 · Incident`, `02 · Agent recommendation`, `03 · Human decision` — restated what the canvas, the tool feed and the gate already demonstrate, and took a sixth of the first screen doing it.
   - Replaced with two live values: the state, and who it is waiting on. `Waiting on — Evidence` becomes `The reviewer` the moment the evidence is clean. Nine lines of caption became a status a reviewer can act on.
+
+## Milestone 199 — Saying who it is for and what it costs to go without
+
+- [x] **M199.1 — The opening named a category, not a stake** `DONE`
+  - Acceptance: a reviewer arriving cold learns the problem before the mechanism.
+  - Evidence: the modal opened on _"A WebMCP architecture laboratory"_ — the technology it is built with, not who it is for or what it costs them to go without it. Product legibility was the lowest-scoring dimension in the adversarial review, and this was the first thing a judge read.
+  - It now opens on the stake: _"When an agent proposes a change to a live system, nothing checks it. Aether computes what it would do."_ over _"For the team that owns the incident."_ The lede names the failure mode — the suggestion arrives with confidence, the tools that would verify it live somewhere else, and the decision gets made on persuasion.
+  - The header carried the same problem in miniature: `Counterfactual review` and `Agent-modeled proof room` are internal vocabulary in the line a judge reads first. They now say what state you are in — `Before it ships`, or `Your system`.
+  - The primary action is now the only glowing thing on the screen, on a card that lifts off the page rather than sitting flush against it.
