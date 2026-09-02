@@ -1493,7 +1493,7 @@ export function App() {
       <section className="hero-bar" aria-labelledby="hero-bar-name">
         <div>
           <p className="eyebrow" id="hero-bar-name">
-            Live architecture decision room
+            Live · shared with your agent
           </p>
           <h1>
             {/* The headline is the reviewer's current question, not a fixed
@@ -2699,7 +2699,9 @@ export function App() {
               replays the three before it. */}
           <div className="tool-feed" aria-live="polite" aria-atomic="false">
             <p className="eyebrow">
-              {toolCalls.length ? "Agent tool activity" : "Agent tool surface"}
+              {toolCalls.length
+                ? "What the agent did"
+                : "What the agent may do"}
             </p>
             {toolCalls.length ? (
               <ol>
@@ -2929,7 +2931,7 @@ export function App() {
       <section className="review-dock" aria-label="Branch review and approval">
         <div className="review-head">
           <div>
-            <p className="eyebrow">Review surface</p>
+            <p className="eyebrow">Your decision</p>
             <h2>
               {activeBranch.name} <span>v{activeBranch.version}</span>
             </h2>
