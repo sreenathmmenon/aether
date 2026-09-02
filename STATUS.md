@@ -2577,3 +2577,13 @@ was already underway again.
   - Evidence: the strip read "Waiting on — Evidence" whenever approval was ineligible. That is right only while nothing has been run. Once a scenario reports violations the evidence has arrived and said no, and what the decision waits on is a repair — so the strip sent a reviewer to fetch something already on their screen, directly above a panel naming the violations.
   - It now reads "A fix for the violations" in that state and keeps the original wording for the case it was always right for. Removing the distinction fails.
   - Verified live, and the three surfaces now form a chain that adds information at each step rather than repeating: headline **"Evidence blocks approval"** → status **"Waiting on: A fix for the violations"** → gate reason **"Traffic spike reports violations"**. Blocked, what is needed, and exactly where to look.
+
+## Milestone 209 — The whole journey, walked live after the repairs
+
+- [x] **M209.1 — End-to-end verification on the deployed origin** `DONE`
+  - Acceptance: the full decision journey holds together after Milestones 202–208, on the live origin, driven as a reviewer.
+  - Evidence: walked payment-platform from arrival to commit. **5 → 13 → 8 tools**, read from `document.modelContext.getTools()` at each step, matching what `registry.test.ts` asserts.
+  - The blocked state reads as a chain that adds information rather than repeating it: headline **"Evidence blocks approval"** → status **"Waiting on: A fix for the violations"** → gate reason **"Traffic spike reports violations. Resolve them to make approval eligible."**
+  - Resolving the capacity blocker updated every surface coherently — waiting on **"The reviewer"**, evidence **"current and clean · Recomputed after your edits · 5 of 5 components simulated"**, approve enabled. Approval moved the headline to "Only you can commit this future"; commit moved it to "Highest resilience is committed."
+  - After the commit every write tool is gone — no `add_architecture_component`, `run_failure_scenario`, `model_architecture`, `connect_components` or `add_decision_note` — while `create_architecture_branch` remains, so a rejected repair can be replaced rather than dead-ending the reviewer.
+  - The gate claim tracked the surface **from 13 to 8 by itself**, which is the proof it is computed and not written, and it sits beside `Rollback this merge` — the moment the guarantee matters most, where a human can undo a commit and no agent can.
