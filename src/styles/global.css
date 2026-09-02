@@ -960,10 +960,16 @@ button {
     linear-gradient(90deg, rgb(242 245 249 / 0.05) 1px, transparent 1px);
   background-size: 28px 28px;
 }
+/* A region is where components physically run, and losing one is the
+   failure the product opens on -- so it has to read as a place. A 2.4% tint
+   on the midnight ground was invisible; this is a zone with a dashed edge
+   and a faint floor, so the boundary a regional outage crosses is legible
+   without competing with the components inside it. */
 .region-box {
   position: absolute;
-  border: 1px solid rgb(27 77 255 / 0.25);
-  background: rgb(27 77 255 / 0.025);
+  border: 1px dashed rgb(122 162 255 / 0.28);
+  border-radius: var(--radius-lg);
+  background: rgb(122 162 255 / 0.05);
 }
 .region-box span {
   position: absolute;
