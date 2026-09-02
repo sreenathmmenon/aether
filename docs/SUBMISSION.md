@@ -91,10 +91,17 @@ agent's authority that survives being checked.
 
 "No approve tool is registered" is easy to write and easy to believe. What
 made it true was deleting the assumption and testing for it: every one of
-the five human-only commands was opened to an agent actor, one at a time,
-to confirm each fails a test independently rather than being covered by one
+the five gated commands was opened to an agent actor, one at a time, to
+confirm each fails a test independently rather than being covered by one
 assertion that happens to catch the pair everyone thinks of. Removing the
 check on `ROLLBACK_MERGE` alone had broken nothing.
+
+Four of those five — approve, merge, roll back, and setting the cost
+ceiling — refuse an agent outright. The fifth is conditional and is stated
+that way rather than rounded up: an agent may remove a component it added
+by mistake, and is refused when the removal would take the system below two
+components or when three or more dependencies rely on it. The interface
+counts four, because four is the number that survives being checked.
 
 The same method found a subtler class. Approval requires evidence, and
 evidence is tied to a branch version — but nothing enforced that a run

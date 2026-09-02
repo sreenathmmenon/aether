@@ -402,8 +402,9 @@ describe("the demo script quotes what the product reports", () => {
   it("tells the build story with claims the suite backs", () => {
     // The "what we learned" section names specific defects and specific
     // guards. Prose about testing is the easiest place to overclaim, so the
-    // three things it asserts are held to the code: five human-only
-    // commands, an evidence-version filter, and a derived-list guard.
+    // three things it asserts are held to the code: the gated commands and
+    // how many of them are absolute, an evidence-version filter, and a
+    // derived-list guard.
     const flat = submission.replace(/\s+/g, " ");
     expect(flat).toContain("What we learned building it");
 
@@ -418,9 +419,17 @@ describe("the demo script quotes what the product reports", () => {
         return reducerSource.slice(at, end).includes('actor.kind !== "human"');
       });
     expect(humanOnly).toHaveLength(5);
-    expect(flat, "the section miscounts the human-only commands").toContain(
-      "five human-only commands",
+    expect(flat, "the section miscounts the gated commands").toContain(
+      "five gated commands",
     );
+    // Five are gated, but only four refuse an agent outright -- the fifth is
+    // conditional, and rounding it up overstated the boundary this whole
+    // section is about. The prose has to keep that distinction.
+    expect(
+      flat,
+      "the section rounds the conditional gate up to an absolute one",
+    ).toContain("Four of those five");
+    expect(flat).toContain("The interface counts four");
 
     // The evidence-version filter it describes still exists.
     expect(
