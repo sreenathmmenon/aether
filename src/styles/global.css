@@ -248,6 +248,7 @@ button {
 .violation-list {
   max-height: 320px;
   overflow-y: auto;
+  border-radius: var(--radius);
 }
 .diff-list {
   max-height: 300px;
@@ -293,8 +294,13 @@ button {
   width: 33px;
   height: 33px;
   border-radius: 50%;
-  color: var(--ink);
-  background: var(--raised);
+  color: var(--void);
+  background: linear-gradient(180deg, var(--blue), #3d84f0);
+  border-radius: 999px;
+  box-shadow: var(--glow-blue);
+  transition:
+    transform 140ms ease,
+    box-shadow 140ms ease;
   font-weight: 800;
 }
 .hero-bar {
@@ -443,6 +449,7 @@ button {
   text-align: left;
   background: transparent;
   cursor: pointer;
+  border-radius: var(--radius);
 }
 .baseline-card {
   margin: 16px 0 9px;
@@ -678,6 +685,7 @@ button {
   transition:
     box-shadow 0.2s,
     border-color 0.2s;
+  border-radius: var(--radius);
 }
 .architecture-node:active {
   cursor: grabbing;
@@ -997,6 +1005,7 @@ button {
     linear-gradient(135deg, rgba(47, 111, 177, 0.1), transparent 58%),
     var(--raised);
   box-shadow: inset 3px 0 0 var(--blue);
+  border-radius: var(--radius);
 }
 .system-brief-panel strong {
   display: block;
@@ -1204,6 +1213,7 @@ button {
   padding: 11px 13px;
   border: 1px solid var(--line);
   background: var(--raised);
+  border-radius: var(--radius);
 }
 .decision-note > div {
   display: flex;
@@ -1742,9 +1752,16 @@ button {
   max-height: 92vh;
   overflow: auto;
   padding: 44px 46px 34px;
-  border: 1px solid var(--line);
-  background: var(--panel);
-  box-shadow: 0 40px 90px -40px rgba(16, 35, 63, 0.7);
+  border: 1px solid var(--line-bright);
+  border-radius: var(--radius-lg);
+  background:
+    radial-gradient(
+      120% 90% at 50% 0%,
+      color-mix(in oklab, var(--blue) 9%, transparent),
+      transparent 62%
+    ),
+    var(--panel);
+  box-shadow: var(--lift-3);
   animation: intro-rise 0.42s cubic-bezier(0.22, 1, 0.36, 1);
 }
 @keyframes intro-rise {
@@ -1849,6 +1866,7 @@ button {
   padding: 13px 14px;
   border: 1px solid rgba(17, 167, 184, 0.28);
   background: rgba(17, 167, 184, 0.05);
+  border-radius: var(--radius);
 }
 .tool-feed .eyebrow {
   margin-bottom: 9px;
