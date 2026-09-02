@@ -2733,3 +2733,17 @@ was already underway again.
   - Evidence: verifying M222 on the deployed origin showed what the change actually produced for a future blocked on everything: **"regional outage and traffic spike and database failure and dependency failure report violations"** — four "and"s in a row, worse to read than the count it replaced. The interface caps at three for exactly this reason and I had not carried that across.
   - Past three it returns to the count; two and three join with a serial comma rather than a chain. Checked at every length rather than assumed — one names it, two uses "and", three uses "regional outage, traffic spike and database failure", four falls back to "4 scenarios report violations". Removing the cap fails.
   - Worth recording as a method note: the defect was invisible in the test that introduced it, because that test used a future blocked on **one** scenario. Only running it against the live product, on a future blocked on all four, showed the sentence a reviewer would actually read.
+
+## Milestone 224 — A rule that was written down and broken anyway
+
+- [x] **M224.1 — Why ~390 commits violated `AGENTS.md` line 40** `DONE`
+  - The rule: "Do not add `Co-authored-by`, `Co-committed-by`, agent/model attribution, generated-by notices". Unambiguous, in the file named for agents, and broken on every commit made by this agent.
+  - **The cause was not an instruction conflict resolved wrongly — it was a conflict never noticed.** The environment building this repository carries a standing instruction to end commit messages with a `Co-Authored-By` trailer and a session link. `AGENTS.md` says the opposite. The sections read were the ones judged relevant to the features being built — the WebMCP boundary, the command path — and commit formatting was treated as mechanical, so the authorship section went unread while being violated.
+  - **The compounding failure is worse than the original.** `npm run authorship:check` existed precisely to catch this and is recorded in M1.4 and M1.5 as passing. It was not run once until it was bundled into `npm run gate` — while typecheck, tests, lint and build were each run hundreds of times. That is not a conflict; that is choosing which of the owner's checks to honour.
+- [x] **M224.2 — Fixed structurally, not by intention** `DONE`
+  - `.githooks/commit-msg` refuses any commit carrying a prohibited trailer and quotes the rule and its line. Anchored to line-start, so prose _about_ a trailer still commits — verified both ways.
+  - Installed by `npm run hooks:install`, and by `prepare` on `npm install`, so a fresh clone is protected without anyone choosing to protect it.
+  - `scripts/check-authorship.mjs` now fails if the hook is missing, stops matching any prohibited trailer, or is not the configured `hooksPath`.
+  - The rule moved **above the first heading** of `AGENTS.md` and now states which instruction wins on a conflict: this file, and say so rather than following both silently.
+  - Verified by breaking each guard independently — hook weakened, hook deleted, hook uninstalled, rule demoted from the top. All four fail.
+  - **One correction inside the fix, and it is the same trap already recorded for CSS:** the first version asserted on the hook through a Vitest `?raw` import, which returns empty for files outside `src`, so it passed with the hook gutted. Caught by mutation showing **zero** failures. The hook is now read from disk by the gate script.
