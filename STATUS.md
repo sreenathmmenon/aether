@@ -2054,3 +2054,12 @@ was already underway again.
 - [x] **M154.2 — The key check that exempted itself** `DONE`
   - Evidence: the first version asserted the workspace was written under `storageKey` — derived from the same constant it was checking, so renaming the key kept the test green. That is the self-exempting shape for the fourth time this session, and worth naming again: **an assertion derived from the value under test cannot detect a change to it.**
   - The key is now pinned to its literal. Changing it is a migration rather than an edit — every existing visitor silently loses their workspace, because a reader looking under a new key finds nothing — so it has to fail here first and be changed deliberately.
+
+## Milestone 155 — Sweeping for the self-exempting shape
+
+- [x] **M155.1 — Look for the pattern deliberately, having hit it four times** `DONE`
+  - Acceptance: no test derives its expectation from the value it is checking.
+  - Evidence: a scan for assertions comparing an import to itself found none, which is the easy form. The subtler one — an expectation _computed_ from the code under test — needs mutation, so the exported constants that tests derive from were each widened.
+  - Two survived: `replayWindow` and `noteWindow` could be raised to forty with every assertion in `replay-window.test.ts` staying green, because each one derives its expectation from the window it is testing. A window of forty is not a window — the disclosure it exists to trigger becomes unreachable, and the audit list a reviewer reads becomes unbounded.
+  - All four window sizes are now pinned to their literals, with an upper bound so none can be widened into uselessness. Widening `replayWindow` fails.
+  - The workspace size cap was checked too and is genuinely covered — an earlier probe had used the wrong literal and reported it as skipped, which is why it was re-run rather than assumed.

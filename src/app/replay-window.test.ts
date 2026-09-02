@@ -85,4 +85,25 @@ describe("the replay says what it is not showing", () => {
     expect(note).toMatch(/block approval/);
     expect(note).toMatch(/counted in this evidence/);
   });
+
+  it("keeps each window to a length someone will actually read", () => {
+    // Every assertion in this file derives its expectation from the window
+    // it is testing, so widening a window to forty kept them all green —
+    // the self-exempting shape. The windows exist to bound what a reviewer
+    // reads before the disclosure takes over, so their actual sizes are the
+    // property, and changing one should be a deliberate act that fails here.
+    expect(replayWindow).toBe(12);
+    expect(noteWindow).toBe(8);
+    expect(diffWindow).toBe(10);
+    expect(violationWindow).toBe(12);
+    // And none of them is large enough to make the disclosure unreachable,
+    // which is what a "window" of forty would quietly do.
+    for (const window of [
+      replayWindow,
+      noteWindow,
+      diffWindow,
+      violationWindow,
+    ])
+      expect(window).toBeLessThanOrEqual(16);
+  });
 });
