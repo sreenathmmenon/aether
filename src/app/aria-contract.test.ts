@@ -84,6 +84,38 @@ describe("the interface honours the ARIA it declares", () => {
       );
   });
 
+  it("anchors a human note to a component and the evidence behind it", () => {
+    // The human half of the component-anchored discussion claim. Walking it
+    // works — a note appears attributed to Sreenath, "Anchored to Primary
+    // Ledger", and the replay records "recorded decision context" — but
+    // nothing covered it: repointing the button at a different command
+    // broke no test.
+    const handler = appSource.slice(
+      appSource.indexOf("function postDecisionNote"),
+      appSource.indexOf(
+        "return (",
+        appSource.indexOf("function postDecisionNote"),
+      ),
+    );
+    expect(handler, "postDecisionNote moved").toContain("ADD_DECISION_NOTE");
+
+    // Anchored to whatever the reviewer had selected, which is what makes a
+    // note a comment on a component rather than a loose remark.
+    expect(handler).toContain("entityId: selectedEntity?.id");
+
+    // Stamped with the evidence at the time of writing. Without this a note
+    // read months later says what someone thought and not what they saw.
+    expect(handler).toMatch(/evidenceRef/);
+    expect(handler).toMatch(/availability · .*recovery/);
+    expect(handler, "a note with no run loses its evidence entirely").toContain(
+      "Baseline evidence",
+    );
+
+    // And an empty note is refused with a reason rather than posted blank.
+    expect(handler).toMatch(/noteBody\.trim\(\)\.length < 3/);
+    expect(handler).toContain("decision-relevant note");
+  });
+
   it("hands a reviewer a shareable room in two clicks", () => {
     // The collaboration claim is only real if a judge can find it. Walking
     // it: "Open a shared review" mints a room and rewrites the URL, then

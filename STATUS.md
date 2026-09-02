@@ -2310,3 +2310,12 @@ was already underway again.
   - Two clicks, no documentation needed. Reported as no finding — the flow is complete and the handler is carefully built: it copies **before** reloading, because the workspace id resolves once at load and the author would otherwise stay in their private workspace while the link worked for everyone else.
   - It was, however, entirely untested. The feedback line could be reduced to "Copied." silently, and it is the only thing telling a reviewer the link shares their workspace rather than merely bookmarking a page.
   - Now covered: the message must say what the link _does_, both labels must exist, and a clipboard that rejects or is absent must still reach the same continuation rather than stranding the reviewer mid-flow. Each break fails.
+
+## Milestone 183 — The human half of the discussion claim
+
+- [x] **M183.1 — Notes and replay, walked** `DONE`
+  - Acceptance: a person can record a decision with no agent, and it lands attributed and anchored.
+  - Evidence: typing into `Explain the constraint, question, or decision…` and clicking **Add to record** produced a note reading `Sreenath · Anchored to Primary Ledger · "Cost ceiling matters more than latency here." · Baseline evidence`, and the replay recorded `Sreenath recorded decision context` with a timestamp. The component-anchored discussion and replayable history claims both work by hand.
+  - Untested, again: repointing the button at a different reducer command broke nothing.
+  - Now covered on the properties that matter. The note is anchored to whatever the reviewer had selected — that is what makes it a comment on a component rather than a loose remark — and stamped with the evidence at the time of writing, without which a note read months later says what someone thought and not what they saw. An empty note is refused with a reason. Removing the anchor or the evidence stamp each fail.
+  - Four consecutive walks have now found untested paths: the capacity control, the re-run instruction, the brief builder, the share flow, and this. Every one is a path a judge takes and no test did.
