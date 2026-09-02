@@ -110,8 +110,6 @@ const engineActor = {
   displayName: "Aether",
 };
 
-const introStorageKey = "aether.intro.v1";
-
 /** Starting systems a visitor can model, so the product is not one story. */
 const systemTemplates = [
   {
@@ -271,11 +269,6 @@ export function App() {
     useState<Scenario>("regional_outage");
   const [comparing, setComparing] = useState(false);
   // First-time visitors get one screen of framing before the decision room.
-  const [introDismissed, setIntroDismissed] = useState(
-    () =>
-      typeof window !== "undefined" &&
-      window.localStorage.getItem(introStorageKey) === "seen",
-  );
   const [traceStep, setTraceStep] = useState(-1);
   const [noteBody, setNoteBody] = useState("");
   const [componentDraft, setComponentDraft] = useState({
@@ -686,7 +679,6 @@ export function App() {
   }, [state]);
   useEffect(() => () => registryRef.current?.dispose(), []);
   // Both dialogs declare aria-modal, so both must behave like one.
-  const introRef = useRef<HTMLDivElement>(null);
   const compareRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!latestCall) return;
@@ -981,15 +973,6 @@ export function App() {
   }
   // Stable identity: the modal effect depends on this, and a new function each
   // render would tear down and rebuild the focus trap continuously.
-  const dismissIntro = useCallback(() => {
-    setIntroDismissed(true);
-    try {
-      window.localStorage.setItem(introStorageKey, "seen");
-    } catch {
-      // A blocked storage write must never keep the product behind the intro.
-    }
-  }, []);
-  useModalDialog(introRef, !introDismissed, dismissIntro);
   useModalDialog(
     compareRef,
     comparing,
@@ -3265,75 +3248,6 @@ export function App() {
               The agent can compare evidence. Only you can approve and commit a
               future.
             </p>
-          </div>
-        </div>
-      )}
-      {!introDismissed && (
-        <div
-          ref={introRef}
-          className="intro-overlay"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="intro-title"
-        >
-          <div className="intro-card">
-            {/* "A WebMCP architecture laboratory" named the category and the
-                technology — what it is built with, not who it is for or what
-                it costs them to go without it. A reviewer arriving cold needs
-                the stakes before the mechanism. */}
-            <p className="eyebrow">For the team that owns the incident</p>
-            <h2 id="intro-title">
-              When an agent proposes a change to a live system, nothing checks
-              it.<em> Aether computes what it would do.</em>
-            </h2>
-            <p className="intro-lede">
-              The suggestion arrives with confidence, the tools that would
-              verify it live somewhere else, and the decision gets made on
-              persuasion. Here it is made on evidence — branch the architecture,
-              simulate the failure, see the consequence before anyone commits.
-            </p>
-            {/* The loop is the product. Showing its three steps as steps beats
-                describing them in prose a reviewer has to parse. */}
-            <ol className="intro-steps">
-              <li>
-                <b>Agent proposes</b>
-                <span>
-                  It branches a repair future through WebMCP. It cannot touch
-                  the committed architecture.
-                </span>
-              </li>
-              <li>
-                <b>Engine proves</b>
-                <span>
-                  A deterministic simulation over the real dependency graph
-                  returns the same result every time.
-                </span>
-              </li>
-              <li>
-                <b>Only you commit</b>
-                <span>
-                  No approve or merge tool is registered for an agent, in any
-                  state.
-                </span>
-              </li>
-            </ol>
-            <p className="intro-own">
-              Bring your own system: describe it in a sentence and prove a
-              repair on it.
-            </p>
-            <div className="intro-foot">
-              <button className="intro-start" onClick={dismissIntro}>
-                Enter the decision room →
-              </button>
-              <small>
-                {/* The reason was computed and never shown, so someone
-                    already running a supported Chrome was told to install
-                    Chrome. Say which of the two situations they are in. */}
-                {webMcp.available
-                  ? `Your agent can do ${toolCount} things on this page`
-                  : `${webMcp.reason ?? "WebMCP is unavailable here"}. Everything below works without an agent.`}
-              </small>
-            </div>
           </div>
         </div>
       )}

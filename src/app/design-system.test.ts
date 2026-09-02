@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import design from "../../DESIGN.md?raw";
 import agents from "../../AGENTS.md?raw";
+import appSource from "./App.tsx?raw";
 import { textTokens } from "../styles/text-tokens";
 
 /**
@@ -52,5 +53,32 @@ describe("the design contract", () => {
     for (const step of ["12px", "14px", "16px", "20px", "32px", "56px"])
       expect(design, `the ramp is missing ${step}`).toContain(step);
     expect(design).toContain("4px scale");
+  });
+});
+
+/**
+ * The arrival.
+ *
+ * The product opened on a modal holding roughly 120 words of prose in front
+ * of the incident. Every reference product measured opens on one sentence
+ * and the thing itself. The design council fixed this by subtraction rather
+ * than by redesigning the modal: there is nothing to dismiss.
+ */
+describe("what a first-time visitor meets", () => {
+  it("opens on the product, not on a dialog about it", () => {
+    expect(
+      appSource,
+      "an interstitial returned in front of the incident",
+    ).not.toContain("intro-overlay");
+    expect(appSource).not.toContain("Enter the decision room");
+    // And the state that drove it is gone, not merely unrendered — a
+    // dismissed-flag with no dialog is the seed of the next one.
+    expect(appSource).not.toContain("introDismissed");
+  });
+
+  it("leads with the incident itself", () => {
+    // The first words are the reviewer's situation, not a description of
+    // what the product is.
+    expect(appSource).toContain("is down.");
   });
 });
