@@ -390,7 +390,13 @@ button {
   text-transform: uppercase;
 }
 .hero-bar h1 {
-  max-width: 20ch;
+  /* 20ch is a fine measure for "Mumbai is down. Choose the repair before
+     traffic peaks." and too narrow for the committed sentence, which is 83
+     characters: it set four lines and 243px of hero inside a 719px column
+     with 560px empty beside it, pushing the canvas back below the fold at
+     the end of the journey. 28ch still reads as a measure rather than a
+     paragraph and holds every state's sentence in fewer lines. */
+  max-width: 28ch;
   margin: 0;
   /* Measured on the references rather than chosen: Linear sets 64px with
      -1.4px tracking, Stripe 40px at weight 300. Large and light is what
