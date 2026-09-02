@@ -2147,3 +2147,13 @@ was already underway again.
   - The test adds a component after load and requires each of the five references — by tool and by field — to enumerate more than one option and to include the new component. All five mutations are now killed.
   - Verified against the deployed origin: adding a component through WebMCP grew all five enums to six options, and every one contains `entity-live-enum-svc` seconds after it was created. The submission's claim that component identifiers are enumerated from the live graph holds on the running product.
   - Also killed in the same sweep: leaving superseded registrations un-aborted, at both call sites.
+
+## Milestone 165 — Regions and schema strictness
+
+- [x] **M165.1 — Both region enums could be emptied** `DONE`
+  - Acceptance: a component can be placed, and a schema refuses what it does not advertise.
+  - Evidence: `regionId` is required by both component-creating tools and enumerated from the graph. Mutation found both enums could be emptied with nothing failing — which makes creation impossible while the tools stay advertised, since there is then no valid call at all. The test requires both to offer the seeded regions and to agree with each other, since they describe the same graph.
+
+- [x] **M165.2 — `additionalProperties: false` in all fourteen schemas** `DONE`
+  - Evidence: this is what turns a typo into a named rejection rather than a silently ignored field — an agent writing `capacity` instead of `capacityRps` learns which is which. Mutation found it could be loosened on `get_decision_record` with nothing failing.
+  - A first version of the test filtered to schemas with properties, which left exactly that tool uncovered: it takes none. Strictness still matters there — it is what rejects a call carrying stray arguments instead of ignoring them. Now every registered tool is checked, and all fourteen sites are killed.

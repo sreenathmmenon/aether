@@ -185,6 +185,117 @@ describe("Aether WebMCP registry", () => {
     registry?.dispose();
   });
 
+  it("offers the regions a component can actually be placed in", async () => {
+    // Both component-creating tools enumerate regions from the graph, and
+    // mutation found both could be emptied with nothing failing. An empty
+    // region enum makes creation impossible while the tool stays advertised
+    // — `regionId` is required, so there is no valid call at all.
+    const registered: RegisteredTool[] = [];
+    let state = createInitialState(paymentPlatformBaseline);
+    const registry = createAetherToolRegistry(
+      (next) => {
+        state = next;
+      },
+      undefined,
+      {
+        registerTool: async (tool) => {
+          registered.push(tool as unknown as RegisteredTool);
+        },
+      },
+    );
+    const branched = dispatch(state, {
+      type: "CREATE_BRANCH",
+      input: { name: "Region probe", intent: "highest_resilience" },
+    });
+    if (!branched.ok) throw new Error("fixture branch must be created");
+    registered.length = 0;
+    await registry?.refresh(branched.value);
+    registry?.dispose();
+
+    const regionsOf = (name: string, path: (schema: unknown) => unknown) => {
+      const tool = registered.filter((entry) => entry.name === name).at(-1);
+      expect(tool, `${name} is not registered`).toBeDefined();
+      const values = path(
+        (tool as unknown as { inputSchema?: unknown }).inputSchema,
+      );
+      expect(Array.isArray(values), `${name} enumerates no regions`).toBe(true);
+      return values as string[];
+    };
+
+    const single = regionsOf(
+      "add_architecture_component",
+      (schema) =>
+        (
+          schema as {
+            properties?: { regionId?: { enum?: string[] } };
+          }
+        ).properties?.regionId?.enum,
+    );
+    const batch = regionsOf(
+      "model_architecture",
+      (schema) =>
+        (
+          schema as {
+            properties?: {
+              components?: {
+                items?: { properties?: { regionId?: { enum?: string[] } } };
+              };
+            };
+          }
+        ).properties?.components?.items?.properties?.regionId?.enum,
+    );
+
+    for (const [name, values] of [
+      ["add_architecture_component", single],
+      ["model_architecture", batch],
+    ] as const) {
+      expect(
+        values.length,
+        `${name} offers no region, so no call to it can succeed`,
+      ).toBeGreaterThan(1);
+      expect(values, `${name} does not offer the seeded regions`).toContain(
+        "region-mumbai",
+      );
+    }
+    // Both tools describe the same graph, so they must agree about it.
+    expect(single).toEqual(batch);
+  });
+
+  it("refuses fields it does not advertise, in every schema", async () => {
+    // `additionalProperties: false` is what turns a typo into a named
+    // rejection rather than a silently ignored field — an agent that writes
+    // `capacity` instead of `capacityRps` learns which is which. Mutation
+    // found the first schema could accept anything with nothing failing.
+    const registered: RegisteredTool[] = [];
+    const registry = createAetherToolRegistry(() => {}, undefined, {
+      registerTool: async (tool) => {
+        registered.push(tool as unknown as RegisteredTool);
+      },
+    });
+    const branched = dispatch(createInitialState(paymentPlatformBaseline), {
+      type: "CREATE_BRANCH",
+      input: { name: "Strict probe", intent: "highest_resilience" },
+    });
+    if (!branched.ok) throw new Error("fixture branch must be created");
+    await registry?.refresh(branched.value);
+    registry?.dispose();
+
+    // Every registered tool, including the ones that take no parameters —
+    // strictness there is what rejects a call carrying stray arguments
+    // instead of ignoring them, and checking only the parameterised schemas
+    // left `get_decision_record` mutable.
+    expect(registered.length).toBeGreaterThan(5);
+    for (const tool of registered)
+      expect(
+        (
+          tool as unknown as {
+            inputSchema?: { additionalProperties?: boolean };
+          }
+        ).inputSchema?.additionalProperties,
+        `${tool.name} accepts fields it does not advertise`,
+      ).toBe(false);
+  });
+
   it("enumerates live components in every tool that references one", async () => {
     // Five tool schemas enumerate component ids from the live graph, which
     // is what lets an agent operate on something a person added moments
