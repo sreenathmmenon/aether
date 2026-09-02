@@ -96,21 +96,25 @@ if (crossed) process.exit(1);
  * document. Nothing threw and nothing looked wrong, which is exactly why it
  * needs a gate rather than a reader's attention.
  */
-const overlays = [".architecture-lines"];
-for (const selector of overlays) {
-  const rule = global.match(
-    new RegExp(`\\${selector}\\s*\\{[^}]*\\}`, "m"),
-  )?.[0];
-  if (!rule) {
-    console.error(`${selector} has no rule to check`);
-    process.exit(1);
-  }
-  if (!/pointer-events:\s*none/.test(rule)) {
-    console.error(
-      `${selector} covers the canvas and must set pointer-events: none, or it swallows clicks meant for what is underneath`,
-    );
-    process.exit(1);
-  }
+let covered = 0;
+for (const [, selector, body] of global.matchAll(
+  /([.#][A-Za-z0-9_-]+)\s*\{([^}]*)\}/g,
+)) {
+  const stretched =
+    /position:\s*absolute/.test(body) &&
+    (/inset:\s*0/.test(body) ||
+      (/width:\s*100%/.test(body) && /height:\s*100%/.test(body)));
+  if (!stretched) continue;
+  covered += 1;
+  if (/pointer-events:\s*none/.test(body)) continue;
+  console.error(
+    `${selector} stretches across its whole container and does not set pointer-events: none, so it takes clicks meant for what is underneath`,
+  );
+  process.exit(1);
+}
+if (covered === 0) {
+  console.error("no full-bleed overlay found — the check stopped matching");
+  process.exit(1);
 }
 
 console.log(`tokens agree (${pairs.length} colours)`);
