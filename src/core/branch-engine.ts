@@ -39,6 +39,21 @@ const agent: Actor = {
 };
 
 /**
+ * The next free note number. Ids must be stable and unique for the lifetime
+ * of a record -- the note list keys on them and evidence merge dedupes on
+ * them -- so this reads the highest number already issued rather than
+ * counting how many notes are currently held.
+ */
+function nextNoteNumber(notes: DecisionNote[]): number {
+  return (
+    notes.reduce((highest, note) => {
+      const match = /^note-(\d+)$/.exec(note.id);
+      return match ? Math.max(highest, Number(match[1])) : highest;
+    }, 0) + 1
+  );
+}
+
+/**
  * Seed the room with an agent finding and a human constraint that are true of
  * the system actually loaded, rather than of one hardcoded fixture.
  */
@@ -57,7 +72,7 @@ function openingNotes(
   if (!built)
     return [
       {
-        id: "note-1",
+        id: "note-blank-opening-agent",
         workspaceId: "workspace-payment",
         branchId: "branch-baseline",
         actor: agent,
@@ -66,7 +81,7 @@ function openingNotes(
         timestamp,
       },
       {
-        id: "note-2",
+        id: "note-blank-opening-human",
         workspaceId: "workspace-payment",
         branchId: "branch-baseline",
         actor: human,
@@ -839,7 +854,14 @@ export function dispatch(
     )
       return commandFailure("INVALID_INPUT", "Unknown architecture component.");
     next.decisionNotes.push({
-      id: `note-${next.decisionNotes.length + 1}`,
+      // Not `length + 1`. This record can now shrink -- retiring the blank
+      // workspace's opening notes removes two -- and a count-derived id
+      // reissues one the moment a removal happens with notes already held.
+      // That is not reachable through today's commands, because retirement
+      // runs on the first component and real notes come after it; the id
+      // still comes from the highest ever issued so the invariant does not
+      // depend on that ordering holding.
+      id: `note-${nextNoteNumber(next.decisionNotes)}`,
       workspaceId: next.workspace.id,
       branchId: branch.id,
       entityId: command.input.entityId,

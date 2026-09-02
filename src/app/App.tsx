@@ -38,6 +38,7 @@ import { shouldRestore } from "./requested-system";
 import { loadSummary } from "./load-summary";
 import { reconcileMessage } from "./reconcile-message";
 import { mergeEvidence } from "@core/evidence-merge";
+import { visibleNotes } from "./opening-notes";
 import { scenarioNarrative } from "./scenario-copy";
 import { useModalDialog } from "./use-modal-dialog";
 import { syncExplanation, syncTone } from "./sync-status";
@@ -648,7 +649,7 @@ export function App() {
     }
     return undefined;
   };
-  const decisionNotes = state.decisionNotes ?? [];
+  const decisionNotes = visibleNotes(state.decisionNotes ?? [], graph);
   // Notes on this branch and on the baseline, newest first. The count and the
   // list are derived from the same filtered set: taking the count from an
   // already-sliced list would report the window size as the total, so a
@@ -2985,6 +2986,12 @@ export function App() {
               </span>
             </div>
             <div className="thread-notes">
+              {!activeNotes.length && (
+                <p className="thread-empty">
+                  Nothing recorded on this branch yet. Notes written here stay
+                  attached to the component they are about.
+                </p>
+              )}
               {activeNotes.map((note) => (
                 <article
                   className={`decision-note note-${note.actor.kind}`}
