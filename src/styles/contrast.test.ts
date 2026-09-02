@@ -1,11 +1,12 @@
-import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
+import { textTokens } from "./text-tokens";
 
-// A `?raw` import of CSS returns an empty string under this Vitest config —
-// the transform pipeline only handles the TypeScript sources — so the file is
-// read directly. Checked rather than assumed: the first version imported it
-// and every token silently "did not exist".
-const tokens = readFileSync(new URL("./tokens.css", import.meta.url), "utf8");
+// The colours are declared in TypeScript and consumed by the stylesheet,
+// rather than parsed back out of it. A `?raw` import of CSS returns an empty
+// string under this Vitest config — checked, not assumed: the first version
+// imported the stylesheet and every token silently "did not exist", so the
+// suite passed while measuring nothing.
+const tokens = textTokens;
 
 /**
  * Text contrast, measured rather than eyeballed.

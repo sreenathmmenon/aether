@@ -7,11 +7,12 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "start": "tsx server/index.ts",
-    "typecheck": "tsc -b --pretty false",
+    "typecheck": "tsc -b --pretty false && node scripts/check-tokens.mjs",
     "authorship:check": "node scripts/check-authorship.mjs",
     "test": "vitest run",
     "lint": "eslint .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "check:tokens": "node scripts/check-tokens.mjs"
   },
   "engines": {
     "node": ">=22.12.0"

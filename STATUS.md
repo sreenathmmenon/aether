@@ -2001,3 +2001,16 @@ was already underway again.
   - Evidence: measured on the deployed page — four headings, exactly one `h1`, no skipped levels. Eleven landmarks against four headings looked like a gap, so each region was checked individually: **every region without a heading carries a landmark name**, so the outline is fully reachable, just through landmarks rather than headings.
   - Deliberately not "fixed". Promoting the eyebrow labels to headings would change visual weight across the interface to add a redundant path to information already navigable, and the eyebrows are what the landmark names now point at — converting them would mean maintaining both.
   - What is pinned instead is the part that breaks both modes at once: a second `h1`, or a skipped level. Changing an `h2` to an `h4` now fails.
+
+## Milestone 150 — Twenty-five pieces of text just under the threshold
+
+- [x] **M150.1 — Measure contrast rather than trust the palette** `DONE`
+  - Acceptance: text meets AA contrast on the grounds it is drawn on.
+  - Evidence: twenty-five pieces of text on the deployed page measured between **3.87:1 and 4.49:1** against the page ground — every one just under the 4.5:1 threshold, which is why none of it looked obviously wrong. Fourteen were the shared `--muted` token; the rest were four status accents, with the cyan used for live evidence worst at 2.55:1.
+  - **The first measurement was wrong and is recorded as such.** It treated every background as opaque, so a badge with a 7%-alpha tint compared its text against its own colour and reported a ratio of 1.0 — an impossible number that would have meant invisible text. Compositing translucent layers the way a browser does produced the real figures, and the "28 failures" became 25 with plausible ratios.
+  - The accents are also used as fills, where a background need not meet text contrast, so darkening the shared tokens would have changed the interface to fix a problem only the text has. Each accent now has a text-only variant at the minimum darkening that reaches 4.5:1, and only `color:` declarations point at them.
+
+- [x] **M150.2 — A measurement the suite can keep making** `DONE`
+  - Evidence: the contrast test computes real WCAG ratios rather than asserting colour strings, so it fails on the property rather than the palette. Reverting `--muted` fails it; aliasing a text variant back to its fill fails two tests.
+  - Getting it to run took three attempts, each rejected for a reason worth keeping: a `?raw` import of CSS returns an **empty string** under this Vitest config, so the first version passed while measuring nothing. Reading the file with `node:fs` broke typecheck, and adding Node types to the app tsconfig would let Node APIs into the browser bundle unnoticed. Excluding the helper did not work either, because the test imports it transitively.
+  - Settled by declaring the palette in TypeScript and comparing it to the stylesheet in a gate script rather than a test. Drift in either direction now fails `npm run typecheck` by name and value.
