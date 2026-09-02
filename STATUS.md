@@ -2921,3 +2921,28 @@ Working only on the two categories the owner named, in loops, deciding direction
   - Fixed at the save layer: while a save is in flight the newest state waits, and one follow-up PUT sends it. Verified live — the same burst now holds at 4/9 for seven seconds, and repair → approve → commit completes with tools 13 → 8.
   - **Three earlier fixes for this were wrong and were reverted.** Guarding the React effect, and separately teaching `wouldDiscardWork` to count branch operations, both targeted the right symptom at the wrong layer; the operations guard then refused _legitimate_ writes and made the loss worse. Each was measured, judged on the measurement, and backed out. The cost was real: a long stretch of churn on a product that was working, when the asked-for work was visual craft.
   - **The lesson, eighth instance in a new shape:** a reading taken while my own probes were mutating the same branch is not evidence. Several "reverts" I chased were my own commits resetting the branch mid-loop. The only readings that meant anything were from a clean load, in one uninterrupted sequence, sampling continuously rather than at two points.
+
+## Milestone 233 — Council rounds on every screen
+
+Held at each point, scored, fixed, re-scored. Twelve rounds.
+
+- [x] **M233.1 — The first screen belongs to the product** `DONE`
+  - The decision strip spent 159px on three short facts — a 110px floor and 20/32px padding around two stacked lines each — and pushed the canvas to **641px on a 679px fold**. A reviewer met a _summary_ of the architecture before the architecture.
+  - Label beside value on one line; columns sized to their own sentence rather than equal thirds; spacing in one place instead of compounding with per-cell padding. **Band 159px → 62px, canvas 641px → 483px** — components, the failure and live evidence all on the first screen.
+  - Fixed on the way: a leftover `flex-direction: column` that dropped the middle fact a line below its neighbours, a 32px figure forcing its sentence onto two lines, and duplicate dividers between the same pair of facts.
+- [x] **M233.2 — The tool count, said once** `DONE`
+  - The header chip repeated the count the strip already sets large in the agent colour — the same fact twice, 420px apart. The chip reads "Agent connected"; the accessible name still carries the live count, because a screen reader has no strip to look at.
+- [x] **M233.3 — The token gate refuses an undefined custom property** `DONE`
+  - `padding: 0 var(--space-10)` left two of three cells with **no padding at all** — the scale runs 32 then 48, there is no `--space-10` — and nothing in the build said so. An undefined `var()` resolves to nothing and takes its whole declaration with it. The gate now names the token; verified by mutation, and taught to recognise locally scoped properties so a rule may still publish its own geometry.
+- [x] **M233.4 — An affordance hint stops covering evidence** `DONE`
+  - The drag hint was pinned to the canvas's bottom-right corner and floated over the causal chain, hiding "depends on Bengaluru Queue" and "97.11% availability · 7m recovery". Moving it up only relocated the collision onto two component cards: **a diagram has no reliably empty corner.** It sits on the canvas's own label row now, shortened to a chip because the full sentence wrapped the heading; the accessible name carries the whole instruction.
+- [x] **M233.5 — A clipped panel reads as continuing, not broken** `DONE`
+  - The evidence panel holds 2085px in 530px. It scrolls, but a trackpad draws no scrollbar, so the sentence cut at its edge looked like a defect. A bottom fade says the content runs on. **Two scroll-driven versions were tried and backed out** — `mask-image` does not interpolate between a gradient and `none`, and driving a registered length off a scroll timeline did not animate here either. The static fade is honest: there is almost always more evidence below.
+- [x] **M233.6 — The strip shrinks before it clips** `DONE`
+  - `max-content` never yields, so once the copy grew past arrival the three facts needed 1305px in a 1280px window and the third was cut mid-phrase. `fit-content` sizes to the sentence and yields in proportion to need.
+- [x] **M233.7 — The headline takes the width it has** `DONE`
+  - 20ch is a fine measure for "Mumbai is down." and too narrow for the committed sentence at 83 characters: four lines and 243px of hero inside a 719px column with 560px empty beside it. **28ch** — arrival 3 lines → 2, longest state 4 → 3.
+  - And "is committed to the architecture" said in nine words what four say; the strip's own label already names the architecture. It was the one sentence that could not fit 1280px on one line.
+- [x] **M233.8 — Each replay entry has a shape** `DONE`
+  - Measured: the actor sentence needs 166px and the evidence chip 229px, which with the marker and gaps **cannot share a 400px row**. Side by side one always wrapped — "ran a deterministic simulation" broke to three lines and the timestamp floated mid-row. The chip and its timestamp take their own line beneath the actor.
+- **Verified on the deployed origin, committed state: 0 contrast failures, 0 clipped text, 6 ramp steps, 3 weights, no horizontal scroll — and the full journey, arrival → repaired → approved → committed, with tools 13 → 8.**
