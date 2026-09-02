@@ -54,6 +54,7 @@ import {
   persistState,
   storageKey,
 } from "@core/persistence";
+import { gateHolds, humanOnlyCommands } from "./human-gate";
 import { paymentPlatformBaseline } from "../fixtures/payment-platform/baseline";
 import { aiPlatformBaseline } from "../fixtures/ai-platform/baseline";
 import { blankBaseline } from "../fixtures/blank/baseline";
@@ -3073,6 +3074,21 @@ export function App() {
                 ? "Resolve evidence before approval"
                 : "Human approve exact plan"}
             </button>
+          )}
+          {/* The entry's central claim was stated once, in a modal a reviewer
+              dismisses in the first seconds and never sees again — so at the
+              exact moment they are about to approve or commit, nothing on
+              screen said an agent cannot. This reads the tools actually
+              registered on the page rather than repeating a sentence: if a
+              future tool ever exposed a gate command, the page would stop
+              making the claim instead of making it falsely. */}
+          {gateHolds(registeredTools) && (
+            <p className="gate-claim">
+              <b>Yours alone.</b> None of the {toolCount} tools registered for
+              an agent on this page can approve, commit, or roll back —{" "}
+              {humanOnlyCommands.length} commands are refused to any actor that
+              is not human.
+            </p>
           )}
         </div>
       </section>

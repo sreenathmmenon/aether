@@ -1478,6 +1478,23 @@ button {
   opacity: 0.38;
   cursor: not-allowed;
 }
+/* The guarantee sits under the controls it is about, and reads as a quiet
+   fact rather than a warning: the green edge ties it to the approve action,
+   and the weight stays below the buttons so it never competes with them. */
+.gate-claim {
+  margin: 12px 0 0;
+  padding: 9px 12px;
+  border-left: 2px solid var(--green);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  background: rgb(47 211 155 / 0.07);
+  color: var(--muted);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+.gate-claim b {
+  color: var(--green-text);
+  font-weight: 650;
+}
 .review-actions .rollback-button {
   color: var(--coral-text);
   background: var(--raised);
