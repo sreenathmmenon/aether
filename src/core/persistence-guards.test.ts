@@ -130,4 +130,50 @@ describe("the persistence endpoints refuse before they act", () => {
       "if (!row) return context.json({ state: null });",
     );
   });
+
+  it("forwards the origin-trial token WebMCP activation depends on", () => {
+    // Without this header the API does not activate in public Chrome at all,
+    // and the submission asserts it is served. The token itself comes from
+    // the environment, so what is testable is the forwarding: mutation found
+    // the header could be suppressed entirely, or sent with a literal in
+    // place of the configured value, with nothing failing.
+    const middleware = serverSource.slice(
+      serverSource.indexOf('app.use("*"'),
+      serverSource.indexOf('app.get("/health"'),
+    );
+    expect(middleware).toContain(
+      'context.header("Origin-Trial", webMcpOriginTrialToken)',
+    );
+    // Sent only when configured, so a local run without the variable does
+    // not serve an empty header that Chrome would reject noisily.
+    expect(middleware).toContain("if (webMcpOriginTrialToken)");
+    // And the value is the environment variable, never a literal.
+    expect(
+      /webMcpOriginTrialToken\s*=\s*process\.env\.WEBMCP_ORIGIN_TRIAL_TOKEN/.test(
+        serverSource,
+      ),
+      "the token is not read from the environment",
+    ).toBe(true);
+    // The server decodes it at startup so a wrong origin or an expired token
+    // is visible in the logs rather than only as a silent absence in Chrome.
+    expect(serverSource).toContain("describeOriginTrialToken");
+  });
+
+  it("reports the persistence it actually has", () => {
+    // `/health` is what a reviewer checks to see whether decisions are
+    // durable. Mutation found it could be hardcoded to "postgres" while
+    // running on the in-memory fallback, which is the one thing this
+    // endpoint exists not to do.
+    const health = serverSource.slice(
+      serverSource.indexOf('app.get("/health"'),
+      serverSource.indexOf('app.get("/api/workspaces/:id"'),
+    );
+    expect(health, "the health handler moved").toContain("ensureStorage");
+    expect(health).toContain(
+      'persistence: persistent ? "postgres" : "local-fallback"',
+    );
+    // And a database that cannot be reached is degraded, not ok.
+    expect(health).toContain('"degraded"');
+    expect(health).toContain("503");
+  });
 });

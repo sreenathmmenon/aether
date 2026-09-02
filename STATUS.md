@@ -2083,3 +2083,12 @@ was already underway again.
   - The read handler was equally exposed: removing its workspace-id validation broke nothing, and it is the endpoint an unauthenticated visitor reaches first. It is now held to refusing before the query, not after it.
   - One assertion had to be tightened after it passed on the mutation it was written for: `state: null` appears twice in the read handler, so a substring check stayed green while the missing-row branch returned `{}` — which the client would load as a real workspace and open a blank page over the seeded system. Matching the whole return statement fixes it.
   - All five server mutations are now killed, and the four headers were confirmed exact on the deployed origin.
+
+## Milestone 158 — Activation and honesty on the server
+
+- [x] **M158.1 — The header WebMCP activation depends on** `DONE`
+  - Evidence: mutation found the `Origin-Trial` header could be suppressed entirely, or sent with a literal in place of the configured token, with nothing failing — and without it the API does not activate in public Chrome at all. The token comes from the environment, so what is testable is the forwarding: the header carries `webMcpOriginTrialToken`, that variable is read from `WEBMCP_ORIGIN_TRIAL_TOKEN`, it is sent only when configured so a local run does not serve an empty header, and the server decodes it at startup so a wrong origin or expired token shows in the logs rather than only as a silent absence in Chrome.
+
+- [x] **M158.2 — The endpoint that says whether decisions are durable** `DONE`
+  - Evidence: `/health` could be hardcoded to report `postgres` while running on the in-memory fallback — the one thing that endpoint exists not to do, since it is what a reviewer checks to see whether their decisions survive. It now has to derive the value from `ensureStorage`, and an unreachable database has to answer `degraded` with 503 rather than `ok`.
+  - Nine server mutations have now been applied across M157 and M158; every one is killed.
