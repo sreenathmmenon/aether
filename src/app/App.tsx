@@ -42,6 +42,7 @@ import { visibleNotes } from "./opening-notes";
 import { useOverflowFade } from "./use-overflow-fade";
 import { recentActivity } from "./recent-activity";
 import { looksLikeCompose, parseCompose } from "@core/compose-parser";
+import { describeProvenance, type Provenance } from "@core/evidence-source";
 import { reviewPlan, wasRefused, type StepResult } from "./resident-agent";
 import { scenarioNarrative } from "./scenario-copy";
 import { useModalDialog } from "./use-modal-dialog";
@@ -782,6 +783,28 @@ export function App() {
       setAgentRunning(false);
     }
   }
+  // What the evidence rests on. Cost is summed from figures the reviewer
+  // stated; availability, recovery and latency are derived from those by the
+  // deterministic engine -- reproducible, which the fingerprints prove, but
+  // not observed. Saying so is the difference between evidence and a number.
+  const evidenceOrigin = useMemo<string>(() => {
+    const measuredCount = entities.filter((entity) => {
+      const props = entity.properties as { peakRps?: number };
+      return (props.peakRps ?? 0) > 0;
+    }).length;
+    const provenance: Provenance =
+      measuredCount === 0
+        ? { kind: "unknown" }
+        : {
+            // Short, because this sits under a 20px figure in a 160px
+            // column: the four-line version crowded the panel it was
+            // meant to qualify. The component count is the part that
+            // matters -- it says how much of the system the figure rests on.
+            kind: "implied",
+            from: `${measuredCount} stated capacit${measuredCount === 1 ? "y" : "ies"}`,
+          };
+    return describeProvenance(provenance);
+  }, [entities]);
   const compareRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!latestCall) return;
@@ -2456,6 +2479,12 @@ export function App() {
           {/* An empty canvas has no measurements. Rendering 0.00% in red reads
               as a total outage rather than as an absence of data, which is a
               false claim on the first screen of the reviewer's own system. */}
+          {/* Where each figure came from, on the figure itself. A number that
+              cannot say its own origin is arithmetic dressed as evidence, and
+              a reviewer is right to distrust it -- this was the weakest thing
+              on the page. The distinction that matters to someone about to
+              approve: did we observe this, or derive it from what you told
+              us? The honesty note below said so in a tooltip nobody opens. */}
           <div className="metric-grid">
             <div>
               <span>Availability</span>
@@ -2471,24 +2500,36 @@ export function App() {
               >
                 {unbuilt ? "—" : `${evidence.availability.toFixed(2)}%`}
               </strong>
+              <em className="metric-origin">
+                {unbuilt ? "no basis yet" : evidenceOrigin}
+              </em>
             </div>
             <div>
               <span>Recovery</span>
               <strong className={unbuilt ? "metric-empty" : undefined}>
                 {unbuilt ? "—" : `${evidence.rtoMinutes}m`}
               </strong>
+              <em className="metric-origin">
+                {unbuilt ? "no basis yet" : evidenceOrigin}
+              </em>
             </div>
             <div>
               <span>Latency</span>
               <strong className={unbuilt ? "metric-empty" : undefined}>
                 {unbuilt ? "—" : `${evidence.latencyMs}ms`}
               </strong>
+              <em className="metric-origin">
+                {unbuilt ? "no basis yet" : evidenceOrigin}
+              </em>
             </div>
             <div>
               <span>Monthly cost</span>
               <strong className={unbuilt ? "metric-empty" : undefined}>
                 {unbuilt ? "—" : `$${evidence.monthlyCostUsd.toLocaleString()}`}
               </strong>
+              <em className="metric-origin">
+                {unbuilt ? "no basis yet" : "stated · your figures"}
+              </em>
             </div>
           </div>
           <div
