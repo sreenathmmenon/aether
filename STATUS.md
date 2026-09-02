@@ -2702,3 +2702,16 @@ was already underway again.
   - The server restart had to be waited on by _behaviour_ rather than by bundle hash, per M219.2.
 - [x] **M220.2 — No console errors, and the agent's write reaches the database** `DONE`
   - Evidence: with console capture armed before load, a full pass — page load, tool registration, branch creation — produced **no errors and no warnings**. An agent then called `run_failure_scenario`, and the network log shows the resulting **`PUT /api/workspaces/w-3ecf63…` → 200**: agent tool call, validated dispatch, durable save, in one chain against the live service.
+
+## Milestone 221 — Counting the gate honestly
+
+- [x] **M221.1 — The page claimed five absolute human-only commands; four are** `DONE`
+  - Acceptance: the human/agent boundary is described exactly, not rounded up.
+  - Evidence: `APPROVE_BRANCH`, `MERGE_BRANCH`, `ROLLBACK_MERGE` and `SET_COST_CEILING` refuse an agent outright. **`REMOVE_COMPONENT` does not** — an agent may remove a component it added by mistake, and the reducer stops it only when the removal would take the system below two components or when three or more dependencies rely on it. Counting it with the other four overstated the gate by one, on the page whose whole credibility rests on describing that boundary exactly.
+  - It is now named separately rather than dropped, because it is a real restriction, and the sentence says so: removing a component a system depends on needs a human too. The count comes from the list, so it corrected itself to four.
+  - The test could not tell the shapes apart — it scraped every command with an actor check. It now distinguishes a bare refusal from one inside a conditional block, and moving `REMOVE_COMPONENT` back into the absolute list fails. One subtlety recorded: `MERGE_BRANCH` is absolute despite an extra clause before its return, because that clause only _adds_ a requirement, so the test looks for the block rather than for an adjacent return.
+  - `docs/SUBMISSION.md` carried the same overstatement in the section specifically about making claims that survive checking. Corrected there too, and the guarding test — which had pinned the phrase, and therefore pinned the overclaim — now requires the distinction.
+  - Re-verified on the live surface that the strongest claim still holds exactly: of the 13 registered tools, **none** matches remove, delete, approve, merge, commit or rollback.
+- [x] **M221.2 — Half the screenshot checklist described a product that had changed** `DONE`
+  - Evidence: four of eight entries were stale and **nothing guarded the list**, which is why they drifted. It named twelve tools where thirteen register; quoted "1 scenario reports violations" after the gate reason began naming the blocker; described three futures as three availability figures after each card began leading with its own axis; and named a person the interface had stopped naming.
+  - Corrected against what was verified live, and now guarded: the new test derives each card headline from the engine rather than repeating it, so the checklist cannot quote a figure the interface no longer renders. Confirmed by mutating three entries — each fails.
