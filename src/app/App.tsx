@@ -56,6 +56,7 @@ import {
   storageKey,
 } from "@core/persistence";
 import { gateHolds } from "./human-gate";
+import { plainLanguage } from "./tool-plain-language";
 import { paymentPlatformBaseline } from "../fixtures/payment-platform/baseline";
 import { aiPlatformBaseline } from "../fixtures/ai-platform/baseline";
 import { blankBaseline } from "../fixtures/blank/baseline";
@@ -2838,6 +2839,11 @@ export function App() {
                     : offlineToolSurface
                   ).map((tool) => (
                     <li key={tool}>
+                      {/* The capability first, in words. The identifier stays
+                          beside it because this panel is read by a reviewer
+                          who wants to know what a machine may do and by an
+                          engineer who wants to know which tool does it. */}
+                      <span>{plainLanguage(tool)}</span>
                       <code>{tool}</code>
                     </li>
                   ))}

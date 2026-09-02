@@ -2350,6 +2350,22 @@ button {
   font-family: "SFMono-Regular", Consolas, monospace;
   font-size: 12px;
 }
+.tool-inventory li {
+  display: grid;
+  gap: 2px;
+}
+.tool-inventory li span {
+  color: var(--ink);
+  font-size: var(--text-sm);
+}
+.tool-inventory li code {
+  /* --ink-subtle clears 4.5:1 on the ivory surfaces it was calibrated
+     against, and this panel sits on a tinted ground where it lands at
+     4.48 -- close enough to look fine and still a failure. The muted step
+     is the correct one here. */
+  color: var(--ink-muted);
+  font-size: var(--text-xs);
+}
 .tool-gate {
   margin: 8px 0 0;
   padding-top: 8px;
