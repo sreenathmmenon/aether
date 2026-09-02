@@ -2715,3 +2715,14 @@ was already underway again.
 - [x] **M221.2 — Half the screenshot checklist described a product that had changed** `DONE`
   - Evidence: four of eight entries were stale and **nothing guarded the list**, which is why they drifted. It named twelve tools where thirteen register; quoted "1 scenario reports violations" after the gate reason began naming the blocker; described three futures as three availability figures after each card began leading with its own axis; and named a person the interface had stopped naming.
   - Corrected against what was verified live, and now guarded: the new test derives each card headline from the engine rather than repeating it, so the checklist cannot quote a figure the interface no longer renders. Confirmed by mutating three entries — each fails.
+
+## Milestone 222 — The same blocker, described two ways
+
+- [x] **M222.1 — The recommendation counted what the interface names** `DONE`
+  - Acceptance: one blocker is described the same way on every surface.
+  - Evidence: found by calling `recommend_architecture_future` on the deployed origin right after verifying the corrected gate claim. Its `nextAction` read **"1 scenario reports violations"** — the counting phrasing the interface had already moved away from (M205). One blocker was being described two different ways on two surfaces, and the agent was given the less useful of them, on the tool whose entire job is to say something worth acting on.
+  - The standing already held the blocking scenarios as an array and reduced them to a length, exactly as the interface used to. It now names them, with scenario keys read as words rather than identifiers. Reverting to a count fails.
+  - The interface keeps its own richer per-architecture labels, because those derive from the graph on screen and the recommendation runs without one. That is a deliberate difference, not a second copy of the same string.
+  - **Third instance of one pattern** — a count standing in for the thing it counts (M205 on the gate reason, M212/M213 on refusals, this one). Swept the rest of the agent-facing surface: the only other count is "N items rejected" in the human tool feed, where a summary is right because the full per-item detail is in the result the agent receives, and "Built N components", which is a genuine quantity rather than a stand-in.
+- [x] **M222.2 — The corrected gate claim, live** `DONE`
+  - Evidence: the deployed page now reads **"None of the 13 tools registered for an agent on this page can approve, commit, or roll back — 4 commands are refused to any actor that is not human, and removing a component a system depends on needs you too."**
