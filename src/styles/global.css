@@ -1649,15 +1649,23 @@ button {
 /* The most consequential control in the product. When the evidence is clean
    this is the one thing on screen that should look alive — it was a grey
    block indistinguishable from the buttons around it. */
+/* The single most important control on the page measured 1.10:1 at the
+   moment it becomes enabled: light ink on the vivid --verified fill, which
+   is 3.61:1 even at best. The deeper --verified-text value carries white at
+   5.67:1 and is already a role in the system, so the primary action is
+   solid and readable rather than a gradient between two identical stops --
+   which is what an earlier bulk edit had flattened it into. */
 .review-actions .approve-button:not(:disabled) {
   border-color: transparent;
-  background: linear-gradient(180deg, var(--verified), var(--verified));
-  color: var(--surface-sunken);
+  background: var(--verified-text);
+  color: var(--surface-raised);
   box-shadow: var(--lift-2);
 }
 .review-actions .approve-button:not(:disabled):hover {
   transform: translateY(-1px);
-  box-shadow: var(--lift-2), var(--lift-2);
+  background: var(--verified);
+  color: var(--structure);
+  box-shadow: var(--lift-3);
 }
 .review-actions .approve-button:disabled {
   opacity: 0.38;

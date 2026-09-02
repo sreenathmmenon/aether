@@ -196,6 +196,34 @@ if (offences.length) {
 }
 
 /**
+ * A vivid fill under light text.
+ *
+ * This exact collision has now been found and fixed five separate times: the
+ * node kind labels, a numbered chip, four impact badges, the +8 badge that
+ * announces the agent gaining reach, and the approve button -- the single
+ * most important control on the page, at 1.10:1 the moment it becomes
+ * enabled. Each was found by rendering a state and measuring it, which means
+ * the next one hides in whichever state nobody rendered.
+ *
+ * The rule is simple enough to check: --verified and --agent are mid-tone
+ * fills. Light text on either fails AA. They carry dark text, or the deeper
+ * `-text` value carries light text. --human and --failure are dark enough
+ * for light text and are not flagged.
+ */
+const lightInk =
+  /color:\s*var\(--(?:surface(?:-raised|-sunken)?|structure-ink)\)/;
+const midFill =
+  /background(?:-color)?:\s*(?:linear-gradient\([^;]*)?var\(--(?:verified|agent|branch)\)/;
+for (const block of global.split(/(?<=\})\s*/)) {
+  if (!midFill.test(block) || !lightInk.test(block)) continue;
+  const selector = block.split("{")[0].trim().slice(0, 60);
+  console.error(
+    `${selector} puts light text on a mid-tone fill, which cannot reach 4.5:1. Use the deeper --*-text value as the ground, or dark ink on the fill.`,
+  );
+  process.exit(1);
+}
+
+/**
  * The stage has to actually respond, and it has to remain perceivable
  * without motion. Checked here because the classes live in the stylesheet,
  * which a `?raw` import returns empty for in the test environment.
