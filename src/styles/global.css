@@ -1205,6 +1205,10 @@ button {
 .causal-timeline .trace-active small {
   color: var(--failure-text);
 }
+.causal-timeline .trace-active i {
+  background: var(--failure);
+  box-shadow: 0 0 0 3px rgb(217 61 66 / 0.25);
+}
 .causal-timeline i {
   margin-top: 4px;
   flex: none;
@@ -1216,8 +1220,12 @@ button {
   background: var(--border);
 }
 .causal-timeline .trace-active {
+  /* The step the trace is on. This strip sits on the midnight stage, so the
+     canvas scope already resolves --ink to the bright value; the dot picks
+     up the failure colour so the eye can follow propagation without reading
+     the words. */
   color: var(--ink);
-  font-weight: 650;
+  font-weight: var(--weight-bold);
   transform: translateY(-2px);
 }
 .causal-timeline .trace-active i {
