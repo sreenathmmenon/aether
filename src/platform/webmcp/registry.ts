@@ -28,6 +28,18 @@ const agent: Actor = {
 export type ToolRegistry = {
   refresh: (state: AetherState) => Promise<void>;
   dispose: () => void;
+  /**
+   * The registered surface, callable from this page.
+   *
+   * A reviewer opening this product without a WebMCP client saw a static
+   * interface: the whole premise is what an agent may do here, and the proof
+   * of it depended on them having brought an agent. These are the same tool
+   * objects registered with `document.modelContext` -- same schemas, same
+   * guards, same observed wrapper feeding the activity strip -- so an
+   * in-page agent and an external one are indistinguishable to the product.
+   */
+  surface: () => { name: string; description: string; schema: unknown }[];
+  call: (name: string, input: Record<string, unknown>) => Promise<string>;
 };
 
 /** A single agent tool invocation, surfaced live in the interface. */
@@ -273,6 +285,7 @@ export function createAetherToolRegistry(
   const webmcp = context;
   let registrations: Registration[] = [];
   let registeredNames: string[] = [];
+  const registeredTools = new Map<string, WebMcpTool>();
   let currentState: AetherState | undefined;
   let registeredCapabilityKey = "";
 
@@ -394,6 +407,8 @@ export function createAetherToolRegistry(
     await webmcp.registerTool(observed, { signal: controller.signal });
     registrations.push({ abort: () => controller.abort() });
     registeredNames.push(tool.name);
+    // The same object the browser holds, kept so this page can drive it too.
+    registeredTools.set(tool.name, observed);
   }
 
   async function refreshSurface(state: AetherState) {
@@ -424,6 +439,7 @@ export function createAetherToolRegistry(
       registrations.forEach((registration) => registration.abort());
       registrations = [];
       registeredNames = [];
+      registeredTools.clear();
       // Deliberately not reported. Teardown and re-registration are one
       // operation from outside, and announcing the gap between them made a
       // live region say "0 tools registered" before "12" — an emptiness the
@@ -1491,9 +1507,30 @@ export function createAetherToolRegistry(
 
   return {
     refresh: refreshSurface,
+    surface: () =>
+      [...registeredTools.values()].map((tool) => ({
+        name: tool.name,
+        description: tool.description ?? "",
+        schema: tool.inputSchema,
+      })),
+    async call(name, input) {
+      const tool = registeredTools.get(name);
+      // The same refusal an external agent gets for a tool that is not on
+      // the surface right now -- which, on this product, is the point.
+      if (!tool)
+        return JSON.stringify({
+          error: "NOT_AVAILABLE",
+          problems: [`${name} is not registered in this state.`],
+          nextAction: `Available now: ${registeredNames.join(", ")}.`,
+        });
+      return String(
+        await tool.execute(input, {} as WebMCP.ToolExecuteCallbackOptions),
+      );
+    },
     dispose() {
       registrations.forEach((registration) => registration.abort());
       registrations = [];
+      registeredTools.clear();
     },
   };
 }

@@ -41,6 +41,7 @@ import { mergeEvidence } from "@core/evidence-merge";
 import { visibleNotes } from "./opening-notes";
 import { useOverflowFade } from "./use-overflow-fade";
 import { recentActivity } from "./recent-activity";
+import { reviewPlan, wasRefused, type StepResult } from "./resident-agent";
 import { scenarioNarrative } from "./scenario-copy";
 import { useModalDialog } from "./use-modal-dialog";
 import { syncExplanation, syncTone } from "./sync-status";
@@ -744,6 +745,42 @@ export function App() {
       ),
     [state.audit],
   );
+  // An agent that lives on the page. The product's claim is what an agent
+  // may and may not do here, and proving it required the reviewer to arrive
+  // with a WebMCP client -- most will not, and they saw a static interface.
+  const [agentRunning, setAgentRunning] = useState(false);
+  const [agentSaid, setAgentSaid] = useState("");
+  const [agentTrace, setAgentTrace] = useState<StepResult[]>([]);
+  async function runResidentAgent() {
+    const registry = registryRef.current;
+    if (!registry || agentRunning) return;
+    setAgentRunning(true);
+    setAgentSaid("");
+    setAgentTrace([]);
+    const trace: StepResult[] = [];
+    try {
+      for (const step of reviewPlan("branch-highest_resilience")) {
+        setAgentSaid(step.say);
+        if (step.tool) {
+          const result = await registry.call(step.tool, step.input ?? {});
+          const entry = { step, result, refused: wasRefused(result) };
+          trace.push(entry);
+          setAgentTrace([...trace]);
+        }
+        await new Promise((resolve) => setTimeout(resolve, step.settle ?? 800));
+      }
+      // The conclusion is the demonstration. It goes to the shared activity
+      // strip, which is where this product reports what just happened -- the
+      // header is a fixed row and a sentence that long squeezed every other
+      // control in it onto two lines.
+      setAgentSaid("");
+      refuse(
+        "Approval refused: the agent has no approve tool. That decision is yours.",
+      );
+    } finally {
+      setAgentRunning(false);
+    }
+  }
   const compareRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!latestCall) return;
@@ -1528,6 +1565,20 @@ export function App() {
           {ownSystem ? "Your system" : "Before it ships"}
         </div>
         <div className="header-status">
+          {/* A reviewer without a WebMCP client saw a static page and had to
+              take this product's central claim on trust. This drives the
+              registered surface itself -- same tools, same guards -- so the
+              claim demonstrates itself in front of them. */}
+          <button
+            className="run-agent"
+            onClick={runResidentAgent}
+            disabled={agentRunning || !webMcp.available}
+          >
+            {agentRunning || agentSaid
+              ? agentSaid || "Working…"
+              : "Watch an agent work"}
+            {!agentRunning && agentSaid && <i aria-hidden="true"> · again</i>}
+          </button>
           {/* The agent surface is this product's whole premise, so the opening
               viewport has to show it rather than leaving it a screen down. The
               count is the live registration count, and the most recent call
