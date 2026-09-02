@@ -236,6 +236,34 @@ for (const area of declaredAreas) {
     process.exit(1);
   }
 }
+// Counting names was not enough: two children can claim the same area, so
+// dropping one child's declaration still left every name matched while that
+// child fell back to auto-placement. Each of the dock's children needs its
+// own, which is what actually prevents the silent wrap.
+for (const child of [
+  ".review-head",
+  ".diff-list",
+  ".replay-earlier",
+  ".review-actions",
+]) {
+  // Every base rule for this selector, not one of them: `.diff-list` is
+  // declared twice (a scrolling list elsewhere, and the dock's column) and
+  // `.review-actions` has descendant rules that a loose match mistook for
+  // the base. The area may be declared in any of the base rules.
+  const rules = [
+    ...global.matchAll(new RegExp(`^\\${child} \\{[^}]*\\}`, "gm")),
+  ].map((match) => match[0]);
+  if (rules.length === 0) {
+    console.error(`${child} has no rule to check.`);
+    process.exit(1);
+  }
+  if (!rules.some((rule) => rule.includes("grid-area:"))) {
+    console.error(
+      `${child} sits in .review-dock and declares no grid-area, so it is auto-placed and can wrap into the wrong column silently.`,
+    );
+    process.exit(1);
+  }
+}
 
 /**
  * A vivid fill under light text.

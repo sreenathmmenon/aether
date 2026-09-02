@@ -1,0 +1,41 @@
+#!/bin/sh
+# Refuse a commit that leaves the design system or the types broken.
+#
+# The gate only helps if it runs after the last edit. A splice produced
+# `display: flex;f;` -- broken CSS that prettier reported as correctly
+# formatted -- and the same edit silently dropped a `grid-area`, which the
+# token gate would have caught had it been run again. It had been run before
+# that edit and not after, so the layout shipped half-applied for several
+# rounds.
+#
+# This runs the checks that are fast enough not to be worth bypassing:
+# formatting, types, and the design system. Tests and build stay in
+# `npm run gate`, which is still the full check.
+set -e
+
+if ! npx prettier --check . >/dev/null 2>&1; then
+  echo ""
+  echo "  Commit refused: formatting."
+  echo "  Run: npx prettier --write ."
+  echo ""
+  exit 1
+fi
+
+if ! npx tsc -b --pretty false >/dev/null 2>&1; then
+  echo ""
+  echo "  Commit refused: typecheck."
+  npx tsc -b --pretty false 2>&1 | head -5
+  echo ""
+  exit 1
+fi
+
+# The design system, and the structural guards that live with it: token
+# roles, the 4px grid, the type ramp, contrast pairings, grid areas, the
+# shipped fonts.
+if ! node scripts/check-tokens.mjs >/dev/null 2>&1; then
+  echo ""
+  echo "  Commit refused: the design system."
+  node scripts/check-tokens.mjs 2>&1 | head -6
+  echo ""
+  exit 1
+fi

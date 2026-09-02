@@ -64,6 +64,26 @@ for (const trailer of [
       `${hookPath} no longer refuses "${trailer}", which AGENTS.md prohibits.`,
     );
 }
+/**
+ * The pre-commit hook, for the same reason the commit-msg hook is checked:
+ * a splice produced broken CSS that prettier accepted on --write, and the
+ * same edit silently dropped a grid-area the token gate would have caught.
+ * The gate had been run before that edit and not after. A check that has to
+ * be remembered after the last edit is not a check.
+ */
+const preCommit = ".githooks/pre-commit";
+if (!existsSync(preCommit)) {
+  throw new Error(
+    `${preCommit} is missing; nothing runs the design system check after the last edit.`,
+  );
+}
+const preCommitBody = readFileSync(preCommit, "utf8");
+for (const check of ["prettier --check", "tsc -b", "check-tokens.mjs"])
+  if (!preCommitBody.includes(check))
+    throw new Error(
+      `${preCommit} no longer runs "${check}", so that class of defect can reach a commit again.`,
+    );
+
 const configured = git("config", "--get", "core.hooksPath");
 if (configured !== ".githooks") {
   throw new Error(
