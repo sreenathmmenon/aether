@@ -216,8 +216,11 @@ function rejected(
    */
   writableBranches?: readonly string[],
 ) {
+  const namesABranch =
+    failure.message === "This branch cannot be changed." ||
+    failure.message === "Unknown architecture branch.";
   const branchHint =
-    failure.message === "This branch cannot be changed." && writableBranches
+    namesABranch && writableBranches
       ? writableBranches.length
         ? `Use one of: ${writableBranches.join(", ")}.`
         : "No branch is writable now. Create one with create_architecture_branch."

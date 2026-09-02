@@ -93,6 +93,23 @@ describe("Aether WebMCP registry", () => {
     // a summary rather than handing it the answer.
     expect(refusal.nextAction).not.toContain("get_architecture_summary");
 
+    // "Unknown architecture branch." is a different refusal, raised by
+    // RUN_SCENARIO and ADD_DECISION_NOTE rather than by SET_PROPERTY, and it
+    // is the same dead end: an agent working from a stale or invented ID
+    // needs the real ones, not a restatement that its guess was wrong.
+    const unknown = JSON.parse(
+      String(
+        await [...live]
+          .find((tool) => tool.name === "run_failure_scenario")
+          ?.execute({
+            branchId: "branch-does-not-exist",
+            scenario: "regional_outage",
+          }),
+      ),
+    ) as { problems: string[]; nextAction: string };
+    expect(unknown.problems).toContain("Unknown architecture branch.");
+    expect(unknown.nextAction).toContain("branch-highest_resilience");
+
     registry?.dispose();
   });
 
