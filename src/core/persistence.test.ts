@@ -1,7 +1,16 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createInitialState } from "./branch-engine";
 import { paymentPlatformBaseline } from "../fixtures/payment-platform/baseline";
+import {
+  clearPersistedState,
+  loadPersistedState,
+  persistState,
+  storageKey,
+} from "./persistence";
 import { parsePersistedState } from "./persistence";
+
+// The storage stub must not leak into the tests after it.
+afterEach(() => vi.unstubAllGlobals());
 import { simulationEngineVersion } from "@simulation/engine";
 
 describe("workspace persistence shape", () => {
@@ -134,5 +143,40 @@ describe("workspace persistence shape", () => {
     expect(parsed).toBeDefined();
     expect(Object.keys(parsed!.simulations)).toContain("branch-baseline");
     expect(parsed!.simulations["branch-baseline"]).toHaveLength(0);
+  });
+
+  it("round-trips a workspace through browser storage and clears it", () => {
+    // Mutation testing found both halves untested: renaming the storage key
+    // and making `clearPersistedState` a no-op each broke nothing. The clear
+    // is what `loadTemplate` calls when a person deliberately switches
+    // systems — a broken one leaves the previous system's work behind, which
+    // is the failure the ?system= restore rule is careful to permit only
+    // when the stored work belongs to the requested system.
+    const store = new Map<string, string>();
+    vi.stubGlobal("window", {
+      localStorage: {
+        getItem: (key: string) => store.get(key) ?? null,
+        setItem: (key: string, value: string) => store.set(key, value),
+        removeItem: (key: string) => store.delete(key),
+      },
+    });
+
+    const state = createInitialState(paymentPlatformBaseline);
+    persistState(state);
+    // Written under the key the loader reads, not merely written somewhere.
+    expect([...store.keys()], "persisted under an unexpected key").toEqual([
+      storageKey,
+    ]);
+    // And the key itself is pinned. Deriving the expectation from the same
+    // constant made this self-exempting — renaming it kept the test green
+    // while every existing visitor silently lost their workspace, because a
+    // reader looking under a new key finds nothing. Changing it is a
+    // migration, not an edit, so it has to fail here first.
+    expect(storageKey).toBe("aether.workspace.payment.v1");
+    expect(loadPersistedState()?.workspace.id).toBe(state.workspace.id);
+
+    clearPersistedState();
+    expect(store.size, "the workspace survived a clear").toBe(0);
+    expect(loadPersistedState()).toBeUndefined();
   });
 });

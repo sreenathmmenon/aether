@@ -2043,3 +2043,14 @@ was already underway again.
   - A first attempt covered only `add_entity` and left three still mutable, which the re-run caught. The test now exercises all four operations and asserts every label is one the interface has a style for — an unrecognised value would render as an unstyled word beside a decision.
   - Verified against the deployed origin: creating a repair future and adding a component renders labels reading `resilience`, `cost` and `capacity` in the review dock, every one carrying a matching styled class.
   - The field names had to be read rather than guessed: a dependency change reads as `routes to Bengaluru Queue`, built from the relationship kind, not a fixed word like "dependency". The first version asserted the guess and failed for that reason.
+
+## Milestone 154 — Browser storage, round-tripped
+
+- [x] **M154.1 — Two untested halves of persistence** `DONE`
+  - Acceptance: a workspace survives a round trip through browser storage and is genuinely removed when cleared.
+  - Evidence: mutation testing found both halves untested — renaming the storage key and making `clearPersistedState` a no-op each broke nothing. The clear is what `loadTemplate` calls when a person deliberately switches systems, so a broken one leaves the previous system's work behind, which is the exact failure the `?system=` restore rule is careful to permit only when the stored work belongs to the requested system.
+  - A test now writes, reads back, clears and confirms the store is empty, using a stubbed `localStorage` that is unstubbed afterwards so it cannot leak.
+
+- [x] **M154.2 — The key check that exempted itself** `DONE`
+  - Evidence: the first version asserted the workspace was written under `storageKey` — derived from the same constant it was checking, so renaming the key kept the test green. That is the self-exempting shape for the fourth time this session, and worth naming again: **an assertion derived from the value under test cannot detect a change to it.**
+  - The key is now pinned to its literal. Changing it is a migration rather than an edit — every existing visitor silently loses their workspace, because a reader looking under a new key finds nothing — so it has to fail here first and be changed deliberately.
