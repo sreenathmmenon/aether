@@ -2694,3 +2694,11 @@ was already underway again.
   - Ordering is the behaviour, so the test pins it — after the real routes, before the shell. Placed above the handlers it would 404 every endpoint that exists. Removing the terminator fails two tests.
 - [x] **M219.2 — A hole in how deploys were verified** `DONE`
   - Evidence: each deploy this session waited for the new client bundle hash to appear on the origin. For a **server-only** change the hash never changes, so the wait returns immediately against the _old_ build and the verification that follows tests the previous deployment. Caught when the API 404 appeared not to have shipped. Server changes now wait on the behaviour itself. Checked the last thirty commits: this is the only one that touched `server/`, so no earlier verification was affected.
+
+## Milestone 220 — The API terminator, and the app around it, verified live
+
+- [x] **M220.1 — Unknown API paths answer 404 in JSON on the deployed origin** `DONE`
+  - Evidence: `/api/workspace/x`, `/api/nonexistent` and `/api/workspaces` all return **404 `{"error":"NOT_FOUND","problems":["No such endpoint."]}`** — the same `{error, problems}` shape the tools use, so a client does not have to sniff the content type to tell a failure from a page. Every real route is unaffected: `/api/workspaces/:id` 200, `/health` 200, `/llms.txt` 200, and the SPA still serves `text/html` at `/?system=blank`.
+  - The server restart had to be waited on by _behaviour_ rather than by bundle hash, per M219.2.
+- [x] **M220.2 — No console errors, and the agent's write reaches the database** `DONE`
+  - Evidence: with console capture armed before load, a full pass — page load, tool registration, branch creation — produced **no errors and no warnings**. An agent then called `run_failure_scenario`, and the network log shows the resulting **`PUT /api/workspaces/w-3ecf63…` → 200**: agent tool call, validated dispatch, durable save, in one chain against the live service.
