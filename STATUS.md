@@ -2214,3 +2214,11 @@ was already underway again.
   - Evidence: the README said **"Two worked systems ship"** while the Devpost description said three. Three is correct — payment platform, ride-hailing dispatch, and AI inference, all four templates confirmed in the interface and all three walked live this session. The README, which is the first thing anyone landing on the repository reads, was underselling the product by a third.
   - The count is now derived from the templates the interface actually registers, and both documents are held to it. Reverting the README to "Two" fails.
   - This is the fourth documented figure this session found to contradict the product — after the 1,500-character budget, the stale "nine tools", and the shot plan that could not be recorded. Each was checkable from the repository and none was checked until it was.
+
+## Milestone 172 — Closing the documented-figure class
+
+- [x] **M172.1 — Sweep every countable claim rather than find a fifth by accident** `DONE`
+  - Acceptance: no figure in the submission materials can contradict the product.
+  - Evidence: four documented figures this session turned out to be wrong — the 1,500-character output budget, a stale "nine tools", a shot plan whose central instruction was impossible, and a README undercounting the shipped systems by a third. Each was checkable from the repository, and each was found by accident rather than by looking.
+  - Every remaining countable claim across `README.md` and `docs/` was enumerated and checked. The tool counts were already guarded by the registry drift test; the shipped-system count was closed in M171. The two left — four scenarios and five components — are correct, and are now derived from the engine's scenario set and the seeded fixture rather than restated.
+  - Miscounting components in the script now fails. The class is closed: figures in the film's script, the README, and the submission are all held to what the product reports.

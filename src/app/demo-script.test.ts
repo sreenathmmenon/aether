@@ -3,6 +3,8 @@ import demo from "../../docs/DEMO.md?raw";
 import submission from "../../docs/SUBMISSION.md?raw";
 import appSource from "./App.tsx?raw";
 import readme from "../../README.md?raw";
+import engineSource from "@simulation/engine?raw";
+import baselineSource from "../fixtures/payment-platform/baseline.ts?raw";
 import { createInitialState, dispatch } from "@core/branch-engine";
 import { paymentPlatformBaseline } from "../fixtures/payment-platform/baseline";
 import { deriveGraph } from "@core/branch-engine";
@@ -243,5 +245,30 @@ describe("the demo script quotes what the product reports", () => {
         `${name} miscounts the shipped systems; there are ${seeded.length}`,
       ).toContain(correct!);
     }
+  });
+
+  it("counts scenarios and components the way the product does", () => {
+    // Four documented figures this session contradicted the product — a
+    // character budget, a tool count, a shot plan, and the number of shipped
+    // systems — each checkable from the repository and none checked until it
+    // was. These are the remaining countable claims in the film's script.
+    const scenarios = new Set(
+      [
+        ...engineSource.matchAll(
+          /"(regional_outage|traffic_spike|database_failure|dependency_failure)"/g,
+        ),
+      ].map((match) => match[1]!),
+    );
+    expect(scenarios.size, "the scenario set changed").toBe(4);
+    expect(demo.replace(/\s+/g, " ")).toContain("four scenarios");
+
+    const components = [
+      ...baselineSource.matchAll(/kind: "(service|database|queue|gateway)"/g),
+    ].length;
+    expect(components, "the seeded architecture changed size").toBe(5);
+    // The gate reason the script quotes states this count twice.
+    expect(demo.replace(/\s+/g, " ")).toContain(
+      `${components} of ${components} components simulated`,
+    );
   });
 });
