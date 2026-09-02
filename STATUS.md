@@ -2135,4 +2135,5 @@ was already underway again.
   - Evidence: `writableBranchIds()` appears in six tool schemas, and each is a separate opportunity to drift. M145 covered the discarded case for one of them. Mutation found the other five could be replaced with every branch in the workspace — offering an agent a **merged** branch, a committed architecture, as somewhere to write.
   - The reducer would refuse those writes, so this is advertising rather than damage — but it is the state-aware claim inverted: the surface would say an agent may edit a decision that has already been made.
   - The test approves and merges a repair, creates a second future so write tools stay registered and the enums exist to be checked, then requires no `branchId` enum anywhere to contain the merged branch. All six mutations are now killed.
+  - Verified against the deployed origin through a real approval and commit: with one future merged and another open, all six write tools offer only `branch-lowest_cost`. The committed architecture appears in no `branchId` enum anywhere on the live surface.
   - Also killed in the same sweep: leaving note bodies untrimmed in tool results.
