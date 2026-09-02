@@ -2063,3 +2063,14 @@ was already underway again.
   - Two survived: `replayWindow` and `noteWindow` could be raised to forty with every assertion in `replay-window.test.ts` staying green, because each one derives its expectation from the window it is testing. A window of forty is not a window — the disclosure it exists to trigger becomes unreachable, and the audit list a reviewer reads becomes unbounded.
   - All four window sizes are now pinned to their literals, with an upper bound so none can be widened into uselessness. Widening `replayWindow` fails.
   - The workspace size cap was checked too and is genuinely covered — an earlier probe had used the wrong literal and reported it as skipped, which is why it was re-run rather than assumed.
+
+## Milestone 156 — Final end-to-end verification
+
+- [x] **M156.1 — The whole journey, on the deployed product** `DONE`
+  - Evidence, measured on a cleared browser against the live origin after this session's changes:
+  - Onboarding dialog present on first load; five state-aware tools registered.
+  - Creating a repair future through WebMCP grows the surface to **twelve**.
+  - Two runs of the same scenario return byte-identical results at `aether-sim-5`.
+  - Approval becomes eligible reading `Evidence is current and clean · First run on this future · 5 of 5 components simulated`.
+  - **Zero** registered tools match approve, merge, rollback or remove, in any state.
+  - Repository: 270 tests across 34 files, clean typecheck, lint, format and build. Live on Railway with Postgres persistence, a valid Chrome origin-trial token, and COOP/COEP/`Permissions-Policy: tools=(self)` all serving.
