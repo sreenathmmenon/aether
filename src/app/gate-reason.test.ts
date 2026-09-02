@@ -1,3 +1,4 @@
+import appSource from "./App.tsx?raw";
 import { describe, expect, it } from "vitest";
 import { gateReason } from "./gate-reason";
 
@@ -108,5 +109,20 @@ describe("why approval is or is not available", () => {
     ).toBe(
       "1 scenario reports violations. Resolve them to make approval eligible.",
     );
+  });
+
+  it("does not tell a reviewer to fetch evidence they already have", () => {
+    // The status strip said "Waiting on — Evidence" whenever approval was
+    // ineligible. Once a scenario has reported violations the evidence has
+    // arrived and said no: what is missing is a repair, not a measurement.
+    const strip = appSource.slice(
+      appSource.indexOf('className="brief-waiting"'),
+    );
+    const block = strip.slice(0, 900);
+    expect(block).toContain("blockingRuns.length");
+    expect(block).toContain('"A fix for the violations"');
+    // And the original wording survives for the case it was always right
+    // for: no run has been recorded against this version yet.
+    expect(block).toContain('"Evidence"');
   });
 });

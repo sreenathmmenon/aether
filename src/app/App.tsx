@@ -1602,13 +1602,20 @@ export function App() {
         <div className="brief-waiting">
           <span className="brief-label">Waiting on</span>
           <strong>
+            {/* "Evidence" was right only while none had been run. Once a
+                scenario has reported violations the evidence has arrived and
+                said no, and the reviewer is waiting on a repair, not on a
+                measurement — so the strip told them to go and get something
+                they already had. */}
             {unbuilt
               ? "You, or an agent"
               : branchCount === 0
                 ? "A repair future"
                 : approvalEligible
                   ? `The ${reviewerName.toLowerCase()}`
-                  : "Evidence"}
+                  : blockingRuns.length
+                    ? "A fix for the violations"
+                    : "Evidence"}
           </strong>
         </div>
       </section>
