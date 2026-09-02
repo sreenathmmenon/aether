@@ -399,6 +399,61 @@ describe("the demo script quotes what the product reports", () => {
     }
   });
 
+  it("keeps the screenshot checklist describing the screens that exist", () => {
+    // Nothing guarded this list, which is why four of its entries drifted:
+    // it still named twelve tools, quoted a gate reason that no longer
+    // counts scenarios, described three cards that now each lead with a
+    // different axis, and named a person the interface stopped naming.
+    const flat = submission.replace(/\s+/g, " ");
+    const checklist = flat.slice(
+      flat.indexOf("Screenshot checklist"),
+      flat.indexOf("What we learned"),
+    );
+    expect(checklist.length).toBeGreaterThan(200);
+
+    // The surface sizes it quotes are held to the registry by the same test
+    // that holds every other document; what this adds is that the checklist
+    // cannot quote a figure the interface no longer renders.
+    expect(
+      checklist,
+      "the checklist names a person the interface does not",
+    ).not.toMatch(/Sreenath/);
+    expect(
+      checklist,
+      "the gate reason counts scenarios again instead of naming one",
+    ).not.toContain("1 scenario reports violations");
+
+    // Each card's headline comes from futureHeadline, so the checklist has
+    // to quote what that function returns rather than three availabilities.
+    let state = createInitialState(paymentPlatformBaseline);
+    for (const intent of [
+      "lowest_cost",
+      "fastest_recovery",
+      "highest_resilience",
+    ] as const) {
+      const created = dispatch(state, {
+        type: "CREATE_BRANCH",
+        input: { name: intent, intent },
+      });
+      if (!created.ok) throw new Error(`${intent} must be creatable`);
+      state = created.value;
+      const branch = state.branches[`branch-${intent}`]!;
+      const headline = futureHeadline(
+        branch.name,
+        runScenario(
+          deriveGraph(state, branch),
+          "regional_outage",
+          branch.id,
+          branch.version,
+        ),
+      );
+      expect(
+        checklist,
+        `the checklist no longer quotes "${headline}"`,
+      ).toContain(headline);
+    }
+  });
+
   it("tells the build story with claims the suite backs", () => {
     // The "what we learned" section names specific defects and specific
     // guards. Prose about testing is the easiest place to overclaim, so the

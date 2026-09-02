@@ -66,19 +66,23 @@ restored into their previous workspace.
    at `93.96% availability · 1 violation`, the causal evidence naming
    `Primary Ledger has no standby replica`, and the human guardrail — all
    in one frame.
-3. **Immediately after "Create repair futures".** Three futures at 93.96%,
-   96.36% and 97.11%, and the header chip now reading **12 state-aware
-   tools**. This is the state-dependent registration claim in one image.
+3. **Immediately after "Create repair futures".** Three futures, each
+   leading with the axis it optimises — `Lowest cost · $5,920 / month`,
+   `Fastest recovery · 12m recovery`, `Highest resilience · 97.11%
+availability` — and the header chip now reading **13 state-aware tools**
+   with the `+8` badge beside it. This is the state-dependent registration
+   claim and the trade-off in one image.
 4. **The gate refusing.** Highest resilience selected, approve disabled,
-   and the reason reading "1 scenario reports violations. Resolve them to
-   make approval eligible."
+   the status strip reading `Waiting on — A fix for the violations`, and the
+   reason naming the blocker: "Traffic spike reports violations. Resolve
+   them to make approval eligible."
 5. **A clean panel that still warns.** The Regional outage tab showing "No
    SLO violations" with `Traffic spike still blocks approval:
 Reconciliation capacity deficit: 2,000 RPS` directly beneath it — the
    product refusing to let a passing scenario stand in for the others.
-6. **The approval record.** `Sreenath approved the exact plan — 4 clean
-scenarios · worst 97.11%`: a named person, the evidence they had, and
-   the worst case they accepted.
+6. **The approval record.** `Reviewer approved the exact plan — 4 clean
+scenarios · worst 97.11%`: who decided, the evidence they had, and the
+   worst case they accepted.
 7. **After the commit.** Eight tools registered, `Rollback this merge`
    present as a human control, and no agent tool that could undo it.
 8. **A different system.** The same journey on ride-hailing dispatch or AI
