@@ -2626,3 +2626,11 @@ was already underway again.
   - One correction of my own, recorded: the first test for this aimed at `propose_architecture_change`, which never produces that message — `SET_PROPERTY` looks the branch up and answers `"This branch cannot be changed."` instead. The assertion therefore passed with the fix removed and proved nothing. Caught by mutating the fix away and seeing **zero** failures rather than one. The test now calls `run_failure_scenario`, which does raise it, and removing the fix fails.
 - [x] **M212.3 — How the Chrome API takes arguments** `DONE`
   - Evidence: `document.modelContext.executeTool` takes the tool object and a **JSON string**, not a name and an object. Several earlier probes in this session failed with "Failed to parse input arguments" and one with a transient error, which looked like tool defects and were not. Recorded so the next live probe starts from the working form.
+
+## Milestone 213 — The whole class, not the two instances
+
+- [x] **M213.1 — Every refusal that rejects an identifier now names a valid one** `DONE`
+  - Acceptance: an agent handed a rejected ID is told which IDs would work.
+  - Evidence: sweeping the reducer's refusal messages for the shape fixed in M212 found two more — `"Unknown architecture entity."` from `propose_architecture_change` and `"Unknown architecture component."` from `add_decision_note`. Both told an agent its component ID was wrong and neither named one that was right, while `connect_components` already answered `"Choose from: gateway, auth, ledger, queue, reconciliation."` for the identical mistake. Confirmed by calling all three and comparing the answers.
+  - Both now answer the same way, from the same live component list the schema enum is built from. When the branch has no components the answer is to add one rather than an empty list. Verified by calling the real tools: `nextAction` is now `"Choose one of: gateway, auth, ledger, queue, reconciliation."`
+  - **That covers every refusal in the reducer that rejects an identifier.** The three that remain — a duplicate dependency, a region that cannot be removed, a stale merge plan — describe a state rather than a bad ID, and the generic sentence is right for them.
