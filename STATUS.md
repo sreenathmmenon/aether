@@ -2541,3 +2541,12 @@ was already underway again.
   - The guard now reads any sentence about the tool surface and skips qualified subsets — "seven write tools" is true while the surface is thirteen, and a false alarm teaches the next reader to ignore the test. Widening it surfaced **three further stale claims** the original had never seen.
   - One correction inside the fix, recorded: the first attempt still required the word "tools" in the sentence, so `README.md`'s "bringing the surface to thirteen" escaped it — proven by breaking that line three ways and watching it pass. The filter now recognises "surface" as naming the same thing. All three break-tests now fail as they should.
   - The compliance doc claimed **twelve tools read back from a browser**. That is a claim about a live observation, so it was re-verified rather than renumbered: **5** tools on the committed payment architecture and **13** once a repair future was open, read from `document.modelContext.getTools()` on the deployed origin. The doc now records both, and says the growth was observed rather than asserted.
+
+## Milestone 205 — Naming the evidence a decision waits on
+
+- [x] **M205.1 — The blocker was counted, never named** `DONE`
+  - Acceptance: a reviewer blocked from approving is told which scenario blocks them.
+  - Evidence: the disabled approval control read "1 scenario reports violations. Resolve them to make approval eligible." It told a reviewer something stood between them and approving, then made them hunt for what. On the page whose whole claim is that a decision rests on nameable evidence, the blocking evidence was the one thing left unnamed.
+  - The caller already held the failing runs as an array and reduced them to a length; it now passes the scenario labels through. The sentence reads "Regional outage and Traffic spike report violations."
+  - Degrades deliberately: beyond three it returns to the count, because four scenario names in one sentence is a wall and the failing runs are on screen anyway, and a caller with no names still produces the original correct sentence. Both paths are tested; removing the naming fails.
+  - Swept the interface for the same shape — a count standing in for the thing itself. The two other candidates already name what they describe: the unmeasured-components note lists the components, and the capacity button names the single bottleneck and counts only in the plural case, where a button label cannot list them.
