@@ -41,6 +41,7 @@ import { mergeEvidence } from "@core/evidence-merge";
 import { visibleNotes } from "./opening-notes";
 import { useOverflowFade } from "./use-overflow-fade";
 import { recentActivity } from "./recent-activity";
+import { looksLikeCompose, parseCompose } from "@core/compose-parser";
 import { reviewPlan, wasRefused, type StepResult } from "./resident-agent";
 import { scenarioNarrative } from "./scenario-copy";
 import { useModalDialog } from "./use-modal-dialog";
@@ -1277,7 +1278,13 @@ export function App() {
    * description; otherwise the entry point depends on narration.
    */
   function buildFromBrief() {
-    const parsed = parseBrief(systemBrief);
+    // A reviewer's architecture already exists in a file. Asking them to
+    // retype it as prose was asking them to describe what they could paste,
+    // and the topology in a compose file is more reliable than any sentence
+    // about it: `depends_on` is the dependency edge this product traces.
+    const parsed = looksLikeCompose(systemBrief)
+      ? parseCompose(systemBrief)
+      : parseBrief(systemBrief);
     if (parsed.components.length === 0) {
       setComposerNotice("Describe at least one component in the brief first.");
       refuse("Describe at least one component in the brief first.");
@@ -2345,8 +2352,11 @@ export function App() {
                     to do. */}
                 <textarea
                   className="canvas-empty-brief"
-                  aria-label="Describe your architecture"
-                  placeholder="nginx -> orders API -> Postgres, and a worker consumes from SQS"
+                  aria-label="Describe your architecture, or paste a docker-compose file"
+                  placeholder={
+                    "Paste your docker-compose.yml — or describe it:\n" +
+                    "nginx -> orders API -> Postgres, and a worker consumes from SQS"
+                  }
                   value={systemBrief}
                   onChange={(event) => setSystemBrief(event.target.value)}
                 />
@@ -2358,7 +2368,11 @@ export function App() {
                 >
                   Build this architecture →
                 </button>
-                <small>Or let a connected agent build it through WebMCP.</small>
+                <small>
+                  A compose file&rsquo;s <code>depends_on</code> is read as the
+                  dependency graph. Or let a connected agent build it through
+                  WebMCP.
+                </small>
               </div>
             )}
           </div>
