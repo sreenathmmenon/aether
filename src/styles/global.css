@@ -442,8 +442,28 @@ button {
 }
 .studio {
   display: grid;
-  min-height: 650px;
+  /* No floor: it fought the 78vh cap on the canvas and held the row 86px
+     taller than the stage, which is the empty band this rule was meant to
+     remove. The canvas's own min-height keeps the graph readable. */
   grid-template-columns: 250px minmax(560px, 1fr) 330px;
+  /* The row is as tall as its tallest column. The canvas is capped at 78vh
+     so a large graph cannot inflate the page, but the side panels grew to
+     whatever their content needed -- leaving 180px of empty white under the
+     stage on the first screen a reviewer scrolls to. The row now takes the
+     canvas's height and the panels scroll their own content, so the three
+     columns end together. */
+  align-items: stretch;
+  max-height: 78vh;
+}
+.future-rail,
+.intelligence-panel {
+  /* A grid item's default min-height is its content, so overflow-y had
+     nothing to act against and the panel simply grew past the row --
+     spilling 180px over the section below and colliding with it. The row is
+     bounded at 78vh, so the panels are bounded with it and scroll inside. */
+  min-height: 0;
+  max-height: 78vh;
+  overflow-y: auto;
 }
 .future-rail,
 .intelligence-panel {
@@ -557,6 +577,10 @@ button {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  /* Capped so a tall graph scrolls rather than inflating the row. `100%`
+     here resolved against a grid area that is itself content-sized, which
+     circles back to the same 564px -- so the cap is the viewport bound
+     alone, and align-items: stretch on the row does the filling. */
   max-height: 78vh;
   overflow: hidden;
   /* The one midnight region. The product's contract calls for "midnight
