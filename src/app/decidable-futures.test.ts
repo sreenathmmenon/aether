@@ -2,9 +2,14 @@ import { describe, expect, it } from "vitest";
 import appSource from "./App.tsx?raw";
 import { createInitialState, deriveGraph, dispatch } from "@core/branch-engine";
 import { paymentPlatformBaseline } from "../fixtures/payment-platform/baseline";
+import { reviewerId, reviewerName } from "./reviewer-identity";
 import { runScenario } from "@simulation/engine";
 
-const human = { kind: "human" as const, id: "reviewer", name: "Reviewer" };
+const human = {
+  id: reviewerId,
+  kind: "human" as const,
+  displayName: reviewerName,
+};
 
 /**
  * A rolled-back future stays in the rail as history, correctly marked
