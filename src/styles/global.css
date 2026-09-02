@@ -449,7 +449,11 @@ button {
      the same 365px as "No repair future yet", so the short fact sat in a
      half-empty cell while the long ones wrapped to two lines beside 200px
      of empty space. Each fact takes the width its own sentence needs. */
-  grid-template-columns: repeat(3, max-content);
+  /* `max-content` never yields, so once the copy grew -- "Highest resilience
+     is not approvable yet" -- the three facts needed 1305px in a 1280px
+     window and the third was cut at the edge. `auto` still sizes to the
+     sentence when there is room and shrinks only when there is not. */
+  grid-template-columns: repeat(3, auto);
   justify-content: start;
   /* Spacing lives here, not here *and* in each cell's padding: the two
      compounded into a 40px gap after the first fact and ~90px after the
