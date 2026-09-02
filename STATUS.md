@@ -2445,3 +2445,10 @@ was already underway again.
   - **The recommendation and the gate cannot disagree**, asserted by approving the future the tool names: an agent never sends someone to a button that will refuse them. And it says so itself — the next action names a human and states that no tool can commit.
   - When nothing is approvable it names the closest future and what is blocking it rather than only refusing: _"No future is approvable. Highest resilience is closest: 1 scenario reports violations."_ An agent asked "what now" needs a target.
   - Surface grows to thirteen: 5 → 10 → 13, and 8 after a merge. Every documented count and pinned list moved with it, caught by the eight drift guards built earlier this session.
+
+## Milestone 197 — The beat where the agent has an opinion
+
+- [x] **M197.1 — Put the recommendation in the film** `DONE`
+  - Evidence: a ten-second beat before the gate opens. The agent is asked which future to take and answers with a reason, a trade-off, and its own limit — _"A human reviews and approves in the Aether interface. No tool can commit Highest resilience."_
+  - Two things are said aloud there: the agent is reasoning about evidence **it did not generate**, and it ends by naming what it cannot do. An agent that recommends and then declines to act is a different character from one that executes, and that difference is the whole product.
+  - Guarded: removing the beat fails. A probe fault recorded — blockquote markers survive whitespace collapsing, so a sentence wrapping inside a quote reads as `No tool > can commit` and the assertion failed on formatting rather than content.

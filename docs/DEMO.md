@@ -135,6 +135,25 @@ cannot look at a green panel and miss what is blocking you.
 
 Raise reconciliation, re-run all four scenarios one at a time.
 
+### 2:15–2:25 — The agent gives an opinion, and says it cannot act on it
+
+Ask the agent which future to take. It calls
+`recommend_architecture_future` and answers:
+
+> **Recommended: Highest resilience** — 97.11% availability at worst across
+> 4 clean scenarios, recovering in 7m. It is also the cheapest approvable
+> future. _A human reviews and approves in the Aether interface. No tool
+> can commit Highest resilience._
+
+Two things are worth saying aloud here. The agent is reasoning about
+evidence it did not generate — those figures came from the engine. And the
+last sentence is the agent stating its own limit: it recommends, and then
+tells you it cannot do the thing it just recommended.
+
+The recommendation is computed from the same readiness rule the approval
+gate enforces, so an agent can never point you at a button that will refuse
+you.
+
 ### 2:25–2:45 — The gate opens, and only for a person
 
 The reason changes to:

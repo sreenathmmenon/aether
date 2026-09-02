@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import demo from "../../docs/DEMO.md?raw";
 import submission from "../../docs/SUBMISSION.md?raw";
 import appSource from "./App.tsx?raw";
+import registrySource from "../platform/webmcp/registry.ts?raw";
 import readme from "../../README.md?raw";
 import gateSource from "./gate-reason.ts?raw";
 import reducerSource from "@core/branch-engine?raw";
@@ -464,5 +465,25 @@ describe("the demo script quotes what the product reports", () => {
     expect(demo.indexOf("?system=blank")).toBeLessThan(
       demo.indexOf("Mumbai is down"),
     );
+  });
+
+  it("shows the agent reasoning, not only executing", () => {
+    // Agent value scored 5-6 when the film showed an agent that only acted.
+    // The beat where it recommends — and states that it cannot commit what
+    // it recommends — is the one that makes it a collaborator rather than a
+    // fast pair of hands.
+    // Blockquote markers survive whitespace collapsing, so a sentence that
+    // wraps inside a quote reads as "No tool > can commit" — strip them
+    // before matching prose that spans lines.
+    const flat = demo.replace(/^>\s?/gm, "").replace(/\s+/g, " ");
+    expect(flat, "the film no longer shows the agent recommending").toContain(
+      "recommend_architecture_future",
+    );
+    // The reason, not just the verdict.
+    expect(flat).toMatch(/availability at worst across/);
+    // And the agent naming its own limit, which is the point of the beat.
+    expect(flat).toMatch(/No tool can commit/);
+    // The tool has to exist for the film to quote it.
+    expect(registrySource).toContain('name: "recommend_architecture_future"');
   });
 });
