@@ -2433,3 +2433,15 @@ was already underway again.
   - Evidence: rewriting it surfaced that the script still quoted `Only Sreenath can set guardrails` and `Sreenath approved the exact plan` — copy M194 had already removed. A recorder following it would have read a line aloud that does not appear on screen.
   - Both corrected, and guarded: the script may not name a person, and the sentence it quotes must be one the interface builds. A first version of that assertion embedded the formatter's line wrapping and failed on a reflow rather than a real change, so it matches whitespace-collapsed text.
   - The ordering is guarded too: removing the agent-first opening fails two tests.
+
+## Milestone 196 — Giving the agent something to say
+
+- [x] **M196.1 — Twelve tools, and none of them an opinion** `DONE`
+  - Acceptance: an agent can tell a person which future the evidence favours, why, and what it costs.
+  - Evidence: the adversarial review put _agent value shown_ at 8.5 after M193–M195, and the reason it was not higher is that the agent still only ever **acted**. It built, branched and simulated — a fast pair of hands. Every read tool returned state: components, runs, a table of numbers. None returned a judgement, so an agent had to derive the trade-off from figures alone and could tell a person nothing they could not read themselves.
+  - The product already knew the answer, twice. The interface computes approval eligibility to enable a button; the reducer computes it again to refuse a command. Neither was reachable from a tool.
+  - `recommend_architecture_future` is that judgement in one place. Live on the deployed origin it returns: _"Recommended branch-highest_resilience — 97.11% availability at worst across 4 clean scenarios, recovering in 7m. It is also the cheapest approvable future. A human reviews and approves in the Aether interface. No tool can commit Highest resilience."_
+  - Ranked on availability, then recovery, then cost — the order a resilience decision is actually made in, since a cheaper future that stays down longer is not the better answer to an outage. The trade-off is stated even when the pick is also the cheapest, because that is the part a person decides on.
+  - **The recommendation and the gate cannot disagree**, asserted by approving the future the tool names: an agent never sends someone to a button that will refuse them. And it says so itself — the next action names a human and states that no tool can commit.
+  - When nothing is approvable it names the closest future and what is blocking it rather than only refusing: _"No future is approvable. Highest resilience is closest: 1 scenario reports violations."_ An agent asked "what now" needs a target.
+  - Surface grows to thirteen: 5 → 10 → 13, and 8 after a merge. Every documented count and pinned list moved with it, caught by the eight drift guards built earlier this session.
