@@ -1992,3 +1992,4 @@ was already underway again.
   - Clean on the first three. **Thirteen landmarks, ten named**: the incident headline (`section.hero-bar`) and the futures list (`aside.future-rail`) were announced as an unnamed "region" and "complementary" to anyone navigating by landmark. `main` and `header` are unique on the page and correctly need no name.
   - Both are now named with `aria-labelledby` pointing at the eyebrow text already on screen — `Live architecture decision room` and `Architecture futures` — rather than a second string that could drift from what the section says.
   - A test now requires every `<section>` and `<aside>` in the source to carry a name, so a new one cannot ship unnamed. Removing either name fails it.
+  - Verified against the deployed origin: all eleven `section` and `aside` landmarks now carry a name, reading as a navigable outline of the decision room — briefing, studio, futures, canvas, evidence, history, discussion, replay, review, activity.
