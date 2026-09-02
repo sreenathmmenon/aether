@@ -330,10 +330,19 @@ export function App() {
   const writable =
     (activeBranch.status !== "merged" || ownSystem) &&
     activeBranch.status !== "discarded";
+  // Only runs recorded against the version on screen. Without the version
+  // filter the panel showed a superseded run as current evidence — after a
+  // cost edit it reported $8,694 and "No SLO violations" while the agent,
+  // computing fresh, reported $12,492 and a ceiling breach for the same
+  // branch and scenario. That is the exact staleness the approval gate
+  // refuses over, displayed as though it were current, and it also stamped
+  // decision notes with figures that no longer described the architecture.
+  const versionRuns = (state.simulations[activeBranch.id] ?? []).filter(
+    (run) => run.branchVersion === activeBranch.version,
+  );
   const activeSimulation =
-    (state.simulations[activeBranch.id] ?? []).find(
-      (run) => run.scenario === selectedScenario,
-    ) ?? (state.simulations[activeBranch.id] ?? []).at(-1);
+    versionRuns.find((run) => run.scenario === selectedScenario) ??
+    versionRuns.at(-1);
   // Approval requires every simulated scenario on this branch version to be
   // clean, so the interface must report blockers from all of them rather than
   // only the scenario currently on screen.

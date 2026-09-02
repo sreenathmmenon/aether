@@ -2341,3 +2341,13 @@ was already underway again.
     - The **two registry sites** were the whole gap, and both are fixed.
   - The rule is now enforced for the tool surface, since that is where the divergence was: dropping the ceiling from either agent-facing run fails. A third tool added later that runs a scenario is covered on the day it is written.
   - Recorded as the shape worth remembering: the engine, the reducer and the interface all handled the guardrail correctly, and the defect lived entirely in what the _agent_ was given. A claim that two paths share a model is only as good as the arguments each path passes it.
+
+## Milestone 186 — The panel showed a run the gate had already rejected
+
+- [x] **M186.1 — Compare the two views field by field** `DONE`
+  - Acceptance: the evidence a reviewer reads describes the architecture currently on screen.
+  - Evidence: after fixing the guardrail in M184, the agent's view and the page's were compared field by field rather than assumed to agree. Availability and recovery matched. **Cost and violations did not**: for the same branch and the same scenario, the page reported `$8,694` and `No SLO violations` while an agent computing fresh reported `$12,492` and a ceiling breach.
+  - The cause: `activeSimulation` matched a stored run on **scenario alone**, with no version filter, while `currentRuns` beside it filtered on version. So after an edit bumped the branch version, the panel displayed a superseded run as current evidence — the exact staleness the approval gate refuses over, shown as though it were fresh.
+  - It reached further than the panel. Decision notes stamp `evidenceRef` from `activeSimulation`, so a note written in that state recorded figures describing an architecture that no longer existed — and a note's whole value is saying what someone saw when they decided.
+  - Fixed by filtering on the branch version, with `previewEvidence` — already computed live for the current version — as the fallback when nothing is stored yet. Removing the filter fails.
+  - A probe fault recorded: the first test sliced from `activeSimulation`, but the filter lives in the `versionRuns` declaration just above it, so the assertion failed for its own window rather than a real absence.

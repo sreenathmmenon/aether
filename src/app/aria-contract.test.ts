@@ -84,6 +84,36 @@ describe("the interface honours the ARIA it declares", () => {
       );
   });
 
+  it("never shows a superseded run as current evidence", () => {
+    // Found by comparing the agent's view with the page's, field by field.
+    // After an edit the panel reported $8,694 and "No SLO violations" while
+    // an agent computing fresh reported $12,492 and a ceiling breach — same
+    // branch, same scenario. `activeSimulation` matched on scenario alone,
+    // so a run from a superseded version displayed as current: the exact
+    // staleness the approval gate refuses over.
+    // The window starts at `versionRuns`, which is where the filter lives —
+    // slicing from `activeSimulation` alone missed it and failed for that
+    // reason rather than a real one.
+    const block = appSource.slice(
+      appSource.indexOf("const versionRuns"),
+      appSource.indexOf("const currentRuns"),
+    );
+    expect(block, "activeSimulation moved").toContain("selectedScenario");
+    // The version filter is what makes the displayed evidence current.
+    expect(
+      block,
+      "the panel can show a run from a superseded branch version",
+    ).toContain("run.branchVersion === activeBranch.version");
+    // And the fallback when nothing is stored for this version is a live
+    // computation, not the newest stale run.
+    expect(appSource).toContain(
+      "const evidence = activeSimulation ?? previewEvidence",
+    );
+    // Decision notes stamp `activeSimulation`, so a stale run there wrote a
+    // note describing an architecture that no longer existed.
+    expect(appSource).toMatch(/evidenceRef: activeSimulation/);
+  });
+
   it("anchors a human note to a component and the evidence behind it", () => {
     // The human half of the component-anchored discussion claim. Walking it
     // works — a note appears attributed to Sreenath, "Anchored to Primary
