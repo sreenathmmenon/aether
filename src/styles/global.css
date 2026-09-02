@@ -1846,16 +1846,11 @@ button {
   border-bottom: 1px solid var(--border);
 }
 .decision-room-head h2 {
-  /* Section headings sat at 20px against a 66px hero, so the ramp's 32px
-     step went unused and every section below the fold read as a caption.
-     This is a section of the product, not a label on a panel. */
-  max-width: 22ch;
+  /* The pitch line this used to size at 32px is gone -- the section names
+     itself and the record below it does the arguing -- so the heading is
+     the eyebrow it always should have been. Only the margin is left to
+     reset; the rest comes from `.eyebrow`. */
   margin: 0;
-  font-family: var(--font-display);
-  font-size: var(--text-xl);
-  font-weight: var(--weight-light);
-  letter-spacing: var(--tracking-tight);
-  line-height: var(--leading-tight);
 }
 .room-live {
   display: inline-flex;

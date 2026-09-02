@@ -271,7 +271,10 @@ export function App() {
     text: string;
     tone: "done" | "refused";
   }>({
-    text: "Describe your architecture. The agent can build it here, and Aether will prove the consequences.",
+    // The strip reports what the shared workspace is doing. Its opening value
+    // was a sentence about what the product can do -- pitch voice in the one
+    // place that should only ever state fact.
+    text: "Baseline architecture loaded.",
     tone: "done",
   });
   const message = notice.text;
@@ -3063,8 +3066,11 @@ export function App() {
       >
         <div className="decision-room-head">
           <div>
-            <p className="eyebrow">Live decision record</p>
-            <h2>Discussion attached to the architecture, not lost in chat.</h2>
+            {/* The eyebrow names the section and the record below proves the
+                claim. "Discussion attached to the architecture, not lost in
+                chat." was the one line written *about* the product rather
+                than by it -- pitch voice on a working surface. */}
+            <h2 className="eyebrow">Live decision record</h2>
           </div>
           {/* This panel claimed the record was shared without offering any way
               to share it. Hand over a link that puts someone else in this
@@ -3236,8 +3242,11 @@ export function App() {
                 <li className="empty-history">
                   <i>1</i>
                   <div>
+                    {/* Every other row in this log states what happened.
+                        "ready for a safe, shared review" described the
+                        product's qualities instead. */}
                     <strong>Incident opened</strong>
-                    <span>Baseline is ready for a safe, shared review.</span>
+                    <span>No commands recorded yet</span>
                   </div>
                 </li>
               )}
