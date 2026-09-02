@@ -532,13 +532,51 @@ button {
   min-height: 0;
   max-height: 78vh;
   overflow: hidden;
+  /* The one midnight region. The product's contract calls for "midnight
+     structural ink", and the structure is the dependency graph: this is the
+     stage where failure propagates and where the agent works. Everything
+     around it stays ivory, so the contrast itself carries the meaning
+     rather than decorating it. */
+  color: var(--structure-ink);
   background:
     radial-gradient(
-      90% 70% at 50% 0%,
-      color-mix(in oklab, var(--human) 5%, transparent),
-      transparent 70%
+      120% 80% at 50% 0%,
+      color-mix(in oklab, var(--agent) 10%, transparent),
+      transparent 65%
     ),
-    var(--surface);
+    var(--structure);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--lift-3);
+  transition: box-shadow var(--duration) var(--ease);
+}
+/* Everything on the midnight stage runs the opposite ink ladder to the rest
+   of the page: brightened to reach contrast rather than darkened. Scoped in
+   one place rather than edited rule by rule, so a component added to the
+   canvas later inherits the right ladder instead of inheriting the page's
+   and disappearing. */
+.canvas-stage {
+  --ink: var(--structure-ink);
+  --ink-muted: var(--structure-muted);
+  --ink-subtle: var(--structure-muted);
+  --surface: var(--structure);
+  --surface-raised: var(--structure-raised);
+  --surface-sunken: var(--structure);
+  --border: var(--structure-border);
+  --border-strong: #3a4759;
+  /* The vivid fills are the readable values on a dark ground -- the same
+     fill/text split as the page, pointing the other way. */
+  --human-text: #7aa2ff;
+  --agent-text: #3fd5c7;
+  --failure-text: #ff8a8e;
+  --verified-text: #4fd6c2;
+  --branch-text: #ffc266;
+}
+/* Text drawn on the canvas runs the opposite ladder to the rest of the
+   page: brightened to reach contrast rather than darkened. */
+.canvas-stage .eyebrow,
+.canvas-stage label,
+.canvas-stage small {
+  color: var(--structure-muted);
 }
 .canvas-stage > :last-child {
   flex: 1;
@@ -589,6 +627,25 @@ button {
   background: var(--surface-raised);
   box-shadow: var(--lift-1);
 }
+/* Controls that live on the midnight stage take its ink, not the page's.
+   The trace control was drawn in page ink on a dark bar and disappeared. */
+.canvas-toolbar .trace-control {
+  border-color: var(--structure-border);
+  color: var(--structure-ink);
+}
+.canvas-toolbar .trace-control:not(:disabled):hover,
+.canvas-toolbar .trace-control:not(:disabled):focus-visible {
+  border-color: var(--agent);
+  background: color-mix(in oklab, var(--agent) 14%, transparent);
+  color: var(--structure-ink);
+}
+.canvas-toolbar .eyebrow,
+.canvas-toolbar strong {
+  color: var(--structure-ink);
+}
+.canvas-toolbar .eyebrow {
+  color: var(--structure-muted);
+}
 .trace-control {
   min-height: 38px;
   padding: 0 11px;
@@ -618,11 +675,13 @@ button {
   overflow: hidden;
   touch-action: none;
   /* The canvas is the stage, so it sits on its own ground rather than
-     repeating the cream of every surrounding panel. */
-  background-color: var(--surface);
+     repeating the ivory of every surrounding panel. The stage itself paints
+     the midnight; this only draws the grid on top of it, so the two cannot
+     disagree about the ground. */
+  background-color: transparent;
   background-image:
-    linear-gradient(rgb(22 32 46 / 0.055) 1px, transparent 1px),
-    linear-gradient(90deg, rgb(22 32 46 / 0.055) 1px, transparent 1px);
+    linear-gradient(rgb(242 245 249 / 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(242 245 249 / 0.05) 1px, transparent 1px);
   background-size: 28px 28px;
 }
 .region-box {
@@ -736,13 +795,21 @@ button {
   cursor: grabbing;
 }
 .architecture-node span {
-  color: var(--human);
-  font-size: 12px;
-  font-weight: 850;
-  letter-spacing: 0.11em;
+  /* The kind label is text, so it takes the text variant. The vivid value
+     stays on the 7px shape marker beside it, where a fill needs no text
+     contrast. Weight 850 was outside the two-weight ramp entirely. */
+  color: var(--human-text);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-label);
+}
+.architecture-node.queue span,
+.architecture-node.gateway span {
+  color: var(--agent-text);
 }
 .architecture-node strong {
-  font-size: 12px;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
 }
 .architecture-node small {
   color: var(--ink-muted);
@@ -1097,7 +1164,7 @@ button {
   border: 1px solid var(--human);
   padding: 10px 12px;
   background: var(--human);
-  color: var(--ink);
+  color: var(--structure-ink);
   font-size: 12px;
   font-weight: 850;
   letter-spacing: 0.01em;
@@ -1348,7 +1415,7 @@ button {
   place-items: center;
   width: 20px;
   height: 20px;
-  color: var(--ink);
+  color: var(--structure-ink);
   background: var(--human);
   border-radius: 50%;
   font-size: 12px;
@@ -1798,7 +1865,6 @@ button {
     transition-duration: 0.01ms !important;
   }
 }
-
 /* Onboarding: one screen of framing before the decision room. */
 .intro-overlay {
   position: fixed;
@@ -1931,7 +1997,6 @@ button {
     animation: none;
   }
 }
-
 /* Live feed of agent tool invocations, so WebMCP activity is visible. */
 .tool-feed {
   margin-top: 14px;
@@ -2000,7 +2065,6 @@ button {
     animation: none;
   }
 }
-
 /* A component that only degraded because something upstream failed reads as
    secondary damage, so the origin of a failure stays visually distinct. */
 .architecture-node.node-degraded {
@@ -2017,7 +2081,6 @@ button {
 .architecture-node.node-degraded small {
   color: var(--branch-text);
 }
-
 /* Architects add their own components, so the model is theirs to shape. */
 /* Editing a selected component: the same four properties an agent can
    propose, so a person is never the weaker actor on their own architecture. */
@@ -2116,7 +2179,6 @@ button {
   opacity: 0.5;
   cursor: not-allowed;
 }
-
 /* Switching the modelled system proves the engine is not one fixture. */
 .system-switch {
   display: grid;
@@ -2147,7 +2209,6 @@ button {
   font-size: 12px;
   line-height: 1.45;
 }
-
 /* The replay is the record of who decided what, so actor and consequence
    must be readable at a glance rather than inferred from command names. */
 .decision-replay li {
@@ -2196,7 +2257,6 @@ button {
   color: var(--branch-text);
   background: rgb(224 134 0 / 0.15);
 }
-
 /* Naming the published capabilities makes the WebMCP surface verifiable
    without an agent connected. */
 .tool-inventory {
@@ -2223,7 +2283,6 @@ button {
   font-size: 12px;
   line-height: 1.45;
 }
-
 /* Approval needs every scenario clean, so blockers from the scenarios that
    are not on screen must still be visible. */
 .other-scenario-block {
@@ -2243,7 +2302,6 @@ button {
   border-radius: 50%;
   background: var(--branch);
 }
-
 /* The own-system capability is what separates Aether from a fixed demo, so
    the opening screen names it. */
 .intro-own {
@@ -2255,7 +2313,6 @@ button {
   font-size: 12.5px;
   line-height: 1.5;
 }
-
 /* Evidence the engine computed on the reviewer's behalf reads as neither a
    human decision nor an agent action. */
 .decision-replay li.replay-system {
@@ -2264,7 +2321,6 @@ button {
 .decision-replay li.replay-system strong {
   color: var(--ink-muted);
 }
-
 /* Outcome of an add lands beside the form, not in a strip below the fold. */
 /* This only ever carries a refusal, and cyan reads as information. */
 .composer-notice {
@@ -2276,7 +2332,6 @@ button {
   font-size: 12.5px;
   line-height: 1.4;
 }
-
 /* A disabled control must say where the missing step happens. */
 .rail-hint {
   margin: 9px 0 0;
@@ -2287,7 +2342,6 @@ button {
 .rail-hint strong {
   color: var(--ink);
 }
-
 /* Load bar: utilisation of a component against its provisioned capacity, so
    a reader sees where a system is tight before reading any number. */
 .node-load {
@@ -2314,7 +2368,6 @@ button {
     transition: none;
   }
 }
-
 /* Building from a brief is the primary action; staging it is secondary. */
 .brief-actions {
   display: grid;
@@ -2331,7 +2384,6 @@ button {
   opacity: 0.45;
   cursor: not-allowed;
 }
-
 /* A healthy component is serving traffic, so its load bar breathes rather
    than sitting still. The architecture reads as running, not drawn. */
 .architecture-node .node-load b {
@@ -2363,7 +2415,6 @@ button {
     animation: none;
   }
 }
-
 /* Traffic keeps moving on an impacted path, in the colour of its condition,
    so a failing system reads as under strain rather than switched off. */
 .path-flow.flow-degraded {
@@ -2374,7 +2425,6 @@ button {
   stroke: rgb(217 61 66 / 0.95);
   animation-duration: 1s;
 }
-
 /* Each component type carries its own accent, so a reader can tell a database
    from a queue without reading the label. */
 .architecture-node span {
@@ -2406,7 +2456,6 @@ button {
   border-radius: 50% 50% 2px 2px;
   background: var(--branch);
 }
-
 /* The surface growing is the one thing that proves state-dependent
    registration, and it was a digit silently changing in the header. This
    marks the transition itself: a reviewer who blinks still sees that
@@ -2443,7 +2492,6 @@ button {
     animation: none;
   }
 }
-
 /* On an empty canvas, describing a system is the only thing to do — and the
    field for it sat in a narrow sidebar as a four-line box while the canvas
    beside it was blank. The film opens on this screen, so the most important
