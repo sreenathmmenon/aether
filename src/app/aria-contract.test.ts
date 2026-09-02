@@ -84,6 +84,33 @@ describe("the interface honours the ARIA it declares", () => {
       );
   });
 
+  it("builds a described system without an agent attached", () => {
+    // The blank canvas is the "bring your own system" claim, and its
+    // agent-free path is a brief box and a Build button, which nothing
+    // covered. This reads the shipped source, so it holds the wiring rather
+    // than the behaviour — an early `return` still passes, and that limit is
+    // stated rather than papered over. What it does catch is the wiring
+    // coming apart: dropping the parser call, or ceasing to connect the
+    // dependencies a brief describes, each fail.
+    const builder = appSource.slice(
+      appSource.indexOf("function buildFromBrief"),
+      appSource.indexOf(
+        "function",
+        appSource.indexOf("function buildFromBrief") + 30,
+      ),
+    );
+    expect(builder, "buildFromBrief moved").toContain("parseBrief");
+    // It reaches the reducer through the same validated commands an agent
+    // uses, rather than writing state directly — that is what makes the two
+    // paths equal rather than parallel.
+    expect(builder).toContain('type: "ADD_COMPONENT"');
+    expect(builder).toContain('type: "CONNECT_COMPONENTS"');
+    expect(builder).toContain("dispatch(");
+    // And it refuses an empty brief with a reason rather than doing nothing.
+    expect(builder).toMatch(/components\.length === 0/);
+    expect(builder).toContain("Describe at least one component");
+  });
+
   it("makes its own re-run instruction followable", () => {
     // After an edit the gate says "Re-run a scenario to make approval
     // eligible", and selecting a scenario is how a person re-runs one —
