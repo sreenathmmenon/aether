@@ -2494,3 +2494,12 @@ was already underway again.
   - The gate now refuses `--ink` or `--muted` as a surface for text, and `--line` as a text colour. It found one more instance on its first run.
   - Two corrections while writing it, both recorded: a loose pattern flagged `border-color: var(--line)`, which is exactly right, so it matches the `color` property alone; and `--muted` as a fill on a 7px status dot is legitimate, so it is flagged only on rules that also set text.
   - **102 text elements measured on the deployed page, zero failing AA** — the dark palette's worst ratio is 6.80:1 against a 4.5 threshold, comfortably better than the light theme ever managed.
+
+## Milestone 201 — Making the central claim visible
+
+- [x] **M201.1 — The surface grew and nothing showed it** `DONE`
+  - Acceptance: a reviewer sees state-dependent registration happen, without watching for it.
+  - Evidence: the tool count going **5 → 13** is what proves the whole submission, and it was a digit silently swapping in the header. A screen reader was told, through a polite live region; a reviewer watching the page had to be looking at the number to notice the one thing that makes this a WebMCP entry rather than a simulation with a chat box.
+  - The transition now marks itself — a glowing **`+8`** beside the chip, verified live: `WebMCP live · 5 state-aware tools` → `13`, badge reading `+8`.
+  - Decorative by design: the chip beside it is already a live region carrying the same fact, and announcing both makes a screen reader say it twice. Guarded against firing on first render, which would flash `+5` for a surface that never grew — removing that guard fails.
+  - Verified in place: the headline, the status strip, the futures rail and the tool count all respond to one state change, so the whole page reads as one live surface rather than panels that happen to share a screen.
