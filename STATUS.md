@@ -2874,3 +2874,23 @@ Two of the three references ship a light ground; Vercel — the supposedly dark 
 - [x] **M231.3 — Two more of my own probes were wrong** `DONE`
   - `lastIndexOf` matched a descendant selector (`.review-actions .approve-button`) and reported a missing grid-area that was present.
   - A shell loop passed its search string through `echo`, stripping leading whitespace, so two of four removals silently no-opped and looked uncaught. Recorded because a probe that reports a defect where none exists costs as much as one that misses a real defect — and this session has now produced both kinds.
+
+## Milestone 232 — The loop on UI craft and wow
+
+Working only on the two categories the owner named, in loops, deciding direction without asking.
+
+- [x] **M232.1 — The trade-off, rendered at the weight it carries** `DONE`
+  - Three futures are the product's central insight and were 201×78 boxes with the deciding figure as a 12px caption. The figure is the hero now — display face at 32px with its axis as a quiet label. The rail widened 250→300px because desktop has the width. The value and unit are separate: as one string "97.11% availability" overflowed the column.
+- [x] **M232.2 — The causal trace, made findable** `DONE`
+  - The one piece of motion that expresses system behaviour rather than decorating it, behind a plain outline button. Now agent-coloured with a play mark and a glow on hover. The canvas toolbar became a two-row grid so four scenario names and the trace stop competing for one line.
+- [x] **M232.3 — The canvas as a real place** `DONE`
+  - Component cards were transparent outlines floating on the stage — they set `--surface`, which inside the canvas scope resolves to the stage itself. They are objects now: raised plate, lit top edge, deep shadow. A failing component is lit from within by the failure colour rather than outlined in it. The capacity track was a dark tint on a dark card and invisible.
+- [x] **M232.4 — The evidence, read as answers** `DONE`
+  - Availability, recovery, latency and cost sat in a bordered table with label and figure at nearly one weight. The figure takes the 20px step with the label recessed, matching the trade-off cards, so one language runs across the page.
+- [x] **M232.5 — The claims, made loud** `DONE`
+  - "These numbers are assumptions." now leads the honesty note at the size of the claim it qualifies. "No approve tool. No merge tool. Not disabled — absent." replaced a 12px footnote. The agent connection is a live teal chip with a breathing dot. Decision notes carry authorship colour — blue for a person, teal for the machine — in the one place the two voices sit side by side.
+- [x] **M232.6 — The agent's reach, where a reviewer is looking** `DONE`
+  - The status strip carried two facts across 1502px. The third belongs there: **5 → 13 → 8** in the agent colour at display size, in the row read before scrolling.
+- [x] **M232.7 — The blank canvas, unclipped** `DONE`
+  - The brief composer — the only thing to do on an empty canvas — was clipped top and bottom with the causal timeline overlapping its submit button. Three causes, each right for a canvas holding a graph and wrong for one holding a brief.
+- **Measured across all four systems and every state: 0 contrast failures, 0 clipped text, 6 ramp steps, 3 weights, 8 paddings, 0 hardcoded colours.**
