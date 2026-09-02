@@ -2157,3 +2157,4 @@ was already underway again.
 - [x] **M165.2 — `additionalProperties: false` in all fourteen schemas** `DONE`
   - Evidence: this is what turns a typo into a named rejection rather than a silently ignored field — an agent writing `capacity` instead of `capacityRps` learns which is which. Mutation found it could be loosened on `get_decision_record` with nothing failing.
   - A first version of the test filtered to schemas with properties, which left exactly that tool uncovered: it takes none. Strictness still matters there — it is what rejects a call carrying stray arguments instead of ignoring them. Now every registered tool is checked, and all fourteen sites are killed.
+  - Verified against the deployed origin: sending `capacity` in place of `capacityRps` returns `capacityRps: Invalid input: expected number, received undefined` with a next action naming the valid regions, so the typo is corrected in one more call rather than silently ignored.
