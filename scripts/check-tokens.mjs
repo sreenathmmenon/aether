@@ -87,4 +87,30 @@ for (const [pattern, why] of misuse) {
 }
 if (crossed) process.exit(1);
 
+/**
+ * A decorative overlay that spans a whole interactive area must not take
+ * pointer input. The architecture edge layer is aria-hidden and stretched
+ * across the entire canvas world; without `pointer-events: none` it sat on
+ * top of the blank canvas's brief composer, so clicking the one control that
+ * starts the product focused nothing and the reviewer's typing went to the
+ * document. Nothing threw and nothing looked wrong, which is exactly why it
+ * needs a gate rather than a reader's attention.
+ */
+const overlays = [".architecture-lines"];
+for (const selector of overlays) {
+  const rule = global.match(
+    new RegExp(`\\${selector}\\s*\\{[^}]*\\}`, "m"),
+  )?.[0];
+  if (!rule) {
+    console.error(`${selector} has no rule to check`);
+    process.exit(1);
+  }
+  if (!/pointer-events:\s*none/.test(rule)) {
+    console.error(
+      `${selector} covers the canvas and must set pointer-events: none, or it swallows clicks meant for what is underneath`,
+    );
+    process.exit(1);
+  }
+}
+
 console.log(`tokens agree (${pairs.length} colours)`);

@@ -643,6 +643,12 @@ button {
      edges are trimmed to the card boundaries so they never need to overlap
      one, but an explicit layer keeps them off the region backgrounds. */
   z-index: 1;
+  /* This layer is aria-hidden decoration drawn across the whole canvas
+     world, so it must never take a click. On a blank canvas it has no edges
+     to draw and covered the brief composer completely: clicking the one
+     control that starts the product focused nothing, and typing went to the
+     document. The cards escaped only because they sit a layer above. */
+  pointer-events: none;
 }
 .architecture-lines line {
   /* Adjacent components leave roughly twelve pixels between their cards, so
