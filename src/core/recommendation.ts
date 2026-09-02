@@ -63,6 +63,24 @@ function readableScenario(scenario: string) {
   return scenario.replaceAll("_", " ");
 }
 
+/**
+ * The blocking scenarios as a phrase. Naming them is the point, but joining
+ * four with "and" produced "regional outage and traffic spike and database
+ * failure and dependency failure report violations" -- worse to read than
+ * the count it replaced. Past three, the count is the clearer sentence, the
+ * same threshold the interface uses.
+ */
+function formatBlockers(blocking: readonly string[]) {
+  if (blocking.length > 3)
+    return `${blocking.length} scenarios report violations`;
+  const named = blocking.map(readableScenario);
+  const phrase =
+    named.length <= 1
+      ? (named[0] ?? "")
+      : `${named.slice(0, -1).join(", ")} and ${named[named.length - 1]}`;
+  return `${phrase} ${blocking.length === 1 ? "reports" : "report"} violations`;
+}
+
 function standingOf(state: AetherState, branch: Branch): FutureStanding {
   const runs = currentRuns(state, branch);
   const blocking = runs
@@ -94,9 +112,7 @@ function standingOf(state: AetherState, branch: Branch): FutureStanding {
           // here left the two surfaces describing one blocker in two
           // different ways, and gave the agent the less useful of them.
           // Scenario keys read as identifiers, so they become words.
-          `${blocking.map(readableScenario).join(" and ")} ${
-            blocking.length === 1 ? "reports" : "report"
-          } violations`,
+          formatBlockers(blocking),
   };
 }
 

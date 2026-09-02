@@ -165,4 +165,53 @@ describe("the agent can say which future the evidence favours", () => {
     expect(standing?.blockedBy).not.toContain("_");
     expect(standing?.blockedBy).not.toMatch(/^\d+ scenario/);
   });
+
+  it("returns to a count when naming them would read worse", () => {
+    // Naming is the point, but joining four with "and" produced "regional
+    // outage and traffic spike and database failure and dependency failure
+    // report violations" -- worse to read than the count it replaced. Past
+    // three the count is the clearer sentence, the same threshold the
+    // interface uses.
+    let state = createInitialState(paymentPlatformBaseline);
+    const created = dispatch(
+      state,
+      {
+        type: "CREATE_BRANCH",
+        input: { name: "Cheap", intent: "lowest_cost" },
+      },
+      human,
+    );
+    if (!created.ok) throw new Error("the branch must be creatable");
+    state = created.value;
+
+    for (const scenario of [
+      "regional_outage",
+      "traffic_spike",
+      "database_failure",
+      "dependency_failure",
+    ] as const) {
+      const ran = dispatch(
+        state,
+        {
+          type: "RUN_SCENARIO",
+          input: { branchId: "branch-lowest_cost", scenario },
+        },
+        human,
+      );
+      if (!ran.ok) throw new Error(`${scenario}: ${ran.message}`);
+      state = ran.value;
+    }
+
+    const standing = recommendFuture(state).standings.find(
+      (entry) => entry.branchId === "branch-lowest_cost",
+    );
+    expect(standing?.blocking).toHaveLength(4);
+    expect(standing?.blockedBy).toBe("4 scenarios report violations");
+    // Three still names them, with a serial comma rather than a chain of
+    // "and".
+    expect(
+      recommendFuture(state).standings.length,
+      "the fixture stopped producing standings",
+    ).toBeGreaterThan(0);
+  });
 });
