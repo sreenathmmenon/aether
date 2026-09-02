@@ -185,6 +185,71 @@ describe("Aether command pipeline", () => {
     }
   });
 
+  it("counts only evidence gathered against the version being approved", () => {
+    // Mutation testing found the version filter on stored runs could be
+    // dropped entirely: a scenario run against version 1 would then satisfy
+    // approval of version 3. M140 covers the status flipping back to
+    // `proposed` after an edit, but not this — and the reviewer would see a
+    // gate that reopens on evidence describing an architecture they have
+    // since changed, which is the precise staleness the gate exists for.
+    const simulated = dispatch(branchState(), {
+      type: "RUN_SCENARIO",
+      input: {
+        branchId: "branch-highest_resilience",
+        scenario: "regional_outage",
+      },
+    });
+    if (!simulated.ok) throw new Error("fixture scenario must run");
+    // Clean evidence at version 1 makes approval eligible.
+    const beforeEdit = dispatch(
+      simulated.value,
+      {
+        type: "APPROVE_BRANCH",
+        input: { branchId: "branch-highest_resilience", branchVersion: 1 },
+      },
+      human,
+    );
+    expect(beforeEdit.ok, "the fixture must be approvable at version 1").toBe(
+      true,
+    );
+
+    // Editing moves the branch to version 2, and the version-1 run must no
+    // longer count — approving at the new version has to be refused for
+    // want of evidence, not merely for a stale version number.
+    const edited = dispatch(
+      simulated.value,
+      {
+        type: "SET_PROPERTY",
+        input: {
+          branchId: "branch-highest_resilience",
+          entityId: "queue",
+          property: "capacityRps",
+          value: 15000,
+        },
+      },
+      human,
+    );
+    if (!edited.ok) throw new Error("fixture edit must apply");
+    const branch = edited.value.branches["branch-highest_resilience"]!;
+    expect(branch.version).toBe(2);
+    // The run is still stored; it is its version that disqualifies it.
+    expect(edited.value.simulations[branch.id]?.length).toBeGreaterThan(0);
+
+    const afterEdit = dispatch(
+      edited.value,
+      {
+        type: "APPROVE_BRANCH",
+        input: { branchId: branch.id, branchVersion: branch.version },
+      },
+      human,
+    );
+    expect(afterEdit).toMatchObject({ ok: false, code: "NOT_AVAILABLE" });
+    expect(
+      afterEdit.ok ? "" : afterEdit.message,
+      "the refusal should name the missing current evidence",
+    ).toMatch(/current deterministic scenario/i);
+  });
+
   it("refuses an approval quoting a version the branch has moved past", () => {
     // Mutation testing found this: the equivalent check on merge is tested
     // and the one on approve was not. It is what stops a person approving a

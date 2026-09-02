@@ -2100,3 +2100,12 @@ was already underway again.
   - Evidence: mutation testing found the check on `APPROVE_BRANCH` could be removed with nothing failing, while the identical check on `MERGE_BRANCH` was covered. It is what stops a person approving a plan while looking at an older version of it — the request carries the version the reviewer saw, and if the branch has moved since, the thing being approved is not the thing on their screen.
   - The test simulates, edits to move the version, asserts the version actually moved, then approves at the old one and requires `STALE_REVISION` with the branch left unapproved. Removing the check fails it.
   - Also killed in the same sweep: a region being accepted as a dependency source, an empty repair future being creatable, and a merge at a stale version.
+
+## Milestone 160 — Evidence from a version the reviewer has changed
+
+- [x] **M160.1 — The version filter on stored runs, untested** `DONE`
+  - Acceptance: approval counts only evidence gathered against the version being approved.
+  - Evidence: mutation testing found the filter `run.branchVersion === branch.version` could be replaced with `true` and nothing failed. A scenario run against version 1 would then satisfy approval of version 3 — the gate reopening on evidence that describes an architecture the reviewer has since changed, which is the precise staleness it exists to prevent.
+  - M140 covers the status flipping back to `proposed` after an edit, and M159 covers a request quoting an old version number. Neither covers this: the request is well-formed and the version current, but the _evidence_ behind it is not.
+  - The test approves cleanly at version 1, edits to move the branch to version 2, confirms the run is still stored so it is the version that disqualifies it rather than its absence, then requires the approval to be refused as `NOT_AVAILABLE` with a message naming the missing current scenario.
+  - Sixteen reducer mutations have now been applied across M139, M140, M159 and M160; every one is killed.
