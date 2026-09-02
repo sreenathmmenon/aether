@@ -562,14 +562,14 @@ button {
   --surface-raised: var(--structure-raised);
   --surface-sunken: var(--structure);
   --border: var(--structure-border);
-  --border-strong: #3a4759;
+  --border-strong: var(--structure-border-strong);
   /* The vivid fills are the readable values on a dark ground -- the same
      fill/text split as the page, pointing the other way. */
-  --human-text: #7aa2ff;
-  --agent-text: #3fd5c7;
-  --failure-text: #ff8a8e;
-  --verified-text: #4fd6c2;
-  --branch-text: #ffc266;
+  --human-text: var(--human-on-structure);
+  --agent-text: var(--agent-on-structure);
+  --failure-text: var(--failure-on-structure);
+  --verified-text: var(--verified-on-structure);
+  --branch-text: var(--branch-on-structure);
 }
 /* Text drawn on the canvas runs the opposite ladder to the rest of the
    page: brightened to reach contrast rather than darkened. */

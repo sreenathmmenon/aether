@@ -138,4 +138,64 @@ for (const selector of [".trace-control"]) {
   }
 }
 
+/**
+ * The system, enforced.
+ *
+ * The previous build had a token file and 87 hardcoded colours that ignored
+ * it, 37 padding values and 20 type styles. Tokens that can be bypassed are
+ * documentation, not a system — this is the check that makes the difference.
+ *
+ * An escape hatch exists because a gate that blocks legitimate work gets
+ * commented out: a declaration may carry `/* off-scale: reason *\/` on the
+ * same line. Those are counted and reported, so a growing count is itself
+ * the signal.
+ */
+const scaleExempt = /\/\* off-scale:/;
+const lines = global.split("\n");
+const offences = [];
+let exempted = 0;
+
+lines.forEach((line, index) => {
+  const at = `global.css:${index + 1}`;
+  if (scaleExempt.test(line)) {
+    exempted += 1;
+    return;
+  }
+  // A literal colour anywhere but the token file bypasses every role.
+  const literal = line.match(/#[0-9a-fA-F]{3,8}\b/);
+  if (literal && !line.trim().startsWith("*"))
+    offences.push(`${at} hardcoded colour ${literal[0]} — use a role token`);
+
+  // Spacing must land on the 4px grid. 1px and 2px are hairlines, not space.
+  const spacing = line.match(
+    /(?:padding|margin|gap|row-gap|column-gap)(?:-[a-z]+)?:\s*([^;]+);/,
+  );
+  if (spacing)
+    for (const value of spacing[1].matchAll(/\b(\d+)px/g)) {
+      const px = Number(value[1]);
+      if (px > 2 && px % 4 !== 0)
+        offences.push(`${at} ${px}px is off the 4px grid`);
+    }
+
+  // Type must land on the six-step ramp and use one of the two weights.
+  const size = line.match(/font-size:\s*(\d+)px/);
+  if (size && ![12, 14, 16, 20, 32, 56].includes(Number(size[1])))
+    offences.push(`${at} font-size ${size[1]}px is off the ramp`);
+  const weight = line.match(/font-weight:\s*(\d{3})/);
+  if (weight && ![300, 400, 650].includes(Number(weight[1])))
+    offences.push(`${at} font-weight ${weight[1]} is not one of 300/400/650`);
+});
+
+if (offences.length) {
+  for (const offence of offences.slice(0, 12)) console.error(offence);
+  if (offences.length > 12) console.error(`…and ${offences.length - 12} more`);
+  console.error(
+    `\n${offences.length} values bypass the design system. Use a role token, or mark the line /* off-scale: reason */ if it genuinely cannot.`,
+  );
+  process.exit(1);
+}
+
+console.log(
+  `design system holds (${exempted} justified exception${exempted === 1 ? "" : "s"})`,
+);
 console.log(`tokens agree (${pairs.length} colours)`);

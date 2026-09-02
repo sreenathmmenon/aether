@@ -108,6 +108,15 @@
   --structure-border: #2a3546;
   --structure-ink: #f2f5f9;
   --structure-muted: #94a3b8;
+  --structure-border-strong: #3a4759;
+  /* The accents as text on midnight. The page has the darkened variants for
+     ivory; these are the same roles brightened for the canvas, so the
+     fill-versus-text split holds on both grounds. */
+  --human-on-structure: #7aa2ff;
+  --agent-on-structure: #3fd5c7;
+  --failure-on-structure: #ff8a8e;
+  --verified-on-structure: #4fd6c2;
+  --branch-on-structure: #ffc266;
 
   /* ---- Ink --------------------------------------------------------- */
   --ink: #16202e;
