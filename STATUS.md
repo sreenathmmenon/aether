@@ -2255,3 +2255,11 @@ was already underway again.
   - Evidence: the end-to-end row said the canonical journey passes for **"both seeded systems"** when three ship — the same undercount M171 found in the README, in the document whose whole purpose is to be audited. All three were walked live before widening the claim: the AI inference platform completes the journey identically, five tools to twelve on branching, byte-identical repeated runs, and clean evidence on a six-component graph.
   - The Chrome row described the deployed surface as "the V3 editable surface" — a version name rather than a measurement, and stale. It now states what was read back from the live origin: five tools growing to twelve as a repair future is created and shrinking to seven once one is committed, with the token decoding to this exact origin and its expiry checked at server startup.
   - Both are guarded. Reverting the count fails, and so does describing the surface by version name again.
+
+## Milestone 177 — Four rows that named a kind of proof instead of offering one
+
+- [x] **M177.1 — Placeholders in the document a judge audits from** `DONE`
+  - Acceptance: every compliance row states something a reader can check.
+  - Evidence: four rows carried category labels rather than evidence — "Schema and validation tests", "Site Tools discovery output and registry test", "Source call sites and deployed URL", "Site Tools discovery and invocation evidence". Every other row names what was measured, so these four read as unfinished in exactly the document that exists to establish the project is not.
+  - All four had been verified this session; only the writing was missing. They now say what was found: the registry calls `document.modelContext.registerTool` with no wrapper and the live origin answers `/health` on Postgres; the in-app browser discovered the surface and called `get_decision_record`; all fourteen schemas refuse unadvertised fields and each `required` list is held to what Zod actually refuses without; every mutating tool declares `readOnlyHint: false` and the untrusted-content marking was checked in **both** directions, by writing an injection marker through every free-text path and finding it only where the annotation says it can be.
+  - A test now requires every row's evidence to be longer than a label. Restoring any placeholder fails.
