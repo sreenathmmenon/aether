@@ -99,5 +99,4 @@ describe("text meets AA contrast on the surfaces it is used on", () => {
         `--${text} is the same colour as --${fill}`,
       ).not.toEqual(token(text));
   });
-
 });

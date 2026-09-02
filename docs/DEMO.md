@@ -74,7 +74,7 @@ Point at three things in one sweep:
 
 - **`CURRENT · Baseline breach · 93.96% availability · 1 violation`**
 - The causal evidence panel: **`Primary Ledger has no standby replica`**
-- The human guardrail: **`Only the reviewer can set guardrails, approve, or merge.`**
+- The status strip: **`Waiting on — Evidence`**, which becomes **`The reviewer`** the moment the evidence is clean
 
 Say: _nothing here is generated text — the availability figure and the
 violation are computed from the dependency graph._

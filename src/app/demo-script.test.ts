@@ -435,14 +435,13 @@ describe("the demo script quotes what the product reports", () => {
     expect(flat, "the script names a person the product does not").not.toMatch(
       /Sreenath/,
     );
-    // And the sentence it quotes is one the interface builds. Matched on
-    // whitespace-collapsed text, because the formatter wraps JSX copy and a
-    // literal newline in the expectation makes this fail on a reflow rather
-    // than a real change.
-    expect(appSource.replace(/\s+/g, " ")).toContain(
-      "can set guardrails, approve, or merge",
-    );
-    expect(flat).toContain("can set guardrails, approve, or merge");
+    // And the film quotes the gate's own words, which the interface builds.
+    // A first version pinned a sentence from the three-column explainer
+    // that was later removed as restating what the canvas already shows —
+    // so this points at the gate reason, which is load-bearing copy rather
+    // than a caption.
+    expect(gateSource).toMatch(/make approval eligible/);
+    expect(flat).toContain("make approval eligible");
   });
 
   it("leads with what neither actor can do alone", () => {

@@ -341,10 +341,33 @@ button {
   font-size: 14px;
 }
 .decision-brief {
-  display: grid;
-  grid-template-columns: 0.85fr 1.25fr 1fr;
+  display: flex;
+  gap: 40px;
+  align-items: baseline;
+  padding: 18px 40px;
   border-bottom: 1px solid var(--line);
-  background: var(--ink);
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--panel) 70%, transparent),
+    transparent
+  );
+}
+.brief-state,
+.brief-waiting {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.brief-waiting {
+  padding-left: 40px;
+  border-left: 1px solid var(--line);
+}
+.brief-state strong,
+.brief-waiting strong {
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.011em;
+  color: var(--ink);
 }
 .decision-brief > div {
   display: grid;
@@ -971,7 +994,8 @@ button {
   padding: 16px;
   border: 1px solid rgba(47, 111, 177, 0.28);
   background:
-    linear-gradient(135deg, rgba(47, 111, 177, 0.1), transparent 58%), var(--raised);
+    linear-gradient(135deg, rgba(47, 111, 177, 0.1), transparent 58%),
+    var(--raised);
   box-shadow: inset 3px 0 0 var(--blue);
 }
 .system-brief-panel strong {

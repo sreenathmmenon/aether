@@ -1541,51 +1541,43 @@ export function App() {
           <small>{reviewerName} + Aether · shared, auditable</small>
         </div>
       </section>
+      {/* This was three columns of static explanation — "01 · Incident",
+          "02 · Agent recommendation", "03 · Human decision" — restating what
+          the canvas, the tool feed and the gate already show, and taking a
+          sixth of the first screen to do it. What a reviewer needs on
+          arrival is not a legend; it is where the decision currently stands
+          and who it is waiting on. */}
       <section
         className="decision-brief"
-        aria-label="Current decision briefing"
+        aria-label="Where the decision stands"
       >
-        <div className="brief-incident">
+        <div className="brief-state">
           <span className="brief-label">
-            {unbuilt ? "01 · Starting point" : "01 · Incident"}
-          </span>
-          <strong>
             {unbuilt
               ? "Nothing modelled yet"
               : scenarioCopy[selectedScenario].short}
-          </strong>
-          <small>
-            {entities.length === 0
-              ? "No architecture is committed yet. Build the graph first."
-              : ownSystem
-                ? "Your own architecture, modelled on this canvas."
-                : `${currentTemplate.name} — a worked example you can branch and test.`}
-          </small>
-        </div>
-        <div className="brief-recommendation">
-          <span className="brief-label">02 · Agent recommendation</span>
+          </span>
           <strong>
             {unbuilt
-              ? "Model the architecture before proposing repairs."
-              : branchCount
-                ? `${activeBranch.name} is the active evidence-backed future.`
-                : "Create isolated futures before touching production."}
+              ? "Describe a system to model it"
+              : branchCount === 0
+                ? "No repair future yet"
+                : approvalEligible
+                  ? `${activeBranch.name} is ready for a decision`
+                  : `${activeBranch.name} is not approvable yet`}
           </strong>
-          <small>
-            The agent can propose. The deterministic model must prove.
-          </small>
         </div>
-        <div className="brief-gate">
-          <span className="brief-label">03 · Human decision</span>
+        <div className="brief-waiting">
+          <span className="brief-label">Waiting on</span>
           <strong>
-            {activeBranch.status === "approved"
-              ? "Exact plan approved — ready to commit"
-              : "Evidence and explicit approval required"}
+            {unbuilt
+              ? "You, or an agent"
+              : branchCount === 0
+                ? "A repair future"
+                : approvalEligible
+                  ? `The ${reviewerName.toLowerCase()}`
+                  : "Evidence"}
           </strong>
-          <small>
-            Only the {reviewerName.toLowerCase()} can set guardrails, approve,
-            or merge.
-          </small>
         </div>
       </section>
       <section
