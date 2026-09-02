@@ -32,6 +32,70 @@ type RegisteredTool = {
 };
 
 describe("Aether WebMCP registry", () => {
+  it("names the branches an agent could use when it names one it cannot", async () => {
+    // The schema enum advertises the writable branches, but an agent that
+    // passes something outside it -- a branch merged or rolled back since it
+    // last read the tools -- was told only "This branch cannot be changed",
+    // which names the problem and no way out of it. The registry knows the
+    // answer, so it says it.
+    const live = new Set<RegisteredTool>();
+    let state = createInitialState(paymentPlatformBaseline);
+    const registry = createAetherToolRegistry(
+      (next) => {
+        state = next;
+      },
+      undefined,
+      {
+        registerTool: async (tool, options) => {
+          const entry = tool as unknown as RegisteredTool;
+          live.add(entry);
+          options?.signal?.addEventListener("abort", () => live.delete(entry));
+        },
+      },
+    );
+    await registry?.refresh(state);
+
+    const branched = dispatch(
+      state,
+      {
+        type: "CREATE_BRANCH",
+        input: { name: "Repair", intent: "highest_resilience" },
+      },
+      { id: "reviewer", kind: "human", displayName: "Reviewer" },
+    );
+    if (!branched.ok) throw new Error("fixture branch must be created");
+    state = branched.value;
+    await registry?.refresh(state);
+
+    const propose = [...live].find(
+      (tool) => tool.name === "propose_architecture_change",
+    );
+    // branch-baseline is committed, so it is outside the enum the schema
+    // published — exactly the value an agent reaches for when its view of
+    // the surface is one step stale.
+    const refusal = JSON.parse(
+      String(
+        await propose?.execute({
+          branchId: "branch-baseline",
+          entityId: "ledger",
+          property: "replicationMode",
+          value: "sync",
+        }),
+      ),
+    ) as { error: string; problems: string[]; nextAction: string };
+
+    expect(refusal.problems).toContain("This branch cannot be changed.");
+    expect(
+      refusal.nextAction,
+      "the refusal names no branch the agent could use instead",
+    ).toContain("branch-highest_resilience");
+    // And it must not be the generic sentence, which sends the agent to read
+    // a summary rather than handing it the answer.
+    expect(refusal.nextAction).not.toContain("get_architecture_summary");
+
+    registry?.dispose();
+  });
+
   it("has the tool its nextAction names registered when that call returns", async () => {
     // An agent follows the nextAction it was just handed. It does not wait
     // for the host to re-render first. create_architecture_branch answers
