@@ -577,8 +577,21 @@ button {
   cursor: pointer;
   border-radius: var(--radius);
 }
+/* The state everything else is measured against. It sits above the three
+   futures and read as a smaller version of them; it is the failing system,
+   so it carries the failure colour on its edge and its own heading weight
+   rather than competing with the trade-off figures below it. */
 .baseline-card {
-  margin: 16px 0 8px;
+  margin: var(--space-4) 0 var(--space-6);
+  padding: var(--space-4);
+  border-color: color-mix(in oklab, var(--failure) 35%, var(--border));
+  background: var(--surface-raised);
+}
+.baseline-card > strong {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-tight);
 }
 /* The three futures are the product's central insight -- three different
    answers to one failure -- and they were 201x78 boxes with the deciding
