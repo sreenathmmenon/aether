@@ -2231,3 +2231,10 @@ was already underway again.
   - One line did not. The script quoted the gate as reading `Recomputed after your edits`; the walk produced `First run on this future`. Both are real, and the difference is not arbitrary: the clause describes the **displayed run's scope**, not whether edits happened. Running every scenario fresh at the repaired version makes each a first run _at that version_. A recorder following the script would have seen a sentence that did not match and wondered what they had done wrong.
   - Corrected to what the walk produced, with the distinction written in so neither reading is a surprise on camera. A test now holds the script to clauses `gate-reason.ts` can actually produce — renaming one fails two tests.
   - This is the argument for rehearsing rather than writing from memory: the figures were all derived and correct, and the one thing a derivation could not check was whether the sentence appears in the situation the script puts the recorder in.
+
+## Milestone 174 — The record row is the thesis in one line
+
+- [x] **M174.1 — Finish the rehearsal through commit and rollback** `DONE`
+  - Evidence: the remaining beats walked exactly as scripted. Approve relabels the control to `Commit approved future →`, committing shrinks the surface to **seven tools**, `Rollback this merge` appears as a human control, and no registered tool matches approve, merge, rollback or remove.
+  - The approval record turned out to say more than the script did. It reads **`Sreenath approved the exact plan — 4 clean scenarios · worst 97.11%`**: a named person, the evidence they had, and the worst case they accepted, in one row. That is the whole argument of the product, written by the product, and the film now points at it rather than paraphrasing.
+  - The sentence is composed with a singular/plural template rather than written out, so the test matches the construction — a first version asserted the rendered phrase and failed for that reason. Dropping the worst-case figure from the record now fails.

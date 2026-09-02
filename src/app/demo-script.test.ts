@@ -287,4 +287,27 @@ describe("the demo script quotes what the product reports", () => {
       ).toContain(clause);
     expect(flat).toContain("First run on this future");
   });
+
+  it("quotes an approval record the interface actually builds", () => {
+    // The record row is the thesis in one line — a named person, the
+    // evidence count, and the worst case they accepted — and the film points
+    // at it. The interface composes that sentence, so the script cannot
+    // quote a shape it does not produce.
+    const flat = demo.replace(/\s+/g, " ");
+    expect(flat).toContain("approved the exact plan");
+    expect(flat, "the script no longer quotes the evidence summary").toMatch(
+      /clean scenarios/,
+    );
+    // Both halves come from App.tsx rather than the script's imagination.
+    // The summary is composed with a singular/plural template rather than
+    // written out, so match the construction, not the rendered sentence.
+    expect(appSource).toContain("approved the exact plan");
+    expect(
+      appSource,
+      "the record no longer summarises the evidence behind an approval",
+    ).toMatch(/clean \$\{[^}]*"scenario" : "scenarios"\}/);
+    expect(appSource, "the record no longer states the worst case").toMatch(
+      /worst \$\{worst\.toFixed\(2\)\}%/,
+    );
+  });
 });

@@ -117,7 +117,11 @@ and **`Human approve exact plan`** becomes enabled.
 Say: _no approve tool exists for the agent. Not gated — absent. Twelve
 tools are registered and not one of them can commit this._
 
-Click approve. The record shows **`Sreenath approved the exact plan`**.
+Click approve. The record entry is the whole thesis in one row:
+
+> "Sreenath approved the exact plan — 4 clean scenarios · worst 97.11%"
+
+A named person, the evidence they had, and the worst case they accepted.
 Then commit. The surface **shrinks to seven tools**: a committed
 architecture is read-only to an agent. **`Rollback this merge`** appears
 as a human control.
