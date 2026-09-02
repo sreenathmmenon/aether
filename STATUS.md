@@ -2860,3 +2860,17 @@ Two of the three references ship a light ground; Vercel — the supposedly dark 
 - [x] **M230.4 — Raw tool identifiers on the human surface** `DONE`
   - The capability panel listed `get_decision_record`, `trace_architecture_dependency` to a reviewer who has not connected an agent — the same protocol vocabulary removed from the header, in the one panel whose job is telling a person what a machine may do to their system. Now phrases, with the identifier beneath for engineers.
   - The map is held to the published surface, so a tool added without a phrase fails rather than appearing raw in front of a judge. One contrast defect introduced and fixed in the same pass: `--ink-subtle` clears 4.5:1 on ivory and lands at **4.48** on this panel's tinted ground.
+
+## Milestone 231 — Making the gate run after the last edit
+
+- [x] **M231.1 — A pre-commit hook, because the gate was being run before the edit that broke things** `DONE`
+  - A splice produced `display: flex;f;` and silently dropped a `grid-area` in the same pass. The token gate would have caught the second — and it had been run _before_ that edit and not after, so the layout shipped half-applied for several rounds.
+  - `.githooks/pre-commit` now runs formatting, types and the design system: the checks fast enough not to be worth bypassing. Tests and build stay in `npm run gate`.
+  - **`npx prettier --write` silently reformats broken CSS**, which is why the corruption looked clean at the time. `--check` rejects it, and the hook uses `--check`. Verified against both defects that actually shipped.
+  - `check-authorship.mjs` refuses a missing or weakened pre-commit hook, the same way it already guards the commit-msg hook. Both directions tested.
+- [x] **M231.2 — The grid-area guard was counting names, not children** `DONE`
+  - With two children legitimately sharing an area, dropping one child's declaration still left every _name_ matched while that child fell back to auto-placement — **the exact defect the guard existed to catch.** It now requires each of the dock's four children to declare its own, verified by removing each in turn.
+  - **Sixth instance** of the recurring lesson: a check that restates or infers its scope can be disarmed by the change it exists to catch.
+- [x] **M231.3 — Two more of my own probes were wrong** `DONE`
+  - `lastIndexOf` matched a descendant selector (`.review-actions .approve-button`) and reported a missing grid-area that was present.
+  - A shell loop passed its search string through `echo`, stripping leading whitespace, so two of four removals silently no-opped and looked uncaught. Recorded because a probe that reports a defect where none exists costs as much as one that misses a real defect — and this session has now produced both kinds.
