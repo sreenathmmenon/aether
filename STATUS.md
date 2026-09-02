@@ -2844,3 +2844,19 @@ Two of the three references ship a light ground; Vercel — the supposedly dark 
 - [x] **M229.3 — A measurement that lied** `DONE`
   - Constraining the shell's width to simulate a narrow viewport **does not trigger media queries**, so it reported the hero as stacked at every width including 1502px. Only reading the real viewport showed the layout was correct. Recorded because a probe that reports a defect where none exists costs as much as one that misses a real defect.
 - **Both defects were found by screenshotting the deployed origin and looking at it** — not by reading CSS, and not by any test. That is now the third time in this stretch, after the blank approve button.
+
+## Milestone 230 — Two empty bands, found by scrolling to bands nobody had looked at
+
+- [x] **M230.1 — 180px of white under the canvas** `DONE`
+  - The studio row is as tall as its tallest column. The canvas is capped at 78vh so a large graph cannot inflate the page, but the side panels grew to whatever their content needed — leaving an empty band on the first screen a reviewer scrolls to. The row is now bounded with the canvas and the panels scroll inside it. **180px → 0.**
+  - Three attempts, and **the second made it worse**: bounding the row without bounding the panels let the agent panel grow 180px past it and collide with the section below. A grid item's default `min-height` is its content, so `overflow-y` had nothing to act against. **Only the screenshot caught the collision** — no numeric measurement being taken would have.
+- [x] **M230.2 — 212px of white in the review dock** `DONE`
+  - The dock declared two rows — `diff` above `earlier` — but the earlier-changes note only renders once there is history, so on a fresh baseline the second row was empty and the diff column sat 46px tall inside a 283px dock with one stranded line in it. One row now; the note is a footnote inside the diff column, and the empty-state message centres in the space.
+- [x] **M230.3 — Three self-inflicted errors, recorded** `DONE`
+  - A splice targeted the wrong `.diff-list` of two and produced `display: flex;f;` — **broken CSS that prettier accepted as correctly formatted.**
+  - The same splice silently dropped `grid-area: diff`, half-applying the dock's named areas. **The gate would have caught it; I had run the gate before that edit and not after.**
+  - `align-self: start` looked like the fix and only moved the gap below the cell rather than removing it.
+  - The area guard was restating its own list, so it demanded `earlier` after the grid stopped naming it. It now derives the areas from the rule and fails if the rule declares none — the same "derive, don't restate" lesson recorded four times before.
+- [x] **M230.4 — Raw tool identifiers on the human surface** `DONE`
+  - The capability panel listed `get_decision_record`, `trace_architecture_dependency` to a reviewer who has not connected an agent — the same protocol vocabulary removed from the header, in the one panel whose job is telling a person what a machine may do to their system. Now phrases, with the identifier beneath for engineers.
+  - The map is held to the published surface, so a tool added without a phrase fails rather than appearing raw in front of a judge. One contrast defect introduced and fixed in the same pass: `--ink-subtle` clears 4.5:1 on ivory and lands at **4.48** on this panel's tinted ground.
