@@ -68,9 +68,13 @@ const misuse = [
   // --muted as a fill is legitimate on a dot a few pixels across; it is a
   // surface only when something sits on top of it, which a 7px dot cannot
   // have. Flag it only on rules that also set a text colour.
+  // --muted as a *fill* is legitimate: a status dot, or a badge whose own
+  // text is the dark ground. What it must never be is the surface under
+  // text that is itself a light colour, which is unreadable. So this
+  // matches only where the pairing actually collides.
   [
-    /color:\s*var\(--[a-z-]+\);[^}]*background(-color)?:\s*var\(--muted\)/g,
-    "--muted is a text colour, not a surface for text",
+    /color:\s*var\(--(?:ink|muted|blue-text|cyan-text|coral-text|green-text|amber-text)\);[^}]*background(-color)?:\s*var\(--muted\)/g,
+    "--muted is a text colour, not a surface for light text",
   ],
 ];
 let crossed = 0;
