@@ -2198,3 +2198,11 @@ was already underway again.
   - Evidence: every claim in the Devpost description was verified accurate in M136 and still holds. What it lacked was the thing that actually persuades — the bottleneck chain M167 discovered was the strongest material in the product and appeared nowhere in the text a judge reads before watching anything.
   - Added in ninety seconds' worth: the strongest repair resolves the opening outage and is **still refused**, a spike breaches it on two capacity deficits, and repairing those reveals a third on reconciliation hidden behind them. That is also the clearest argument for why the gate refuses before it opens rather than rubber-stamping the best-looking option.
   - Verified against the deployed origin before shipping the claim: on a cleared workspace the regional outage is clean, the spike reports `Primary Ledger capacity deficit: 4,500 RPS` and `Authentication capacity deficit: 4,000 RPS`, and raising both reveals `Reconciliation capacity deficit: 2,000 RPS`. The description asserts nothing the product does not do.
+
+## Milestone 170 — The product tells the story the film tells
+
+- [x] **M170.1 — A green panel that still names what blocks you** `DONE`
+  - Evidence: walking the bottleneck chain mid-repair raised a question — sitting on the Regional outage tab, which is clean, does a judge have any way to know a traffic spike still breaches? The product already answers it. Directly beneath `No SLO violations in Regional outage.` it renders **`Traffic spike still blocks approval: Reconciliation capacity deficit: 2,000 RPS`**.
+  - A first probe suggested it was missing, because only the spike had been run at that branch version and there were no current runs to compare against. Running the full set the way the film does showed the warning exactly where it should be. The defect was in the probe, and checking rather than concluding is what separated "the product hides this" from "the product says it plainly".
+  - The script now points at it, because it is the clearest possible demonstration that the gate is not rubber-stamping a convenient scenario — you cannot look at a passing panel and miss what is blocking you.
+  - The sentence is built by the interface, so a test holds the script and the component to the same wording. Changing the panel's phrasing fails.

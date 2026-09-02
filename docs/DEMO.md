@@ -89,6 +89,15 @@ behind the first two:
 Say: _the model found the next constraint instead of declaring victory.
 That is the difference between a diagram and a simulation._
 
+Worth pointing at while you do: the evidence panel is showing **Regional
+outage**, which is clean — and directly beneath "No SLO violations" it
+still says
+
+> "Traffic spike still blocks approval: Reconciliation capacity deficit: 2,000 RPS"
+
+The product will not let a passing scenario stand in for the others. You
+cannot look at a green panel and miss what is blocking you.
+
 Raise reconciliation, re-run all four scenarios one at a time.
 
 ### 1:55–2:20 — The gate opens, and only for a person

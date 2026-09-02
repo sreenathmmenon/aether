@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import demo from "../../docs/DEMO.md?raw";
 import submission from "../../docs/SUBMISSION.md?raw";
+import appSource from "./App.tsx?raw";
 import { createInitialState, dispatch } from "@core/branch-engine";
 import { paymentPlatformBaseline } from "../fixtures/payment-platform/baseline";
 import { deriveGraph } from "@core/branch-engine";
@@ -164,6 +165,21 @@ describe("the demo script quotes what the product reports", () => {
   it("names the live origin a recorder opens", () => {
     expect(quoted("https://webmcp-production-38e5\\.up\\.railway\\.app")).toBe(
       "https://webmcp-production-38e5.up.railway.app",
+    );
+  });
+
+  it("points at the cross-scenario warning the panel renders", () => {
+    // Sitting on a clean scenario tab, the evidence panel still names what
+    // is blocking approval elsewhere — a judge cannot look at a green panel
+    // and miss the remaining bottleneck. The script should point at it, and
+    // the sentence it quotes has to be the one the interface renders.
+    const flat = demo.replace(/\s+/g, " ");
+    expect(flat, "the script no longer points at the warning").toContain(
+      "still blocks approval",
+    );
+    // The interface builds that sentence, so the two must agree on wording.
+    expect(appSource, "the panel no longer renders that sentence").toContain(
+      "still blocks approval",
     );
   });
 
