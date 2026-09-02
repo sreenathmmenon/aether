@@ -502,14 +502,41 @@ describe("the interface honours the ARIA it declares", () => {
     // against a 623 pixel viewport. "5 tools" read as everything the agent
     // can ever do, when it is what this state registers and the count grows
     // to twelve once a repair future exists.
+    // The phrasing changed from "WebMCP live · 5 state-aware tools" to
+    // "Your agent can do 5 things here" — a protocol name and a count is
+    // developer vocabulary, and this is a product surface. What must hold is
+    // unchanged: the count reads as this state's, not as everything the
+    // agent can ever do.
     const chip = appSource.slice(
       appSource.indexOf("aria-label={\n              webMcp.available"),
-      appSource.indexOf('"WebMCP not detected"}'),
+      // The visible label, which closes the chip. lastIndexOf because the
+      // same words appear in the accessible name a few lines above, and
+      // slicing to the first occurrence cut the block in half.
+      appSource.lastIndexOf('"No agent connected"}') + 24,
     );
-    expect(chip).toMatch(/state-aware tools/);
-    // And the accessible name says what the phrase means, since a count on
-    // its own does not carry it.
-    expect(chip).toMatch(/surface changes as the architecture does/);
+    expect(chip).toMatch(/Your agent can do \$\{toolCount\} things/);
+    // And the accessible name says the surface is state-dependent, since a
+    // count on its own does not carry that.
+    expect(chip).toMatch(/changes as the architecture does/);
+    // No protocol vocabulary in the text a person reads. Matched inside
+    // string literals only -- `webMcp.available` is a variable name, and
+    // flagging code would make this test cry wolf.
+    const literals = [
+      ...chip
+        // Comments explain why the wording changed and legitimately quote
+        // the old phrasing; only what renders is under test.
+        .replace(/\/\/[^\n]*/g, "")
+        .replace(/\/\*[\s\S]*?\*\//g, "")
+        // `${webMcp.reason}` is an interpolated variable, not copy. Leaving
+        // it in made this test flag its own identifier and cry wolf.
+        .replace(/\$\{[^}]*\}/g, "")
+        .matchAll(/`([^`]*)`|"([^"]*)"/g),
+    ]
+      .map((m) => m[1] ?? m[2] ?? "")
+      .join(" ");
+    expect(literals, "developer vocabulary returned to the chip").not.toMatch(
+      /WebMCP|state-aware|tools registered/i,
+    );
     // Both halves read the same live count rather than a second source.
     expect(chip.match(/toolCount/g)?.length ?? 0).toBeGreaterThanOrEqual(2);
   });

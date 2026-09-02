@@ -1451,8 +1451,8 @@ export function App() {
                 ? // "state-aware" is doing real work and a count alone does
                   // not carry it: the surface is this size for this state and
                   // changes with it.
-                  `WebMCP live. ${toolCount} tools registered for the current state; the surface changes as the architecture does.`
-                : `WebMCP not detected. ${webMcp.reason ?? "This browser does not expose a model context on this page."}`
+                  `Your agent can do ${toolCount} things here. What it may do changes as the architecture does.`
+                : `No agent connected. ${webMcp.reason ?? "This browser cannot connect an agent to this page. Everything here still works without one."}`
             }
             /* The count moving from five to twelve is the state-dependent
                registration proving itself, and it happened silently. Measured
@@ -1468,8 +1468,14 @@ export function App() {
                 // registration this submission is built on. The panel that
                 // explains that sits below the fold, so the word doing the
                 // work belongs in the chip a reviewer sees first.
-                `WebMCP live · ${toolCount} state-aware tools`
-              : "WebMCP not detected"}
+                // "WebMCP live · 5 state-aware tools" is a protocol name and
+                // a count — developer vocabulary on a product surface, and
+                // the third line a person reads. What a reviewer needs to
+                // know is what the agent may do to their system right now.
+                // The count stays because it is the thing that visibly
+                // changes, but it is now attached to a verb.
+                `Your agent can do ${toolCount} things here`
+              : "No agent connected"}
           </span>
           {toolDelta !== undefined && (
             <span
@@ -2777,10 +2783,10 @@ export function App() {
             </div>
           )}
           <div className="webmcp-status">
-            <i /> <span>WebMCP</span>
+            <i /> <span>Agent</span>
             <strong>
               {webMcp.available
-                ? `${toolCount} state-aware tools`
+                ? `can do ${toolCount} things`
                 : `${offlineToolSurface.length} tools published · no agent detected`}
             </strong>
           </div>
@@ -3324,7 +3330,7 @@ export function App() {
                     already running a supported Chrome was told to install
                     Chrome. Say which of the two situations they are in. */}
                 {webMcp.available
-                  ? `WebMCP live · ${toolCount} state-aware tools on this page`
+                  ? `Your agent can do ${toolCount} things on this page`
                   : `${webMcp.reason ?? "WebMCP is unavailable here"}. Everything below works without an agent.`}
               </small>
             </div>
