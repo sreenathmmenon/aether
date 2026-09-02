@@ -24,4 +24,45 @@ Audit date: 2026-09-01. This document converts the current WebMCP and WebMCP Cha
 
 The project cannot claim WebMCP compliance or challenge readiness until every row has evidence. A successful frontend build alone does not satisfy any runtime, security, evaluation, or submission row.
 
+## The one check that cannot be run from a development environment
+
+Everything else here is verified against the deployed origin. This is not,
+because it requires changing a browser flag, and it is the difference
+between "the token is served" and "the token is what activates the API".
+
+Takes about two minutes:
+
+1. Open `chrome://flags/#enable-webmcp-testing` and set it to **Default**
+   — not Enabled. Enabled turns the API on everywhere, which is exactly
+   what masks the thing being tested. Relaunch Chrome.
+2. Open the live app and run in the console:
+
+   ```js
+   typeof document.modelContext;
+   ```
+
+   Expected: `"object"`. The origin trial is doing the work; the flag is off.
+
+3. Open any unrelated origin — `https://example.com` will do — and run the
+   same line.
+
+   Expected: `"undefined"`. If it returns `"object"` there, the flag is
+   still Enabled and step 2 proved nothing.
+
+4. Back on the live app, confirm the surface is real rather than a stub:
+
+   ```js
+   (await document.modelContext.getTools()).length;
+   ```
+
+   Expected: `5` on a fresh workspace, `12` once a repair future exists.
+
+What this establishes that a served header does not: the `Origin-Trial`
+response header is present and decodes correctly for this exact origin —
+both already verified — but only a flag-disabled profile shows that Chrome
+**accepted** it. The token decodes to
+`https://webmcp-production-38e5.up.railway.app:443`, feature `WebMCP`, and
+its expiry is checked at server startup, so a mismatch or an expiry shows
+in the deploy logs rather than only as a silent absence here.
+
 Position as of 2026-09-01: every implementation row is verified against the deployed origin rather than a local build. Two items remain, and neither is an implementation gap — confirming Chrome activation in a profile with `chrome://flags/#enable-webmcp-testing` set to Default, and producing the two external submission artifacts.

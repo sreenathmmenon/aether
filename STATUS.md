@@ -2238,3 +2238,12 @@ was already underway again.
   - Evidence: the remaining beats walked exactly as scripted. Approve relabels the control to `Commit approved future →`, committing shrinks the surface to **seven tools**, `Rollback this merge` appears as a human control, and no registered tool matches approve, merge, rollback or remove.
   - The approval record turned out to say more than the script did. It reads **`Sreenath approved the exact plan — 4 clean scenarios · worst 97.11%`**: a named person, the evidence they had, and the worst case they accepted, in one row. That is the whole argument of the product, written by the product, and the film now points at it rather than paraphrasing.
   - The sentence is composed with a singular/plural template rather than written out, so the test matches the construction — a first version asserted the rendered phrase and failed for that reason. Dropping the worst-case figure from the record now fails.
+
+## Milestone 175 — The one check nobody could run
+
+- [x] **M175.1 — Described in four places, runnable in none** `DONE`
+  - Acceptance: the flag-disabled Chrome check is a two-minute procedure with expected outputs, not a research exercise.
+  - Evidence: this is the single compliance row that cannot be verified from a development environment, because it requires changing a browser flag. It was mentioned in `WEBMCP_COMPLIANCE.md`, `WEBMCP.md` and twice in this file — always as a thing still outstanding, never as steps someone could follow.
+  - It is now four numbered steps with the exact console lines and what each should print. Two details matter and were easy to get wrong: the flag must be set to **Default**, not Enabled, because Enabled turns the API on everywhere and masks precisely what the check establishes; and step three checks an **unrelated origin** returns `undefined`, without which step two proves nothing.
+  - The expected values were confirmed live before shipping them — `typeof document.modelContext` is `"object"` and a fresh workspace reports five tools. A procedure that tells a reader to expect the wrong number teaches them to distrust a correct result.
+  - What it establishes beyond what is already verified: the `Origin-Trial` header is served and decodes to this exact origin, both checked, but only a flag-disabled profile shows Chrome **accepted** it. Quoting a wrong count or dropping the negative control each fails a test.

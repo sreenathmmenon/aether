@@ -4,6 +4,7 @@ import submission from "../../docs/SUBMISSION.md?raw";
 import appSource from "./App.tsx?raw";
 import readme from "../../README.md?raw";
 import gateSource from "./gate-reason.ts?raw";
+import compliance from "../../docs/WEBMCP_COMPLIANCE.md?raw";
 import engineSource from "@simulation/engine?raw";
 import baselineSource from "../fixtures/payment-platform/baseline.ts?raw";
 import { createInitialState, dispatch } from "@core/branch-engine";
@@ -308,6 +309,29 @@ describe("the demo script quotes what the product reports", () => {
     ).toMatch(/clean \$\{[^}]*"scenario" : "scenarios"\}/);
     expect(appSource, "the record no longer states the worst case").toMatch(
       /worst \$\{worst\.toFixed\(2\)\}%/,
+    );
+  });
+
+  it("gives the flag check expected values the product produces", () => {
+    // The one compliance row that cannot be verified from a development
+    // environment, because it needs a browser flag changed. It was described
+    // in four places and runnable in none, so it is now a procedure with
+    // expected outputs — and those outputs have to be the real ones or the
+    // reader concludes the wrong thing from a mismatch.
+    const flat = compliance.replace(/\s+/g, " ");
+    expect(flat, "the procedure no longer names the flag").toContain(
+      "chrome://flags/#enable-webmcp-testing",
+    );
+    // Default, not Enabled — Enabled turns the API on everywhere and masks
+    // exactly what the check exists to establish.
+    expect(flat).toMatch(/set it to \*\*Default\*\* — not Enabled/);
+    // The surface sizes it tells the reader to expect are the registry's.
+    // Verified live: "object" and 5 on a fresh workspace.
+    expect(flat).toContain("`5` on a fresh workspace");
+    expect(flat).toContain("`12` once a repair future exists");
+    // And the negative control, without which step 2 proves nothing.
+    expect(flat, "the procedure has lost its negative control").toContain(
+      "example.com",
     );
   });
 });
