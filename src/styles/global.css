@@ -398,7 +398,7 @@ button {
   line-height: 1.15;
 }
 .decision-brief small {
-  color: #5e6877;
+  color: var(--muted);
   font-size: 12px;
   line-height: 1.4;
 }
@@ -540,7 +540,7 @@ button {
   min-height: 38px;
   padding: 8px 10px;
   border: 0;
-  color: #43516a;
+  color: var(--muted);
   background: transparent;
   font-size: 12.5px;
   font-weight: 700;
@@ -704,7 +704,7 @@ button {
   animation: impact-arrive 0.5s cubic-bezier(0.22, 1.2, 0.36, 1);
 }
 .architecture-node.node-affected small {
-  color: #a63b32;
+  color: var(--coral-text);
 }
 /* The newest node in a running trace pulses so the eye follows propagation. */
 .architecture-node.node-propagating {
@@ -806,7 +806,7 @@ button {
   letter-spacing: 0.01em;
 }
 .causal-timeline .trace-active small {
-  color: #a63b32;
+  color: var(--coral-text);
 }
 .causal-timeline i {
   margin-top: 3px;
@@ -897,7 +897,7 @@ button {
   margin: 18px 0;
   padding: 12px 13px;
   border-left: 2px solid var(--cyan);
-  color: #405066;
+  color: var(--muted);
   background: rgba(17, 167, 184, 0.06);
   font-size: 12px;
   line-height: 1.45;
@@ -930,7 +930,7 @@ button {
   gap: 6px;
   align-items: center;
   padding: 10px 11px;
-  color: #405066;
+  color: var(--muted);
   border: 1px solid var(--line);
   border-top: 0;
   background: rgba(17, 167, 184, 0.045);
@@ -944,7 +944,7 @@ button {
 }
 .simulation-provenance code {
   padding: 2px 5px;
-  color: #314156;
+  color: var(--muted);
   border: 1px solid rgba(17, 167, 184, 0.24);
   border-radius: 2px;
   background: var(--raised);
@@ -1031,7 +1031,7 @@ button {
   gap: 7px;
   margin: 0;
   padding-left: 19px;
-  color: #485466;
+  color: var(--muted);
   font-size: 12px;
   line-height: 1.35;
 }
@@ -1190,7 +1190,7 @@ button {
   font-size: 12px;
 }
 .thread-heading span {
-  color: #5e6877;
+  color: var(--muted);
   font-size: 12px;
 }
 .thread-notes {
@@ -1221,7 +1221,7 @@ button {
 }
 .decision-note p {
   margin: 7px 0;
-  color: #34445c;
+  color: var(--muted);
   font-size: 12.5px;
   line-height: 1.45;
 }
@@ -1305,7 +1305,7 @@ button {
 }
 .decision-replay li span,
 .decision-replay li small {
-  color: #5e6877;
+  color: var(--muted);
   font-size: 12px;
 }
 .decision-replay li small {
@@ -1806,7 +1806,7 @@ button {
 .intro-lede {
   margin: 0 0 18px;
   max-width: 54ch;
-  color: #43516a;
+  color: var(--muted);
   font-size: 14px;
   line-height: 1.55;
 }
@@ -2100,7 +2100,7 @@ button {
   border-left: 2px solid rgba(17, 167, 184, 0.35);
 }
 .tool-inventory code {
-  color: #35485f;
+  color: var(--muted);
   font-family: "SFMono-Regular", Consolas, monospace;
   font-size: 12px;
 }
@@ -2140,7 +2140,7 @@ button {
   padding: 11px 13px;
   border-left: 2px solid var(--cyan);
   background: rgba(17, 167, 184, 0.06);
-  color: #35485f;
+  color: var(--muted);
   font-size: 12.5px;
   line-height: 1.5;
 }
