@@ -621,14 +621,21 @@ export function dispatch(
       .map((entity) => entity.id);
     const bandIndex = Math.max(0, regionOrder.indexOf(command.input.regionId));
     // Rows clear a card's height (110 units) with room to spare.
-    // The first band starts low enough that its region label clears the
-    // failure beacon pinned at the top of the canvas -- they overlapped at
-    // "PRIMARY" over "Primary unavailable".
-    const bands = [
-      [190, 310],
-      [470, 590],
-    ];
-    const rows = bands[Math.min(bandIndex, bands.length - 1)]!;
+    // Two bands inside the usable canvas: it starts below the failure beacon
+    // pinned at the top -- their labels collided at "PRIMARY" over "Primary
+    // unavailable" -- and ends at the causal timeline pinned across the
+    // floor, which leaves 397 units of safe centre position rather than the
+    // full 700.
+    // One row each, not two. A region band is 196 units tall and needs 30
+    // above it for its label, so two bands want 226 units of separation --
+    // there is room for two rows on the stage, not four. Four columns give
+    // each region four slots, and a fifth component in the same region falls
+    // back to the other band rather than stacking on its neighbour.
+    const bands = [[220], [440]];
+    const own = bands[Math.min(bandIndex, bands.length - 1)]!;
+    // Its own band first, then the others, so a crowded region spills rather
+    // than stacking two cards in the same slot.
+    const rows = [...own, ...bands.flat().filter((row) => !own.includes(row))];
     // A card is about 230 x 110 units on this 1000-unit canvas, so two of
     // them clear each other only beyond those distances. The thresholds were
     // 150 x 120 -- 80 units short horizontally -- and a fifth component

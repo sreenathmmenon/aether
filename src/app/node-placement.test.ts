@@ -26,6 +26,18 @@ const nodeHalfWidth = 115;
  */
 const nodeHeight = 144;
 
+/**
+ * The lowest a card's centre may sit, in canvas units.
+ *
+ * The causal timeline is pinned across the canvas floor, so the usable area
+ * ends at its top edge, not at the canvas edge. Nothing knew that: every
+ * shipped system placed its bottom row underneath it, the flagship payment
+ * platform included. The timeline's own cap came down from 118px to 82px to
+ * make room, because two region bands need 226 units of separation and could
+ * not fit above the taller one.
+ */
+const lowestCentre = 445;
+
 describe("every shipped system lays out without collisions", () => {
   // The agent's placement grid is guarded below, but the seeded fixtures
   // carry hand-written positions that nothing checked: ride-hailing shipped
@@ -51,6 +63,12 @@ describe("every shipped system lays out without collisions", () => {
             Math.abs(a.position.y - b.position.y) >= nodeHeight;
           expect(apart, `${a.name} overlaps ${b.name}`).toBe(true);
         }
+      }
+      for (const component of components) {
+        expect(
+          component.position.y,
+          `${component.name} sits under the causal timeline`,
+        ).toBeLessThanOrEqual(lowestCentre);
       }
     });
   }
@@ -116,6 +134,14 @@ describe("agent-placed components stay on the canvas", () => {
         expect(row, `row ${row} clips the top edge`).toBeGreaterThanOrEqual(
           halfHeight,
         );
+      }
+    }
+    for (const rows of bands) {
+      for (const row of rows) {
+        expect(
+          row,
+          `band row ${row} sits under the causal timeline`,
+        ).toBeLessThanOrEqual(lowestCentre);
       }
     }
     // And the bands themselves must not overlap, or the regions collide

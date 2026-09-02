@@ -1306,8 +1306,12 @@ button {
   background: var(--surface-raised);
   font-size: 12px;
   /* A large architecture can produce a chain of hundreds. Without a ceiling
-     the strip grows until it covers the canvas it is describing. */
-  max-height: 118px;
+     the strip grows until it covers the canvas it is describing.
+     118px took 29% of a 401px stage, and the graph needs that floor: a
+     region band is 196 units tall and needs 30 above it for its label, so
+     two banded rows want 226 units of separation and could not fit above a
+     timeline starting at 469. It scrolls, so a shorter box loses nothing. */
+  max-height: 82px;
   overflow-y: auto;
 }
 .causal-timeline li {

@@ -76,7 +76,12 @@ export const paymentPlatformBaseline: ArchitectureGraph = {
       id: "queue",
       kind: "queue",
       name: "Bengaluru Queue",
-      position: { x: 470, y: 430 },
+      // The bottom row answers two constraints at once. The causal timeline
+      // is pinned across the canvas floor and leaves 397 units of safe
+      // centre position -- a row at 430 drew these cards underneath it --
+      // and the region band below needs room for its own label, which a row
+      // at 380 did not leave: the two bands overlapped by 21px.
+      position: { x: 470, y: 440 },
       properties: {
         regionId: "region-bengaluru",
         peakRps: 8000,
@@ -92,7 +97,7 @@ export const paymentPlatformBaseline: ArchitectureGraph = {
       id: "reconciliation",
       kind: "service",
       name: "Reconciliation",
-      position: { x: 740, y: 430 },
+      position: { x: 740, y: 440 },
       properties: {
         regionId: "region-bengaluru",
         peakRps: 8000,

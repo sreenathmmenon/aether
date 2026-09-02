@@ -106,7 +106,12 @@ export const rideHailingBaseline: ArchitectureGraph = {
       id: "events",
       kind: "queue",
       name: "Trip Events",
-      position: { x: 430, y: 450 },
+      // The bottom row answers two constraints at once. The causal timeline
+      // is pinned across the canvas floor and leaves 397 units of safe
+      // centre position -- a row at 430 drew these cards underneath it --
+      // and the region band below needs room for its own label, which a row
+      // at 380 did not leave: the two bands overlapped by 21px.
+      position: { x: 430, y: 440 },
       properties: {
         regionId: "region-analytics",
         peakRps: 18000,
@@ -122,7 +127,7 @@ export const rideHailingBaseline: ArchitectureGraph = {
       id: "pricing",
       kind: "service",
       name: "Surge Pricing",
-      position: { x: 700, y: 450 },
+      position: { x: 700, y: 440 },
       properties: {
         regionId: "region-analytics",
         peakRps: 12000,
