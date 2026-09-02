@@ -5,8 +5,8 @@ body {
   margin: 0;
   min-width: 320px;
   color: var(--ink);
-  background: var(--panel);
-  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  background: var(--surface);
+  font-family: var(--font-body);
 }
 button {
   font: inherit;
@@ -18,7 +18,7 @@ button {
    either way, because it cannot tab through the interface.
    :focus-visible means a mouse click never draws a ring. */
 :where(button, a[href], input, select, textarea, [tabindex]):focus-visible {
-  outline: 2px solid var(--blue);
+  outline: 2px solid var(--human);
   outline-offset: 2px;
   border-radius: 4px;
 }
@@ -30,7 +30,7 @@ button {
       rgba(24, 180, 185, 0.12),
       transparent 22rem
     ),
-    var(--paper);
+    var(--surface);
 }
 .aether-topbar {
   height: 68px;
@@ -38,8 +38,8 @@ button {
   display: flex;
   align-items: center;
   gap: 30px;
-  border-bottom: 1px solid var(--line);
-  background: rgb(18 27 46 / 0.88);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-raised);
 }
 .brand {
   display: inline-flex;
@@ -55,10 +55,10 @@ button {
   width: 13px;
   height: 13px;
   transform: rotate(45deg);
-  background: linear-gradient(135deg, var(--cyan), var(--orange));
+  background: linear-gradient(135deg, var(--agent), var(--branch));
 }
 .breadcrumb {
-  color: var(--muted);
+  color: var(--ink-muted);
   font-size: 13px;
 }
 .breadcrumb i {
@@ -66,7 +66,7 @@ button {
   width: 4px;
   height: 4px;
   margin: 0 10px 2px;
-  background: var(--orange);
+  background: var(--branch);
   border-radius: 50%;
 }
 .header-status {
@@ -76,7 +76,7 @@ button {
   margin-left: auto;
 }
 .connection {
-  color: var(--muted);
+  color: var(--ink-muted);
   font-size: 12px;
 }
 .connection::before {
@@ -86,11 +86,11 @@ button {
   height: 7px;
   margin-right: 7px;
   border-radius: 50%;
-  background: var(--muted);
+  background: var(--ink-muted);
 }
 .connection-live::before {
-  background: var(--green);
-  box-shadow: 0 0 0 4px rgba(36, 135, 101, 0.12);
+  background: var(--verified);
+  box-shadow: 0 0 0 4px rgb(15 144 128 / 0.12);
 }
 /* The newest agent tool call, surfaced in the header so WebMCP activity is
    visible in the opening viewport rather than only in the panel below it. */
@@ -100,15 +100,15 @@ button {
   gap: 6px;
   padding: 4px 9px;
   border-radius: 999px;
-  border: 1px solid rgba(47, 106, 191, 0.3);
-  background: rgba(47, 106, 191, 0.09);
+  border: 1px solid rgb(27 77 255 / 0.3);
+  background: rgb(27 77 255 / 0.09);
   animation: header-call-in 260ms ease-out;
   max-width: 240px;
 }
 .header-call code {
   font-size: 12px;
   font-weight: 700;
-  color: var(--blue);
+  color: var(--human);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -128,7 +128,7 @@ button {
   background: rgba(193, 74, 60, 0.09);
 }
 .header-call-rejected code {
-  color: var(--coral-text);
+  color: var(--failure-text);
 }
 @keyframes header-call-in {
   from {
@@ -147,7 +147,7 @@ button {
 }
 /* An absent measurement, distinct from a measured zero. */
 .metric-empty {
-  color: var(--muted);
+  color: var(--ink-muted);
   opacity: 0.55;
 }
 /* The way in, on an otherwise empty canvas. */
@@ -161,10 +161,10 @@ button {
   justify-items: center;
   width: min(430px, 78%);
   padding: 26px 28px;
-  border: 1px solid rgba(17, 36, 64, 0.11);
+  border: 1px solid rgb(22 32 46 / 0.11);
   border-radius: 12px;
-  background: rgb(18 27 46 / 0.96);
-  box-shadow: 0 16px 40px rgba(17, 36, 64, 0.08);
+  background: var(--surface-raised);
+  box-shadow: 0 16px 40px rgb(22 32 46 / 0.08);
   text-align: center;
 }
 .canvas-empty strong {
@@ -175,12 +175,12 @@ button {
 }
 .canvas-empty p {
   margin: 0;
-  color: var(--muted);
+  color: var(--ink-muted);
   font-size: 13px;
   line-height: 1.5;
 }
 .canvas-empty small {
-  color: var(--muted);
+  color: var(--ink-muted);
   font-size: 12px;
 }
 .canvas-empty-cta {
@@ -188,36 +188,36 @@ button {
   padding: 9px 17px;
   border: none;
   border-radius: 999px;
-  color: var(--void);
-  background: var(--blue);
+  color: var(--surface-sunken);
+  background: var(--human);
   font-size: 13px;
   font-weight: 750;
   cursor: pointer;
 }
 .canvas-empty-cta:hover {
-  background: #1d3557;
+  background: var(--structure);
 }
 /* The evidence and the moment behind a recorded decision. */
 .replay-evidence {
   display: block;
   margin-top: 2px;
-  color: var(--blue);
+  color: var(--human);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 .replay-evidence + time {
   display: block;
   margin-top: 2px;
-  color: var(--muted);
+  color: var(--ink-muted);
   font-variant-numeric: tabular-nums;
 }
 /* A shared room: everyone holding this link works in one workspace. */
 .room-chip {
   padding: 5px 9px;
-  border: 1px solid rgba(47, 106, 191, 0.32);
+  border: 1px solid rgb(27 77 255 / 0.32);
   border-radius: 999px;
-  color: var(--blue);
-  background: rgba(47, 106, 191, 0.08);
+  color: var(--human);
+  background: rgb(27 77 255 / 0.08);
   font-size: 12px;
   font-weight: 800;
   max-width: 160px;
@@ -233,16 +233,16 @@ button {
 }
 .room-invite {
   padding: 7px 13px;
-  border: 1px solid rgba(47, 106, 191, 0.32);
+  border: 1px solid rgb(27 77 255 / 0.32);
   border-radius: 999px;
-  color: var(--blue);
-  background: rgba(47, 106, 191, 0.07);
+  color: var(--human);
+  background: rgb(27 77 255 / 0.07);
   font-size: 12px;
   font-weight: 750;
   cursor: pointer;
 }
 .room-invite:hover {
-  background: rgba(47, 106, 191, 0.13);
+  background: rgb(27 77 255 / 0.13);
 }
 /* Every record scrolls rather than hiding what it cannot fit. */
 .violation-list {
@@ -264,29 +264,29 @@ button {
 }
 .replay-earlier {
   margin: 8px 0 0;
-  color: var(--muted);
+  color: var(--ink-muted);
   font-size: 12px;
 }
 .shared-live {
   padding: 5px 8px;
-  border: 1px solid rgba(36, 135, 101, 0.25);
+  border: 1px solid rgb(15 144 128 / 0.25);
   border-radius: 999px;
-  color: var(--green-text);
-  background: rgba(36, 135, 101, 0.07);
+  color: var(--verified-text);
+  background: rgb(15 144 128 / 0.07);
   font-size: 12px;
   font-weight: 800;
 }
 /* Not saved anywhere durable: the strongest signal the header carries. */
 .sync-at-risk {
-  border-color: rgba(217, 93, 79, 0.4);
-  color: var(--coral-text);
-  background: rgba(217, 93, 79, 0.09);
+  border-color: rgb(217 61 66 / 0.4);
+  color: var(--failure-text);
+  background: rgb(217 61 66 / 0.09);
 }
 /* Held locally, not yet durable. */
 .sync-pending {
-  border-color: rgba(17, 36, 64, 0.22);
-  color: var(--muted);
-  background: rgba(17, 36, 64, 0.05);
+  border-color: rgb(22 32 46 / 0.22);
+  color: var(--ink-muted);
+  background: rgb(22 32 46 / 0.05);
 }
 .human-chip {
   display: grid;
@@ -295,7 +295,7 @@ button {
   height: 33px;
   border-radius: 50%;
   color: var(--ink);
-  background: var(--raised);
+  background: var(--surface-raised);
   font-weight: 800;
 }
 .hero-bar {
@@ -304,11 +304,11 @@ button {
   justify-content: space-between;
   gap: 24px;
   padding: 38px 32px 30px;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--border);
 }
 .eyebrow {
   margin: 0 0 8px;
-  color: var(--blue);
+  color: var(--human);
   font-weight: 800;
   font-size: 12px;
   letter-spacing: 0.14em;
@@ -324,18 +324,18 @@ button {
 }
 .hero-bar h1 em {
   font-style: italic;
-  color: var(--blue);
+  color: var(--human);
 }
 .hero-proof {
   min-width: 220px;
   display: grid;
   gap: 3px;
   padding: 12px 0 0 18px;
-  border-left: 2px solid var(--coral);
+  border-left: 2px solid var(--failure);
 }
 .hero-proof span,
 .hero-proof small {
-  color: var(--muted);
+  color: var(--ink-muted);
   font-size: 12.5px;
 }
 .hero-proof strong {
@@ -346,10 +346,10 @@ button {
   gap: 40px;
   align-items: baseline;
   padding: 18px 40px;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--border);
   background: linear-gradient(
     180deg,
-    color-mix(in oklab, var(--panel) 70%, transparent),
+    color-mix(in oklab, var(--surface) 70%, transparent),
     transparent
   );
 }
@@ -361,7 +361,7 @@ button {
 }
 .brief-waiting {
   padding-left: 40px;
-  border-left: 1px solid var(--line);
+  border-left: 1px solid var(--border);
 }
 .brief-state strong,
 .brief-waiting strong {
@@ -375,7 +375,7 @@ button {
   gap: 5px;
   min-height: 110px;
   padding: 21px 32px;
-  border-right: 1px solid var(--line);
+  border-right: 1px solid var(--border);
 }
 .decision-brief > div:last-child {
   border-right: 0;
@@ -384,10 +384,10 @@ button {
   background: rgba(213, 99, 79, 0.055);
 }
 .brief-recommendation {
-  background: linear-gradient(90deg, rgba(17, 167, 184, 0.06), transparent);
+  background: linear-gradient(90deg, rgb(0 169 155 / 0.06), transparent);
 }
 .brief-label {
-  color: var(--blue);
+  color: var(--human);
   font-size: 12px;
   font-weight: 850;
   letter-spacing: 0.12em;
@@ -399,7 +399,7 @@ button {
   line-height: 1.15;
 }
 .decision-brief small {
-  color: var(--muted);
+  color: var(--ink-muted);
   font-size: 12px;
   line-height: 1.4;
 }
@@ -411,13 +411,13 @@ button {
 .future-rail,
 .intelligence-panel {
   padding: 26px 22px;
-  background: rgb(18 27 46 / 0.68);
+  background: var(--surface-sunken);
 }
 .future-rail {
-  border-right: 1px solid var(--line);
+  border-right: 1px solid var(--border);
 }
 .intelligence-panel {
-  border-left: 1px solid var(--line);
+  border-left: 1px solid var(--border);
 }
 .rail-heading {
   display: flex;
@@ -429,7 +429,7 @@ button {
   place-items: center;
   width: 26px;
   height: 20px;
-  background: var(--raised);
+  background: var(--surface-raised);
   color: var(--ink);
   font-size: 12px;
 }
@@ -439,7 +439,7 @@ button {
   display: grid;
   gap: 5px;
   padding: 13px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--border);
   color: var(--ink);
   text-align: left;
   background: transparent;
@@ -452,17 +452,17 @@ button {
 .future-card {
   position: relative;
   margin-top: 9px;
-  background: rgb(23 34 58 / 0.35);
+  background: var(--surface-sunken);
 }
 .future-card-active {
-  border-color: var(--cyan-text);
+  border-color: var(--agent-text);
   box-shadow:
-    inset 3px 0 var(--cyan),
-    0 7px 18px rgba(17, 36, 64, 0.05);
-  background: var(--raised);
+    inset 3px 0 var(--agent),
+    0 7px 18px rgb(22 32 46 / 0.05);
+  background: var(--surface-raised);
 }
 .future-kicker {
-  color: var(--blue);
+  color: var(--human);
   font-size: 12px;
   letter-spacing: 0.12em;
   font-weight: 850;
@@ -474,14 +474,14 @@ button {
 }
 .baseline-card small,
 .future-card small {
-  color: var(--muted);
+  color: var(--ink-muted);
   font-size: 12px;
 }
 .future-card b {
   position: absolute;
   top: 14px;
   right: 12px;
-  color: var(--cyan-text);
+  color: var(--agent-text);
   font-size: 12px;
 }
 .create-future-button {
@@ -493,20 +493,20 @@ button {
   padding: 13px 8px;
   border: 0;
   color: var(--ink);
-  background: var(--raised);
+  background: var(--surface-raised);
   font-size: 12px;
   font-weight: 750;
   cursor: pointer;
 }
 .create-future-button span {
-  color: var(--cyan-text);
+  color: var(--agent-text);
   font-size: 15px;
 }
 .reset-link {
   margin-top: 16px;
   padding: 0;
   border: 0;
-  color: var(--muted);
+  color: var(--ink-muted);
   background: transparent;
   font-size: 12.5px;
   text-decoration: underline;
@@ -525,10 +525,10 @@ button {
   background:
     radial-gradient(
       90% 70% at 50% 0%,
-      color-mix(in oklab, var(--blue) 5%, transparent),
+      color-mix(in oklab, var(--human) 5%, transparent),
       transparent 70%
     ),
-    var(--paper);
+    var(--surface);
 }
 .canvas-stage > :last-child {
   flex: 1;
@@ -542,7 +542,7 @@ button {
   gap: 14px;
   height: 72px;
   padding: 0 22px;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--border);
 }
 .canvas-toolbar div:first-child {
   display: grid;
@@ -559,15 +559,15 @@ button {
   display: flex;
   gap: 4px;
   padding: 4px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--border);
   border-radius: 10px;
-  background: rgb(7 11 20 / 0.45);
+  background: var(--surface-sunken);
 }
 .scenario-tabs button {
   min-height: 38px;
   padding: 8px 10px;
   border: 0;
-  color: var(--muted);
+  color: var(--ink-muted);
   background: transparent;
   font-size: 12.5px;
   font-weight: 700;
@@ -576,7 +576,7 @@ button {
 .scenario-tabs .scenario-active {
   color: var(--ink);
   border-radius: 7px;
-  background: var(--raised);
+  background: var(--surface-raised);
   box-shadow: var(--lift-1);
 }
 .trace-control {
@@ -594,13 +594,13 @@ button {
 .trace-control:disabled {
   opacity: 0.38;
   cursor: not-allowed;
-  border-color: var(--line);
-  color: var(--muted);
+  border-color: var(--border);
+  color: var(--ink-muted);
 }
 .trace-control:not(:disabled):hover,
 .trace-control:not(:disabled):focus-visible {
   color: var(--ink);
-  background: var(--raised);
+  background: var(--surface-raised);
 }
 .canvas-world {
   position: relative;
@@ -609,22 +609,22 @@ button {
   touch-action: none;
   /* The canvas is the stage, so it sits on its own ground rather than
      repeating the cream of every surrounding panel. */
-  background-color: var(--paper);
+  background-color: var(--surface);
   background-image:
-    linear-gradient(rgba(17, 36, 64, 0.055) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(17, 36, 64, 0.055) 1px, transparent 1px);
+    linear-gradient(rgb(22 32 46 / 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(22 32 46 / 0.055) 1px, transparent 1px);
   background-size: 28px 28px;
 }
 .region-box {
   position: absolute;
-  border: 1px solid rgba(32, 104, 191, 0.25);
-  background: rgba(32, 104, 191, 0.025);
+  border: 1px solid rgb(27 77 255 / 0.25);
+  background: rgb(27 77 255 / 0.025);
 }
 .region-box span {
   position: absolute;
   top: -18px;
   left: 0;
-  color: var(--muted);
+  color: var(--ink-muted);
   font-size: 12px;
   font-weight: 750;
   letter-spacing: 0.1em;
@@ -638,8 +638,8 @@ button {
 }
 .region-box-blr {
   border-radius: 10px;
-  border-color: rgba(36, 135, 101, 0.3);
-  background: rgba(36, 135, 101, 0.025);
+  border-color: rgb(15 144 128 / 0.3);
+  background: rgb(15 144 128 / 0.025);
 }
 .architecture-lines {
   position: absolute;
@@ -667,11 +667,11 @@ button {
   transition: 0.28s;
 }
 .path-healthy {
-  stroke: rgba(17, 167, 184, 0.62);
+  stroke: rgb(0 169 155 / 0.62);
 }
 /* Healthy links carry a slow flow so a working path reads as live traffic. */
 .path-flow {
-  stroke: rgba(17, 167, 184, 0.85);
+  stroke: rgb(0 169 155 / 0.85);
   stroke-width: 3.2;
   stroke-linecap: round;
   stroke-dasharray: 2 26;
@@ -689,13 +689,13 @@ button {
   }
 }
 .path-degraded {
-  stroke: var(--orange);
+  stroke: var(--branch);
   stroke-dasharray: 7 5;
   opacity: 0.85;
   animation: dash 1.4s linear infinite;
 }
 .path-failed {
-  stroke: var(--coral);
+  stroke: var(--failure);
   stroke-dasharray: 7 5;
   animation: dash 1.1s linear infinite;
 }
@@ -710,11 +710,11 @@ button {
   display: grid;
   gap: 4px;
   padding: 11px;
-  border: 1px solid var(--muted);
+  border: 1px solid var(--ink-muted);
   transform: translate(-50%, -50%);
   color: var(--ink);
-  background: var(--panel);
-  box-shadow: 0 9px 25px rgba(17, 36, 64, 0.08);
+  background: var(--surface);
+  box-shadow: 0 9px 25px rgb(22 32 46 / 0.08);
   text-align: left;
   cursor: grab;
   transition:
@@ -726,7 +726,7 @@ button {
   cursor: grabbing;
 }
 .architecture-node span {
-  color: var(--blue);
+  color: var(--human);
   font-size: 12px;
   font-weight: 850;
   letter-spacing: 0.11em;
@@ -735,19 +735,23 @@ button {
   font-size: 12px;
 }
 .architecture-node small {
-  color: var(--muted);
+  color: var(--ink-muted);
   font-size: 12px;
 }
 .architecture-node.node-affected {
-  border-color: var(--coral-text);
-  background: linear-gradient(180deg, var(--raised) 0%, var(--panel) 62%);
+  border-color: var(--failure-text);
+  background: linear-gradient(
+    180deg,
+    var(--surface-raised) 0%,
+    var(--surface) 62%
+  );
   box-shadow:
-    0 0 0 1px rgba(217, 93, 79, 0.35),
-    0 10px 24px -14px rgba(217, 93, 79, 0.75);
+    0 0 0 1px rgb(217 61 66 / 0.35),
+    0 10px 24px -14px rgb(217 61 66 / 0.75);
   animation: impact-arrive 0.5s cubic-bezier(0.22, 1.2, 0.36, 1);
 }
 .architecture-node.node-affected small {
-  color: var(--coral-text);
+  color: var(--failure-text);
 }
 /* The newest node in a running trace pulses so the eye follows propagation. */
 .architecture-node.node-propagating {
@@ -763,11 +767,11 @@ button {
 @keyframes impact-arrive {
   0% {
     transform: translate(-50%, -50%) scale(0.94);
-    box-shadow: 0 0 0 0 rgba(217, 93, 79, 0);
+    box-shadow: 0 0 0 0 rgb(217 61 66 / 0);
   }
   55% {
     transform: translate(-50%, -50%) scale(1.045);
-    box-shadow: 0 0 0 12px rgba(217, 93, 79, 0.16);
+    box-shadow: 0 0 0 12px rgb(217 61 66 / 0.16);
   }
   100% {
     transform: translate(-50%, -50%) scale(1);
@@ -776,22 +780,22 @@ button {
 @keyframes impact-pulse {
   0% {
     box-shadow:
-      0 0 0 1px rgba(217, 93, 79, 0.45),
-      0 0 0 0 rgba(217, 93, 79, 0.34);
+      0 0 0 1px rgb(217 61 66 / 0.45),
+      0 0 0 0 rgb(217 61 66 / 0.34);
   }
   100% {
     box-shadow:
-      0 0 0 1px rgba(217, 93, 79, 0.28),
-      0 0 0 18px rgba(217, 93, 79, 0);
+      0 0 0 1px rgb(217 61 66 / 0.28),
+      0 0 0 18px rgb(217 61 66 / 0);
   }
 }
 .architecture-node.queue {
-  border-color: rgba(17, 167, 184, 0.65);
+  border-color: rgb(0 169 155 / 0.65);
 }
 .architecture-node.node-selected {
-  outline: 3px solid rgba(17, 167, 184, 0.25);
+  outline: 3px solid rgb(0 169 155 / 0.25);
   outline-offset: 3px;
-  box-shadow: 0 13px 27px rgba(17, 36, 64, 0.13);
+  box-shadow: 0 13px 27px rgb(22 32 46 / 0.13);
 }
 .failure-beacon {
   position: absolute;
@@ -801,7 +805,7 @@ button {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: var(--coral-text);
+  color: var(--failure-text);
   font-weight: 750;
   font-size: 12px;
 }
@@ -819,11 +823,11 @@ button {
   gap: 6px 14px;
   margin: 0;
   padding: 9px 12px;
-  border: 1px solid rgba(17, 36, 64, 0.12);
+  border: 1px solid rgb(22 32 46 / 0.12);
   border-radius: 8px;
   list-style: none;
-  color: var(--muted);
-  background: rgb(18 27 46 / 0.92);
+  color: var(--ink-muted);
+  background: var(--surface-raised);
   font-size: 12px;
   /* A large architecture can produce a chain of hundreds. Without a ceiling
      the strip grows until it covers the canvas it is describing. */
@@ -844,12 +848,12 @@ button {
   line-height: 1.35;
 }
 .causal-timeline li small {
-  color: var(--muted);
+  color: var(--ink-muted);
   font-size: 12px;
   letter-spacing: 0.01em;
 }
 .causal-timeline .trace-active small {
-  color: var(--coral-text);
+  color: var(--failure-text);
 }
 .causal-timeline i {
   margin-top: 3px;
@@ -859,7 +863,7 @@ button {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--line);
+  background: var(--border);
 }
 .causal-timeline .trace-active {
   color: var(--ink);
@@ -867,7 +871,7 @@ button {
   transform: translateY(-2px);
 }
 .causal-timeline .trace-active i {
-  background: var(--coral);
+  background: var(--failure);
   box-shadow: 0 0 0 4px rgba(213, 99, 79, 0.15);
 }
 .causal-timeline .trace-pending {
@@ -877,25 +881,25 @@ button {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--coral);
+  background: var(--failure);
   /* An active incident pulses, so the eye lands on it before the labels. */
   animation: incident-pulse 1.9s ease-out infinite;
 }
 @keyframes incident-pulse {
   0% {
-    box-shadow: 0 0 0 0 rgba(217, 93, 79, 0.45);
+    box-shadow: 0 0 0 0 rgb(217 61 66 / 0.45);
   }
   70% {
-    box-shadow: 0 0 0 11px rgba(217, 93, 79, 0);
+    box-shadow: 0 0 0 11px rgb(217 61 66 / 0);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(217, 93, 79, 0);
+    box-shadow: 0 0 0 0 rgb(217 61 66 / 0);
   }
 }
 @media (prefers-reduced-motion: reduce) {
   .failure-beacon i {
     animation: none;
-    box-shadow: 0 0 0 5px rgba(217, 93, 79, 0.16);
+    box-shadow: 0 0 0 5px rgb(217 61 66 / 0.16);
   }
 }
 .canvas-hint {
@@ -903,9 +907,9 @@ button {
   top: 16px;
   right: 16px;
   padding: 7px 9px;
-  color: var(--muted);
-  background: rgb(18 27 46 / 0.8);
-  border: 1px solid var(--line);
+  color: var(--ink-muted);
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
   font-size: 12px;
 }
 .evidence-heading {
@@ -927,28 +931,28 @@ button {
   border-radius: 50%;
 }
 .risk-dot {
-  background: var(--coral);
+  background: var(--failure);
 }
 .safe-dot {
-  background: var(--green);
+  background: var(--verified);
 }
 /* Nothing measured yet is neither safe nor at risk. */
 .idle-dot {
-  background: var(--line);
+  background: var(--border);
 }
 .agent-narrative {
   margin: 18px 0;
   padding: 12px 13px;
-  border-left: 2px solid var(--cyan);
-  color: var(--muted);
-  background: rgba(17, 167, 184, 0.06);
+  border-left: 2px solid var(--agent);
+  color: var(--ink-muted);
+  background: rgb(0 169 155 / 0.06);
   font-size: 12px;
   line-height: 1.45;
 }
 .agent-narrative span {
   display: block;
   margin-bottom: 5px;
-  color: var(--cyan-text);
+  color: var(--agent-text);
   font-size: 12px;
   font-weight: 850;
   letter-spacing: 0.1em;
@@ -957,15 +961,15 @@ button {
 .metric-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  border-top: 1px solid var(--line);
-  border-left: 1px solid var(--line);
+  border-top: 1px solid var(--border);
+  border-left: 1px solid var(--border);
 }
 .metric-grid div {
   display: grid;
   gap: 5px;
   padding: 11px;
-  border-right: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
 }
 .simulation-provenance {
   display: flex;
@@ -973,39 +977,39 @@ button {
   gap: 6px;
   align-items: center;
   padding: 10px 11px;
-  color: var(--muted);
-  border: 1px solid var(--line);
+  color: var(--ink-muted);
+  border: 1px solid var(--border);
   border-top: 0;
-  background: rgba(17, 167, 184, 0.045);
+  background: rgb(0 169 155 / 0.045);
   font-size: 12px;
 }
 .simulation-provenance span {
-  color: var(--cyan-text);
+  color: var(--agent-text);
   font-weight: 850;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 .simulation-provenance code {
   padding: 2px 5px;
-  color: var(--muted);
-  border: 1px solid rgba(17, 167, 184, 0.24);
+  color: var(--ink-muted);
+  border: 1px solid rgb(0 169 155 / 0.24);
   border-radius: 2px;
-  background: var(--raised);
+  background: var(--surface-raised);
   font-family: "SFMono-Regular", Consolas, monospace;
   font-size: 12px;
 }
 .metric-grid span {
-  color: var(--muted);
+  color: var(--ink-muted);
   font-size: 12px;
 }
 .metric-grid strong {
   font-size: 16px;
 }
 .critical {
-  color: var(--coral-text);
+  color: var(--failure-text);
 }
 .safe {
-  color: var(--green-text);
+  color: var(--verified-text);
 }
 .violation-list {
   margin-top: 18px;
@@ -1015,7 +1019,7 @@ button {
   align-items: flex-start;
   gap: 7px;
   margin: 7px 0;
-  color: #485669;
+  color: var(--ink-muted);
   font-size: 12.5px;
   line-height: 1.35;
 }
@@ -1025,10 +1029,10 @@ button {
   flex: none;
   margin-top: 4px;
   border-radius: 50%;
-  background: var(--coral);
+  background: var(--failure);
 }
 .violation-list .no-violation {
-  color: var(--green-text);
+  color: var(--verified-text);
 }
 .system-brief-panel {
   display: grid;
@@ -1038,8 +1042,8 @@ button {
   border: 1px solid rgba(47, 111, 177, 0.28);
   background:
     linear-gradient(135deg, rgba(47, 111, 177, 0.1), transparent 58%),
-    var(--raised);
-  box-shadow: inset 3px 0 0 var(--blue);
+    var(--surface-raised);
+  box-shadow: inset 3px 0 0 var(--human);
   border-radius: var(--radius);
 }
 .system-brief-panel strong {
@@ -1050,7 +1054,7 @@ button {
   line-height: 1.1;
 }
 .system-brief-panel small {
-  color: var(--muted);
+  color: var(--ink-muted);
   font-size: 12px;
   line-height: 1.4;
 }
@@ -1058,16 +1062,16 @@ button {
   width: 100%;
   min-height: 86px;
   resize: vertical;
-  border: 1px solid var(--line);
+  border: 1px solid var(--border);
   padding: 11px;
-  background: var(--raised);
+  background: var(--surface-raised);
   color: var(--ink);
   font: inherit;
   font-size: 12.5px;
   line-height: 1.45;
 }
 .system-brief-panel textarea:focus {
-  outline: 2px solid rgba(17, 167, 184, 0.32);
+  outline: 2px solid rgb(0 169 155 / 0.32);
   outline-offset: 2px;
 }
 .system-brief-panel ol {
@@ -1075,14 +1079,14 @@ button {
   gap: 7px;
   margin: 0;
   padding-left: 19px;
-  color: var(--muted);
+  color: var(--ink-muted);
   font-size: 12px;
   line-height: 1.35;
 }
 .system-brief-panel button {
-  border: 1px solid var(--blue);
+  border: 1px solid var(--human);
   padding: 10px 12px;
-  background: var(--blue);
+  background: var(--human);
   color: var(--ink);
   font-size: 12px;
   font-weight: 850;
@@ -1094,7 +1098,7 @@ button {
   gap: 7px;
   margin-top: 18px;
   padding-top: 17px;
-  border-top: 1px solid var(--line);
+  border-top: 1px solid var(--border);
 }
 .human-actions .eyebrow {
   margin-bottom: 1px;
@@ -1107,10 +1111,10 @@ button {
   justify-content: space-between;
   gap: 8px;
   padding: 10px 11px;
-  border: 1px solid rgba(17, 36, 64, 0.3);
+  border: 1px solid rgb(22 32 46 / 0.3);
   color: var(--ink);
-  background: var(--raised);
-  box-shadow: 0 1px 0 rgba(17, 36, 64, 0.16);
+  background: var(--surface-raised);
+  box-shadow: 0 1px 0 rgb(22 32 46 / 0.16);
   font-size: 12px;
   font-weight: 750;
   text-align: left;
@@ -1123,15 +1127,15 @@ button {
 }
 .human-actions button::after {
   content: "→";
-  color: var(--blue);
+  color: var(--human);
   font-size: 12.5px;
   opacity: 0.65;
 }
 .human-actions button:hover:not(:disabled),
 .human-actions button:focus-visible:not(:disabled) {
-  border-color: var(--blue);
-  background: var(--raised);
-  box-shadow: 0 2px 0 rgba(32, 104, 191, 0.32);
+  border-color: var(--human);
+  background: var(--surface-raised);
+  box-shadow: 0 2px 0 rgb(27 77 255 / 0.32);
   transform: translateY(-1px);
 }
 .human-actions button:active:not(:disabled) {
@@ -1153,8 +1157,8 @@ button {
   }
 }
 .human-actions .secondary-action {
-  border-color: var(--line);
-  color: var(--blue);
+  border-color: var(--border);
+  color: var(--human);
 }
 .webmcp-status {
   display: grid;
@@ -1163,23 +1167,23 @@ button {
   gap: 6px;
   margin-top: 19px;
   padding: 11px;
-  background: rgba(36, 135, 101, 0.07);
-  color: var(--muted);
+  background: rgb(15 144 128 / 0.07);
+  color: var(--ink-muted);
   font-size: 12px;
 }
 .webmcp-status i {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: var(--green);
+  background: var(--verified);
 }
 .webmcp-status strong {
   color: var(--ink);
   font-size: 12px;
 }
 .decision-room {
-  border-bottom: 1px solid var(--line);
-  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
 }
 .decision-room-head {
   display: flex;
@@ -1187,7 +1191,7 @@ button {
   justify-content: space-between;
   gap: 24px;
   padding: 26px 32px 19px;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--border);
 }
 .decision-room-head h2 {
   max-width: 560px;
@@ -1200,7 +1204,7 @@ button {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  color: #1c7454;
+  color: var(--verified-text);
   font-size: 12px;
   font-weight: 800;
 }
@@ -1208,8 +1212,8 @@ button {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: var(--green);
-  box-shadow: 0 0 0 4px rgba(36, 135, 101, 0.12);
+  background: var(--verified);
+  box-shadow: 0 0 0 4px rgb(15 144 128 / 0.12);
 }
 .decision-room-grid {
   display: grid;
@@ -1221,8 +1225,8 @@ button {
   padding: 22px 32px 26px;
 }
 .decision-replay {
-  border-left: 1px solid var(--line);
-  background: rgba(17, 36, 64, 0.025);
+  border-left: 1px solid var(--border);
+  background: rgb(22 32 46 / 0.025);
 }
 .thread-heading {
   display: flex;
@@ -1234,7 +1238,7 @@ button {
   font-size: 12px;
 }
 .thread-heading span {
-  color: var(--muted);
+  color: var(--ink-muted);
   font-size: 12px;
 }
 .thread-notes {
@@ -1246,8 +1250,8 @@ button {
 }
 .decision-note {
   padding: 11px 13px;
-  border: 1px solid var(--line);
-  background: var(--raised);
+  border: 1px solid var(--border);
+  background: var(--surface-raised);
   border-radius: var(--radius);
 }
 .decision-note > div {
@@ -1261,21 +1265,21 @@ button {
 }
 .decision-note span,
 .decision-note small {
-  color: var(--muted);
+  color: var(--ink-muted);
   font-size: 12px;
 }
 .decision-note p {
   margin: 7px 0;
-  color: var(--muted);
+  color: var(--ink-muted);
   font-size: 12.5px;
   line-height: 1.45;
 }
 .decision-note small {
-  color: var(--blue);
+  color: var(--human);
   font-weight: 750;
 }
 .note-agent {
-  border-left: 3px solid var(--cyan);
+  border-left: 3px solid var(--agent);
 }
 .note-human {
   border-left: 3px solid var(--ink);
@@ -1283,12 +1287,12 @@ button {
 .note-composer {
   margin-top: 13px;
   padding-top: 13px;
-  border-top: 1px solid var(--line);
+  border-top: 1px solid var(--border);
 }
 .note-composer label {
   display: block;
   margin-bottom: 7px;
-  color: var(--muted);
+  color: var(--ink-muted);
   font-size: 12px;
 }
 .note-composer div {
@@ -1299,9 +1303,9 @@ button {
   min-width: 0;
   flex: 1;
   padding: 10px 11px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--border);
   color: var(--ink);
-  background: var(--raised);
+  background: var(--surface-raised);
   font: inherit;
   font-size: 12.5px;
 }
@@ -1309,7 +1313,7 @@ button {
   padding: 0 12px;
   border: 1px solid var(--ink);
   color: var(--ink);
-  background: var(--raised);
+  background: var(--surface-raised);
   font-size: 12px;
   font-weight: 800;
   cursor: pointer;
@@ -1327,7 +1331,7 @@ button {
   align-items: start;
   gap: 9px;
   padding: 10px 0;
-  border-top: 1px solid var(--line);
+  border-top: 1px solid var(--border);
 }
 .decision-replay li i {
   display: grid;
@@ -1335,7 +1339,7 @@ button {
   width: 20px;
   height: 20px;
   color: var(--ink);
-  background: var(--blue);
+  background: var(--human);
   border-radius: 50%;
   font-size: 12px;
   font-style: normal;
@@ -1350,30 +1354,30 @@ button {
 }
 .decision-replay li span,
 .decision-replay li small {
-  color: var(--muted);
+  color: var(--ink-muted);
   font-size: 12px;
 }
 .decision-replay li small {
-  color: var(--blue);
+  color: var(--human);
   text-transform: capitalize;
 }
 /* This placeholder is the first-visit state, so it must meet contrast on its
    own rather than being dimmed below the threshold. */
 .empty-history span {
-  color: #5c6472;
+  color: var(--ink-muted);
 }
 .review-dock {
   display: grid;
   grid-template-columns: 250px 1fr 260px;
   align-items: stretch;
   min-height: 124px;
-  border-top: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
-  background: var(--raised);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-raised);
 }
 .review-head {
   padding: 20px 26px;
-  border-right: 1px solid var(--line);
+  border-right: 1px solid var(--border);
 }
 .review-head h2 {
   margin: 0;
@@ -1381,14 +1385,14 @@ button {
   font-size: 20px;
 }
 .review-head h2 span {
-  color: var(--muted);
+  color: var(--ink-muted);
   font-family: inherit;
   font-size: 12px;
 }
 .review-head > span {
   display: block;
   margin-top: 7px;
-  color: var(--muted);
+  color: var(--ink-muted);
   font-size: 12px;
 }
 .diff-list {
@@ -1399,7 +1403,7 @@ button {
   padding: 16px 20px;
 }
 .diff-list > p {
-  color: var(--muted);
+  color: var(--ink-muted);
   font-size: 12px;
 }
 .diff-item {
@@ -1408,7 +1412,7 @@ button {
   gap: 4px 7px;
   min-width: 148px;
   padding: 8px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--border);
   font-size: 12px;
 }
 .diff-item b {
@@ -1420,26 +1424,26 @@ button {
   text-transform: uppercase;
 }
 .impact-capacity {
-  background: var(--cyan);
+  background: var(--agent);
 }
 .impact-resilience {
-  background: var(--green);
+  background: var(--verified);
 }
 .impact-cost {
-  background: var(--orange);
+  background: var(--branch);
 }
 .impact-topology {
-  background: var(--blue);
+  background: var(--human);
 }
 .diff-item span,
 .diff-item del {
-  color: var(--muted);
+  color: var(--ink-muted);
 }
 .diff-item strong {
   font-size: 12px;
 }
 .diff-item ins {
-  color: var(--green-text);
+  color: var(--verified-text);
   font-weight: 800;
   text-decoration: none;
 }
@@ -1450,10 +1454,10 @@ button {
   justify-content: center;
   gap: 10px;
   padding: 17px;
-  border-left: 1px solid var(--line);
+  border-left: 1px solid var(--border);
 }
 .review-actions > span {
-  color: var(--muted);
+  color: var(--ink-muted);
   font-size: 12px;
 }
 .review-actions button {
@@ -1463,7 +1467,7 @@ button {
     background 140ms ease;
   padding: 10px;
   border: 1px solid var(--ink);
-  background: var(--raised);
+  background: var(--surface-raised);
   color: var(--ink);
   font-size: 12.5px;
   font-weight: 800;
@@ -1474,13 +1478,13 @@ button {
    block indistinguishable from the buttons around it. */
 .review-actions .approve-button:not(:disabled) {
   border-color: transparent;
-  background: linear-gradient(180deg, var(--green), #26b985);
-  color: var(--void);
-  box-shadow: var(--glow-green);
+  background: linear-gradient(180deg, var(--verified), var(--verified));
+  color: var(--surface-sunken);
+  box-shadow: var(--lift-2);
 }
 .review-actions .approve-button:not(:disabled):hover {
   transform: translateY(-1px);
-  box-shadow: var(--glow-green), var(--lift-2);
+  box-shadow: var(--lift-2), var(--lift-2);
 }
 .review-actions .approve-button:disabled {
   opacity: 0.38;
@@ -1492,26 +1496,26 @@ button {
 .gate-claim {
   margin: 12px 0 0;
   padding: 9px 12px;
-  border-left: 2px solid var(--green);
+  border-left: 2px solid var(--verified);
   border-radius: 0 var(--radius) var(--radius) 0;
-  background: rgb(47 211 155 / 0.07);
-  color: var(--muted);
+  background: rgb(15 144 128 / 0.07);
+  color: var(--ink-muted);
   font-size: 12.5px;
   line-height: 1.5;
 }
 .gate-claim b {
-  color: var(--green-text);
+  color: var(--verified-text);
   font-weight: 650;
 }
 .review-actions .rollback-button {
-  color: var(--coral-text);
-  background: var(--raised);
-  border-color: var(--coral-text);
+  color: var(--failure-text);
+  background: var(--surface-raised);
+  border-color: var(--failure-text);
 }
 /* A refusal must not read like a confirmation. The strip sits on the dark
    ground, so this lifts rather than darkens. */
 .message-refused {
-  color: var(--coral-text);
+  color: var(--failure-text);
   font-weight: 650;
 }
 .activity-strip {
@@ -1520,15 +1524,17 @@ button {
   align-items: center;
   gap: 14px;
   padding: 14px 30px;
-  background: var(--raised);
+  background: var(--surface-raised);
   color: var(--ink);
 }
 .activity-strip .eyebrow {
   margin: 0;
-  /* On the dark ink strip the text variant is the wrong direction: it was
-     darkened for light grounds and measures 3.0:1 here, while the original
-     accent reaches 5.36:1. Darker is not universally safer. */
-  color: var(--cyan);
+  /* The ground under this strip is now warm ivory, which flips the rule
+     that used to live here: the vivid fill measures 2.94:1 as text on
+     ivory, and the darkened text variant is the correct one. A fill and a
+     text colour are different roles — this rule has now demonstrated that
+     in both directions. */
+  color: var(--agent-text);
 }
 .activity-strip p {
   margin: 0;
@@ -1543,7 +1549,7 @@ button {
   list-style: none;
 }
 .activity-strip li {
-  color: var(--muted);
+  color: var(--ink-muted);
   font-size: 12px;
 }
 .activity-strip b {
@@ -1567,7 +1573,7 @@ button {
   max-height: 92vh;
   overflow: auto;
   padding: 32px;
-  background: var(--panel);
+  background: var(--surface);
   box-shadow: 0 28px 75px rgba(0, 0, 0, 0.25);
 }
 .close-modal {
@@ -1579,7 +1585,7 @@ button {
   margin: -14px -10px 0 0;
   border: 0;
   background: transparent;
-  color: var(--muted);
+  color: var(--ink-muted);
   font-size: 24px;
   cursor: pointer;
 }
@@ -1599,14 +1605,14 @@ button {
   display: grid;
   gap: 12px;
   padding: 16px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--border);
   color: var(--ink);
-  background: var(--raised);
+  background: var(--surface-raised);
   text-align: left;
   cursor: pointer;
 }
 .compare-choice span {
-  color: var(--blue);
+  color: var(--human);
   font-size: 12.5px;
   font-weight: 800;
 }
@@ -1615,21 +1621,21 @@ button {
   font-size: 29px;
 }
 .compare-choice small {
-  color: var(--muted);
+  color: var(--ink-muted);
   font-size: 12px;
   line-height: 1.4;
 }
 .compare-choice b {
-  color: var(--coral-text);
+  color: var(--failure-text);
   font-size: 12px;
 }
 .selected-choice {
-  border-color: var(--cyan-text);
-  box-shadow: inset 3px 0 var(--cyan);
+  border-color: var(--agent-text);
+  box-shadow: inset 3px 0 var(--agent);
 }
 .compare-foot {
   margin: 22px 0 0;
-  color: var(--muted);
+  color: var(--ink-muted);
   font-size: 12.5px;
 }
 @keyframes dash {
@@ -1647,7 +1653,7 @@ button {
   .intelligence-panel {
     grid-column: 1 / -1;
     border-left: 0;
-    border-top: 1px solid var(--line);
+    border-top: 1px solid var(--border);
   }
   .intelligence-panel .metric-grid {
     grid-template-columns: repeat(4, 1fr);
@@ -1666,7 +1672,7 @@ button {
   .future-rail {
     grid-column: 1 / -1;
     border-right: 0;
-    border-bottom: 1px solid var(--line);
+    border-bottom: 1px solid var(--border);
   }
   .future-stack {
     display: grid;
@@ -1698,7 +1704,7 @@ button {
   .decision-replay {
     border-right: 0;
     border-left: 0;
-    border-bottom: 1px solid var(--line);
+    border-bottom: 1px solid var(--border);
   }
   .decision-room-head {
     align-items: flex-start;
@@ -1724,7 +1730,7 @@ button {
   }
   .future-rail {
     border-right: 0;
-    border-bottom: 1px solid var(--line);
+    border-bottom: 1px solid var(--border);
   }
   .future-stack {
     display: flex;
@@ -1755,7 +1761,7 @@ button {
   .review-head,
   .review-actions {
     border: 0;
-    border-bottom: 1px solid var(--line);
+    border-bottom: 1px solid var(--border);
   }
   .activity-strip {
     grid-template-columns: 1fr;
@@ -1804,15 +1810,15 @@ button {
   max-height: 92vh;
   overflow: auto;
   padding: 44px 46px 34px;
-  border: 1px solid var(--line-bright);
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius-lg);
   background:
     radial-gradient(
       120% 90% at 50% 0%,
-      color-mix(in oklab, var(--blue) 9%, transparent),
+      color-mix(in oklab, var(--human) 9%, transparent),
       transparent 62%
     ),
-    var(--panel);
+    var(--surface);
   box-shadow: var(--lift-3);
   animation: intro-rise 0.42s cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -1831,7 +1837,7 @@ button {
 }
 .intro-card h2 em {
   font-style: italic;
-  color: var(--blue);
+  color: var(--human);
 }
 /* The proposal-proof-approval loop, shown as steps rather than described. */
 .intro-steps {
@@ -1849,8 +1855,8 @@ button {
   align-content: start;
   padding: 13px 14px;
   border-radius: 9px;
-  border: 1px solid rgba(17, 36, 64, 0.1);
-  background: rgba(17, 36, 64, 0.022);
+  border: 1px solid rgb(22 32 46 / 0.1);
+  background: rgb(22 32 46 / 0.022);
   counter-increment: intro-step;
 }
 .intro-steps b {
@@ -1860,10 +1866,10 @@ button {
 }
 .intro-steps b::before {
   content: counter(intro-step) " · ";
-  color: var(--blue);
+  color: var(--human);
 }
 .intro-steps span {
-  color: #5a6a80;
+  color: var(--ink-muted);
   font-size: 12.5px;
   line-height: 1.45;
 }
@@ -1875,7 +1881,7 @@ button {
 .intro-lede {
   margin: 0 0 18px;
   max-width: 54ch;
-  color: var(--muted);
+  color: var(--ink-muted);
   font-size: 14px;
   line-height: 1.55;
 }
@@ -1885,15 +1891,15 @@ button {
   gap: 16px;
   flex-wrap: wrap;
   padding-top: 22px;
-  border-top: 1px solid var(--line);
+  border-top: 1px solid var(--border);
 }
 .intro-start {
   padding: 13px 24px;
   border: 0;
   border-radius: 999px;
-  color: var(--void);
-  background: linear-gradient(180deg, var(--blue), #3d84f0);
-  box-shadow: var(--glow-blue);
+  color: var(--surface-sunken);
+  background: linear-gradient(180deg, var(--human), var(--human));
+  box-shadow: var(--lift-2);
   font-size: 13px;
   font-weight: 750;
   cursor: pointer;
@@ -1903,10 +1909,10 @@ button {
 }
 .intro-start:hover,
 .intro-start:focus-visible {
-  background: var(--blue);
+  background: var(--human);
 }
 .intro-foot small {
-  color: var(--muted);
+  color: var(--ink-muted);
   font-size: 12.5px;
 }
 @media (prefers-reduced-motion: reduce) {
@@ -1920,13 +1926,13 @@ button {
 .tool-feed {
   margin-top: 14px;
   padding: 13px 14px;
-  border: 1px solid rgba(17, 167, 184, 0.28);
-  background: rgba(17, 167, 184, 0.05);
+  border: 1px solid rgb(0 169 155 / 0.28);
+  background: rgb(0 169 155 / 0.05);
   border-radius: var(--radius);
 }
 .tool-feed .eyebrow {
   margin-bottom: 9px;
-  color: var(--cyan-text);
+  color: var(--agent-text);
 }
 .tool-feed ol {
   display: grid;
@@ -1939,11 +1945,11 @@ button {
   display: grid;
   gap: 2px;
   padding-left: 11px;
-  border-left: 2px solid var(--cyan);
+  border-left: 2px solid var(--agent);
   animation: tool-call-in 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .tool-feed li.tool-call-rejected {
-  border-left-color: var(--coral-text);
+  border-left-color: var(--failure-text);
 }
 /* The feed now leads with what the call *did*, so the hierarchy inverts:
    the consequence is the headline, the engine's result sits under it, and
@@ -1955,19 +1961,19 @@ button {
   letter-spacing: -0.008em;
 }
 .tool-feed li.tool-call-rejected strong {
-  color: var(--coral-text);
+  color: var(--failure-text);
 }
 .tool-feed small {
-  color: var(--cyan-text);
+  color: var(--agent-text);
   font-size: 12px;
   font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
 }
 .tool-feed li.tool-call-rejected small {
-  color: var(--muted);
+  color: var(--ink-muted);
 }
 .tool-feed code {
-  color: var(--muted);
+  color: var(--ink-muted);
   font-family: "SFMono-Regular", Consolas, monospace;
   font-size: 11px;
   font-weight: 500;
@@ -1988,14 +1994,18 @@ button {
 /* A component that only degraded because something upstream failed reads as
    secondary damage, so the origin of a failure stays visually distinct. */
 .architecture-node.node-degraded {
-  border-color: rgba(236, 142, 45, 0.75);
-  background: linear-gradient(180deg, var(--raised) 0%, var(--panel) 62%);
+  border-color: rgb(224 134 0 / 0.75);
+  background: linear-gradient(
+    180deg,
+    var(--surface-raised) 0%,
+    var(--surface) 62%
+  );
   box-shadow:
-    0 0 0 1px rgba(236, 142, 45, 0.25),
-    0 10px 24px -16px rgba(236, 142, 45, 0.6);
+    0 0 0 1px rgb(224 134 0 / 0.25),
+    0 10px 24px -16px rgb(224 134 0 / 0.6);
 }
 .architecture-node.node-degraded small {
-  color: var(--amber-text);
+  color: var(--branch-text);
 }
 
 /* Architects add their own components, so the model is theirs to shape. */
@@ -2006,11 +2016,11 @@ button {
   gap: 6px;
   margin-top: 12px;
   padding: 10px 12px;
-  border: 1px solid var(--line);
-  background: rgb(23 34 58 / 0.6);
+  border: 1px solid var(--border);
+  background: var(--surface-sunken);
 }
 .component-editor-label {
-  color: var(--muted);
+  color: var(--ink-muted);
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.05em;
@@ -2025,8 +2035,8 @@ button {
   min-height: 32px;
   min-width: 0;
   padding: 6px 8px;
-  border: 1px solid var(--line);
-  background: var(--raised);
+  border: 1px solid var(--border);
+  background: var(--surface-raised);
   color: var(--ink);
   font: inherit;
   font-size: 12px;
@@ -2037,11 +2047,11 @@ button {
   gap: 7px;
   margin-top: 12px;
   padding: 12px;
-  border: 1px dashed rgba(17, 36, 64, 0.22);
-  background: rgb(23 34 58 / 0.5);
+  border: 1px dashed rgb(22 32 46 / 0.22);
+  background: var(--surface-sunken);
 }
 .component-composer label {
-  color: var(--muted);
+  color: var(--ink-muted);
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.05em;
@@ -2051,8 +2061,8 @@ button {
 .component-composer select {
   min-height: 32px;
   padding: 6px 8px;
-  border: 1px solid var(--line);
-  background: var(--raised);
+  border: 1px solid var(--border);
+  background: var(--surface-raised);
   color: var(--ink);
   font: inherit;
   font-size: 12px;
@@ -2085,7 +2095,7 @@ button {
   padding: 0 14px;
   border: 0;
   color: var(--ink);
-  background: var(--raised);
+  background: var(--surface-raised);
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
@@ -2103,10 +2113,10 @@ button {
   gap: 5px;
   margin-top: 18px;
   padding-top: 16px;
-  border-top: 1px solid var(--line);
+  border-top: 1px solid var(--border);
 }
 .system-switch label {
-  color: var(--muted);
+  color: var(--ink-muted);
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.05em;
@@ -2115,15 +2125,15 @@ button {
 .system-switch select {
   min-height: 34px;
   padding: 6px 8px;
-  border: 1px solid var(--line);
-  background: var(--raised);
+  border: 1px solid var(--border);
+  background: var(--surface-raised);
   color: var(--ink);
   font: inherit;
   font-size: 12px;
   font-weight: 600;
 }
 .system-switch small {
-  color: var(--muted);
+  color: var(--ink-muted);
   font-size: 12px;
   line-height: 1.45;
 }
@@ -2133,13 +2143,13 @@ button {
 .decision-replay li {
   position: relative;
   padding-left: 12px;
-  border-left: 2px solid var(--line);
+  border-left: 2px solid var(--border);
 }
 .decision-replay li.replay-human {
   border-left-color: var(--ink);
 }
 .decision-replay li.replay-agent {
-  border-left-color: var(--cyan-text);
+  border-left-color: var(--agent-text);
 }
 .decision-replay li strong::before {
   content: "";
@@ -2155,26 +2165,26 @@ button {
   color: var(--ink);
 }
 .decision-replay li.replay-agent strong {
-  color: var(--cyan-text);
+  color: var(--agent-text);
 }
 .decision-replay li small {
   padding: 1px 7px;
   border-radius: 999px;
-  background: rgba(17, 36, 64, 0.06);
+  background: rgb(22 32 46 / 0.06);
   font-size: 12px;
   letter-spacing: 0.03em;
 }
 .decision-replay li.impact-gate small {
-  color: #1d6b52;
-  background: rgba(36, 135, 101, 0.13);
+  color: var(--verified-text);
+  background: rgb(15 144 128 / 0.13);
 }
 .decision-replay li.impact-proof small {
-  color: #0d7d8a;
-  background: rgba(17, 167, 184, 0.13);
+  color: var(--agent-text);
+  background: rgb(0 169 155 / 0.13);
 }
 .decision-replay li.impact-guardrail small {
-  color: var(--amber-text);
-  background: rgba(236, 142, 45, 0.15);
+  color: var(--branch-text);
+  background: rgb(224 134 0 / 0.15);
 }
 
 /* Naming the published capabilities makes the WebMCP surface verifiable
@@ -2188,18 +2198,18 @@ button {
 }
 .tool-inventory li {
   padding-left: 10px;
-  border-left: 2px solid rgba(17, 167, 184, 0.35);
+  border-left: 2px solid rgb(0 169 155 / 0.35);
 }
 .tool-inventory code {
-  color: var(--muted);
+  color: var(--ink-muted);
   font-family: "SFMono-Regular", Consolas, monospace;
   font-size: 12px;
 }
 .tool-gate {
   margin: 9px 0 0;
   padding-top: 8px;
-  border-top: 1px solid rgba(17, 36, 64, 0.1);
-  color: var(--muted);
+  border-top: 1px solid rgb(22 32 46 / 0.1);
+  color: var(--ink-muted);
   font-size: 12px;
   line-height: 1.45;
 }
@@ -2211,7 +2221,7 @@ button {
   align-items: flex-start;
   gap: 7px;
   margin: 7px 0 0;
-  color: var(--amber-text);
+  color: var(--branch-text);
   font-size: 12px;
   line-height: 1.45;
 }
@@ -2221,7 +2231,7 @@ button {
   height: 6px;
   margin-top: 4px;
   border-radius: 50%;
-  background: var(--orange);
+  background: var(--branch);
 }
 
 /* The own-system capability is what separates Aether from a fixed demo, so
@@ -2229,9 +2239,9 @@ button {
 .intro-own {
   margin: -14px 0 30px;
   padding: 11px 13px;
-  border-left: 2px solid var(--cyan);
-  background: rgba(17, 167, 184, 0.06);
-  color: var(--muted);
+  border-left: 2px solid var(--agent);
+  background: rgb(0 169 155 / 0.06);
+  color: var(--ink-muted);
   font-size: 12.5px;
   line-height: 1.5;
 }
@@ -2239,10 +2249,10 @@ button {
 /* Evidence the engine computed on the reviewer's behalf reads as neither a
    human decision nor an agent action. */
 .decision-replay li.replay-system {
-  border-left-color: var(--muted);
+  border-left-color: var(--ink-muted);
 }
 .decision-replay li.replay-system strong {
-  color: var(--muted);
+  color: var(--ink-muted);
 }
 
 /* Outcome of an add lands beside the form, not in a strip below the fold. */
@@ -2250,9 +2260,9 @@ button {
 .composer-notice {
   margin: 0;
   padding: 6px 8px;
-  border-left: 2px solid var(--coral);
-  background: rgba(217, 93, 79, 0.08);
-  color: #7a2f26;
+  border-left: 2px solid var(--failure);
+  background: rgb(217 61 66 / 0.08);
+  color: var(--failure-text);
   font-size: 12.5px;
   line-height: 1.4;
 }
@@ -2260,7 +2270,7 @@ button {
 /* A disabled control must say where the missing step happens. */
 .rail-hint {
   margin: 9px 0 0;
-  color: var(--muted);
+  color: var(--ink-muted);
   font-size: 12px;
   line-height: 1.45;
 }
@@ -2274,20 +2284,20 @@ button {
   display: block;
   height: 3px;
   margin-top: 2px;
-  background: rgba(17, 36, 64, 0.1);
+  background: rgb(22 32 46 / 0.1);
   overflow: hidden;
 }
 .node-load b {
   display: block;
   height: 100%;
-  background: var(--cyan);
+  background: var(--agent);
   transition: width 0.35s ease;
 }
 .node-load.load-tight b {
-  background: var(--orange);
+  background: var(--branch);
 }
 .node-load.load-over b {
-  background: var(--coral);
+  background: var(--failure);
 }
 @media (prefers-reduced-motion: reduce) {
   .node-load b {
@@ -2302,7 +2312,7 @@ button {
   gap: 7px;
 }
 .brief-build {
-  background: var(--raised);
+  background: var(--surface-raised);
   color: var(--ink);
   border: 0;
   font-weight: 750;
@@ -2333,10 +2343,10 @@ button {
   animation: serving 1.1s ease-in-out infinite;
 }
 .architecture-node.node-affected .node-load b {
-  background: var(--coral);
+  background: var(--failure);
 }
 .architecture-node.node-degraded .node-load b {
-  background: var(--orange);
+  background: var(--branch);
 }
 @media (prefers-reduced-motion: reduce) {
   .architecture-node .node-load b {
@@ -2347,11 +2357,11 @@ button {
 /* Traffic keeps moving on an impacted path, in the colour of its condition,
    so a failing system reads as under strain rather than switched off. */
 .path-flow.flow-degraded {
-  stroke: rgba(236, 142, 45, 0.9);
+  stroke: rgb(224 134 0 / 0.9);
   animation-duration: 1.6s;
 }
 .path-flow.flow-failed {
-  stroke: rgba(217, 93, 79, 0.95);
+  stroke: rgb(217 61 66 / 0.95);
   animation-duration: 1s;
 }
 
@@ -2367,24 +2377,24 @@ button {
   width: 7px;
   height: 7px;
   flex: none;
-  background: var(--muted);
+  background: var(--ink-muted);
 }
 .architecture-node.service span::before {
   border-radius: 50%;
-  background: var(--blue);
+  background: var(--human);
 }
 .architecture-node.database span::before {
   border-radius: 2px;
-  background: #7a4fd6;
+  background: var(--human);
 }
 .architecture-node.queue span::before {
   border-radius: 1px;
-  background: var(--cyan);
+  background: var(--agent);
   transform: rotate(45deg);
 }
 .architecture-node.gateway span::before {
   border-radius: 50% 50% 2px 2px;
-  background: var(--orange);
+  background: var(--branch);
 }
 
 /* The surface growing is the one thing that proves state-dependent
@@ -2404,13 +2414,13 @@ button {
   animation: tool-delta-in 0.45s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .tool-delta-up {
-  color: var(--void);
-  background: var(--green);
-  box-shadow: var(--glow-green);
+  color: var(--surface-sunken);
+  background: var(--verified);
+  box-shadow: var(--lift-2);
 }
 .tool-delta-down {
-  color: var(--void);
-  background: var(--muted);
+  color: var(--surface-sunken);
+  background: var(--ink-muted);
 }
 @keyframes tool-delta-in {
   from {
@@ -2453,9 +2463,9 @@ button {
   min-height: 132px;
   margin-top: 6px;
   padding: 14px 16px;
-  border: 1px solid var(--line-bright);
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius);
-  background: var(--panel);
+  background: var(--surface);
   color: var(--ink);
   font: inherit;
   font-size: 14px;
@@ -2464,6 +2474,6 @@ button {
 }
 .studio:has(.canvas-empty) .canvas-empty-brief:focus-visible {
   outline: none;
-  border-color: var(--blue);
-  box-shadow: var(--glow-blue);
+  border-color: var(--human);
+  box-shadow: var(--lift-2);
 }

@@ -35,16 +35,21 @@ if (wrong.length) {
 // every `color:` rule made that one worse, and no test can see which rule
 // uses which token, so it is checked here.
 const global = readFileSync("src/styles/global.css", "utf8");
-const darkStrip = global.slice(
+const stripRule = global.slice(
   global.indexOf(".activity-strip .eyebrow {"),
   global.indexOf("}", global.indexOf(".activity-strip .eyebrow {")),
 );
+// This rule guarded the same mistake in the opposite direction. It used to
+// sit on a dark ink strip and needed the vivid `--cyan`; the ground is now
+// warm ivory, so the vivid value measures 2.94:1 as text and the darkened
+// `-text` variant is the correct one. A fill and a text colour are different
+// roles, and this is the rule that keeps proving it.
 if (
-  !darkStrip.includes("var(--cyan)") ||
-  darkStrip.includes("var(--cyan-text)")
+  !stripRule.includes("var(--agent-text)") ||
+  /color:\s*var\(--agent\)/.test(stripRule)
 ) {
   console.error(
-    ".activity-strip .eyebrow sits on the dark ink strip and must use --cyan, not --cyan-text, which is darkened for light grounds and measures 3.0:1 there.",
+    ".activity-strip .eyebrow sits on ivory and must use --agent-text, not the vivid --agent fill, which measures 2.94:1 as text there.",
   );
   process.exit(1);
 }
