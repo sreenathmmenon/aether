@@ -55,11 +55,34 @@ simulation.
 
 ## Screenshot checklist
 
-1. Baseline breach with regional dependency failure.
-2. Three isolated futures and comparative evidence.
-3. ChatGPT Site Tools discovery showing dynamic capability expansion.
-4. Component-anchored human/agent discussion, replayable history, approval gate, merge, and rollback.
-5. The same journey on the second seeded system, showing nothing is fixture-specific.
+Each of these is a state, not a topic — the point in the walk where the
+shutter should click. Clear `localStorage` first; a returning visitor is
+restored into their previous workspace.
+
+1. **First load, before any click.** The onboarding dialog reading "Your
+   agent can propose a system change. Aether proves what it does.", with
+   `WebMCP live · 5 state-aware tools` already in the header behind it.
+2. **The decision room, untouched.** The Mumbai headline, the baseline card
+   at `93.96% availability · 1 violation`, the causal evidence naming
+   `Primary Ledger has no standby replica`, and the human guardrail — all
+   in one frame.
+3. **Immediately after "Create repair futures".** Three futures at 93.96%,
+   96.36% and 97.11%, and the header chip now reading **12 state-aware
+   tools**. This is the state-dependent registration claim in one image.
+4. **The gate refusing.** Highest resilience selected, approve disabled,
+   and the reason reading "1 scenario reports violations. Resolve them to
+   make approval eligible."
+5. **A clean panel that still warns.** The Regional outage tab showing "No
+   SLO violations" with `Traffic spike still blocks approval:
+Reconciliation capacity deficit: 2,000 RPS` directly beneath it — the
+   product refusing to let a passing scenario stand in for the others.
+6. **The approval record.** `Sreenath approved the exact plan — 4 clean
+scenarios · worst 97.11%`: a named person, the evidence they had, and
+   the worst case they accepted.
+7. **After the commit.** Seven tools registered, `Rollback this merge`
+   present as a human control, and no agent tool that could undo it.
+8. **A different system.** The same journey on ride-hailing dispatch or AI
+   inference — three seeded systems ship, and nothing is fixture-specific.
 
 ## What we learned building it
 

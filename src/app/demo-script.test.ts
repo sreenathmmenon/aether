@@ -352,6 +352,14 @@ describe("the demo script quotes what the product reports", () => {
       "the compliance evidence undercounts the seeded systems",
     ).not.toContain("both seeded systems");
     expect(flat).toContain("all three seeded systems");
+    // The screenshot list had the same undercount: "the second seeded
+    // system" when three ship.
+    const sub = submission.replace(/\s+/g, " ");
+    expect(
+      sub,
+      "the screenshot checklist undercounts the seeded systems",
+    ).not.toContain("the second seeded system");
+    expect(sub).toContain("three seeded systems ship");
     // And no vague status text where a measured one belongs.
     expect(
       flat,
