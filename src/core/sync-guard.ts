@@ -32,6 +32,19 @@ export function wouldDiscardWork(
         (total, runs) => total + runs.length,
         0,
       ),
+      // A branch's own edits are work too, and nothing above sees them: a
+      // repair adds operations to an existing branch without changing the
+      // component count, the branch count, or the run count, and the audit
+      // entries behind it are unioned in by `mergeEvidence` so that does not
+      // shrink either. Incoming state holding an older copy of a branch
+      // passed every check, and the reconcile adopted it -- an agent's repair
+      // loop reached version 6 with 11 operations and snapped back to version
+      // 3 with 8 about two seconds later, taking the approval that rested on
+      // those edits with it.
+      operations: Object.values(candidate.branches).reduce(
+        (total, branch) => total + branch.operations.length,
+        0,
+      ),
     };
   };
   const here = built(current);
@@ -39,5 +52,6 @@ export function wouldDiscardWork(
   if (there.components < here.components) return true;
   if (there.branches < here.branches) return true;
   if (there.runs < here.runs) return true;
+  if (there.operations < here.operations) return true;
   return there.audit < here.audit;
 }
