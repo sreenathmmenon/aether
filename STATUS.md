@@ -2166,3 +2166,19 @@ was already underway again.
   - So the risk is not a hole but a disagreement. A schema that under-declares sends a model into a rejection it was told to expect success from; one that over-declares makes it supply fields the tool would have defaulted — the same class as the `model_architecture` case reverted in M134, where the omission was deliberate ergonomics.
   - The test now calls every tool with an empty object and requires each advertised `required` field to appear by name in the refusal. Adding `replicas` to a required list — a field Zod treats as optional — fails it.
   - This is the first survivor set this session that was correct as it stood. Recorded as such: eleven mutations survived, none of them a defect, and the test that came out of it guards a different property than the one being probed.
+
+## Milestone 167 — A demo script someone can actually record from
+
+- [x] **M167.1 — Stop hardening, start on what a judge watches** `DONE`
+  - Acceptance: the film can be recorded on the first take from the document alone.
+  - Evidence: the mutation sweep had reached diminishing returns — the last two rounds found a `required` list that was **correct as it stood** and five region-geometry survivors that are canvas padding. Meanwhile the demo doc was a narrative: no URL, no exact click, no words to say, no figure to read aloud. A judge watches a video; they do not run `npm test`.
+  - `docs/DEMO.md` is now a script walked end to end against the deployed origin. Every button label, headline, gate reason and metric in it is what the page actually showed during that walk.
+
+- [x] **M167.2 — The walk changed the story** `DONE`
+  - Evidence: the old plan said "select the clean future, approve, merge". Walking it found **no future is clean** — creating all three runs four scenarios each, and every one carries violations. The film as planned could not have been recorded.
+  - What is actually there is better. Highest resilience resolves the regional outage but a traffic spike breaches on two capacity deficits; repairing those reveals a **third** bottleneck on reconciliation that was hidden behind them. The model finds the next constraint instead of declaring victory, which is the difference between a diagram and a simulation, and it is now the centre of the film.
+  - Two recording hazards were found by hitting them: editing invalidates evidence, so an edit followed immediately by an approve closes the gate and looks like a bug on camera; and a returning visitor is restored into their previous workspace, so the opening incident is only the opening incident with storage cleared. Both are written into the script.
+
+- [x] **M167.3 — The figures cannot drift from the product** `DONE`
+  - Evidence: a script that quotes numbers is worse than a narrative if they go stale — the take is wrong in a way nobody notices until it is published. Every figure the script states is now derived from the same engine the page uses: the baseline availability and its violation, the three futures' figures, the spike deficits by name, and the third bottleneck **after** performing the two repairs that reveal it. Quoting a wrong baseline or a wrong revealed deficit each fails.
+  - The formatter reflows prose, so a quoted phrase can be split across a line break — the assertions match whitespace-collapsed text, which was found by the first version failing on `5 state-aware tools` for that reason alone.

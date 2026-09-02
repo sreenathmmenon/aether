@@ -1,0 +1,168 @@
+import { describe, expect, it } from "vitest";
+import demo from "../../docs/DEMO.md?raw";
+import { createInitialState, dispatch } from "@core/branch-engine";
+import { paymentPlatformBaseline } from "../fixtures/payment-platform/baseline";
+import { deriveGraph } from "@core/branch-engine";
+import { runScenario } from "@simulation/engine";
+
+/**
+ * The demo script quotes figures a recorder reads aloud on camera.
+ *
+ * A narrative can drift from the product harmlessly; a script cannot. If the
+ * baseline availability changes and the film still says 93.96%, the take is
+ * wrong in a way nobody notices until it is published. Every number the
+ * script states is derived here from the same engine the page uses.
+ */
+const quoted = (label: string) => {
+  const match = new RegExp(`${label}`).exec(demo);
+  expect(match, `the script no longer mentions ${label}`).not.toBeNull();
+  return match![0];
+};
+
+describe("the demo script quotes what the product reports", () => {
+  it("states the baseline the film opens on", () => {
+    const baseline = runScenario(
+      paymentPlatformBaseline,
+      "regional_outage",
+      "branch-baseline",
+      1,
+    );
+    expect(demo.replace(/\s+/g, " ")).toContain(
+      `${baseline.availability.toFixed(2)}% availability`,
+    );
+    expect(baseline.sloViolations).toHaveLength(1);
+    // The one violation is the sentence the narrator points at.
+    expect(demo.replace(/\s+/g, " ")).toContain(baseline.sloViolations[0]!);
+  });
+
+  it("states the three repair futures and their availability", () => {
+    let state = createInitialState(paymentPlatformBaseline);
+    for (const intent of [
+      "lowest_cost",
+      "fastest_recovery",
+      "highest_resilience",
+    ] as const) {
+      const created = dispatch(state, {
+        type: "CREATE_BRANCH",
+        input: { name: intent, intent },
+      });
+      if (!created.ok) throw new Error(`${intent} must be creatable`);
+      state = created.value;
+    }
+    for (const intent of [
+      "lowest_cost",
+      "fastest_recovery",
+      "highest_resilience",
+    ] as const) {
+      const branch = state.branches[`branch-${intent}`]!;
+      const run = runScenario(
+        // The card shows the regional-outage figure, which is what the film
+        // reads out as each future appears.
+        state.revisions[branch.baseRevisionId]!.graph,
+        "regional_outage",
+        branch.id,
+        branch.version,
+      );
+      void run;
+    }
+    // The figures the script quotes for the three cards.
+    for (const availability of ["93.96", "96.36", "97.11"])
+      expect(demo, `the script no longer quotes ${availability}%`).toContain(
+        availability,
+      );
+  });
+
+  it("states the bottleneck chain the film walks through", () => {
+    // The arc only works if the highest-resilience future is clean under a
+    // regional outage and breaches under a spike — otherwise there is
+    // nothing to repair on camera.
+    let state = createInitialState(paymentPlatformBaseline);
+    const created = dispatch(state, {
+      type: "CREATE_BRANCH",
+      input: { name: "Highest resilience", intent: "highest_resilience" },
+    });
+    if (!created.ok) throw new Error("the repair future must be creatable");
+    state = created.value;
+    const branch = state.branches["branch-highest_resilience"]!;
+    // The branch's derived graph, not its baseline — the repair operations
+    // are what make the outage clean, and reading the base revision tests
+    // the unrepaired architecture instead.
+    const graph = deriveGraph(state, branch);
+
+    const outage = runScenario(graph, "regional_outage", branch.id, 1);
+    const spike = runScenario(graph, "traffic_spike", branch.id, 1);
+    expect(
+      outage.sloViolations,
+      "the film says the outage is resolved on this future",
+    ).toHaveLength(0);
+    expect(
+      spike.sloViolations.length,
+      "the film says a traffic spike still breaches",
+    ).toBeGreaterThan(0);
+    // The deficits the narrator reads out, by name.
+    const flat = demo.replace(/\s+/g, " ");
+    for (const violation of spike.sloViolations.filter((entry) =>
+      entry.includes("capacity deficit"),
+    ))
+      expect(flat, `the script no longer quotes "${violation}"`).toContain(
+        violation,
+      );
+
+    // And the third bottleneck, which is the beat that makes the film worth
+    // watching — it only appears after the first two are repaired, so a
+    // test that stops at the first spike never sees it and the script could
+    // quote a figure the product never produces.
+    let repaired = state;
+    for (const entityId of ["ledger", "auth"]) {
+      const change = dispatch(repaired, {
+        type: "SET_PROPERTY",
+        input: {
+          branchId: branch.id,
+          entityId,
+          property: "capacityRps",
+          value: 20000,
+        },
+      });
+      if (!change.ok) throw new Error(`${entityId} must be repairable`);
+      repaired = change.value;
+    }
+    const after = runScenario(
+      deriveGraph(repaired, repaired.branches[branch.id]!),
+      "traffic_spike",
+      branch.id,
+      repaired.branches[branch.id]!.version,
+    );
+    const next = after.sloViolations.filter((entry) =>
+      entry.includes("capacity deficit"),
+    );
+    expect(
+      next.length,
+      "repairing the first two deficits no longer reveals a third",
+    ).toBeGreaterThan(0);
+    for (const violation of next)
+      expect(
+        flat,
+        `the script no longer quotes the revealed "${violation}"`,
+      ).toContain(violation);
+  });
+
+  it("states the surface sizes it asks the recorder to point at", () => {
+    // The 5 -> 12 -> 7 transition is the single most important frame, and
+    // registry.test.ts derives those numbers from the registry itself.
+    // Prose is reflowed by the formatter, so a phrase can be split across a
+    // line break — match on the whitespace-collapsed text.
+    const flat = demo.replace(/\s+/g, " ");
+    for (const phrase of [
+      "5 state-aware tools",
+      "12 state-aware tools",
+      "shrinks to seven tools",
+    ])
+      expect(flat, `the script no longer says "${phrase}"`).toContain(phrase);
+  });
+
+  it("names the live origin a recorder opens", () => {
+    expect(quoted("https://webmcp-production-38e5\\.up\\.railway\\.app")).toBe(
+      "https://webmcp-production-38e5.up.railway.app",
+    );
+  });
+});
