@@ -2657,3 +2657,12 @@ was already underway again.
 - [x] **M215.2 — The empty-canvas invitation priced the wrong failure** `DONE`
   - Evidence: swept the other controls reachable on a blank canvas. The scenario tabs are safe — the panel answers "Nothing to measure yet" with em-dashes rather than fabricated zeros — but the invitation beneath it read "I will show you what a **regional** failure costs" whatever tab was selected.
   - It now names the selected scenario. One correction while writing it, recorded: the obvious field, `short`, is a headline fragment — checking all four first produced "show you what **shared dependency lost · most depended on** costs" and "what **primary unavailable** costs". `label` reads correctly, and the test now holds the sentence to reading well for every scenario rather than merely compiling.
+
+## Milestone 216 — The empty-canvas guards, verified live
+
+- [x] **M216.1 — The trace guard holds in both directions on the deployed origin** `DONE`
+  - Evidence: on a blank canvas the control is now disabled, dimmed to 0.38 opacity with a `not-allowed` cursor and the tooltip "Model a system and run a scenario to trace its failure path." The phantom "Tracing 1/2" is gone.
+  - It re-enables the moment a real system exists — typed `nginx -> orders API -> Postgres` into the canvas composer, and the control became live with the engine read naming **"orders API is the causal break"** from the reviewer's own words. Playing it advanced **1/5 → 3/5** across five real steps, against the two phantom bookends it used to count.
+- [x] **M216.2 — The rest of the blank-canvas surface swept** `DONE`
+  - Evidence: every control reachable before anything is modelled was exercised. The scenario tabs are safe — the panel answers "Nothing to measure yet" with em-dashes rather than fabricated zeros. `Add to record` refuses an empty note with "Add a short, decision-relevant note before posting." `Build system first` and `Build this architecture` are correctly disabled until there is a brief.
+  - `Open a shared review` creates a durable room and puts it in the URL (`?system=blank&room=review-1aiznp`); the server round-trips it (`GET /api/workspace/<room>` → 200) and `/health` reports `persistence: postgres`, so the collaboration claim is backed by real storage rather than local state.
