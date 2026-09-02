@@ -2666,3 +2666,13 @@ was already underway again.
 - [x] **M216.2 — The rest of the blank-canvas surface swept** `DONE`
   - Evidence: every control reachable before anything is modelled was exercised. The scenario tabs are safe — the panel answers "Nothing to measure yet" with em-dashes rather than fabricated zeros. `Add to record` refuses an empty note with "Add a short, decision-relevant note before posting." `Build system first` and `Build this architecture` are correctly disabled until there is a brief.
   - `Open a shared review` creates a durable room and puts it in the URL (`?system=blank&room=review-1aiznp`); the server round-trips it (`GET /api/workspace/<room>` → 200) and `/health` reports `persistence: postgres`, so the collaboration claim is backed by real storage rather than local state.
+
+## Milestone 217 — The claims a judge would check first, checked
+
+- [x] **M217.1 — Determinism verified through the agent surface, not asserted** `DONE`
+  - Evidence: called `run_failure_scenario` three times from `document.modelContext` on the deployed origin, same branch and scenario. All three returned byte-identical results — `97.11% · 7m · 360ms · $8,694`, `inputHash fnv1a-10cdfc70`, `outputHash fnv1a-38b3208a`. The reproducibility claim holds where a judge would test it.
+- [x] **M217.2 — WebMCP platform requirements re-verified on the live origin** `DONE`
+  - Evidence: `cross-origin-opener-policy: same-origin`, `cross-origin-embedder-policy: require-corp`, `permissions-policy: tools=(self)`, `x-content-type-options: nosniff`, and the `Origin-Trial` header all present after this session's deploys. The token decodes to `https://webmcp-production-38e5.up.railway.app:443`, feature `WebMCP`, expiry **2026-11-17** — valid well past submission.
+- [x] **M217.3 — Keyboard and labelling swept, and two of my own probes corrected** `DONE`
+  - Evidence: all 14 interactive controls show a visible focus indicator under keyboard-style focus, and every input is named by a `label[for]` or `aria-label`.
+  - **Both probes were wrong before the code was.** The first read `textContent` of `<input>` elements, which is always empty, and reported two controls as unnamed. The second called `.focus()` from script, which deliberately does not trigger `:focus-visible`, and reported 14 controls as having no focus ring — the stylesheet has a global `:where(button, a[href], input, select, textarea, [tabindex]):focus-visible` rule all along. Re-run with `focus({focusVisible:true})`, nothing is missing. Recorded because a probe that cries wolf is how real findings get ignored.
