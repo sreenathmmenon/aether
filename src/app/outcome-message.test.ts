@@ -24,6 +24,21 @@ describe("what a reviewer is told a command did", () => {
     // Derived from the reducer, so a state added later fails here rather than
     // reaching a reviewer as an enum.
     expect(reducerStates.length).toBeGreaterThan(8);
+    // Named as well as counted. A derivation that reads the source it tests
+    // can be disarmed by the change it exists to catch — collapsing one
+    // state into another keeps the count plausible while removing the
+    // renamed state from scrutiny. Found as a real defect in the reducer's
+    // edit-command list, so every derived list here now carries a backstop.
+    for (const state of [
+      "human_approved",
+      "human_edit",
+      "merged",
+      "simulated",
+      "branches_exist",
+    ])
+      expect(reducerStates, `${state} is no longer a reducer state`).toContain(
+        state,
+      );
     for (const state of reducerStates) {
       const message = outcomeMessage(state);
       expect(message, `${state} has no sentence`).not.toContain(

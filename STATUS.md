@@ -1923,3 +1923,12 @@ was already underway again.
   - Killed: removing the asset-route terminator, and pointing an `aria-describedby` at an id that does not exist.
   - **Survived**: renaming the `/robots.txt` route. The `llms-txt` test derives which text files are served from the server's own routes, so renaming one removed it from scrutiny — the test's property ("each served file is read from `dist/`") stayed true while nothing served the file at all.
   - Fixed by naming both files rather than counting them: `llms.txt` and `robots.txt` must each appear in the routes. Renaming either now fails. Verified live — both return 200 from the deployed origin, 23 and 1,297 bytes.
+
+## Milestone 142 — Closing the class rather than the cases
+
+- [x] **M142.1 — Every derived list now names as well as counts** `DONE`
+  - Acceptance: no list derived from source can shrink silently and take its assertions with it.
+  - Evidence: M140 and M141 each found one instance of a derivation being disarmed by the change it was written to catch. Rather than wait for a third, the two remaining unguarded derivations were given the same backstop `human-gate.test.ts` already carried.
+  - `outcome-message.test.ts` derives the reducer's states from `nextState = "..."`. A count guard alone would not notice one state collapsing into another, which keeps the count plausible while removing the renamed state from scrutiny. It now names five states explicitly, and collapsing `human_edit` into `simulated` fails it.
+  - `human-gate.test.ts` derives tool-dispatched commands from the exact shape `{ type: "X", input:`. Reformatting a call site was checked first and does **not** break it — the regex tolerates whitespace — but a shape the regex cannot see does, and then "no tool reaches a human-only command" would pass against a list that had quietly lost entries. It now names four commands an agent legitimately reaches; making one invisible to the regex fails it.
+  - The rule this settles, since it has now cost three investigations: **the derivation and the assertion must key on different properties, and a derived list must name a few members as well as count them.**

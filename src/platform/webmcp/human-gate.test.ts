@@ -44,6 +44,21 @@ describe("the human gate holds by construction", () => {
     expect(commandBlocks.length).toBeGreaterThan(8);
     expect(dispatchedByTools.length).toBeGreaterThan(3);
     expect(humanOnly.length).toBeGreaterThan(3);
+    // Named as well as counted. The dispatch regex depends on the exact
+    // shape `{ type: "X", input:`, so reformatting a call site would shrink
+    // this list silently — and "no tool reaches a human-only command" passes
+    // for free against a list that has quietly lost entries. The commands an
+    // agent legitimately reaches are the ones to pin.
+    for (const command of [
+      "CREATE_BRANCH",
+      "RUN_SCENARIO",
+      "ADD_COMPONENT",
+      "ADD_DECISION_NOTE",
+    ])
+      expect(
+        dispatchedByTools,
+        `${command} is no longer seen as tool-dispatched`,
+      ).toContain(command);
     for (const command of dispatchedByTools)
       expect(
         commandBlocks.map((block) => block.name),
