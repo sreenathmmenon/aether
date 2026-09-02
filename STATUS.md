@@ -2352,3 +2352,11 @@ was already underway again.
   - Fixed by filtering on the branch version, with `previewEvidence` — already computed live for the current version — as the fallback when nothing is stored yet. Removing the filter fails.
   - Verified against the deployed origin: after locking a ceiling and editing cost, the agent and the page now report the identical figure and the identical sentence — `Human cost ceiling exceeded: $12,492 > $8,700` — for the same run. The two views agree.
   - A probe fault recorded: the first test sliced from `activeSimulation`, but the filter lives in the `versionRuns` declaration just above it, so the assertion failed for its own window rather than a real absence.
+
+## Milestone 187 — Making the comparison a test, not a technique
+
+- [x] **M187.1 — Two defects from one method** `DONE`
+  - Acceptance: every scenario computed for display or for a tool is given the same engine inputs.
+  - Evidence: M184 and M186 both came from comparing the agent's view with the page's, field by field — the tools omitted the workspace cost ceiling, and the panel displayed a superseded run. Both were the same shape: one path passing the engine different arguments than another. That comparison was a technique someone had to remember to apply.
+  - It is now a test. Every `runScenario` call in `App.tsx` and `registry.ts` must pass the workspace ceiling, with template loading excluded because no workspace — and therefore no ceiling — exists at that point. Dropping it from the baseline card fails; dropping it from the agent's inspect fails three tests.
+  - A probe fault recorded, and it is the second time a fixed-width window has produced a false finding: matching 260 characters after `runScenario(` truncated the baseline call before its ceiling argument and reported a defect that was not there. Matching balanced parentheses instead reads the whole call however it is formatted.

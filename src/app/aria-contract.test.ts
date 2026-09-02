@@ -84,6 +84,37 @@ describe("the interface honours the ARIA it declares", () => {
       );
   });
 
+  it("gives the engine the same inputs wherever a run is computed", () => {
+    // Two defects in a row came from comparing the agent's view with the
+    // page's: the tools omitted the cost ceiling, and the panel displayed a
+    // superseded run. Both were one path passing the engine different
+    // arguments than another. This holds every scenario computed for
+    // display or for a tool to the full shape, so the comparison is a test
+    // rather than a technique someone has to remember to apply.
+    const sources: [string, string][] = [
+      ["App.tsx", appSource],
+      ["registry.ts", registrySource],
+    ];
+    let checked = 0;
+    for (const [name, source] of sources)
+      // Balanced to the closing parenthesis rather than a fixed window: a
+      // 260-character slice truncated the baseline call before its ceiling
+      // argument and reported a defect that was not there.
+      for (const [, args] of source.matchAll(
+        /runScenario\(((?:[^()]|\([^()]*\))*)\)/g,
+      )) {
+        // Template loading has no workspace yet, so no ceiling can exist.
+        if (args.includes("template.graph")) continue;
+        checked += 1;
+        expect(
+          args,
+          `a scenario in ${name} is computed without the workspace cost ceiling`,
+        ).toContain("costCeilingUsd");
+      }
+    // Both files contribute, or a rename silently emptied this.
+    expect(checked).toBeGreaterThan(2);
+  });
+
   it("never shows a superseded run as current evidence", () => {
     // Found by comparing the agent's view with the page's, field by field.
     // After an edit the panel reported $8,694 and "No SLO violations" while
