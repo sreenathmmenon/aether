@@ -2452,3 +2452,23 @@ was already underway again.
   - Evidence: a ten-second beat before the gate opens. The agent is asked which future to take and answers with a reason, a trade-off, and its own limit — _"A human reviews and approves in the Aether interface. No tool can commit Highest resilience."_
   - Two things are said aloud there: the agent is reasoning about evidence **it did not generate**, and it ends by naming what it cannot do. An agent that recommends and then declines to act is a different character from one that executes, and that difference is the whole product.
   - Guarded: removing the beat fails. A probe fault recorded — blockquote markers survive whitespace collapsing, so a sentence wrapping inside a quote reads as `No tool > can commit` and the assertion failed on formatting rather than content.
+
+## Milestone 198 — From printed report to live surface
+
+- [x] **M198.1 — The interface looked like a document** `DONE`
+  - Acceptance: the product reads as a live surface two actors work on, not a consultancy report.
+  - Evidence: cream paper, serif headlines, hairline rules and muted blue-grey. Every element was drawn rather than lifted, which is the opposite of what the product is — a shared surface where an agent and a person work at the same time.
+  - Rebuilt on one dark ground with light lifted off it: a depth ladder (`--void` → `--paper` → `--panel` → `--raised`), a single accent that means _computed_, and glow reserved for the three moments something is genuinely live — a running simulation, an agent acting, a gate opening.
+  - The whole restyle moved through tokens, so 86 usages across 2,260 lines of CSS changed coherently rather than one rule at a time.
+
+- [x] **M198.2 — Inverting a theme is not a colour swap** `DONE`
+  - Evidence: three rounds of real breakage, each found by measuring rather than looking.
+  - A blanket `#fff → var(--ink)` substitution turned every white _background_ into a pale block carrying the dark text of its light-mode design — twenty-six surfaces, including the top bar, tabs and metric grid. A white background on a dark ground is a raised surface, not a text colour.
+  - Eight `rgba()` frosted panels survived the hex pass entirely and rendered the same way.
+  - Nine stale greys were still set as text colours, putting inactive tabs, code chips and the reproducible-run figures at **1.5–2.1 contrast**.
+  - Measured on the deployed page at each stage rather than judged by eye: **102 text elements, zero failing AA.** The dark palette's worst ratio is 6.80:1 against a 4.5 threshold — comfortably better than the light theme ever managed.
+  - The palette gate caught the token drift on the very first run, which is exactly what it was built for.
+
+- [x] **M198.3 — Removing what the product already shows** `DONE`
+  - Evidence: a three-column explainer — `01 · Incident`, `02 · Agent recommendation`, `03 · Human decision` — restated what the canvas, the tool feed and the gate already demonstrate, and took a sixth of the first screen doing it.
+  - Replaced with two live values: the state, and who it is waiting on. `Waiting on — Evidence` becomes `The reviewer` the moment the evidence is clean. Nine lines of caption became a status a reviewer can act on.
