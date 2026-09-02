@@ -2725,12 +2725,11 @@ export function App() {
                     </li>
                   ))}
                 </ol>
-                <p className="tool-gate">
-                  No approve or merge tool is registered, and an agent cannot
-                  dismantle the system or remove a heavily depended-on
-                  component. Only the {reviewerName.toLowerCase()} can commit a
-                  future.
-                </p>
+                {/* The list above already shows there is no approve tool —
+                    a reader can count. What it cannot show is that this is
+                    absence rather than a disabled state, which is the whole
+                    claim, so that is all this says now. */}
+                <p className="tool-gate">Not gated — absent.</p>
               </>
             )}
           </div>

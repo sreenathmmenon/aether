@@ -1871,16 +1871,33 @@ button {
 .tool-feed li.tool-call-rejected {
   border-left-color: var(--coral-text);
 }
-.tool-feed code {
+/* The feed now leads with what the call *did*, so the hierarchy inverts:
+   the consequence is the headline, the engine's result sits under it, and
+   the tool name is the quiet third line an engineer can still find. */
+.tool-feed strong {
   color: var(--ink);
-  font-family: "SFMono-Regular", Consolas, monospace;
-  font-size: 12.5px;
-  font-weight: 600;
+  font-size: 13.5px;
+  font-weight: 650;
+  letter-spacing: -0.008em;
+}
+.tool-feed li.tool-call-rejected strong {
+  color: var(--coral-text);
 }
 .tool-feed small {
-  color: var(--muted);
+  color: var(--cyan-text);
   font-size: 12px;
+  font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
+}
+.tool-feed li.tool-call-rejected small {
+  color: var(--muted);
+}
+.tool-feed code {
+  color: var(--muted);
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 11px;
+  font-weight: 500;
+  opacity: 0.72;
 }
 @keyframes tool-call-in {
   from {
