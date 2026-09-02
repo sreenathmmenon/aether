@@ -215,16 +215,30 @@ function rejected(
    * and no way out of it. The registry knows the answer, so it says it.
    */
   writableBranches?: readonly string[],
+  /**
+   * Component IDs on the branch the call named, for the refusals that reject
+   * an entity ID the same way — "Unknown architecture entity." told an agent
+   * its ID was wrong and not one that was right, while connect_components
+   * already answered "Choose from: …" for the identical mistake.
+   */
+  components?: readonly string[],
 ) {
   const namesABranch =
     failure.message === "This branch cannot be changed." ||
     failure.message === "Unknown architecture branch.";
+  const namesAComponent =
+    failure.message === "Unknown architecture entity." ||
+    failure.message === "Unknown architecture component.";
   const branchHint =
     namesABranch && writableBranches
       ? writableBranches.length
         ? `Use one of: ${writableBranches.join(", ")}.`
         : "No branch is writable now. Create one with create_architecture_branch."
-      : undefined;
+      : namesAComponent && components
+        ? components.length
+          ? `Choose one of: ${components.join(", ")}.`
+          : "This branch has no components yet. Add one with add_architecture_component."
+        : undefined;
   return toolResult({
     error: failure.code,
     problems: [failure.message],
@@ -580,7 +594,8 @@ export function createAetherToolRegistry(
             { type: "CREATE_BRANCH", input: parsed.data },
             agent,
           );
-          if (!result.ok) return rejected(result, writableBranchIds());
+          if (!result.ok)
+            return rejected(result, writableBranchIds(), componentIds());
           await commit(result.value);
           return toolResult({
             branchId: result.value.workspace.activeBranchId,
@@ -641,7 +656,8 @@ export function createAetherToolRegistry(
               { type: "ADD_DECISION_NOTE", input: parsed.data },
               agent,
             );
-            if (!result.ok) return rejected(result, writableBranchIds());
+            if (!result.ok)
+              return rejected(result, writableBranchIds(), componentIds());
             await commit(result.value);
             return toolResult({
               branchId: parsed.data.branchId,
@@ -694,7 +710,8 @@ export function createAetherToolRegistry(
               { type: "RUN_SCENARIO", input: parsed.data },
               agent,
             );
-            if (!result.ok) return rejected(result, writableBranchIds());
+            if (!result.ok)
+              return rejected(result, writableBranchIds(), componentIds());
             await commit(result.value);
             return toolResult(
               result.value.simulations[parsed.data.branchId]?.find(
@@ -948,7 +965,8 @@ export function createAetherToolRegistry(
               { type: "ADD_COMPONENT", input: parsed.data },
               agent,
             );
-            if (!result.ok) return rejected(result, writableBranchIds());
+            if (!result.ok)
+              return rejected(result, writableBranchIds(), componentIds());
             await commit(result.value);
             return toolResult({
               branchId: parsed.data.branchId,
@@ -1237,7 +1255,8 @@ export function createAetherToolRegistry(
               { type: "CONNECT_COMPONENTS", input: parsed.data },
               agent,
             );
-            if (!result.ok) return rejected(result, writableBranchIds());
+            if (!result.ok)
+              return rejected(result, writableBranchIds(), componentIds());
             await commit(result.value);
             return toolResult({
               connected: `${parsed.data.sourceId} -> ${parsed.data.targetId}`,
@@ -1293,7 +1312,8 @@ export function createAetherToolRegistry(
               { type: "SET_PROPERTY", input: parsed.data },
               agent,
             );
-            if (!result.ok) return rejected(result, writableBranchIds());
+            if (!result.ok)
+              return rejected(result, writableBranchIds(), componentIds());
             await commit(result.value);
             return toolResult({
               branchId: parsed.data.branchId,

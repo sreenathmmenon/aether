@@ -110,6 +110,37 @@ describe("Aether WebMCP registry", () => {
     expect(unknown.problems).toContain("Unknown architecture branch.");
     expect(unknown.nextAction).toContain("branch-highest_resilience");
 
+    // A rejected component ID is the same dead end. connect_components
+    // already answered "Choose from: …" for exactly this mistake, while
+    // these two named the bad ID and no good one.
+    for (const [tool, input] of [
+      [
+        "propose_architecture_change",
+        {
+          branchId: "branch-highest_resilience",
+          entityId: "not-a-component",
+          property: "replicationMode",
+          value: "sync",
+        },
+      ],
+      [
+        "add_decision_note",
+        {
+          branchId: "branch-highest_resilience",
+          entityId: "not-a-component",
+          body: "A note anchored to a component that does not exist.",
+        },
+      ],
+    ] as const) {
+      const answer = JSON.parse(
+        String(await [...live].find((t) => t.name === tool)?.execute(input)),
+      ) as { nextAction: string };
+      expect(
+        answer.nextAction,
+        `${tool} rejects a component without naming a real one`,
+      ).toContain("ledger");
+    }
+
     registry?.dispose();
   });
 
