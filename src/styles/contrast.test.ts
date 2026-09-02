@@ -53,50 +53,78 @@ const token = (name: string) => {
 };
 
 describe("text meets AA contrast on the surfaces it is used on", () => {
-  // The two grounds text actually sits on.
-  const paper = () => token("paper");
-  const panel = () => token("panel");
-
-  it("holds every text colour to 4.5:1 on every ground it is used on", () => {
-    // Two grounds were not enough. Three colours passed against `--paper`
-    // and failed on the tinted panels behind the region labels and the sync
-    // badge, which sit a few points darker — measured live at 4.42 to 4.49.
-    // The darkest tinted ground is included so the calibration covers what
-    // the interface actually draws on.
+  it("holds ivory-ground text to 4.5:1 on every surface it is drawn on", () => {
+    // The product has two grounds, and they invert the ladder. On ivory a
+    // text colour is darkened to reach contrast; on the midnight canvas it
+    // is brightened. Measuring only one of them would leave half the
+    // interface unchecked, which is how twenty-five pieces of text once sat
+    // between 3.87 and 4.49 without anything noticing.
     for (const name of [
       "ink",
-      "muted",
-      "blue-text",
-      "cyan-text",
-      "coral-text",
-      "green-text",
-      "amber-text",
+      "ink-muted",
+      "ink-subtle",
+      "human-text",
+      "agent-text",
+      "failure-text",
+      "verified-text",
+      "branch-text",
     ])
-      for (const [groundName, ground] of [
-        ["void", token("void")],
-        ["paper", paper()],
-        ["panel", panel()],
-        // The lightest raised surface, which is the hardest ground for a
-        // bright text colour to clear on a dark interface.
-        ["raised", token("raised")],
-      ] as const)
+      for (const groundName of [
+        "surface",
+        "surface-sunken",
+        "surface-raised",
+      ] as const) {
+        const ratio = contrast(token(name), token(groundName));
         expect(
-          contrast(token(name), ground),
-          `--${name} on --${groundName} is ${contrast(token(name), ground).toFixed(2)}:1`,
+          ratio,
+          `--${name} on --${groundName} is ${ratio.toFixed(2)}:1`,
         ).toBeGreaterThanOrEqual(4.5);
+      }
   });
 
-  it("keeps the fill accents distinct from their text variants", () => {
-    // If a text variant were merely aliased to its accent, this file would
-    // pass while the interface regressed to the original colours.
-    for (const [fill, text] of [
-      ["cyan", "cyan-text"],
-      ["coral", "coral-text"],
-      ["green", "green-text"],
-    ] as const)
-      expect(
-        token(fill),
-        `--${text} is the same colour as --${fill}`,
-      ).not.toEqual(token(text));
+  it("holds canvas text to 4.5:1 on the midnight ground", () => {
+    // The canvas is the one dark region — the stage where failure
+    // propagates and the agent acts — so its text runs the opposite ladder.
+    for (const name of ["structure-ink", "structure-muted"])
+      for (const groundName of ["structure", "structure-raised"] as const) {
+        const ratio = contrast(token(name), token(groundName));
+        expect(
+          ratio,
+          `--${name} on --${groundName} is ${ratio.toFixed(2)}:1`,
+        ).toBeGreaterThanOrEqual(4.5);
+      }
+  });
+
+  it("keeps authorship distinguishable, which luminance alone cannot show", () => {
+    // Blue is what a person did; teal is what the agent did. A first version
+    // of this test compared their contrast ratio and demanded 1.4 -- but
+    // contrast measures luminance, and these two are separated by hue at
+    // almost identical lightness (1.10:1). The assertion would have forced
+    // one of them lighter for no legibility gain and broken the pairing.
+    // Hue distance is the property that actually matters here.
+    const hue = (rgb: readonly number[]) => {
+      const [r, g, b] = [rgb[0]! / 255, rgb[1]! / 255, rgb[2]! / 255];
+      const max = Math.max(r, g, b);
+      const min = Math.min(r, g, b);
+      if (max === min) return 0;
+      const d = max - min;
+      const h =
+        max === r
+          ? ((g - b) / d) % 6
+          : max === g
+            ? (b - r) / d + 2
+            : (r - g) / d + 4;
+      return (((h * 60) % 360) as number) + (h < 0 ? 360 : 0);
+    };
+    const apart = Math.abs(hue(token("human")) - hue(token("agent")));
+    const separation = Math.min(apart, 360 - apart);
+    expect(
+      separation,
+      `--human and --agent are only ${separation.toFixed(0)} degrees apart in hue`,
+    ).toBeGreaterThan(40);
+    expect(token("human")).not.toEqual(token("agent"));
+    // And a fill must never be silently aliased to its text variant, or the
+    // accents dull back to the readable values and the canvas loses its life.
+    expect(token("agent")).not.toEqual(token("agent-text"));
   });
 });

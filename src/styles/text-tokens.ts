@@ -5,25 +5,34 @@
  * contrast test measures values it can see at compile time. A gate script
  * holds `tokens.css` to these, so the two cannot drift apart.
  *
- * The interface moved from a cream page to a dark ground, which inverts the
- * whole ladder: on paper a text colour is darkened to reach contrast, and
- * here it is brightened. Every value below is measured against the darkest
- * ground it is drawn on.
+ * The design council returned the product to the ground its own contract
+ * always specified — warm ivory surfaces, midnight structural ink — after a
+ * dark rebuild inverted it. Two of the three reference products measured
+ * live ship a light ground; Vercel, the supposedly dark one, is #fafafa.
+ *
+ * Two ladders run here, and both are measured. Ink on ivory is darkened to
+ * reach contrast; ink on the midnight canvas is brightened. The canvas is
+ * the one dark region, where the dependency graph lives and the agent acts.
  */
 export const textTokens = `
-  --ink: #e8edf7;
-  --muted: #9aabc6;
-  --void: #070b14;
-  --paper: #0b1120;
-  --panel: #121b2e;
-  --raised: #17223a;
-  --blue: #5b9dff;
-  --cyan: #2dd4de;
-  --coral: #ff6b5e;
-  --green: #2fd39b;
-  --blue-text: #85b8ff;
-  --cyan-text: #5fe3ea;
-  --coral-text: #ff8f85;
-  --green-text: #5fdfb4;
-  --amber-text: #ffc078;
+  --surface: #fdfcfa;
+  --surface-sunken: #f6f4f0;
+  --surface-raised: #ffffff;
+  --structure: #0e1420;
+  --structure-raised: #18202f;
+  --structure-ink: #f2f5f9;
+  --structure-muted: #94a3b8;
+  --ink: #16202e;
+  --ink-muted: #5b6878;
+  --ink-subtle: #646e7b;
+  --human-text: #1b4dff;
+  --agent-text: #00786e;
+  --failure-text: #c0272c;
+  --verified-text: #0b7466;
+  --branch-text: #96590a;
+  --human: #1b4dff;
+  --agent: #00a99b;
+  --failure: #d93d42;
+  --verified: #0f9080;
+  --branch: #e08600;
 `;
