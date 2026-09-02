@@ -640,4 +640,33 @@ describe("dependency-graph simulation", () => {
     expect(result.deficitsNotListed).toBeUndefined();
     expect(result.deficitNote).toBeUndefined();
   });
+
+  it("reports an unreplicated store on the failure path, once", () => {
+    // The engine carried a second rule for the same fact — a "single
+    // regional dependency" violation — which could never fire: it required a
+    // database with both upstream and downstream dependents, but `writes_to`
+    // is a backward kind, so a database things write to has dependents and
+    // no upstream. Mutation testing found it by deleting it and breaking
+    // nothing. It was removed rather than repaired, because this is the
+    // sentence a reviewer already gets for the same weakness.
+    const result = runScenario(
+      paymentPlatformBaseline,
+      "regional_outage",
+      "branch-baseline",
+      1,
+    );
+    const standby = result.sloViolations.filter((violation) =>
+      violation.includes("has no standby replica"),
+    );
+    expect(standby).toHaveLength(1);
+    expect(standby[0]).toContain("Primary Ledger");
+
+    // And the removed rule stays removed: one architectural weakness, one
+    // sentence, or the evidence reads as two problems where there is one.
+    expect(
+      result.sloViolations.filter((violation) =>
+        violation.includes("single regional dependency"),
+      ),
+    ).toHaveLength(0);
+  });
 });

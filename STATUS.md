@@ -1941,3 +1941,13 @@ was already underway again.
   - The cause is a familiar shape: the existing cases build components, branches and audit entries **together**, so any one surviving check catches the loss and the other three are never exercised. The test was proving the combination, not the guard.
   - Each dimension is now isolated — a workspace missing exactly one component, exactly one branch, exactly one audit entry, or its runs — plus the case that matters in the other direction: an identical workspace must not be treated as loss, or every reconciliation would be refused. All four mutations are now killed.
   - Also killed in the same sweep, needing no change: removing the merge dedupe, renaming the workspace size cap, ignoring replication in the latency model, miscounting hidden replay entries, always restoring a `?system=` link, and accepting any shape as persisted state.
+
+## Milestone 144 — A violation that could never fire
+
+- [x] **M144.1 — Mutation finds unreachable code that a coverage number would not** `DONE`
+  - Acceptance: every rule in the engine can fire, and each is enforced.
+  - Evidence: mutating the engine's derived violations killed four and left one — deleting the `single regional dependency` rule broke no test. Checking why found something stronger than a missing test: **the rule could never fire on any shipped system in any scenario.**
+  - The condition required a database with both upstream and downstream dependents. But `writes_to` is a backward kind — a service writing to a database makes that _service_ the dependent — so a database things write to has downstream dependents and no upstream, and `upstream > 0` is unsatisfiable for it. Verified on the payment fixture: the ledger's two edges, `auth writes_to ledger` and `ledger publishes_to queue`, both yield dependents and no upstream.
+  - **Deleted rather than repaired**, because the fact it described is already reported: an unreplicated store on the failure path produces `Primary Ledger has no standby replica`, the same weakness in words a reviewer can act on. Repairing the condition would have added a second sentence about one problem. The four scenario fingerprints did not move, which confirms the rule contributed nothing.
+  - `eslint` then caught `upstreamOf` as orphaned, so the helper went with it — the gate finding the second half of a deletion is exactly what it is for.
+  - A test now holds the surviving sentence: exactly one standby-replica violation, naming the ledger, and zero of the removed kind. Dropping the surviving violation fails three tests.

@@ -178,18 +178,6 @@ function dependentsOf(graph: ArchitectureGraph, id: string) {
 }
 
 /** Entities that `id` itself relies on. */
-function upstreamOf(graph: ArchitectureGraph, id: string) {
-  return Object.values(graph.relationships)
-    .flatMap((relationship) => {
-      const backward = backwardKinds.has(relationship.kind);
-      if (backward && relationship.sourceId === id)
-        return [relationship.targetId];
-      if (!backward && relationship.targetId === id)
-        return [relationship.sourceId];
-      return [];
-    })
-    .sort();
-}
 
 /**
  * Breadth-first propagation along real dependency edges. A seed failure
@@ -565,23 +553,20 @@ export function runScenario(
   if (scenario === "traffic_spike" && deficits.length > 0)
     violations.push("Traffic spike SLO breached");
 
-  // A single point of failure is a real, derivable graph property: one
-  // upstream, no replicas, and everything downstream dies with it.
-  for (const entity of operational) {
-    if (!impacted.has(entity.id)) continue;
-    if (entity.kind !== "database") continue;
-    // Replication is what removes a single point of failure. A database with
-    // a standby is not one, however many things depend on it, so the rule
-    // must not fire on an architecture that has already been repaired.
-    const mode = replicationOf(entity) ?? "none";
-    if (mode !== "none") continue;
-    const replicas = propertiesOf(entity).replicas;
-    const isSingle = typeof replicas !== "number" || replicas <= 1;
-    const downstream = dependentsOf(graph, entity.id).length;
-    const upstream = upstreamOf(graph, entity.id).length;
-    if (isSingle && downstream > 0 && upstream > 0)
-      violations.push(`${entity.name} is a single regional dependency`);
-  }
+  // A "single regional dependency" violation used to be derived here, and it
+  // could never fire. It required a database with both upstream and
+  // downstream dependents, but `writes_to` is a backward kind — a service
+  // writing to a database makes that service a *dependent* — so a database
+  // that things write to has downstream dependents and no upstream, and the
+  // condition was unsatisfiable on every shipped system in every scenario.
+  // Found by mutation testing: deleting the rule broke no test, because no
+  // test could reach it.
+  //
+  // It is deleted rather than repaired because the fact it described is
+  // already reported. An unreplicated store on the failure path produces
+  // "<name> has no standby replica", which is the same architectural
+  // weakness in words a reviewer can act on. Repairing the condition would
+  // have added a second sentence about one problem.
 
   if (costCeilingUsd && monthlyCostUsd > costCeilingUsd)
     violations.push(
