@@ -194,8 +194,21 @@ button {
   font-weight: 650;
   cursor: pointer;
 }
-.canvas-empty-cta:hover {
+.canvas-empty-cta:not(:disabled):hover {
   background: var(--structure);
+}
+/* This sits inside the canvas, where the scope redefines --surface-sunken to
+   the midnight ground -- so the light ink resolved to dark ink on vivid blue
+   at 3.12:1, and with no disabled rule it looked fully live while being
+   inert. Same defect as the trace control, in the state a reviewer meets
+   first: an empty canvas with nothing typed yet. */
+.canvas-empty-cta {
+  color: var(--surface-raised);
+}
+.canvas-empty-cta:disabled {
+  background: var(--structure-raised);
+  color: var(--structure-muted);
+  cursor: not-allowed;
 }
 /* The evidence and the moment behind a recorded decision. */
 .replay-evidence {
