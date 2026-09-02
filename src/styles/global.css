@@ -1041,16 +1041,24 @@ button {
   color: var(--ink-muted);
   font-size: 12px;
 }
+/* A component the failure reaches. On the midnight stage the light-ground
+   surfaces this used resolved to the stage itself, so a failing component
+   lost the material every other card had -- the one state that most needs
+   to be felt was the flattest thing on the canvas. It is lit from within by
+   the failure colour now, and holds its depth. */
 .architecture-node.node-affected {
-  border-color: var(--failure-text);
-  background: linear-gradient(
-    180deg,
-    var(--surface-raised) 0%,
-    var(--surface) 62%
-  );
+  border-color: var(--failure);
+  background:
+    radial-gradient(
+      120% 100% at 50% 0%,
+      rgb(217 61 66 / 0.22),
+      transparent 70%
+    ),
+    var(--structure-raised);
   box-shadow:
-    0 0 0 1px rgb(217 61 66 / 0.35),
-    0 10px 24px -14px rgb(217 61 66 / 0.75);
+    inset 0 1px 0 rgb(255 138 142 / 0.18),
+    0 0 0 1px rgb(217 61 66 / 0.45),
+    0 14px 32px -10px rgb(217 61 66 / 0.5);
   animation: impact-arrive 0.5s cubic-bezier(0.22, 1.2, 0.36, 1);
 }
 .architecture-node.node-affected small {
