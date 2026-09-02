@@ -3010,6 +3010,9 @@ export function App() {
             {gateReason({
               currentRuns: currentRuns.length,
               blockingRuns: blockingRuns.length,
+              blockingScenarios: blockingRuns.map(
+                (run) => scenarioCopy[run.scenario].label,
+              ),
               hasAnyRun: (state.simulations[activeBranch.id] ?? []).length > 0,
               scope: activeSimulation
                 ? {

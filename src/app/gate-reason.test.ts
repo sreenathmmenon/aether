@@ -60,4 +60,53 @@ describe("why approval is or is not available", () => {
     expect(first).toContain("First run on this future");
     expect(first).toContain("3 of 5");
   });
+
+  it("names the scenarios that block approval instead of counting them", () => {
+    // "1 scenario reports violations" told a reviewer that something blocked
+    // approval without telling them what to go and look at, on the page
+    // whose whole claim is that a decision rests on nameable evidence.
+    expect(
+      gateReason({
+        currentRuns: 3,
+        blockingRuns: 1,
+        blockingScenarios: ["Regional outage"],
+        hasAnyRun: true,
+      }),
+    ).toBe(
+      "Regional outage reports violations. Resolve them to make approval eligible.",
+    );
+
+    expect(
+      gateReason({
+        currentRuns: 3,
+        blockingRuns: 2,
+        blockingScenarios: ["Regional outage", "Traffic spike"],
+        hasAnyRun: true,
+      }),
+    ).toBe(
+      "Regional outage and Traffic spike report violations. Resolve them to make approval eligible.",
+    );
+  });
+
+  it("falls back to the count when naming them would not be readable", () => {
+    // Four scenario names in one sentence is a wall, and the reviewer can
+    // see the failing runs on screen anyway.
+    expect(
+      gateReason({
+        currentRuns: 4,
+        blockingRuns: 4,
+        blockingScenarios: ["A", "B", "C", "D"],
+        hasAnyRun: true,
+      }),
+    ).toBe(
+      "4 scenarios report violations. Resolve them to make approval eligible.",
+    );
+
+    // And a caller that has no names still produces a correct sentence.
+    expect(
+      gateReason({ currentRuns: 2, blockingRuns: 1, hasAnyRun: true }),
+    ).toBe(
+      "1 scenario reports violations. Resolve them to make approval eligible.",
+    );
+  });
 });
