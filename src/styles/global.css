@@ -1059,15 +1059,15 @@ button {
   background: rgb(122 162 255 / 0.05);
 }
 .region-box span {
-  /* Inside its own box rather than floating above it. Two regions that start
-     at the same x -- which is what an agent-built system produces, one band
-     stacked over the other -- put their labels at the identical point and
-     "PRIMARY" and "SECONDARY" rendered on top of each other as "BROONDARY".
-     Each label now sits within the band it names, so it can only ever
-     collide with itself. */
+  /* Above its band, not inside it. Inside looks like the safer choice -- two
+     bands at the same origin rendered "PRIMARY" and "SECONDARY" on top of
+     each other as "BROONDARY" -- but the real cause was the bands
+     coinciding, and that is fixed where components are placed. Moving the
+     label inside instead put it on a component card on every seeded system,
+     which reserve only 17px above their first row. */
   position: absolute;
-  top: var(--space-1);
-  left: var(--space-2);
+  top: -18px;
+  left: 0;
   color: var(--ink-muted);
   font-size: 12px;
   font-weight: 650;
