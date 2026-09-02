@@ -434,8 +434,12 @@ describe("the interface honours the ARIA it declares", () => {
     // server and the badge stayed on "Local draft" for the rest of the
     // session — accurately, which is what made it hard to see. Observed in a
     // real shared room as PUT 409 → GET 200 → nothing.
+    // Anchored on the reload that opens this path rather than on the shape of
+    // the branch above it: the effect now serialises its saves, and testing
+    // for `if (result === "conflict")` failed on that restructuring with
+    // every clause below still true.
     const conflict = appSource.slice(
-      appSource.indexOf('if (result === "conflict")'),
+      appSource.indexOf("return loadRemoteWorkspace()"),
       appSource.indexOf("}, [state, sharedRoom, keepLocalWork]);"),
     );
     expect(conflict, "the conflict path is not where it was").toContain(

@@ -322,6 +322,16 @@ export function App() {
   const registryRef = useRef<ToolRegistry | undefined>(undefined);
   const remoteReadyRef = useRef(false);
   const applyingRemoteRef = useRef(false);
+  // One PUT at a time. Each state change fires a save with the version the
+  // page last saw, so a burst of agent writes sent several at once: the
+  // first won, the rest came back 409, and the conflict handler adopted the
+  // server's copy -- which held an earlier write from the same burst. On the
+  // deployed origin a three-write repair reached version 5 with 10
+  // operations and settled back at 3 with 8, losing two of the agent's
+  // changes and the approval that rested on them. While a save is in flight
+  // the newest state waits here, and exactly one follow-up PUT sends it.
+  const savingRef = useRef(false);
+  const pendingSaveRef = useRef<AetherState | undefined>(undefined);
   /**
    * Incoming shared state was refused because adopting it would destroy work
    * the reviewer has here. That keeps their architecture, but it also means
@@ -726,68 +736,99 @@ export function App() {
       return;
     }
     if (!remoteReadyRef.current) return;
-    void saveRemoteWorkspace(state, remoteVersionRef.current).then((result) => {
-      if (typeof result === "number") {
-        remoteVersionRef.current = result;
-        setSyncStatus("Synced");
+    // Coalesce rather than race: while a save is in flight, hold the newest
+    // state and send it once, instead of firing a second PUT that is certain
+    // to conflict with the first.
+    if (savingRef.current) {
+      pendingSaveRef.current = state;
+      return;
+    }
+    savingRef.current = true;
+    const finishSave = () => {
+      const queued = pendingSaveRef.current;
+      if (!queued) {
+        // Only now is the lane free. Clearing it before checking the queue
+        // would let a state change arriving in this tick start a second
+        // concurrent PUT -- the very race this exists to prevent.
+        savingRef.current = false;
+        return;
       }
-      if (result === "local") setSyncStatus("Local draft");
-      if (result === "offline") setSyncStatus("Offline draft");
-      if (result === "conflict")
-        void loadRemoteWorkspace().then((remote) => {
-          if (!remote) return;
-          // A refused write means someone else got there first, so the
-          // authoritative state has to be adopted. It must still not be
-          // adopted over work it would destroy — the poll and the storage
-          // event both check this, and this path did not, which is the path a
-          // shared room actually takes.
-          //
-          // The candidate is the *merge*, not the incoming state, because the
-          // merge is what gets adopted here. Testing `remote` refused every
-          // concurrent write — the local note is not in the remote audit, so
-          // the guard saw loss that adopting the merge would not cause — and
-          // the tab stayed a local draft with its note never sent. The two
-          // other callers adopt `remote` wholesale and rightly test it.
-          let discards = false;
-          setState((current) => {
-            discards = wouldDiscardWork(
-              current,
-              mergeEvidence(current, remote),
-            );
-            return current;
-          });
-          if (discards) {
-            keepLocalWork();
+      pendingSaveRef.current = undefined;
+      void runSave(queued);
+    };
+    void runSave(state);
+    function runSave(pending: AetherState) {
+      return saveRemoteWorkspace(pending, remoteVersionRef.current).then(
+        (result) => {
+          if (typeof result === "number") {
+            remoteVersionRef.current = result;
+            setSyncStatus("Synced");
+          }
+          if (result === "local") setSyncStatus("Local draft");
+          if (result === "offline") setSyncStatus("Offline draft");
+          if (result !== "conflict") {
+            finishSave();
             return;
           }
-          remoteVersionRef.current = remote.workspace.persistenceVersion ?? 0;
-          // Union the evidence rather than swapping wholesale. Remote and local
-          // can each hold runs the other has not seen — the writer that produced
-          // one may not have observed the other — and adopting either direction
-          // wholesale drops the difference. Runs are keyed on branch, version and
-          // scenario, so a union is safe and no evidence is lost either way.
-          //
-          // The merged result then has to be written back. This path set
-          // `applyingRemoteRef` first, which suppresses the save effect, so
-          // the local half of the merge never reached the server: a refused
-          // write reloaded, merged, and stopped. Observed in a real shared
-          // room as PUT 409 → GET 200 → nothing, with the badge stuck on
-          // "Local draft" for the rest of the session — accurately, because
-          // the change really had not persisted.
-          setState((current) => {
-            const merged = mergeEvidence(current, remote);
-            void saveRemoteWorkspace(merged, remoteVersionRef.current).then(
-              (retry) => {
-                if (typeof retry !== "number") return;
-                remoteVersionRef.current = retry;
-                setSyncStatus("Synced");
-              },
-            );
-            return merged;
-          });
-          setMessage(reconcileMessage(Boolean(sharedRoom)));
-        });
-    });
+          return loadRemoteWorkspace()
+            .then((remote) => {
+              if (!remote) return;
+              // A refused write means someone else got there first, so the
+              // authoritative state has to be adopted. It must still not be
+              // adopted over work it would destroy — the poll and the storage
+              // event both check this, and this path did not, which is the path a
+              // shared room actually takes.
+              //
+              // The candidate is the *merge*, not the incoming state, because the
+              // merge is what gets adopted here. Testing `remote` refused every
+              // concurrent write — the local note is not in the remote audit, so
+              // the guard saw loss that adopting the merge would not cause — and
+              // the tab stayed a local draft with its note never sent. The two
+              // other callers adopt `remote` wholesale and rightly test it.
+              let discards = false;
+              setState((current) => {
+                discards = wouldDiscardWork(
+                  current,
+                  mergeEvidence(current, remote),
+                );
+                return current;
+              });
+              if (discards) {
+                keepLocalWork();
+                return;
+              }
+              remoteVersionRef.current =
+                remote.workspace.persistenceVersion ?? 0;
+              // Union the evidence rather than swapping wholesale. Remote and local
+              // can each hold runs the other has not seen — the writer that produced
+              // one may not have observed the other — and adopting either direction
+              // wholesale drops the difference. Runs are keyed on branch, version and
+              // scenario, so a union is safe and no evidence is lost either way.
+              //
+              // The merged result then has to be written back. This path set
+              // `applyingRemoteRef` first, which suppresses the save effect, so
+              // the local half of the merge never reached the server: a refused
+              // write reloaded, merged, and stopped. Observed in a real shared
+              // room as PUT 409 → GET 200 → nothing, with the badge stuck on
+              // "Local draft" for the rest of the session — accurately, because
+              // the change really had not persisted.
+              setState((current) => {
+                const merged = mergeEvidence(current, remote);
+                void saveRemoteWorkspace(merged, remoteVersionRef.current).then(
+                  (retry) => {
+                    if (typeof retry !== "number") return;
+                    remoteVersionRef.current = retry;
+                    setSyncStatus("Synced");
+                  },
+                );
+                return merged;
+              });
+              setMessage(reconcileMessage(Boolean(sharedRoom)));
+            })
+            .finally(finishSave);
+        },
+      );
+    }
   }, [state, sharedRoom, keepLocalWork]);
   useEffect(() => {
     void loadRemoteWorkspace().then((remote) => {
