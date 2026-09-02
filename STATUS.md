@@ -2074,3 +2074,12 @@ was already underway again.
   - Approval becomes eligible reading `Evidence is current and clean · First run on this future · 5 of 5 components simulated`.
   - **Zero** registered tools match approve, merge, rollback or remove, in any state.
   - Repository: 270 tests across 34 files, clean typecheck, lint, format and build. Live on Railway with Postgres persistence, a valid Chrome origin-trial token, and COOP/COEP/`Permissions-Policy: tools=(self)` all serving.
+
+## Milestone 157 — The headers WebMCP depends on, untested
+
+- [x] **M157.1 — Every server header could be weakened silently** `DONE`
+  - Acceptance: the isolation headers the API is gated behind are asserted by value.
+  - Evidence: M120 covered the write handler's ordering and nothing else on the server. Mutation testing found all four response headers could be changed with no test failing — `Permissions-Policy: tools=*` exposing the surface to any embedder, `unsafe-none` on either isolation header removing the gating the API requires. Each is still valid header syntax, so only the exact value catches it.
+  - The read handler was equally exposed: removing its workspace-id validation broke nothing, and it is the endpoint an unauthenticated visitor reaches first. It is now held to refusing before the query, not after it.
+  - One assertion had to be tightened after it passed on the mutation it was written for: `state: null` appears twice in the read handler, so a substring check stayed green while the missing-row branch returned `{}` — which the client would load as a real workspace and open a blank page over the seeded system. Matching the whole return statement fixes it.
+  - All five server mutations are now killed, and the four headers were confirmed exact on the deployed origin.
