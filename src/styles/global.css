@@ -333,7 +333,6 @@ button {
   justify-content: start;
   align-items: end;
   gap: var(--space-16);
-  max-width: 1440px;
   padding: var(--space-12) var(--space-8) var(--space-8);
   border-bottom: 1px solid var(--border);
 }
@@ -353,7 +352,11 @@ button {
      reads as calm and confident; this was 38px at the body weight, which
      is why it felt cramped rather than composed. */
   font-family: var(--font-display);
-  font-size: var(--text-display);
+  /* Desktop and larger. The incident is the first thing a reviewer reads
+     and 56px was sized for a laptop; on a wide monitor it scales with the
+     viewport so the statement keeps its presence instead of shrinking into
+     the corner of the screen. */
+  font-size: clamp(3.5rem, 4.4vw, 5rem);
   font-weight: var(--weight-light);
   letter-spacing: var(--tracking-tight);
   line-height: var(--leading-tight);
