@@ -1201,9 +1201,10 @@ button {
 }
 .evidence-heading h2 {
   margin: 0;
-  font-family: inherit;
-  font-size: 20px;
-  letter-spacing: -0.03em;
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-tight);
 }
 .risk-dot,
 .safe-dot,
@@ -1525,16 +1526,21 @@ button {
   display: flex;
   align-items: end;
   justify-content: space-between;
-  gap: 24px;
-  padding: 24px 32px 20px;
+  gap: var(--space-6);
+  padding: var(--space-12) var(--space-8) var(--space-6);
   border-bottom: 1px solid var(--border);
 }
 .decision-room-head h2 {
-  max-width: 560px;
+  /* Section headings sat at 20px against a 66px hero, so the ramp's 32px
+     step went unused and every section below the fold read as a caption.
+     This is a section of the product, not a label on a panel. */
+  max-width: 22ch;
   margin: 0;
-  font-family: inherit;
-  font-size: 20px;
-  letter-spacing: -0.03em;
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: var(--weight-light);
+  letter-spacing: var(--tracking-tight);
+  line-height: var(--leading-tight);
 }
 .room-live {
   display: inline-flex;
@@ -1729,9 +1735,14 @@ button {
   border-right: 1px solid var(--border);
 }
 .review-head h2 {
+  /* "Highest resilience v4" names the decision being made. It carries the
+     display face so the moment reads as a decision rather than a row
+     label. */
   margin: 0;
-  font-family: inherit;
-  font-size: 20px;
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-tight);
 }
 .review-head h2 span {
   color: var(--ink-muted);
@@ -2010,11 +2021,13 @@ button {
   cursor: pointer;
 }
 .compare-modal h2 {
-  max-width: 440px;
-  margin: 0 0 24px;
-  font-family: inherit;
-  font-size: 32px;
-  letter-spacing: -0.04em;
+  max-width: 22ch;
+  margin: 0 0 var(--space-6);
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: var(--weight-light);
+  letter-spacing: var(--tracking-tight);
+  line-height: var(--leading-tight);
 }
 .compare-grid {
   display: grid;
