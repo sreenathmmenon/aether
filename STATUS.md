@@ -2783,3 +2783,24 @@ Two of the three references ship a light ground; Vercel — the supposedly dark 
 - [x] **M225.6 — Product language, not protocol language** `DONE`
   - "WebMCP live · 5 state-aware tools" was the third line a person read. Now "Your agent can do 5 things here"; the unavailable state reads "No agent connected". Five surfaces carried the old vocabulary.
   - The new guard cried wolf three times before it was right — flagging a variable name, a comment quoting the old copy, and an interpolated expression. It now strips comments and interpolations and matches only what renders.
+
+## Milestone 226 — The council's contract, completed
+
+- [x] **M226.1 — The fonts reached nobody** `DONE`
+  - The self-hosted typefaces were in `dist/` and the origin returned **`text/html`** for every `.woff2`: the SPA catch-all was serving the app shell. A browser cannot parse that as a font, declines it without raising anything, and renders in system-ui. Invisible locally, because the dev server serves `public/` directly; invisible in the build, because the files copy correctly. Only `document.fonts.check()` against the deployed origin showed it — **every screenshot taken before this was a product no judge would have seen.**
+  - `/fonts/*` now has its own handler and 404 terminator. **Third instance** of this shape after `/assets/*` and `/api/*`, so the test names it as a class. The gate also refuses a `@font-face` whose file does not exist.
+- [x] **M226.2 — Arrival by subtraction** `DONE`
+  - The product opened on a modal holding ~120 words of prose. 70 lines of dialog, its state, its storage key, its focus trap and 121 lines of dead CSS are gone; a reviewer lands on the incident at 56px with the failing architecture already behind it.
+  - **368 tests passed with the entire arrival deleted** — nothing guarded it. Two now do, including that the dismissed-flag stays gone, because a flag with no dialog is the seed of the next one.
+- [x] **M226.3 — The stage answers the agent** `DONE`
+  - The canvas opens when the surface grows, edge taking the agent colour, and settles when a commit closes the write surface. Driven by the real registration count, so it cannot play when nothing happened; reduced-motion holds the edge instead of pulsing.
+  - Verified live: `canvas-stage` → `canvas-stage canvas-opening` as authority went 5 → 13.
+  - Three corrections, all caught by tests: a comment between `<section` and its `aria-label` hid the landmark name; a ternary containing `>` inside the tag read as the end of the element; and **the gate's own checks were wrong twice** — slicing the last of ten reduced-motion blocks, and matching a class name that the fallback satisfied, so the animation could have been deleted with the check passing.
+- [x] **M226.4 — Tabular figures, and what rendering the branched state exposed** `DONE`
+  - The mono face shipped and nothing used it. It now sets every figure a reviewer compares, so differences read as shape before they read as numbers.
+  - Checking that in the branched state found **five contrast failures invisible until futures exist** — four impact badges and the `+8` badge announcing the agent gaining reach, at 3.59:1 on the one element whose whole job is to be noticed.
+  - **I made it worse before better.** Light ink on the vivid fills cleared two badges and broke three: no single ink clears all four, because page ink fails on agent teal and branch amber while light ink fails on human blue. The soft tint paired with each role's own text variant clears every one at 4.8–5.15. Fourth instance of the fill-versus-text split. Branched-state text below AA: **7 → 0**.
+- [x] **M226.5 — The guarantee became architecture** `DONE`
+  - The sentence the product exists to make was 12px muted text behind a hairline. It is now a block framing the decision, with "Yours alone." in the display face, and reads "Your agent can do 13 things here. Approving, committing and rolling back are not among them, and nor is removing anything your system depends on."
+  - Its test checked only that the element existed, so it would have passed with the claim saying anything. It now holds the copy to what the reducer refuses and rejects protocol vocabulary.
+  - One layout defect the new block made visible: `min-width` on flex items does not stop them shrinking, so the diff row compressed every card and truncated the component names it existed to show.
