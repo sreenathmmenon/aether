@@ -2569,3 +2569,11 @@ was already underway again.
   - The script now reads **$5,920 / month · 12m recovery · 97.11% availability**, which is the stronger moment anyway: the cheap future is not a worse version of the safe one, it is a different answer to the same failure, and that is what a trade-off rail exists to show.
   - The guarding test had two faults of its own. It computed three simulation runs and discarded them with `void run` before asserting hardcoded strings, so it pinned the prose to itself rather than to the engine; and it read each branch's **base revision** instead of its derived graph, measuring the unrepaired architecture. It now asserts the exact headline each card renders, computed. Changing a quoted figure by twenty dollars fails.
   - Verified live on the deployed origin: the three cards announce `$5,920 / month`, `12m recovery`, `97.11% availability`, matching the script exactly.
+
+## Milestone 208 — Asking for something the reviewer already had
+
+- [x] **M208.1 — "Waiting on — Evidence" when the evidence had already arrived** `DONE`
+  - Acceptance: the status strip names what the decision actually waits on.
+  - Evidence: the strip read "Waiting on — Evidence" whenever approval was ineligible. That is right only while nothing has been run. Once a scenario reports violations the evidence has arrived and said no, and what the decision waits on is a repair — so the strip sent a reviewer to fetch something already on their screen, directly above a panel naming the violations.
+  - It now reads "A fix for the violations" in that state and keeps the original wording for the case it was always right for. Removing the distinction fails.
+  - Verified live, and the three surfaces now form a chain that adds information at each step rather than repeating: headline **"Evidence blocks approval"** → status **"Waiting on: A fix for the violations"** → gate reason **"Traffic spike reports violations"**. Blocked, what is needed, and exactly where to look.
