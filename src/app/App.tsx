@@ -1385,7 +1385,11 @@ export function App() {
         </a>
         <div className="breadcrumb">
           {currentTemplate.name} <i />{" "}
-          {ownSystem ? "Agent-modeled proof room" : "Counterfactual review"}
+          {/* "Counterfactual review" and "agent-modeled proof room" are
+              internal vocabulary. A reviewer arriving cold reads the header
+              first and should learn what state they are in, not what the
+              feature is called. */}
+          {ownSystem ? "Your system" : "Before it ships"}
         </div>
         <div className="header-status">
           {/* The agent surface is this product's whole premise, so the opening
@@ -3148,14 +3152,20 @@ export function App() {
           aria-labelledby="intro-title"
         >
           <div className="intro-card">
-            <p className="eyebrow">A WebMCP architecture laboratory</p>
+            {/* "A WebMCP architecture laboratory" named the category and the
+                technology — what it is built with, not who it is for or what
+                it costs them to go without it. A reviewer arriving cold needs
+                the stakes before the mechanism. */}
+            <p className="eyebrow">For the team that owns the incident</p>
             <h2 id="intro-title">
-              Your agent can propose a system change.
-              <em> Aether proves what it does.</em>
+              When an agent proposes a change to a live system, nothing checks
+              it.<em> Aether computes what it would do.</em>
             </h2>
             <p className="intro-lede">
-              Branch the architecture, run a deterministic failure simulation,
-              and see the consequence before anyone commits it.
+              The suggestion arrives with confidence, the tools that would
+              verify it live somewhere else, and the decision gets made on
+              persuasion. Here it is made on evidence — branch the architecture,
+              simulate the failure, see the consequence before anyone commits.
             </p>
             {/* The loop is the product. Showing its three steps as steps beats
                 describing them in prose a reviewer has to parse. */}
