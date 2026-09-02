@@ -55,7 +55,7 @@ import {
   persistState,
   storageKey,
 } from "@core/persistence";
-import { gateHolds, humanOnlyCommands } from "./human-gate";
+import { gateHolds } from "./human-gate";
 import { paymentPlatformBaseline } from "../fixtures/payment-platform/baseline";
 import { aiPlatformBaseline } from "../fixtures/ai-platform/baseline";
 import { blankBaseline } from "../fixtures/blank/baseline";
@@ -3152,11 +3152,13 @@ export function App() {
               making the claim instead of making it falsely. */}
           {gateHolds(registeredTools) && (
             <p className="gate-claim">
-              <b>Yours alone.</b> None of the {toolCount} tools registered for
-              an agent on this page can approve, commit, or roll back —{" "}
-              {humanOnlyCommands.length} commands are refused to any actor that
-              is not human, and removing a component a system depends on needs
-              you too.
+              {/* Thirty-four words of protocol vocabulary in the block a
+                  reviewer is meant to take in at a glance, standing over the
+                  control it describes. The guarantee is one sentence; the
+                  count belongs to it because it is what visibly changes. */}
+              <b>Yours alone.</b> Your agent can do {toolCount} things here.
+              Approving, committing and rolling back are not among them, and nor
+              is removing anything your system depends on.
             </p>
           )}
         </div>

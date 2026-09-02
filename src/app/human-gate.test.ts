@@ -80,6 +80,29 @@ describe("the human gate the page describes", () => {
       "the gate claim left the review actions",
     ).toContain("gate-claim");
 
+    // The claim has to say what the reducer actually refuses, in the words a
+    // person uses rather than the ones the protocol uses. It read "None of
+    // the 13 tools registered for an agent on this page can approve, commit,
+    // or roll back — 4 commands are refused to any actor that is not human"
+    // — thirty-four words of protocol vocabulary in the block a reviewer is
+    // meant to take in at a glance, standing over the control it describes.
+    const claim = appSource.slice(
+      appSource.indexOf('className="gate-claim"'),
+      appSource.indexOf("</p>", appSource.indexOf('className="gate-claim"')),
+    );
+    for (const refused of ["Approving", "committing", "rolling back"])
+      expect(claim, `the claim no longer names ${refused}`).toContain(refused);
+    // The conditional gate is stated rather than rounded into the others.
+    expect(claim).toMatch(/removing anything your system depends on/);
+    // And no protocol vocabulary, matched on rendered text only.
+    const rendered = claim
+      .replace(/\{\/\*[\s\S]*?\*\/\}/g, "")
+      .replace(/\{[^}]*\}/g, "");
+    expect(
+      rendered,
+      "protocol vocabulary returned to the guarantee",
+    ).not.toMatch(/WebMCP|tools registered|state-aware|actor/);
+
     // Computed from the live surface, not written as a sentence: a hardcoded
     // count or a static claim would keep asserting itself after it stopped
     // being true.

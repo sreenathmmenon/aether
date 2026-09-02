@@ -1556,7 +1556,12 @@ button {
   display: grid;
   grid-template-columns: auto 1fr;
   gap: 4px 8px;
-  min-width: 148px;
+  /* min-width alone does not stop a flex item shrinking, so the row
+     compressed every card to fit and truncated the component names it was
+     showing the change to -- "Primary Ledge", "monthlyCostUs". The row
+     already scrolls; the items just have to keep their size. */
+  flex: none;
+  min-width: 160px;
   padding: 8px;
   border: 1px solid var(--border);
   font-size: 12px;
@@ -1650,19 +1655,29 @@ button {
 /* The guarantee sits under the controls it is about, and reads as a quiet
    fact rather than a warning: the green edge ties it to the approve action,
    and the weight stays below the buttons so it never competes with them. */
+/* The guarantee this entire product exists to make was 12px muted text
+   behind a hairline -- a footnote under the control it is about. A
+   guarantee is architecture: it reads as a solid, deliberate block that
+   frames the decision rather than annotating it. Quiet and permanent, not
+   loud, because it is a promise rather than an alert. */
 .gate-claim {
-  margin: 12px 0 0;
-  padding: 8px 12px;
-  border-left: 2px solid var(--verified);
-  border-radius: 0 var(--radius) var(--radius) 0;
-  background: rgb(15 144 128 / 0.07);
-  color: var(--ink-muted);
-  font-size: 12px;
-  line-height: 1.5;
+  margin: var(--space-4) 0 0;
+  padding: var(--space-4);
+  border: 1px solid var(--verified);
+  border-radius: var(--radius);
+  background: var(--verified-soft);
+  color: var(--ink);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
 }
 .gate-claim b {
+  display: block;
+  margin-bottom: var(--space-1);
   color: var(--verified-text);
-  font-weight: 650;
+  font-family: var(--font-display);
+  font-size: var(--text-base);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-tight);
 }
 .review-actions .rollback-button {
   color: var(--failure-text);
