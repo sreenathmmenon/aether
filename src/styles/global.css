@@ -513,8 +513,27 @@ button {
   cursor: pointer;
 }
 .canvas-stage {
+  /* The stage stretched to match the tallest column beside it, leaving over
+     a thousand pixels of empty ground below a 578px graph on the first
+     screen a judge sees. It scrolls its own content instead of inflating
+     the row. */
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  max-height: 78vh;
   overflow: hidden;
-  background: var(--line);
+  background:
+    radial-gradient(
+      90% 70% at 50% 0%,
+      color-mix(in oklab, var(--blue) 5%, transparent),
+      transparent 70%
+    ),
+    var(--paper);
+}
+.canvas-stage > :last-child {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
 }
 .canvas-toolbar {
   display: flex;
