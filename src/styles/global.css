@@ -601,7 +601,7 @@ button {
   touch-action: none;
   /* The canvas is the stage, so it sits on its own ground rather than
      repeating the cream of every surrounding panel. */
-  background-color: var(--line);
+  background-color: var(--paper);
   background-image:
     linear-gradient(rgba(17, 36, 64, 0.055) 1px, transparent 1px),
     linear-gradient(90deg, rgba(17, 36, 64, 0.055) 1px, transparent 1px);
