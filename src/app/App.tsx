@@ -2024,28 +2024,25 @@ export function App() {
                   <code>nginx -&gt; api -&gt; Postgres</code> works. Aether
                   models it, then proves what a failure costs.
                 </p>
+                {/* The field itself, where the reviewer is already looking.
+                    This was a button that scrolled to a four-line box in a
+                    narrow sidebar — a workaround for the input being in the
+                    wrong place on the one screen where it is the only thing
+                    to do. */}
+                <textarea
+                  className="canvas-empty-brief"
+                  aria-label="Describe your architecture"
+                  placeholder="nginx -> orders API -> Postgres, and a worker consumes from SQS"
+                  value={systemBrief}
+                  onChange={(event) => setSystemBrief(event.target.value)}
+                />
                 <button
                   type="button"
                   className="canvas-empty-cta"
-                  onClick={() => {
-                    const brief = briefRef.current;
-                    if (!brief) return;
-                    // Scroll the window itself and only focus once it has
-                    // settled: focusing first cancels the smooth scroll and
-                    // leaves the reviewer typing into a field they cannot see.
-                    const target =
-                      brief.getBoundingClientRect().top +
-                      window.scrollY -
-                      window.innerHeight / 2 +
-                      brief.offsetHeight / 2;
-                    // The workspace re-renders on its sync poll, which
-                    // interrupts a smooth scroll and drops the reviewer back
-                    // at the top. Jump directly instead, then focus.
-                    window.scrollTo({ top: target });
-                    brief.focus({ preventScroll: true });
-                  }}
+                  onClick={buildFromBrief}
+                  disabled={!systemBrief.trim()}
                 >
-                  Write the brief →
+                  Build this architecture →
                 </button>
                 <small>Or let a connected agent build it through WebMCP.</small>
               </div>

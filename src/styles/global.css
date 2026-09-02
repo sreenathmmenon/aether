@@ -2392,3 +2392,47 @@ button {
     animation: none;
   }
 }
+
+/* On an empty canvas, describing a system is the only thing to do — and the
+   field for it sat in a narrow sidebar as a four-line box while the canvas
+   beside it was blank. The film opens on this screen, so the most important
+   input was the smallest element in it. When there is nothing to draw, the
+   brief takes the canvas. */
+.studio:has(.canvas-empty) {
+  grid-template-columns: 250px minmax(560px, 1fr) 0;
+}
+.studio:has(.canvas-empty) .intelligence-panel {
+  display: none;
+}
+.studio:has(.canvas-empty) .canvas-stage {
+  max-height: none;
+}
+.studio:has(.canvas-empty) .canvas-empty {
+  max-width: 620px;
+  margin: 0 auto;
+  padding: 40px 0;
+}
+.studio:has(.canvas-empty) .canvas-empty strong {
+  font-size: 28px;
+  line-height: 1.18;
+  letter-spacing: -0.02em;
+}
+.studio:has(.canvas-empty) .canvas-empty-brief {
+  width: 100%;
+  min-height: 132px;
+  margin-top: 6px;
+  padding: 14px 16px;
+  border: 1px solid var(--line-bright);
+  border-radius: var(--radius);
+  background: var(--panel);
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+  resize: vertical;
+}
+.studio:has(.canvas-empty) .canvas-empty-brief:focus-visible {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: var(--glow-blue);
+}
