@@ -336,6 +336,16 @@ export function App() {
     [state, activeBranch],
   );
   const branchCount = Object.keys(state.branches).length - 1;
+  /**
+   * Futures that still offer a decision. A rolled-back future stays in the
+   * rail as history, correctly marked "discarded", but it is no longer one of
+   * the choices — and the headline counted it, telling a reviewer they had
+   * "3 futures, one decision" when one of the three had already been undone.
+   */
+  const decidableCount = Object.values(state.branches).filter(
+    (branch) =>
+      branch.id !== "branch-baseline" && branch.status !== "discarded",
+  ).length;
   // A seeded architecture is committed and read-only. A system the user is
   // building themselves stays editable on its baseline until they branch.
   const ownSystem = state.workspace.templateId === "blank";
@@ -1555,8 +1565,10 @@ export function App() {
               </>
             ) : (
               <>
-                {branchCount === 1 ? "One future" : `${branchCount} futures`},
-                one decision. <em>Compare</em> the evidence before committing.
+                {decidableCount === 1
+                  ? "One future"
+                  : `${decidableCount} futures`}
+                , one decision. <em>Compare</em> the evidence before committing.
               </>
             )}
           </h1>
