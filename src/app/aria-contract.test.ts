@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import appSource from "./App.tsx?raw";
 import registrySource from "../platform/webmcp/registry.ts?raw";
+import gateSource from "./gate-reason.ts?raw";
 
 /**
  * The test environment has no DOM, so nothing rendered these attributes and
@@ -81,6 +82,28 @@ describe("the interface honours the ARIA it declares", () => {
       expect(attributes, "a decorative glyph is announced as text").toContain(
         'aria-hidden="true"',
       );
+  });
+
+  it("makes its own re-run instruction followable", () => {
+    // After an edit the gate says "Re-run a scenario to make approval
+    // eligible", and selecting a scenario is how a person re-runs one —
+    // there is no run button, by design. The guard matched on scenario
+    // alone, so a run recorded before the edit still counted and clicking
+    // the scenario did nothing. The interface gave one instruction in that
+    // state and it could not be followed without an agent.
+    const selector = appSource.slice(
+      appSource.indexOf("function selectScenario"),
+      appSource.indexOf("function playTrace"),
+    );
+    expect(selector, "selectScenario moved").toContain("RUN_SCENARIO");
+    // The version is what the approval gate requires, so it is what decides
+    // whether a stored run still counts.
+    expect(
+      selector,
+      "selecting a scenario ignores the branch version, so a stale run counts",
+    ).toContain("run.branchVersion === activeBranch.version");
+    // And the instruction it has to satisfy still exists.
+    expect(gateSource).toMatch(/Re-run a scenario/);
   });
 
   it("lets a person change every property an agent can", () => {

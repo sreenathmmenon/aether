@@ -1089,10 +1089,17 @@ export function App() {
   function selectScenario(scenario: Scenario) {
     setSelectedScenario(scenario);
     setTraceStep(-1);
+    // Matched on the branch *version* too. Checking only the scenario meant
+    // a run recorded before an edit still counted, so after changing a
+    // property the gate said "Re-run a scenario to make approval eligible"
+    // and clicking the scenario did nothing — the one instruction the
+    // interface gives in that state was unfollowable without an agent.
     if (
       branchCount &&
       !(state.simulations[activeBranch.id] ?? []).some(
-        (run) => run.scenario === scenario,
+        (run) =>
+          run.scenario === scenario &&
+          run.branchVersion === activeBranch.version,
       )
     )
       apply({
