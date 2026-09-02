@@ -2952,3 +2952,19 @@ Held at each point, scored, fixed, re-scored. Twelve rounds.
 - [x] **M233.10 — The shared activity strip stops repeating itself** `DONE`
   - It took the last four audit entries verbatim, so an agent doing the same thing four times filled it with four identical rows — a stuck feed, telling the reviewer nothing the first row had not. Consecutive repeats collapse into a count. **Only consecutive ones:** "ran a simulation, approved, ran a simulation" is three things in that order, and the same command by different actors stays separate, because who did it is the point.
 - **Checked and found correct, no change needed:** the compare overlay (scrim at 72%, `role="dialog"`, `aria-modal`, focus starts inside and returns to the exact opener on Escape) and the futures rail. Two readings that looked like defects were artefacts of my own probes — a synthetic Escape read before React's cleanup ran, and a height-ratio test that counted a 32px figure's line box as a wrap.
+
+## Milestone 234 — The canvas, measured instead of assumed
+
+The bring-your-own-system path was the least-examined surface. Looking at it properly turned up a family of layout defects — most of them **also present in the shipped fixtures**, including the flagship.
+
+- [x] **M234.1 — Agent-placed components stay on the canvas** `DONE`
+  - A position is the _centre_ of a card, so a first column at 90 in a 1000-unit space put the left edge at **-17px** and cut "Edge Gateway" mid-word. Five columns at a 160-unit pitch then sat cards 70 units inside each other, butted edge to edge with names truncated to "Checkout Edg". Four columns at 250 clear both the canvas edges and each other.
+- [x] **M234.2 — Each region gets its own band** `DONE`
+  - The grid filled row 1 left to right regardless of region, so the two regions interleaved and their bounding boxes came out at the **same origin** — the bands drew on top of each other and their labels rendered as one word, "BROONDARY". A component now lands in the band its region owns.
+  - Moving the label _inside_ its band looked like the fix and was not: it put the label on a component card on every seeded system, which reserve only 17px above their first row. The label went back above the band once the real cause was fixed.
+- [x] **M234.3 — Two shipped systems were drawing cards on top of each other** `DONE`
+  - The agent's grid was guarded; the hand-written fixture positions were not. Ride-hailing shipped "Trip State" 130 units above "Driver Supply" — an 8px overlap on screen — and the new test immediately found "Eval Queue" and "Analytics" 130 apart on the same row. Every shipped system is now checked.
+- [x] **M234.4 — The graph gets back the canvas floor** `DONE`
+  - The causal timeline is pinned across the bottom, so the usable area ends at _its_ top edge. Nothing knew that: **every** system placed its bottom row underneath the timeline, the flagship included. The timeline capped at 118px of a 401px stage — 29% of the canvas it describes — and at 82px the two region bands fit above it. It scrolls, so a shorter box loses nothing.
+- **The recurring lesson, sharpened:** `defaultNodeExtent` says a card is 176 × 104; it renders **216 × 144**. Two separate tests written against the declared numbers passed while the cards still overlapped on screen, and only the browser disagreed. Every threshold in the placement test is now a measured value with the measurement recorded beside it.
+- **Verified live on all four systems:** nothing overlapping, nothing under the timeline, nothing off canvas, no truncated name, no label on a card, no label over the failure beacon.
