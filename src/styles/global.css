@@ -1647,10 +1647,16 @@ button {
   font-size: 12px;
 }
 .review-actions button {
+  /* Transform and shadow only. Transitioning `background` left the approve
+     button stalled on the disabled white after it became enabled -- the
+     colour changes as the element re-renders, so the transition never
+     advances and the most important control on the page stayed blank.
+     Confirmed by disabling the transition, which turns it green instantly.
+     Availability is a state change, not a movement: it should be immediate,
+     which is also what the contract's motion rule asks for. */
   transition:
     transform 140ms ease,
-    box-shadow 140ms ease,
-    background 140ms ease;
+    box-shadow 140ms ease;
   padding: 8px;
   border: 1px solid var(--ink);
   background: var(--surface-raised);
@@ -1710,6 +1716,22 @@ button {
   font-size: var(--text-base);
   font-weight: var(--weight-bold);
   letter-spacing: var(--tracking-tight);
+}
+/* Commit is the last irreversible step and had no rule of its own: it
+   inherited the generic dark ink while picking up the approve treatment's
+   green ground, landing at 2.89:1. It is the same primary action as
+   approve, one step further on, and reads that way. */
+.review-actions .commit-button {
+  border-color: transparent;
+  background: var(--verified-text);
+  color: var(--surface-raised);
+  box-shadow: var(--lift-2);
+}
+.review-actions .commit-button:hover {
+  transform: translateY(-1px);
+  background: var(--verified);
+  color: var(--structure);
+  box-shadow: var(--lift-3);
 }
 .review-actions .rollback-button {
   color: var(--failure-text);
