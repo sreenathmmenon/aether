@@ -1134,7 +1134,7 @@ button {
   gap: 8px 16px;
   margin: 0;
   padding: 8px 12px;
-  border: 1px solid rgb(22 32 46 / 0.12);
+  border: 1px solid var(--structure-border);
   border-radius: var(--radius);
   list-style: none;
   color: var(--ink-muted);
@@ -2630,10 +2630,14 @@ button {
 /* Load bar: utilisation of a component against its provisioned capacity, so
    a reader sees where a system is tight before reading any number. */
 .node-load {
+  /* The capacity track. A dark tint on a dark card is invisible, so the
+     bar had nothing to read against -- it now sits on a light wash the way
+     it did on the old ivory ground. */
   display: block;
   height: 3px;
   margin-top: 2px;
-  background: rgb(22 32 46 / 0.1);
+  border-radius: var(--radius-full);
+  background: rgb(242 245 249 / 0.14);
   overflow: hidden;
 }
 .node-load b {
