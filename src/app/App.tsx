@@ -1604,13 +1604,28 @@ export function App() {
           </h1>
         </div>
         <div className="hero-proof">
-          <span>Decision now</span>
+          {/* A live label, so it has to advance with the journey: it read
+              "Decision now -- Review Highest resilience" after the branch
+              had already been reviewed, approved and committed. */}
+          <span>
+            {/* `merged` alone is not "decided": on arrival the active branch
+                IS the committed baseline, so this read "Decision made" before
+                any decision existed. It takes a repair future to have been
+                committed, which means a branch has to exist first. */}
+            {branchCount > 0 && activeBranch.status === "merged"
+              ? "Decision made"
+              : "Decision now"}
+          </span>
           <strong>
             {unbuilt
               ? "Build the model first"
-              : branchCount
-                ? `Review ${activeBranch.name}`
-                : "Create repair futures"}
+              : !branchCount
+                ? "Create repair futures"
+                : activeBranch.status === "merged"
+                  ? `Committed ${activeBranch.name}`
+                  : activeBranch.status === "approved"
+                    ? `Commit ${activeBranch.name}`
+                    : `Review ${activeBranch.name}`}
           </strong>
           <small>{reviewerName} + Aether · shared, auditable</small>
         </div>
@@ -1632,13 +1647,22 @@ export function App() {
               : scenarioCopy[selectedScenario].short}
           </span>
           <strong>
+            {/* The strip reported "ready for a decision -- waiting on the
+                reviewer" through three distinct stages, because the chain
+                never tested what had already happened: approving is the
+                reviewer's act, so after it the decision is not still
+                waiting on them. The branch status carries the stage. */}
             {unbuilt
               ? "Describe a system to model it"
               : branchCount === 0
                 ? "No repair future yet"
-                : approvalEligible
-                  ? `${activeBranch.name} is ready for a decision`
-                  : `${activeBranch.name} is not approvable yet`}
+                : activeBranch.status === "merged"
+                  ? `${activeBranch.name} is committed to the architecture`
+                  : activeBranch.status === "approved"
+                    ? `${activeBranch.name} is approved, not yet committed`
+                    : approvalEligible
+                      ? `${activeBranch.name} is ready for a decision`
+                      : `${activeBranch.name} is not approvable yet`}
           </strong>
         </div>
         <div className="brief-waiting">
@@ -1653,11 +1677,15 @@ export function App() {
               ? "You, or an agent"
               : branchCount === 0
                 ? "A repair future"
-                : approvalEligible
-                  ? `The ${reviewerName.toLowerCase()}`
-                  : blockingRuns.length
-                    ? "A fix for the violations"
-                    : "Evidence"}
+                : activeBranch.status === "merged"
+                  ? "Nothing — it is live"
+                  : activeBranch.status === "approved"
+                    ? `The ${reviewerName.toLowerCase()} to commit it`
+                    : approvalEligible
+                      ? `The ${reviewerName.toLowerCase()}`
+                      : blockingRuns.length
+                        ? "A fix for the violations"
+                        : "Evidence"}
           </strong>
         </div>
         {/* The third fact in the row a reviewer reads before scrolling: what

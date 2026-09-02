@@ -115,14 +115,46 @@ describe("why approval is or is not available", () => {
     // The status strip said "Waiting on — Evidence" whenever approval was
     // ineligible. Once a scenario has reported violations the evidence has
     // arrived and said no: what is missing is a repair, not a measurement.
-    const strip = appSource.slice(
-      appSource.indexOf('className="brief-waiting"'),
-    );
-    const block = strip.slice(0, 900);
+    // Slice to the end of the element rather than a fixed character count:
+    // a 900-character window failed the moment the branch chain grew, even
+    // though every clause it asserts was still there.
+    const start = appSource.indexOf('className="brief-waiting"');
+    const block = appSource.slice(start, appSource.indexOf("</div>", start));
     expect(block).toContain("blockingRuns.length");
     expect(block).toContain('"A fix for the violations"');
     // And the original wording survives for the case it was always right
     // for: no run has been recorded against this version yet.
     expect(block).toContain('"Evidence"');
+  });
+
+  it("does not say the decision waits on the reviewer after they decided", () => {
+    // The strip reported "ready for a decision -- waiting on the reviewer"
+    // through three distinct stages: eligible, approved, and committed. The
+    // chain tested only whether approval was *possible*, never what had
+    // already happened -- and approving is the reviewer's own act, so after
+    // it the decision is not still waiting on them.
+    for (const marker of [
+      'className="brief-state"',
+      'className="brief-waiting"',
+    ]) {
+      const start = appSource.indexOf(marker);
+      const block = appSource.slice(start, appSource.indexOf("</div>", start));
+      expect(block).toContain('activeBranch.status === "approved"');
+      expect(block).toContain('activeBranch.status === "merged"');
+      // And the no-branch case is tested first. On arrival the active branch
+      // IS the committed baseline, so a bare `merged` test claims a decision
+      // that has not happened -- which it did, in the hero label, until the
+      // branch count guarded it.
+      expect(block.indexOf("branchCount")).toBeLessThan(
+        block.indexOf('activeBranch.status === "merged"'),
+      );
+    }
+
+    const heroStart = appSource.indexOf('className="hero-proof"');
+    const hero = appSource.slice(
+      heroStart,
+      appSource.indexOf("</div>", heroStart),
+    );
+    expect(hero).toContain("branchCount > 0 && activeBranch.status");
   });
 });
