@@ -2683,3 +2683,14 @@ was already underway again.
   - Acceptance: two writers cannot silently overwrite each other.
   - Evidence: three sequential PUTs to `/api/workspaces/<room>` on the deployed origin. `expectedVersion 0` → **200 `{"version":1}`**; the same stale `expectedVersion 0` again → **409 `{"error":"STALE_WORKSPACE"}`**; `expectedVersion 1` → **200 `{"version":2}`**. The conditional `UPDATE … WHERE version = $3` holds against real PostgreSQL, not a mock.
   - **A third probe error of my own, recorded:** the first attempt used `/api/workspace/` (singular). No such route exists, so all three writes fell through to the SPA catch-all and returned the HTML app shell with status 200 — which read exactly like a guard that had failed open. Reading the response body rather than the status code exposed it. The route is `/api/workspaces/:id`.
+
+## Milestone 219 — An API that answered "success" for endpoints it does not have
+
+- [x] **M219.1 — Every unmatched `/api/` path returned 200 and an HTML page** `DONE`
+  - Acceptance: an API namespace answers in JSON or it answers 404.
+  - Evidence: `/api/workspace/x`, `/api/nonexistent` and `/api/workspaces` all returned **200 with `text/html`**, falling through to the single-page shell. A client calling a mistyped endpoint was told it had succeeded.
+  - **This is not hypothetical — it cost a probe in this session.** Three PUTs to `/api/workspace/<id>` (singular; no such route) came back 200, which read exactly like the optimistic-concurrency guard failing open. The requests had never reached the handler. Reading the response body instead of the status code exposed it; against the real path (`/api/workspaces/:id`) the guard is correct — `200 {"version":1}`, then **409 `STALE_WORKSPACE`** for the repeated stale version, then `200 {"version":2}`.
+  - The identical reasoning was already recorded one namespace over for `/assets/*`, where a missing bundle returned HTML with a 200 and failed on a parse error. `/api/*` now terminates the same way, in JSON.
+  - Ordering is the behaviour, so the test pins it — after the real routes, before the shell. Placed above the handlers it would 404 every endpoint that exists. Removing the terminator fails two tests.
+- [x] **M219.2 — A hole in how deploys were verified** `DONE`
+  - Evidence: each deploy this session waited for the new client bundle hash to appear on the origin. For a **server-only** change the hash never changes, so the wait returns immediately against the _old_ build and the verification that follows tests the previous deployment. Caught when the API 404 appeared not to have shipped. Server changes now wait on the behaviour itself. Checked the last thirty commits: this is the only one that touched `server/`, so no earlier verification was affected.
