@@ -2399,3 +2399,13 @@ was already underway again.
   - Held to that across all three fixtures: every component with stated demand must be offered a value that absorbs a spike, and the largest option must never be below what the component already has. Restoring the fixed ladder fails both.
   - Verified against the deployed origin: Matching, whose peak is 32,000 RPS, is now offered 32,000 / 48,000 / 72,000 / 96,000, and Location Ingest is offered up to 138,000. Repairing both clears their deficits and the engine surfaces the next constraints — Trip State and Surge Pricing — instead of the control making the breach worse. Ride-hailing now tells the same bottleneck-chain story the payment platform does.
   - The signature took two attempts: a component's properties are a union that includes regions, which carry neither figure, so the parameter reads both defensively rather than asserting a shape the type system does not have.
+
+## Milestone 193 — Making the agent visible as a collaborator
+
+- [x] **M193.1 — The feed was a function log** `DONE`
+  - Acceptance: watching an agent work reads like watching a colleague work.
+  - Evidence: an adversarial review of the submission scored _agent value shown_ at 5–6 out of 10 across every reviewer perspective, and this was why. The activity feed — the one screen where a person watches an agent operate on their architecture — echoed the arguments sent in: `branchId: branch-highest_resilience · entityId: ledger · property: capacityRps`. A reviewer learned that a function ran and nothing about what changed.
+  - The registry already had the consequence and was discarding it. Calls are now narrated from the result: `Simulated traffic spike · 96.37% available · 3 violations`, `Added Fraud Engine to mumbai`, `Built 4 components from the brief`.
+  - **A refusal is now the most legible line in the feed.** `create_architecture_branch refused — That architecture future already exists.` The product telling an agent no, in front of the person who will decide, is the strongest single thing this interface can show, and it used to render as an argument echo like everything else.
+  - Verified on the deployed origin: both lines render with distinct accepted and refused styling, the consequence first and the tool name kept as a quiet third line — a reviewer wants what happened, an engineer wants to know which tool did it.
+  - Guarded so a tool added later cannot fall back to reciting arguments: every name the registry publishes must have a description, asserted against the registry's own source. An unfamiliar tool degrades honestly to its request rather than inventing an outcome it cannot read.
