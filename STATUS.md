@@ -2599,3 +2599,17 @@ was already underway again.
   - One further correction, recorded: the first version of the assertion checked only that the headline _reads_ `decidableCount`, so widening the filter back to every branch passed. It now asserts the filter itself excludes discarded futures — and that mutation fails.
 - [x] **M210.2 — A commit that shipped with the gate red** `DONE`
   - Evidence: the previous commit went in with typecheck and lint failing. The test actor carried `name` where `Actor` requires `displayName`; Vitest does not typecheck, so 341 tests passed over a type error and I read the test count without reading the two gate lines above it. Fixed in the following commit, and the actor now takes its identity from `reviewer-identity` rather than naming a person, matching the rest of the suite.
+
+## Milestone 211 — One gate command, and what it found
+
+- [x] **M211.1 — The quality gate was five commands run by hand** `DONE`
+  - Acceptance: one command runs every check and stops at the first failure.
+  - Evidence: running the checks as a hand-typed chain is how one goes unread — M210.2 shipped with typecheck and lint failing because the test count was read and the two lines above it were not. `npm run gate` now runs format, lint, typecheck, tokens, tests, build and authorship in order.
+- [x] **M211.2 — `authorship:check` had not been run in a long time, and was failing** `DONE`
+  - Acceptance: the authorship policy this repository publishes is the one its history satisfies.
+  - Evidence: adding the combined command surfaced it immediately. **391 of 485 commits** carried `Co-Authored-By` and `Claude-Session` trailers, which `CONTRIBUTING.md` and `scripts/check-authorship.mjs` both prohibit. M1.4 and M1.5 record this check as passing, which had stopped being true.
+  - The conflict was real and not mine to settle quietly: the repository policy bans the trailers, the environment building it adds them. It was put to the owner, who chose to strip them.
+  - All 485 commits rewritten with `filter-branch`. **The tree hash is byte-identical before and after** — `8e15e54c…` on both sides, so only messages changed and no file content moved. 341 tests and the build were re-run against the rewritten history before the backup was released. The pre-rewrite tip `1f712b9d85bd13b5` stays in the reflog.
+  - Two stale refs kept the check failing after the rewrite — `refs/original/` from filter-branch and the backup tag — because the check scans `--all`. Both were cleared once the rewrite was verified.
+  - **The gate now passes end to end for the first time**: format, lint, typecheck, tokens, 341 tests, build, authorship.
+  - Left for the owner, deliberately: every commit hash changed, so `origin/main` has diverged and still holds the old history. Publishing it needs a force-push, which is not a call to make unasked.
