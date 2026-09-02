@@ -2225,15 +2225,15 @@ export function App() {
               as the condition does. */}
           {!unbuilt && unmeasuredComponents.length > 0 && (
             <p className="assumed-figures">
-              Computed from defaults —{" "}
+              <b>These numbers are assumptions.</b>{" "}
               {unmeasuredComponents.length === entities.length
-                ? "no component"
+                ? "No component in this system"
                 : `${unmeasuredComponents.length} of ${entities.length} components`}{" "}
               {unmeasuredComponents.length === entities.length ? "has" : "have"}{" "}
-              stated traffic. Set peak and capacity on{" "}
-              {unmeasuredComponents.slice(0, 2).join(", ")}
-              {unmeasuredComponents.length > 2 ? " and others" : ""} to measure
-              this system rather than assume it.
+              stated traffic, so the engine computed from defaults. Set peak and
+              capacity on {unmeasuredComponents.slice(0, 2).join(" and ")}
+              {unmeasuredComponents.length > 2 ? ", and the rest," : ""} to
+              measure this system rather than assume it.
             </p>
           )}
           {/* An empty canvas has no measurements. Rendering 0.00% in red reads
