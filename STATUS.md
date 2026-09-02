@@ -2726,3 +2726,10 @@ was already underway again.
   - **Third instance of one pattern** — a count standing in for the thing it counts (M205 on the gate reason, M212/M213 on refusals, this one). Swept the rest of the agent-facing surface: the only other count is "N items rejected" in the human tool feed, where a summary is right because the full per-item detail is in the result the agent receives, and "Built N components", which is a genuine quantity rather than a stand-in.
 - [x] **M222.2 — The corrected gate claim, live** `DONE`
   - Evidence: the deployed page now reads **"None of the 13 tools registered for an agent on this page can approve, commit, or roll back — 4 commands are refused to any actor that is not human, and removing a component a system depends on needs you too."**
+
+## Milestone 223 — A fix that needed fixing
+
+- [x] **M223.1 — Naming four blockers read worse than counting them** `DONE`
+  - Evidence: verifying M222 on the deployed origin showed what the change actually produced for a future blocked on everything: **"regional outage and traffic spike and database failure and dependency failure report violations"** — four "and"s in a row, worse to read than the count it replaced. The interface caps at three for exactly this reason and I had not carried that across.
+  - Past three it returns to the count; two and three join with a serial comma rather than a chain. Checked at every length rather than assumed — one names it, two uses "and", three uses "regional outage, traffic spike and database failure", four falls back to "4 scenarios report violations". Removing the cap fails.
+  - Worth recording as a method note: the defect was invisible in the test that introduced it, because that test used a future blocked on **one** scenario. Only running it against the live product, on a future blocked on all four, showed the sentence a reviewer would actually read.
