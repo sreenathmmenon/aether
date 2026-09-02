@@ -552,10 +552,16 @@ button {
   font-size: 13px;
 }
 .scenario-tabs {
+  /* A segmented control: the track recedes and the selected segment lifts.
+     The substitution left this on the border colour, which is brighter than
+     every surface around it, so the tab strip read as the loudest thing on
+     the canvas. */
   display: flex;
   gap: 4px;
   padding: 4px;
-  background: var(--line);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgb(7 11 20 / 0.45);
 }
 .scenario-tabs button {
   min-height: 38px;
@@ -569,8 +575,9 @@ button {
 }
 .scenario-tabs .scenario-active {
   color: var(--ink);
+  border-radius: 7px;
   background: var(--raised);
-  box-shadow: 0 2px 5px rgba(17, 36, 64, 0.08);
+  box-shadow: var(--lift-1);
 }
 .trace-control {
   min-height: 38px;
