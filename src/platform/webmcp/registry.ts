@@ -398,21 +398,6 @@ export function createAetherToolRegistry(
 
   async function refreshSurface(state: AetherState) {
     {
-      // Never adopt a copy that is behind the one already held. This is
-      // called both after a write and from a React effect carrying the render
-      // value, which can be older than the writes already recorded -- and the
-      // next write composes onto whatever is here, so adopting it rebased an
-      // agent's repair onto stale state and silently dropped it.
-      //
-      // Operations across branches, not audit length: `mergeEvidence` unions
-      // audit entries, so a stale copy can carry as many as the current one.
-      // A branch edited in place moves this and nothing else.
-      const depth = (candidate: AetherState) =>
-        Object.values(candidate.branches).reduce(
-          (total, branch) => total + branch.operations.length,
-          0,
-        );
-      if (currentState && depth(currentState) > depth(state)) return;
       currentState = state;
       // The key must change whenever the registered surface would change, or
       // the early return below leaves a stale set of tools on the page. That
