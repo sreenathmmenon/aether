@@ -344,9 +344,13 @@ for (const [, url] of shipped.matchAll(/url\("([^"]+\.woff2)"\)/g)) {
  * text butted against the dividers -- the scale runs 32 then 48, and there
  * is no `--space-10`. Nothing in the build said so.
  */
-const definedTokens = new Set(
-  [...shipped.matchAll(/^\s*(--[a-z0-9-]+)\s*:/gm)].map(([, name]) => name),
-);
+const definedTokens = new Set([
+  ...[...shipped.matchAll(/^\s*(--[a-z0-9-]+)\s*:/gm)].map(([, name]) => name),
+  // A rule may also declare its own scoped property -- the causal timeline
+  // publishes its height so the drag hint can sit clear of it rather than
+  // guessing. Those are defined, just not in tokens.css.
+  ...[...global.matchAll(/^\s*(--[a-z0-9-]+)\s*:/gm)].map(([, name]) => name),
+]);
 const undefinedTokens = [
   ...new Set(
     [...global.matchAll(/var\((--[a-z0-9-]+)/g)]

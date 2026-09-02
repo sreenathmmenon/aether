@@ -1924,6 +1924,27 @@ export function App() {
                     ? "Committed architecture"
                     : "Isolated future"}
               </strong>
+              {/* This was pinned over the canvas and covered whatever it
+                  landed on -- first two facts of the causal chain, then two
+                  component cards when it was moved clear of them. A diagram
+                  has no reliably empty corner. It is a statement about the
+                  canvas's mode, so it belongs on the canvas's own label row
+                  beside the state it qualifies. */}
+              <span
+                className="canvas-hint"
+                title={
+                  writable
+                    ? "Drag a component to record a human topology edit"
+                    : "This committed future is read-only"
+                }
+                aria-label={
+                  writable
+                    ? "Drag a component to record a human topology edit"
+                    : "This committed future is read-only"
+                }
+              >
+                {writable ? "Drag to edit" : "Read-only"}
+              </span>
             </div>
             <div
               className="scenario-tabs"
@@ -2242,11 +2263,6 @@ export function App() {
                 <small>Or let a connected agent build it through WebMCP.</small>
               </div>
             )}
-            <div className="canvas-hint">
-              {writable
-                ? "Drag a component to record a human topology edit"
-                : "This committed future is read-only"}
-            </div>
           </div>
         </section>
         {/* The evidence panel is what the scenario tabs switch, so it is the
