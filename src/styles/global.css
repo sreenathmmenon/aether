@@ -313,11 +313,24 @@ button {
   font-weight: 650;
 }
 .hero-bar {
-  display: flex;
+  /* space-between pushed the headline and the decision panel to opposite
+     edges, leaving 494px of nothing between them on a 1502px row -- a third
+     of the hero doing no work. The headline is already capped at 20ch, so
+     the panel sits beside the text it belongs to rather than against the
+     far margin, and the row keeps its shape as the viewport widens. */
+  display: grid;
+  /* The headline column is sized to the headline: `1fr` stretched it to
+     fill the row and left the panel stranded 341px away from text that had
+     already stopped. `max-content` lets the column end where the words do. */
+  /* `auto` rather than `max-content`: max-content refused to shrink the
+     headline column, so below about 1100px the decision panel was pushed
+     off the edge and clipped. */
+  grid-template-columns: auto minmax(240px, 300px);
+  justify-content: start;
   align-items: end;
-  justify-content: space-between;
-  gap: 24px;
-  padding: 40px 32px 32px;
+  gap: var(--space-16);
+  max-width: 1440px;
+  padding: var(--space-12) var(--space-8) var(--space-8);
   border-bottom: 1px solid var(--border);
 }
 .eyebrow {
@@ -1885,6 +1898,15 @@ button {
    rather than disappearing: it carries the metrics, the human controls, and
    the live WebMCP surface, so hiding it would remove the product. */
 @media (max-width: 1180px) {
+  /* Below this the two columns cannot both hold their measure, so the
+     decision panel sits under the headline rather than being squeezed. */
+  .hero-bar {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-6);
+  }
+  .hero-proof {
+    max-width: 420px;
+  }
   .studio {
     grid-template-columns: 220px minmax(0, 1fr);
   }
