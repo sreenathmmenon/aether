@@ -40,6 +40,7 @@ import { reconcileMessage } from "./reconcile-message";
 import { mergeEvidence } from "@core/evidence-merge";
 import { visibleNotes } from "./opening-notes";
 import { useOverflowFade } from "./use-overflow-fade";
+import { recentActivity } from "./recent-activity";
 import { scenarioNarrative } from "./scenario-copy";
 import { useModalDialog } from "./use-modal-dialog";
 import { syncExplanation, syncTone } from "./sync-status";
@@ -729,6 +730,16 @@ export function App() {
   useOverflowFade(
     ".intelligence-panel, .future-rail, .thread-notes, .replay-list, .decision-replay ol",
     [state, selectedScenario],
+  );
+  const activityEntries = useMemo(
+    () =>
+      recentActivity(
+        state.audit,
+        (commandName) =>
+          commandLabels[commandName]?.label ??
+          commandName.replaceAll("_", " ").toLowerCase(),
+      ),
+    [state.audit],
   );
   const compareRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -3364,16 +3375,17 @@ export function App() {
           {message}
         </p>
         <ol>
-          {state.audit
-            .slice(-4)
-            .reverse()
-            .map((event) => (
-              <li key={event.id}>
-                <b>{actorName(event.actor.kind).toUpperCase()}</b>{" "}
-                {commandLabels[event.commandName]?.label ??
-                  event.commandName.replaceAll("_", " ").toLowerCase()}
-              </li>
-            ))}
+          {/* Consecutive repeats collapse into a count. An agent doing the
+              same thing four times -- four scenario runs, four notes -- filled
+              this with four identical rows, which reads as a stuck feed
+              rather than as activity, and told the reviewer nothing the
+              first row had not. */}
+          {activityEntries.map((entry) => (
+            <li key={entry.id}>
+              <b>{actorName(entry.actorKind).toUpperCase()}</b> {entry.label}
+              {entry.count > 1 && <i> ×{entry.count}</i>}
+            </li>
+          ))}
         </ol>
       </section>
       {comparing && (

@@ -2251,6 +2251,13 @@ button {
   font-size: 12px;
   letter-spacing: 0.08em;
 }
+.activity-strip i {
+  /* The repeat count. Tabular so a run of them does not jitter, and quiet:
+     it qualifies the entry rather than competing with the actor. */
+  color: var(--ink-subtle);
+  font-style: normal;
+  font-variant-numeric: tabular-nums;
+}
 .compare-overlay {
   position: fixed;
   z-index: 10;
