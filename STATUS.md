@@ -2832,3 +2832,15 @@ Two of the three references ship a light ground; Vercel — the supposedly dark 
 - [x] **M228.3 — Two false alarms, recorded because they cost real time** `DONE`
   - **A cached stylesheet made an already-fixed defect look unfixed.** The origin was serving the correct rule while the browser held the old one; only a hard reload showed it. Comparing bundle hashes said "deployed" and was not enough.
   - **A workspace restored from PostgreSQL started a fresh walk in the merged state**, which reads exactly like a broken journey until you notice `localStorage.clear()` does not reset durable storage. The product was behaving correctly — durable sync is the feature.
+
+## Milestone 229 — Two layout defects at the moments that matter
+
+- [x] **M229.1 — The decision controls were in a corner** `DONE`
+  - The review dock declared three grid columns and held four children, so the decision controls auto-placed onto a second row into the **250px first column** — a sixth of the width — while **972px of the diff column sat empty beside them**. The approve control and the guarantee beneath it are the most important things on the page, put in a corner by an off-by-one.
+  - They now occupy a named 280px column beside the evidence. Auto-placement is the hazard: nothing throws, no test sees it, the layout is simply wrong. The grid names its areas, every child claims one, and the gate refuses both a dock without named areas and an area nothing claims.
+- [x] **M229.2 — A third of the hero was dead space** `DONE`
+  - `justify-content: space-between` sent the headline and the decision panel to opposite edges of a 1502px row, leaving **494px of nothing** between them, with "Decision now" stranded against the far margin rather than reading as part of the statement. Now 64px of deliberate gap.
+  - Two corrections while getting there: `1fr` stretched the column and left a 341px gap; `max-content` fixed that but refused to shrink, so below ~1100px the panel was clipped off the edge. `auto` plus the existing 1180px breakpoint holds at every width.
+- [x] **M229.3 — A measurement that lied** `DONE`
+  - Constraining the shell's width to simulate a narrow viewport **does not trigger media queries**, so it reported the hero as stacked at every width including 1502px. Only reading the real viewport showed the layout was correct. Recorded because a probe that reports a defect where none exists costs as much as one that misses a real defect.
+- **Both defects were found by screenshotting the deployed origin and looking at it** — not by reading CSS, and not by any test. That is now the third time in this stretch, after the blank approve button.
