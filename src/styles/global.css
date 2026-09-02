@@ -315,15 +315,25 @@ button {
   text-transform: uppercase;
 }
 .hero-bar h1 {
-  max-width: 620px;
+  max-width: 20ch;
   margin: 0;
-  font-family: inherit;
-  font-size: 38px;
-  letter-spacing: -0.04em;
-  line-height: 1.04;
+  /* Measured on the references rather than chosen: Linear sets 64px with
+     -1.4px tracking, Stripe 40px at weight 300. Large and light is what
+     reads as calm and confident; this was 38px at the body weight, which
+     is why it felt cramped rather than composed. */
+  font-family: var(--font-display);
+  font-size: var(--text-display);
+  font-weight: var(--weight-light);
+  letter-spacing: var(--tracking-tight);
+  line-height: var(--leading-tight);
+  text-wrap: balance;
 }
 .hero-bar h1 em {
-  font-style: italic;
+  /* The emphasis is the verb the reviewer is being asked to perform. It
+     earns weight rather than italics, which at this size read as a slant
+     rather than as emphasis. */
+  font-style: normal;
+  font-weight: var(--weight-bold);
   color: var(--human);
 }
 .hero-proof {
