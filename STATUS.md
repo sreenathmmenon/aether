@@ -2518,3 +2518,16 @@ was already underway again.
   - Decoration must not take a click, so the layer no longer does. The token gate holds it to that, because nothing throws and nothing looks wrong when this regresses: removing `pointer-events: none` fails the gate.
   - Swept every other full-bleed absolute overlay and pseudo-element in the stylesheet for the same shape. This was the only one.
   - Verified live through genuine mouse and keyboard: `elementFromPoint` returns `TEXTAREA` where it returned the `SVG` before, a real click makes `activeElement` the textarea, typed characters appear in the box, and the build produces the three-component graph above.
+
+## Milestone 203 — Saying only what the page can prove about itself
+
+- [x] **M203.1 — The panel credited an agent for the engine's work** `DONE`
+  - Acceptance: nothing on the page attributes computed output to an agent.
+  - Evidence: the evidence panel labelled its reasoning **"Agent read"**. That sentence comes from `scenarioNarrative`, which derives it from the graph deterministically with no agent involved — it renders identically on a page where no agent has ever connected. On an entry whose whole claim is that a reviewer can see which work an agent did and which work it could not do, crediting an agent for the app's own output is the single overclaim that costs the claim its credibility.
+  - Now **"Engine read"**, which is also the stronger label: it is reproducible, which an agent's reading is not. A test pins it in both directions — the correction must not erase the agent from the surfaces that record real tool calls, which is the evidence the WebMCP integration did anything at all. Restoring the old label fails.
+  - Swept the interface for the same shape of claim: this was the only one. The remaining matches are "an agent reads", describing an agent consuming the page, which is accurate.
+- [x] **M203.2 — The central claim was absent from the moment it mattered** `DONE`
+  - Acceptance: a reviewer standing over approve and commit is told an agent cannot reach them.
+  - Evidence: "No approve or merge tool is registered for an agent, in any state" appeared **once**, in the intro modal — dismissed in the first seconds and never seen again. At the exact moment a reviewer decides, the entry's central claim was off screen.
+  - The guarantee now sits under those controls, and it is **computed rather than written**: `gateHolds` reads the tools actually registered on the page and confirms none is a gate command, and the count comes from the live surface. If a future tool ever exposed one, the page would stop making the claim rather than make it falsely.
+  - `humanOnlyCommands` is held to the reducer that enforces it: the test derives the list from the `actor.kind !== "human"` checks in `branch-engine.ts` rather than from the list under test, so a command that gains or loses its human check fails. Verified by breaking it three ways — dropping a command from the list fails, hardcoding the claim in the page fails, moving it away from the review actions fails.
