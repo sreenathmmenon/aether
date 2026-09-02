@@ -1497,7 +1497,27 @@ export function App() {
           <span className="brand-mark" /> AETHER
         </a>
         <div className="breadcrumb">
-          {currentTemplate.name} <i />{" "}
+          {/* The system name in the header IS the switch. It was a select in
+              the futures rail, below four cards that are the rail's real
+              content -- with three futures open it sat at 538px in a 530px
+              column, 171px out of sight. It is not a decision control; it
+              changes which system you are looking at, which is exactly what
+              this breadcrumb already names. */}
+          <label className="system-picker">
+            <span className="visually-hidden">Model a different system</span>
+            <select
+              id="system-template"
+              value={state.workspace.templateId ?? systemTemplates[0].id}
+              onChange={(event) => loadTemplate(event.target.value)}
+            >
+              {systemTemplates.map((template) => (
+                <option key={template.id} value={template.id}>
+                  {template.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <i />{" "}
           {/* "Counterfactual review" and "agent-modeled proof room" are
               internal vocabulary. A reviewer arriving cold reads the header
               first and should learn what state they are in, not what the
@@ -1646,8 +1666,17 @@ export function App() {
             ) : activeBranch.status === "merged" &&
               activeBranch.id !== "branch-baseline" ? (
               <>
-                {activeBranch.name} is <em>committed</em>. The record shows who
-                decided, and on what evidence.
+                {/* "The record shows who decided, and on what evidence" is
+                    what the decision record below says, at length, with the
+                    evidence attached. Repeating it here cost the headline a
+                    third line -- 83 characters needs about 1550px to set in
+                    two, which no sane measure gives -- to say something the
+                    reader is about to be shown. The wording is measured, not
+                    chosen: at 939px this sets two lines of 912 and 808,
+                    where "Every decision behind it is on the record"
+                    stranded 180px on a third. */}
+                {activeBranch.name} is <em>committed</em>. The whole decision is
+                on the record.
               </>
             ) : approvalEligible ? (
               <>
@@ -1900,19 +1929,11 @@ export function App() {
               })}
             </div>
           )}
+          {/* The picker itself moved to the header, where the breadcrumb
+              already names the system. What stays is the one line that says
+              what this system is -- which belongs beside the architecture it
+              describes, not in a header. */}
           <div className="system-switch">
-            <label htmlFor="system-template">Model a different system</label>
-            <select
-              id="system-template"
-              value={state.workspace.templateId ?? systemTemplates[0].id}
-              onChange={(event) => loadTemplate(event.target.value)}
-            >
-              {systemTemplates.map((template) => (
-                <option key={template.id} value={template.id}>
-                  {template.name}
-                </option>
-              ))}
-            </select>
             <small>
               {
                 systemTemplates.find(

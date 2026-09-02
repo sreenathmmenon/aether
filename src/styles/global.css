@@ -64,8 +64,60 @@ button {
   background: linear-gradient(135deg, var(--agent), var(--branch));
 }
 .breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
   color: var(--ink-muted);
   font-size: 12px;
+}
+/* Present to a screen reader, absent to the eye: the picker's label. The
+   breadcrumb already reads as the system name, so a visible "Model a
+   different system" beside it would say the same thing twice. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+/* The system name in the header is the switch. It has to read as the
+   breadcrumb it replaced -- not as a form control parked in a header -- so
+   it carries the surrounding type and shows its affordance on hover and
+   focus rather than at rest. */
+.system-picker select {
+  appearance: none;
+  /* Just enough right padding for the chevron drawn below. `appearance:
+     none` removes the browser's own arrow but not the width it reserved, so
+     the control measured 162px for 107px of text and the chevron floated
+     away from the name it belongs to. */
+  width: max-content;
+  padding: var(--space-1) var(--space-4) var(--space-1) var(--space-2);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  background: transparent;
+  background-image:
+    linear-gradient(45deg, transparent 50%, currentcolor 50%),
+    linear-gradient(135deg, currentcolor 50%, transparent 50%);
+  background-position:
+    right 8px center,
+    right 4px center;
+  background-size:
+    4px 4px,
+    4px 4px;
+  background-repeat: no-repeat;
+  font: inherit;
+  font-weight: var(--weight-bold);
+  cursor: pointer;
+}
+.system-picker select:hover,
+.system-picker select:focus-visible {
+  border-color: var(--border);
+  background-color: var(--surface-raised);
 }
 .breadcrumb i {
   display: inline-block;
@@ -374,10 +426,15 @@ button {
   /* `auto` rather than `max-content`: max-content refused to shrink the
      headline column, so below about 1100px the decision panel was pushed
      off the edge and clipped. */
-  grid-template-columns: auto minmax(240px, 300px);
-  justify-content: start;
+  /* The headline takes what it needs and the panel takes the rest. With a
+     300px floor on the panel and a 64px gap, a 1280px row left the headline
+     852px -- enough to strand "commits." alone on a third line at 235px
+     while the two lines above it each left 200px unused. The panel's own
+     content is 282px wide, so the floor was costing the headline a line for
+     space the panel never used. */
+  grid-template-columns: 1fr max-content;
   align-items: end;
-  gap: var(--space-16);
+  gap: var(--space-12);
   padding: var(--space-12) var(--space-8) var(--space-8);
   border-bottom: 1px solid var(--border);
 }
@@ -390,13 +447,15 @@ button {
   text-transform: uppercase;
 }
 .hero-bar h1 {
-  /* 20ch is a fine measure for "Mumbai is down. Choose the repair before
-     traffic peaks." and too narrow for the committed sentence, which is 83
-     characters: it set four lines and 243px of hero inside a 719px column
-     with 560px empty beside it, pushing the canvas back below the fold at
-     the end of the journey. 28ch still reads as a measure rather than a
-     paragraph and holds every state's sentence in fewer lines. */
-  max-width: 28ch;
+  /* Measured across all six headlines rather than chosen. 20ch set the
+     committed sentence in four lines and 243px of hero inside a 719px
+     column with 560px empty beside it. 28ch (852px here) still stranded
+     "commits." alone on a third line at 235px while the two lines above it
+     each left 200px unused. At 1000px five of the six set in two balanced
+     lines; only the committed sentence stays at three, and at 83 characters
+     it genuinely is longer than the rest.
+     `ch` rather than `px`, so the measure tracks the type as it scales. */
+  max-width: 33ch;
   margin: 0;
   /* Measured on the references rather than chosen: Linear sets 64px with
      -1.4px tracking, Stripe 40px at weight 300. Large and light is what
@@ -465,8 +524,26 @@ button {
      longest fact still wrapped while the short one sat in space it did not
      need. `fit-content` sizes to the sentence and yields in proportion to
      how much each one is actually asking for. */
-  grid-template-columns: repeat(3, fit-content(100%));
-  justify-content: start;
+  /* Each column takes exactly what its own sentence needs. Measured: the
+     three facts want 535 + 313 + 360 of the 1232 available, so they fit --
+     but `fit-content` shared the shrinkage evenly and left the longest one
+     at 479px, wrapping, while the short ones sat in space they did not
+     want. `auto` did no better, because `max-content` siblings claim their
+     full size first and the leftover went to neither.
+     The earlier clipping this replaced came from the row being genuinely
+     too narrow for the copy; that is fixed in the copy itself, so the
+     columns can be honest about what they need. */
+  /* Each column holds its sentence while the row has the width, and gives
+     way in order when it does not: the agent's reach is the first to yield,
+     then what the decision waits on, and the state of the branch -- the
+     reviewer's actual question -- yields last. A hard `max-content` refused
+     to shrink at all and ran the last fact off a narrow desktop; a plain
+     `minmax(0, max-content)` shrank even when there was room to spare and
+     wrapped the longest fact at 1280px. */
+  grid-template-columns:
+    minmax(min-content, max-content)
+    minmax(0, max-content)
+    minmax(0, max-content);
   /* Spacing lives here, not here *and* in each cell's padding: the two
      compounded into a 40px gap after the first fact and ~90px after the
      second, so the dividers floated at inconsistent distances. */
@@ -535,7 +612,10 @@ button {
   align-items: baseline;
   gap: var(--space-3);
   min-width: 0;
-  padding: 0 var(--space-8);
+  /* 32px each side spent 192px of a 1280px row on gaps between three short
+     facts, and the longest one then wrapped for want of 56px. The dividers
+     still read at 24px. */
+  padding: 0 var(--space-6);
   border-right: 1px solid var(--border);
 }
 .decision-brief > div:first-child {
