@@ -2750,3 +2750,36 @@ was already underway again.
   - The rule moved **above the first heading** of `AGENTS.md` and now states which instruction wins on a conflict: this file, and say so rather than following both silently.
   - Verified by breaking each guard independently — hook weakened, hook deleted, hook uninstalled, rule demoted from the top. All four fail.
   - **One correction inside the fix, and it is the same trap already recorded for CSS:** the first version asserted on the hook through a Vitest `?raw` import, which returns empty for files outside `src`, so it passed with the hook gutted. Caught by mutation showing **zero** failures. The hook is now read from disk by the gate script.
+
+## Milestone 225 — The design council, and the system it produced
+
+A design council was convened over four rounds — Stripe, Shopify/Polaris, Razorpay/Blade, Sarvam, Vercel, Linear, and three agentic-AI practitioners — with every position argued against rather than summarised into agreement. The old `AGENTS.md` UX clause was put on the table as one candidate, not as the constitution.
+
+**Evidence, measured live in the browser rather than recalled:**
+
+|                 | Ground    | Display | Weight  | Tracking | Paddings |
+| --------------- | --------- | ------- | ------- | -------- | -------- |
+| Linear          | `#08090a` | 64px    | —       | −1.4px   | —        |
+| Stripe          | light     | 40px    | **300** | −0.8px   | —        |
+| Vercel          | `#fafafa` | —       | —       | —        | **8**    |
+| Aether (before) | `#121b2e` | 25px    | **700** | ~0       | **37**   |
+
+Two of the three references ship a light ground; Vercel — the supposedly dark one — is `#fafafa`. The dark rebuild earlier in this session had also inverted the product's own written contract.
+
+- [x] **M225.1 — Warm ivory product, one midnight canvas** `DONE`
+  - Ground is `#fdfcfa`, never pure white. The simulation canvas is the single dark region — the stage where failure propagates and the agent works — so contrast carries meaning rather than decorating. The ink ladder inverts inside it, scoped in one place so a component added later inherits the right ladder instead of disappearing.
+  - **Text below AA: 41 → 0**, measured by compositing translucent layers the way a browser does, re-run after every change rather than once at the end.
+- [x] **M225.2 — The palette carries authorship** `DONE`
+  - Blue is what a person did; teal is what the agent did. No reference product needs this vocabulary because none of them has a machine acting on their surface. Held by a test that measures **hue distance** — a first version demanded a contrast ratio, which measures luminance, and would have forced one of the pair lighter for no legibility gain.
+- [x] **M225.3 — Type and space on one scale** `DONE`
+  - `paddings 37 → 8` (matching Vercel exactly), `type styles 20 → 9`, `font sizes 9 → 5`, `weights 8 → 2`. Display is 56px at weight 300 with −0.03em tracking: large and light reads as calm, small and heavy is what made it cramped.
+  - **The fonts ship.** The previous build declared zero `@font-face` and named Inter, so it rendered as system-ui for anyone without Inter installed — no judge saw the product being screenshotted. Space Grotesk and JetBrains Mono, self-hosted, 31KB.
+- [x] **M225.4 — Enforced by the build** `DONE`
+  - Blade's condition: tokens that can be bypassed are documentation. `npm run gate` now fails on a literal colour outside the token file, spacing off the 4px grid, a size off the ramp, or a weight outside 300/400/650.
+  - Polaris's objection — an over-strict gate gets commented out — is answered rather than dismissed: an inline `/* off-scale: reason */` is permitted and **counted in the passing output**, so a growing count is itself the signal.
+  - It caught six violations on its first run, all mine from an hour earlier. Verified by introducing each violation type in turn; all four are refused.
+- [x] **M225.5 — `DESIGN.md` exists** `DONE`
+  - The owner referred to a design system in `AGENTS.md` and a separate `DESIGN.md`. The first was three sentences of prose in a section an agent could skip; the second had never existed. That is why the product drifted. A test derives the role names from the token file and holds the document to the values that actually ship.
+- [x] **M225.6 — Product language, not protocol language** `DONE`
+  - "WebMCP live · 5 state-aware tools" was the third line a person read. Now "Your agent can do 5 things here"; the unavailable state reads "No agent connected". Five surfaces carried the old vocabulary.
+  - The new guard cried wolf three times before it was right — flagging a variable name, a comment quoting the old copy, and an interpolated expression. It now strips comments and interpolations and matches only what renders.
