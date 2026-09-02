@@ -185,6 +185,37 @@ describe("Aether WebMCP registry", () => {
     registry?.dispose();
   });
 
+  it("rejects an unknown trace target in the shape an agent branches on", () => {
+    // The comment beside this rejection explains a real defect — a component
+    // advertised as traceable and then refused as unknown — but nothing
+    // tested the reply itself, so its error code could be changed to
+    // anything. An agent that branches on `INVALID_INPUT` to correct its own
+    // call would read a different code and give up instead.
+    const registered: RegisteredTool[] = [];
+    const registry = createAetherToolRegistry(() => {}, undefined, {
+      registerTool: async (tool) => {
+        registered.push(tool as unknown as RegisteredTool);
+      },
+    });
+    return (async () => {
+      await registry?.refresh(createInitialState(paymentPlatformBaseline));
+      const trace = registered
+        .filter((tool) => tool.name === "trace_architecture_dependency")
+        .at(-1);
+      expect(trace, "the trace tool is not registered").toBeDefined();
+
+      const rejection = JSON.parse(
+        String(await trace!.execute({ entityId: "not-a-component" })),
+      ) as { error: string; problems: string[]; nextAction: string };
+      expect(rejection.error).toBe("INVALID_INPUT");
+      expect(rejection.problems.join(" ")).toContain("entityId");
+      // The valid options are named, so the correction takes one more call
+      // rather than a guess.
+      expect(rejection.nextAction).toContain("ledger");
+      registry?.dispose();
+    })();
+  });
+
   it("registers no write tool on a branch a person discarded", async () => {
     // A rolled-back repair is discarded, and `canEditModel` refuses it — but
     // nothing tested that, so removing the check broke no test. The reducer

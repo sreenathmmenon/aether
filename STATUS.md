@@ -2118,3 +2118,11 @@ was already underway again.
   - Evidence: noticed while verifying M160 live — the gate closed on an agent-initiated `propose_architecture_change`, not a human edit. Checking the suite found every invalidation test dispatches as a human, so the agent path was covered only by inspection.
   - This is the asymmetry the whole design rests on. An agent proposing a change it cannot approve is the point; an agent proposing a change that leaves a _previous_ approval standing would let it ship something no one agreed to.
   - The test dispatches with no actor argument, which is how every registered tool reaches the reducer, and requires the edit to succeed, the status to fall back to `proposed`, and a human merge at the approved version to be refused as `STALE_REVISION`. Making `SET_PROPERTY` leave the status alone fails this and one other test.
+
+## Milestone 162 — Sweeping the registry's error contract
+
+- [x] **M162.1 — Every write tool's honesty, and one untested rejection** `DONE`
+  - Acceptance: no mutating tool can claim to be read-only, and rejections keep the shape an agent branches on.
+  - Evidence: all seven `readOnlyHint: false` sites were mutated individually and every one is killed — a tool that writes to the workspace cannot advertise itself as read-only, which is a WebMCP compliance property the submission asserts.
+  - One survivor: the `trace_architecture_dependency` rejection for an unknown component. Its comment explains a real defect it fixes — a component advertised as traceable and then refused as unknown — but nothing tested the reply, so its error code could be changed to anything. An agent branching on `INVALID_INPUT` to correct its own call would read a different code and give up.
+  - Now covered by both halves: the code an agent branches on, and the hint naming the valid components so the correction takes one more call rather than a guess. Changing either fails.
