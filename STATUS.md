@@ -2206,3 +2206,11 @@ was already underway again.
   - A first probe suggested it was missing, because only the spike had been run at that branch version and there were no current runs to compare against. Running the full set the way the film does showed the warning exactly where it should be. The defect was in the probe, and checking rather than concluding is what separated "the product hides this" from "the product says it plainly".
   - The script now points at it, because it is the clearest possible demonstration that the gate is not rubber-stamping a convenient scenario — you cannot look at a passing panel and miss what is blocking you.
   - The sentence is built by the interface, so a test holds the script and the component to the same wording. Changing the panel's phrasing fails.
+
+## Milestone 171 — The README undersold the product
+
+- [x] **M171.1 — Two documents, two different counts** `DONE`
+  - Acceptance: every document states the number of shipped systems the interface registers.
+  - Evidence: the README said **"Two worked systems ship"** while the Devpost description said three. Three is correct — payment platform, ride-hailing dispatch, and AI inference, all four templates confirmed in the interface and all three walked live this session. The README, which is the first thing anyone landing on the repository reads, was underselling the product by a third.
+  - The count is now derived from the templates the interface actually registers, and both documents are held to it. Reverting the README to "Two" fails.
+  - This is the fourth documented figure this session found to contradict the product — after the 1,500-character budget, the stale "nine tools", and the shot plan that could not be recorded. Each was checkable from the repository and none was checked until it was.

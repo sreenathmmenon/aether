@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import demo from "../../docs/DEMO.md?raw";
 import submission from "../../docs/SUBMISSION.md?raw";
 import appSource from "./App.tsx?raw";
+import readme from "../../README.md?raw";
 import { createInitialState, dispatch } from "@core/branch-engine";
 import { paymentPlatformBaseline } from "../fixtures/payment-platform/baseline";
 import { deriveGraph } from "@core/branch-engine";
@@ -209,5 +210,38 @@ describe("the demo script quotes what the product reports", () => {
       flat,
       "the description no longer says what the reviewer will see happen",
     ).toContain("third bottleneck");
+  });
+
+  it("counts the shipped systems the same everywhere", () => {
+    // The README said two worked systems ship and the Devpost description
+    // said three. Three is right — payment platform, ride-hailing dispatch
+    // and AI inference — and the number is derived here from the templates
+    // the interface actually registers, so neither document can drift from
+    // the product or from each other again.
+    const templates = [
+      ...appSource.matchAll(/id: "(blank|[a-z-]+)",\s*\n\s*name: "/g),
+    ].map((match) => match[1]!);
+    const seeded = templates.filter((id) => id !== "blank");
+    // The extraction has to see them, or the counts below are vacuous.
+    expect(seeded.length).toBeGreaterThan(2);
+
+    const words: Record<number, string> = {
+      2: "Two worked systems",
+      3: "Three worked systems",
+      4: "Four worked systems",
+    };
+    const correct = words[seeded.length];
+    expect(correct, `no phrasing for ${seeded.length} systems`).toBeDefined();
+    for (const [name, text] of [
+      ["README.md", readme],
+      ["docs/SUBMISSION.md", submission],
+    ] as const) {
+      const flat = text.replace(/\s+/g, " ");
+      if (!/\b(Two|Three|Four) worked systems\b/.test(flat)) continue;
+      expect(
+        flat,
+        `${name} miscounts the shipped systems; there are ${seeded.length}`,
+      ).toContain(correct!);
+    }
   });
 });
