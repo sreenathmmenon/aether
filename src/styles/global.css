@@ -37,16 +37,16 @@ button {
   padding: 0 32px;
   display: flex;
   align-items: center;
-  gap: 30px;
+  gap: 32px;
   border-bottom: 1px solid var(--border);
   background: var(--surface-raised);
 }
 .brand {
   display: inline-flex;
   align-items: center;
-  gap: 11px;
-  font-size: 13px;
-  font-weight: 850;
+  gap: 12px;
+  font-size: 12px;
+  font-weight: 650;
   letter-spacing: 0.16em;
   color: var(--ink);
   text-decoration: none;
@@ -59,13 +59,13 @@ button {
 }
 .breadcrumb {
   color: var(--ink-muted);
-  font-size: 13px;
+  font-size: 12px;
 }
 .breadcrumb i {
   display: inline-block;
   width: 4px;
   height: 4px;
-  margin: 0 10px 2px;
+  margin: 0 8px 2px;
   background: var(--branch);
   border-radius: 50%;
 }
@@ -84,7 +84,7 @@ button {
   display: inline-block;
   width: 7px;
   height: 7px;
-  margin-right: 7px;
+  margin-right: 8px;
   border-radius: 50%;
   background: var(--ink-muted);
 }
@@ -97,8 +97,8 @@ button {
 .header-call {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 9px;
+  gap: 8px;
+  padding: 4px 8px;
   border-radius: 999px;
   border: 1px solid rgb(27 77 255 / 0.3);
   background: rgb(27 77 255 / 0.09);
@@ -107,7 +107,7 @@ button {
 }
 .header-call code {
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 650;
   color: var(--human);
   white-space: nowrap;
   overflow: hidden;
@@ -160,7 +160,7 @@ button {
   gap: 8px;
   justify-items: center;
   width: min(430px, 78%);
-  padding: 26px 28px;
+  padding: 24px 28px;
   border: 1px solid rgb(22 32 46 / 0.11);
   border-radius: 12px;
   background: var(--surface-raised);
@@ -170,13 +170,13 @@ button {
 .canvas-empty strong {
   color: var(--ink);
   font-family: inherit;
-  font-size: 19px;
+  font-size: 20px;
   line-height: 1.25;
 }
 .canvas-empty p {
   margin: 0;
   color: var(--ink-muted);
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1.5;
 }
 .canvas-empty small {
@@ -184,14 +184,14 @@ button {
   font-size: 12px;
 }
 .canvas-empty-cta {
-  margin-top: 3px;
-  padding: 9px 17px;
+  margin-top: 4px;
+  padding: 8px 16px;
   border: none;
   border-radius: 999px;
   color: var(--surface-sunken);
   background: var(--human);
-  font-size: 13px;
-  font-weight: 750;
+  font-size: 12px;
+  font-weight: 650;
   cursor: pointer;
 }
 .canvas-empty-cta:hover {
@@ -202,7 +202,7 @@ button {
   display: block;
   margin-top: 2px;
   color: var(--human);
-  font-weight: 700;
+  font-weight: 650;
   font-variant-numeric: tabular-nums;
 }
 .replay-evidence + time {
@@ -213,13 +213,13 @@ button {
 }
 /* A shared room: everyone holding this link works in one workspace. */
 .room-chip {
-  padding: 5px 9px;
+  padding: 4px 8px;
   border: 1px solid rgb(27 77 255 / 0.32);
   border-radius: 999px;
   color: var(--human);
   background: rgb(27 77 255 / 0.08);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 650;
   max-width: 160px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -228,17 +228,17 @@ button {
 .room-live-group {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 .room-invite {
-  padding: 7px 13px;
+  padding: 8px 12px;
   border: 1px solid rgb(27 77 255 / 0.32);
   border-radius: 999px;
   color: var(--human);
   background: rgb(27 77 255 / 0.07);
   font-size: 12px;
-  font-weight: 750;
+  font-weight: 650;
   cursor: pointer;
 }
 .room-invite:hover {
@@ -268,13 +268,13 @@ button {
   font-size: 12px;
 }
 .shared-live {
-  padding: 5px 8px;
+  padding: 4px 8px;
   border: 1px solid rgb(15 144 128 / 0.25);
   border-radius: 999px;
   color: var(--verified-text);
   background: rgb(15 144 128 / 0.07);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 650;
 }
 /* Not saved anywhere durable: the strongest signal the header carries. */
 .sync-at-risk {
@@ -296,20 +296,20 @@ button {
   border-radius: 50%;
   color: var(--ink);
   background: var(--surface-raised);
-  font-weight: 800;
+  font-weight: 650;
 }
 .hero-bar {
   display: flex;
   align-items: end;
   justify-content: space-between;
   gap: 24px;
-  padding: 38px 32px 30px;
+  padding: 40px 32px 32px;
   border-bottom: 1px solid var(--border);
 }
 .eyebrow {
   margin: 0 0 8px;
   color: var(--human);
-  font-weight: 800;
+  font-weight: 650;
   font-size: 12px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -339,14 +339,14 @@ button {
 .hero-proof {
   min-width: 220px;
   display: grid;
-  gap: 3px;
-  padding: 12px 0 0 18px;
+  gap: 4px;
+  padding: 12px 0 0 16px;
   border-left: 2px solid var(--failure);
 }
 .hero-proof span,
 .hero-proof small {
   color: var(--ink-muted);
-  font-size: 12.5px;
+  font-size: 12px;
 }
 .hero-proof strong {
   font-size: 14px;
@@ -355,7 +355,7 @@ button {
   display: flex;
   gap: 40px;
   align-items: baseline;
-  padding: 18px 40px;
+  padding: 16px 40px;
   border-bottom: 1px solid var(--border);
   background: linear-gradient(
     180deg,
@@ -375,16 +375,16 @@ button {
 }
 .brief-state strong,
 .brief-waiting strong {
-  font-size: 17px;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 650;
   letter-spacing: -0.011em;
   color: var(--ink);
 }
 .decision-brief > div {
   display: grid;
-  gap: 5px;
+  gap: 4px;
   min-height: 110px;
-  padding: 21px 32px;
+  padding: 20px 32px;
   border-right: 1px solid var(--border);
 }
 .decision-brief > div:last-child {
@@ -399,13 +399,13 @@ button {
 .brief-label {
   color: var(--human);
   font-size: 12px;
-  font-weight: 850;
+  font-weight: 650;
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 .decision-brief strong {
   font-family: inherit;
-  font-size: 17px;
+  font-size: 16px;
   line-height: 1.15;
 }
 .decision-brief small {
@@ -420,7 +420,7 @@ button {
 }
 .future-rail,
 .intelligence-panel {
-  padding: 26px 22px;
+  padding: 24px 24px;
   background: var(--surface-sunken);
 }
 .future-rail {
@@ -447,8 +447,8 @@ button {
 .future-card {
   width: 100%;
   display: grid;
-  gap: 5px;
-  padding: 13px;
+  gap: 4px;
+  padding: 12px;
   border: 1px solid var(--border);
   color: var(--ink);
   text-align: left;
@@ -457,11 +457,11 @@ button {
   border-radius: var(--radius);
 }
 .baseline-card {
-  margin: 16px 0 9px;
+  margin: 16px 0 8px;
 }
 .future-card {
   position: relative;
-  margin-top: 9px;
+  margin-top: 8px;
   background: var(--surface-sunken);
 }
 .future-card-active {
@@ -475,12 +475,12 @@ button {
   color: var(--human);
   font-size: 12px;
   letter-spacing: 0.12em;
-  font-weight: 850;
+  font-weight: 650;
   text-transform: uppercase;
 }
 .baseline-card strong,
 .future-card strong {
-  font-size: 13px;
+  font-size: 12px;
 }
 .baseline-card small,
 .future-card small {
@@ -500,17 +500,17 @@ button {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 13px 8px;
+  padding: 12px 8px;
   border: 0;
   color: var(--ink);
   background: var(--surface-raised);
   font-size: 12px;
-  font-weight: 750;
+  font-weight: 650;
   cursor: pointer;
 }
 .create-future-button span {
   color: var(--agent-text);
-  font-size: 15px;
+  font-size: 14px;
 }
 .reset-link {
   margin-top: 16px;
@@ -518,7 +518,7 @@ button {
   border: 0;
   color: var(--ink-muted);
   background: transparent;
-  font-size: 12.5px;
+  font-size: 12px;
   text-decoration: underline;
   cursor: pointer;
 }
@@ -587,9 +587,9 @@ button {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 14px;
+  gap: 16px;
   height: 72px;
-  padding: 0 22px;
+  padding: 0 24px;
   border-bottom: 1px solid var(--border);
 }
 .canvas-toolbar div:first-child {
@@ -597,7 +597,7 @@ button {
   gap: 1px;
 }
 .canvas-toolbar strong {
-  font-size: 13px;
+  font-size: 12px;
 }
 .scenario-tabs {
   /* A segmented control: the track recedes and the selected segment lifts.
@@ -613,12 +613,12 @@ button {
 }
 .scenario-tabs button {
   min-height: 38px;
-  padding: 8px 10px;
+  padding: 8px 8px;
   border: 0;
   color: var(--ink-muted);
   background: transparent;
-  font-size: 12.5px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 650;
   cursor: pointer;
 }
 .scenario-tabs .scenario-active {
@@ -648,12 +648,12 @@ button {
 }
 .trace-control {
   min-height: 38px;
-  padding: 0 11px;
+  padding: 0 12px;
   border: 1px solid var(--ink);
   color: var(--ink);
   background: transparent;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 650;
   cursor: pointer;
 }
 /* Without this the control looked live while doing nothing, which is worse
@@ -695,7 +695,7 @@ button {
   left: 0;
   color: var(--ink-muted);
   font-size: 12px;
-  font-weight: 750;
+  font-weight: 650;
   letter-spacing: 0.1em;
 }
 /* Region bands track the node grid: Mumbai holds the write path on the left,
@@ -778,7 +778,7 @@ button {
   min-height: 80px;
   display: grid;
   gap: 4px;
-  padding: 11px;
+  padding: 12px;
   border: 1px solid var(--ink-muted);
   transform: translate(-50%, -50%);
   color: var(--ink);
@@ -883,7 +883,7 @@ button {
   align-items: center;
   gap: 8px;
   color: var(--failure-text);
-  font-weight: 750;
+  font-weight: 650;
   font-size: 12px;
 }
 /* The propagation order runs along the canvas floor rather than sitting on
@@ -897,9 +897,9 @@ button {
   bottom: 14px;
   display: flex;
   flex-wrap: wrap;
-  gap: 6px 14px;
+  gap: 8px 16px;
   margin: 0;
-  padding: 9px 12px;
+  padding: 8px 12px;
   border: 1px solid rgb(22 32 46 / 0.12);
   border-radius: 8px;
   list-style: none;
@@ -914,7 +914,7 @@ button {
 .causal-timeline li {
   display: flex;
   align-items: flex-start;
-  gap: 7px;
+  gap: 8px;
   transition:
     color 0.25s ease,
     transform 0.25s ease;
@@ -933,7 +933,7 @@ button {
   color: var(--failure-text);
 }
 .causal-timeline i {
-  margin-top: 3px;
+  margin-top: 4px;
   flex: none;
 }
 .causal-timeline i {
@@ -944,7 +944,7 @@ button {
 }
 .causal-timeline .trace-active {
   color: var(--ink);
-  font-weight: 750;
+  font-weight: 650;
   transform: translateY(-2px);
 }
 .causal-timeline .trace-active i {
@@ -983,7 +983,7 @@ button {
   position: absolute;
   top: 16px;
   right: 16px;
-  padding: 7px 9px;
+  padding: 8px 8px;
   color: var(--ink-muted);
   background: var(--surface-raised);
   border: 1px solid var(--border);
@@ -996,7 +996,7 @@ button {
 .evidence-heading h2 {
   margin: 0;
   font-family: inherit;
-  font-size: 25px;
+  font-size: 20px;
   letter-spacing: -0.03em;
 }
 .risk-dot,
@@ -1004,7 +1004,7 @@ button {
 .idle-dot {
   width: 9px;
   height: 9px;
-  margin-top: 7px;
+  margin-top: 8px;
   border-radius: 50%;
 }
 .risk-dot {
@@ -1018,8 +1018,8 @@ button {
   background: var(--border);
 }
 .agent-narrative {
-  margin: 18px 0;
-  padding: 12px 13px;
+  margin: 16px 0;
+  padding: 12px 12px;
   border-left: 2px solid var(--agent);
   color: var(--ink-muted);
   background: rgb(0 169 155 / 0.06);
@@ -1028,10 +1028,10 @@ button {
 }
 .agent-narrative span {
   display: block;
-  margin-bottom: 5px;
+  margin-bottom: 4px;
   color: var(--agent-text);
   font-size: 12px;
-  font-weight: 850;
+  font-weight: 650;
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
@@ -1043,17 +1043,17 @@ button {
 }
 .metric-grid div {
   display: grid;
-  gap: 5px;
-  padding: 11px;
+  gap: 4px;
+  padding: 12px;
   border-right: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
 }
 .simulation-provenance {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
   align-items: center;
-  padding: 10px 11px;
+  padding: 8px 12px;
   color: var(--ink-muted);
   border: 1px solid var(--border);
   border-top: 0;
@@ -1062,12 +1062,12 @@ button {
 }
 .simulation-provenance span {
   color: var(--agent-text);
-  font-weight: 850;
+  font-weight: 650;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 .simulation-provenance code {
-  padding: 2px 5px;
+  padding: 2px 4px;
   color: var(--ink-muted);
   border: 1px solid rgb(0 169 155 / 0.24);
   border-radius: 2px;
@@ -1089,15 +1089,15 @@ button {
   color: var(--verified-text);
 }
 .violation-list {
-  margin-top: 18px;
+  margin-top: 16px;
 }
 .violation-list p {
   display: flex;
   align-items: flex-start;
-  gap: 7px;
-  margin: 7px 0;
+  gap: 8px;
+  margin: 8px 0;
   color: var(--ink-muted);
-  font-size: 12.5px;
+  font-size: 12px;
   line-height: 1.35;
 }
 .violation-list i {
@@ -1114,7 +1114,7 @@ button {
 .system-brief-panel {
   display: grid;
   gap: 12px;
-  margin-top: 18px;
+  margin-top: 16px;
   padding: 16px;
   border: 1px solid rgba(47, 111, 177, 0.28);
   background:
@@ -1127,7 +1127,7 @@ button {
   display: block;
   margin-bottom: 4px;
   font-family: inherit;
-  font-size: 17px;
+  font-size: 16px;
   line-height: 1.1;
 }
 .system-brief-panel small {
@@ -1140,11 +1140,11 @@ button {
   min-height: 86px;
   resize: vertical;
   border: 1px solid var(--border);
-  padding: 11px;
+  padding: 12px;
   background: var(--surface-raised);
   color: var(--ink);
   font: inherit;
-  font-size: 12.5px;
+  font-size: 12px;
   line-height: 1.45;
 }
 .system-brief-panel textarea:focus {
@@ -1153,28 +1153,28 @@ button {
 }
 .system-brief-panel ol {
   display: grid;
-  gap: 7px;
+  gap: 8px;
   margin: 0;
-  padding-left: 19px;
+  padding-left: 20px;
   color: var(--ink-muted);
   font-size: 12px;
   line-height: 1.35;
 }
 .system-brief-panel button {
   border: 1px solid var(--human);
-  padding: 10px 12px;
+  padding: 8px 12px;
   background: var(--human);
   color: var(--structure-ink);
   font-size: 12px;
-  font-weight: 850;
+  font-weight: 650;
   letter-spacing: 0.01em;
   cursor: pointer;
 }
 .human-actions {
   display: grid;
-  gap: 7px;
-  margin-top: 18px;
-  padding-top: 17px;
+  gap: 8px;
+  margin-top: 16px;
+  padding-top: 16px;
   border-top: 1px solid var(--border);
 }
 .human-actions .eyebrow {
@@ -1187,13 +1187,13 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 10px 11px;
+  padding: 8px 12px;
   border: 1px solid rgb(22 32 46 / 0.3);
   color: var(--ink);
   background: var(--surface-raised);
   box-shadow: 0 1px 0 rgb(22 32 46 / 0.16);
   font-size: 12px;
-  font-weight: 750;
+  font-weight: 650;
   text-align: left;
   cursor: pointer;
   transition:
@@ -1205,7 +1205,7 @@ button {
 .human-actions button::after {
   content: "→";
   color: var(--human);
-  font-size: 12.5px;
+  font-size: 12px;
   opacity: 0.65;
 }
 .human-actions button:hover:not(:disabled),
@@ -1241,9 +1241,9 @@ button {
   display: grid;
   grid-template-columns: 8px 58px 1fr;
   align-items: center;
-  gap: 6px;
-  margin-top: 19px;
-  padding: 11px;
+  gap: 8px;
+  margin-top: 20px;
+  padding: 12px;
   background: rgb(15 144 128 / 0.07);
   color: var(--ink-muted);
   font-size: 12px;
@@ -1267,23 +1267,23 @@ button {
   align-items: end;
   justify-content: space-between;
   gap: 24px;
-  padding: 26px 32px 19px;
+  padding: 24px 32px 20px;
   border-bottom: 1px solid var(--border);
 }
 .decision-room-head h2 {
   max-width: 560px;
   margin: 0;
   font-family: inherit;
-  font-size: 25px;
+  font-size: 20px;
   letter-spacing: -0.03em;
 }
 .room-live {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
   color: var(--verified-text);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 650;
 }
 .room-live i {
   width: 7px;
@@ -1299,7 +1299,7 @@ button {
 .decision-thread,
 .decision-replay {
   min-width: 0;
-  padding: 22px 32px 26px;
+  padding: 24px 32px 24px;
 }
 .decision-replay {
   border-left: 1px solid var(--border);
@@ -1308,8 +1308,8 @@ button {
 .thread-heading {
   display: flex;
   justify-content: space-between;
-  gap: 15px;
-  margin-bottom: 14px;
+  gap: 16px;
+  margin-bottom: 16px;
 }
 .thread-heading strong {
   font-size: 12px;
@@ -1320,13 +1320,13 @@ button {
 }
 .thread-notes {
   display: grid;
-  gap: 9px;
+  gap: 8px;
   max-height: 260px;
   overflow: auto;
   padding-right: 4px;
 }
 .decision-note {
-  padding: 11px 13px;
+  padding: 12px 12px;
   border: 1px solid var(--border);
   background: var(--surface-raised);
   border-radius: var(--radius);
@@ -1335,10 +1335,10 @@ button {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 10px;
+  gap: 8px;
 }
 .decision-note strong {
-  font-size: 12.5px;
+  font-size: 12px;
 }
 .decision-note span,
 .decision-note small {
@@ -1346,14 +1346,14 @@ button {
   font-size: 12px;
 }
 .decision-note p {
-  margin: 7px 0;
+  margin: 8px 0;
   color: var(--ink-muted);
-  font-size: 12.5px;
+  font-size: 12px;
   line-height: 1.45;
 }
 .decision-note small {
   color: var(--human);
-  font-weight: 750;
+  font-weight: 650;
 }
 .note-agent {
   border-left: 3px solid var(--agent);
@@ -1362,29 +1362,29 @@ button {
   border-left: 3px solid var(--ink);
 }
 .note-composer {
-  margin-top: 13px;
-  padding-top: 13px;
+  margin-top: 12px;
+  padding-top: 12px;
   border-top: 1px solid var(--border);
 }
 .note-composer label {
   display: block;
-  margin-bottom: 7px;
+  margin-bottom: 8px;
   color: var(--ink-muted);
   font-size: 12px;
 }
 .note-composer div {
   display: flex;
-  gap: 7px;
+  gap: 8px;
 }
 .note-composer input {
   min-width: 0;
   flex: 1;
-  padding: 10px 11px;
+  padding: 8px 12px;
   border: 1px solid var(--border);
   color: var(--ink);
   background: var(--surface-raised);
   font: inherit;
-  font-size: 12.5px;
+  font-size: 12px;
 }
 .note-composer button {
   padding: 0 12px;
@@ -1392,7 +1392,7 @@ button {
   color: var(--ink);
   background: var(--surface-raised);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 650;
   cursor: pointer;
 }
 .decision-replay ol {
@@ -1406,8 +1406,8 @@ button {
   display: grid;
   grid-template-columns: 24px 1fr auto;
   align-items: start;
-  gap: 9px;
-  padding: 10px 0;
+  gap: 8px;
+  padding: 8px 0;
   border-top: 1px solid var(--border);
 }
 .decision-replay li i {
@@ -1420,7 +1420,7 @@ button {
   border-radius: 50%;
   font-size: 12px;
   font-style: normal;
-  font-weight: 800;
+  font-weight: 650;
 }
 .decision-replay li div {
   display: grid;
@@ -1453,7 +1453,7 @@ button {
   background: var(--surface-raised);
 }
 .review-head {
-  padding: 20px 26px;
+  padding: 20px 24px;
   border-right: 1px solid var(--border);
 }
 .review-head h2 {
@@ -1468,14 +1468,14 @@ button {
 }
 .review-head > span {
   display: block;
-  margin-top: 7px;
+  margin-top: 8px;
   color: var(--ink-muted);
   font-size: 12px;
 }
 .diff-list {
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 8px;
   overflow: auto;
   padding: 16px 20px;
 }
@@ -1486,7 +1486,7 @@ button {
 .diff-item {
   display: grid;
   grid-template-columns: auto 1fr;
-  gap: 4px 7px;
+  gap: 4px 8px;
   min-width: 148px;
   padding: 8px;
   border: 1px solid var(--border);
@@ -1495,7 +1495,7 @@ button {
 .diff-item b {
   grid-row: span 2;
   align-self: center;
-  padding: 3px;
+  padding: 4px;
   color: var(--ink);
   font-size: 12px;
   text-transform: uppercase;
@@ -1521,7 +1521,7 @@ button {
 }
 .diff-item ins {
   color: var(--verified-text);
-  font-weight: 800;
+  font-weight: 650;
   text-decoration: none;
 }
 .review-actions {
@@ -1529,8 +1529,8 @@ button {
   flex-direction: column;
   align-items: stretch;
   justify-content: center;
-  gap: 10px;
-  padding: 17px;
+  gap: 8px;
+  padding: 16px;
   border-left: 1px solid var(--border);
 }
 .review-actions > span {
@@ -1542,12 +1542,12 @@ button {
     transform 140ms ease,
     box-shadow 140ms ease,
     background 140ms ease;
-  padding: 10px;
+  padding: 8px;
   border: 1px solid var(--ink);
   background: var(--surface-raised);
   color: var(--ink);
-  font-size: 12.5px;
-  font-weight: 800;
+  font-size: 12px;
+  font-weight: 650;
   cursor: pointer;
 }
 /* The most consequential control in the product. When the evidence is clean
@@ -1572,12 +1572,12 @@ button {
    and the weight stays below the buttons so it never competes with them. */
 .gate-claim {
   margin: 12px 0 0;
-  padding: 9px 12px;
+  padding: 8px 12px;
   border-left: 2px solid var(--verified);
   border-radius: 0 var(--radius) var(--radius) 0;
   background: rgb(15 144 128 / 0.07);
   color: var(--ink-muted);
-  font-size: 12.5px;
+  font-size: 12px;
   line-height: 1.5;
 }
 .gate-claim b {
@@ -1599,8 +1599,8 @@ button {
   display: grid;
   grid-template-columns: 120px minmax(200px, 1fr) minmax(250px, 2fr);
   align-items: center;
-  gap: 14px;
-  padding: 14px 30px;
+  gap: 16px;
+  padding: 16px 32px;
   background: var(--surface-raised);
   color: var(--ink);
 }
@@ -1615,7 +1615,7 @@ button {
 }
 .activity-strip p {
   margin: 0;
-  font-size: 12.5px;
+  font-size: 12px;
 }
 .activity-strip ol {
   display: flex;
@@ -1659,24 +1659,24 @@ button {
   position: sticky;
   top: 0;
   float: right;
-  margin: -14px -10px 0 0;
+  margin: -16px -8px 0 0;
   border: 0;
   background: transparent;
   color: var(--ink-muted);
-  font-size: 24px;
+  font-size: 20px;
   cursor: pointer;
 }
 .compare-modal h2 {
   max-width: 440px;
   margin: 0 0 24px;
   font-family: inherit;
-  font-size: 31px;
+  font-size: 32px;
   letter-spacing: -0.04em;
 }
 .compare-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 11px;
+  gap: 12px;
 }
 .compare-choice {
   display: grid;
@@ -1690,12 +1690,12 @@ button {
 }
 .compare-choice span {
   color: var(--human);
-  font-size: 12.5px;
-  font-weight: 800;
+  font-size: 12px;
+  font-weight: 650;
 }
 .compare-choice strong {
   font-family: inherit;
-  font-size: 29px;
+  font-size: 32px;
 }
 .compare-choice small {
   color: var(--ink-muted);
@@ -1711,9 +1711,9 @@ button {
   box-shadow: inset 3px 0 var(--agent);
 }
 .compare-foot {
-  margin: 22px 0 0;
+  margin: 24px 0 0;
   color: var(--ink-muted);
-  font-size: 12.5px;
+  font-size: 12px;
 }
 @keyframes dash {
   to {
@@ -1739,7 +1739,7 @@ button {
     grid-template-columns: 220px 1fr 220px;
   }
   .decision-brief > div {
-    padding: 18px;
+    padding: 16px;
   }
 }
 @media (max-width: 900px) {
@@ -1754,7 +1754,7 @@ button {
   .future-stack {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 9px;
+    gap: 8px;
   }
 }
 @media (max-width: 740px) {
@@ -1765,10 +1765,10 @@ button {
     display: none;
   }
   .hero-bar {
-    padding: 25px 18px;
+    padding: 24px 16px;
   }
   .hero-bar h1 {
-    font-size: 30px;
+    font-size: 32px;
   }
   .hero-proof {
     display: none;
@@ -1785,11 +1785,11 @@ button {
   }
   .decision-room-head {
     align-items: flex-start;
-    padding: 22px 18px 16px;
+    padding: 24px 16px 16px;
   }
   .decision-thread,
   .decision-replay {
-    padding: 18px;
+    padding: 16px;
   }
   .note-composer div {
     display: grid;
@@ -1820,7 +1820,7 @@ button {
   .canvas-toolbar {
     height: auto;
     align-items: flex-start;
-    padding: 14px;
+    padding: 16px;
   }
   .scenario-tabs {
     flex-wrap: wrap;
@@ -1885,7 +1885,7 @@ button {
   width: min(680px, 100%);
   max-height: 92vh;
   overflow: auto;
-  padding: 44px 46px 34px;
+  padding: 44px 48px 32px;
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-lg);
   background:
@@ -1905,9 +1905,9 @@ button {
   }
 }
 .intro-card h2 {
-  margin: 0 0 14px;
+  margin: 0 0 16px;
   font-family: inherit;
-  font-size: 33px;
+  font-size: 32px;
   line-height: 1.08;
   letter-spacing: -0.035em;
 }
@@ -1919,17 +1919,17 @@ button {
 .intro-steps {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
-  margin: 0 0 22px;
+  gap: 16px;
+  margin: 0 0 24px;
   padding: 0;
   list-style: none;
   counter-reset: intro-step;
 }
 .intro-steps li {
   display: grid;
-  gap: 5px;
+  gap: 4px;
   align-content: start;
-  padding: 13px 14px;
+  padding: 12px 16px;
   border-radius: 9px;
   border: 1px solid rgb(22 32 46 / 0.1);
   background: rgb(22 32 46 / 0.022);
@@ -1938,7 +1938,7 @@ button {
 .intro-steps b {
   color: var(--ink);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 650;
 }
 .intro-steps b::before {
   content: counter(intro-step) " · ";
@@ -1946,7 +1946,7 @@ button {
 }
 .intro-steps span {
   color: var(--ink-muted);
-  font-size: 12.5px;
+  font-size: 12px;
   line-height: 1.45;
 }
 @media (max-width: 720px) {
@@ -1955,7 +1955,7 @@ button {
   }
 }
 .intro-lede {
-  margin: 0 0 18px;
+  margin: 0 0 16px;
   max-width: 54ch;
   color: var(--ink-muted);
   font-size: 14px;
@@ -1966,18 +1966,18 @@ button {
   align-items: center;
   gap: 16px;
   flex-wrap: wrap;
-  padding-top: 22px;
+  padding-top: 24px;
   border-top: 1px solid var(--border);
 }
 .intro-start {
-  padding: 13px 24px;
+  padding: 12px 24px;
   border: 0;
   border-radius: 999px;
   color: var(--surface-sunken);
   background: linear-gradient(180deg, var(--human), var(--human));
   box-shadow: var(--lift-2);
-  font-size: 13px;
-  font-weight: 750;
+  font-size: 12px;
+  font-weight: 650;
   cursor: pointer;
   transition:
     transform 140ms ease,
@@ -1989,7 +1989,7 @@ button {
 }
 .intro-foot small {
   color: var(--ink-muted);
-  font-size: 12.5px;
+  font-size: 12px;
 }
 @media (prefers-reduced-motion: reduce) {
   .intro-overlay,
@@ -1999,14 +1999,14 @@ button {
 }
 /* Live feed of agent tool invocations, so WebMCP activity is visible. */
 .tool-feed {
-  margin-top: 14px;
-  padding: 13px 14px;
+  margin-top: 16px;
+  padding: 12px 16px;
   border: 1px solid rgb(0 169 155 / 0.28);
   background: rgb(0 169 155 / 0.05);
   border-radius: var(--radius);
 }
 .tool-feed .eyebrow {
-  margin-bottom: 9px;
+  margin-bottom: 8px;
   color: var(--agent-text);
 }
 .tool-feed ol {
@@ -2019,7 +2019,7 @@ button {
 .tool-feed li {
   display: grid;
   gap: 2px;
-  padding-left: 11px;
+  padding-left: 12px;
   border-left: 2px solid var(--agent);
   animation: tool-call-in 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -2031,7 +2031,7 @@ button {
    the tool name is the quiet third line an engineer can still find. */
 .tool-feed strong {
   color: var(--ink);
-  font-size: 13.5px;
+  font-size: 14px;
   font-weight: 650;
   letter-spacing: -0.008em;
 }
@@ -2050,8 +2050,8 @@ button {
 .tool-feed code {
   color: var(--ink-muted);
   font-family: "SFMono-Regular", Consolas, monospace;
-  font-size: 11px;
-  font-weight: 500;
+  font-size: 12px;
+  font-weight: 400;
   opacity: 0.72;
 }
 @keyframes tool-call-in {
@@ -2086,28 +2086,28 @@ button {
    propose, so a person is never the weaker actor on their own architecture. */
 .component-editor {
   display: grid;
-  gap: 6px;
+  gap: 8px;
   margin-top: 12px;
-  padding: 10px 12px;
+  padding: 8px 12px;
   border: 1px solid var(--border);
   background: var(--surface-sunken);
 }
 .component-editor-label {
   color: var(--ink-muted);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 650;
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
 .component-editor > div {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 6px;
+  gap: 8px;
 }
 .component-editor select {
   min-height: 32px;
   min-width: 0;
-  padding: 6px 8px;
+  padding: 8px 8px;
   border: 1px solid var(--border);
   background: var(--surface-raised);
   color: var(--ink);
@@ -2117,7 +2117,7 @@ button {
 }
 .component-composer {
   display: grid;
-  gap: 7px;
+  gap: 8px;
   margin-top: 12px;
   padding: 12px;
   border: 1px dashed rgb(22 32 46 / 0.22);
@@ -2126,14 +2126,14 @@ button {
 .component-composer label {
   color: var(--ink-muted);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 650;
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
 .component-composer input,
 .component-composer select {
   min-height: 32px;
-  padding: 6px 8px;
+  padding: 8px 8px;
   border: 1px solid var(--border);
   background: var(--surface-raised);
   color: var(--ink);
@@ -2147,7 +2147,7 @@ button {
 .component-composer > div {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 6px;
+  gap: 8px;
 }
 .component-composer-submit {
   width: 100%;
@@ -2165,12 +2165,12 @@ button {
   text-overflow: ellipsis;
 }
 .component-composer button {
-  padding: 0 14px;
+  padding: 0 16px;
   border: 0;
   color: var(--ink);
   background: var(--surface-raised);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 650;
   cursor: pointer;
 }
 .component-composer button:disabled,
@@ -2182,27 +2182,27 @@ button {
 /* Switching the modelled system proves the engine is not one fixture. */
 .system-switch {
   display: grid;
-  gap: 5px;
-  margin-top: 18px;
+  gap: 4px;
+  margin-top: 16px;
   padding-top: 16px;
   border-top: 1px solid var(--border);
 }
 .system-switch label {
   color: var(--ink-muted);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 650;
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
 .system-switch select {
   min-height: 34px;
-  padding: 6px 8px;
+  padding: 8px 8px;
   border: 1px solid var(--border);
   background: var(--surface-raised);
   color: var(--ink);
   font: inherit;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 650;
 }
 .system-switch small {
   color: var(--ink-muted);
@@ -2227,7 +2227,7 @@ button {
   display: inline-block;
   width: 6px;
   height: 6px;
-  margin-right: 6px;
+  margin-right: 8px;
   margin-bottom: 1px;
   border-radius: 50%;
   background: currentColor;
@@ -2239,7 +2239,7 @@ button {
   color: var(--agent-text);
 }
 .decision-replay li small {
-  padding: 1px 7px;
+  padding: 1px 8px;
   border-radius: 999px;
   background: rgb(22 32 46 / 0.06);
   font-size: 12px;
@@ -2267,7 +2267,7 @@ button {
   list-style: none;
 }
 .tool-inventory li {
-  padding-left: 10px;
+  padding-left: 8px;
   border-left: 2px solid rgb(0 169 155 / 0.35);
 }
 .tool-inventory code {
@@ -2276,7 +2276,7 @@ button {
   font-size: 12px;
 }
 .tool-gate {
-  margin: 9px 0 0;
+  margin: 8px 0 0;
   padding-top: 8px;
   border-top: 1px solid rgb(22 32 46 / 0.1);
   color: var(--ink-muted);
@@ -2288,8 +2288,8 @@ button {
 .other-scenario-block {
   display: flex;
   align-items: flex-start;
-  gap: 7px;
-  margin: 7px 0 0;
+  gap: 8px;
+  margin: 8px 0 0;
   color: var(--branch-text);
   font-size: 12px;
   line-height: 1.45;
@@ -2305,12 +2305,12 @@ button {
 /* The own-system capability is what separates Aether from a fixed demo, so
    the opening screen names it. */
 .intro-own {
-  margin: -14px 0 30px;
-  padding: 11px 13px;
+  margin: -16px 0 32px;
+  padding: 12px 12px;
   border-left: 2px solid var(--agent);
   background: rgb(0 169 155 / 0.06);
   color: var(--ink-muted);
-  font-size: 12.5px;
+  font-size: 12px;
   line-height: 1.5;
 }
 /* Evidence the engine computed on the reviewer's behalf reads as neither a
@@ -2325,16 +2325,16 @@ button {
 /* This only ever carries a refusal, and cyan reads as information. */
 .composer-notice {
   margin: 0;
-  padding: 6px 8px;
+  padding: 8px 8px;
   border-left: 2px solid var(--failure);
   background: rgb(217 61 66 / 0.08);
   color: var(--failure-text);
-  font-size: 12.5px;
+  font-size: 12px;
   line-height: 1.4;
 }
 /* A disabled control must say where the missing step happens. */
 .rail-hint {
-  margin: 9px 0 0;
+  margin: 8px 0 0;
   color: var(--ink-muted);
   font-size: 12px;
   line-height: 1.45;
@@ -2372,13 +2372,13 @@ button {
 .brief-actions {
   display: grid;
   grid-template-columns: 1fr auto;
-  gap: 7px;
+  gap: 8px;
 }
 .brief-build {
   background: var(--surface-raised);
   color: var(--ink);
   border: 0;
-  font-weight: 750;
+  font-weight: 650;
 }
 .brief-build:disabled {
   opacity: 0.45;
@@ -2430,7 +2430,7 @@ button {
 .architecture-node span {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
 }
 .architecture-node span::before {
   content: "";
@@ -2463,11 +2463,11 @@ button {
 .tool-delta {
   display: inline-flex;
   align-items: center;
-  margin-left: 6px;
-  padding: 2px 7px;
+  margin-left: 8px;
+  padding: 2px 8px;
   border-radius: 999px;
-  font-size: 11px;
-  font-weight: 800;
+  font-size: 12px;
+  font-weight: 650;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.01em;
   animation: tool-delta-in 0.45s cubic-bezier(0.22, 1, 0.36, 1);
@@ -2512,15 +2512,15 @@ button {
   padding: 40px 0;
 }
 .studio:has(.canvas-empty) .canvas-empty strong {
-  font-size: 28px;
+  font-size: 32px;
   line-height: 1.18;
   letter-spacing: -0.02em;
 }
 .studio:has(.canvas-empty) .canvas-empty-brief {
   width: 100%;
   min-height: 132px;
-  margin-top: 6px;
-  padding: 14px 16px;
+  margin-top: 8px;
+  padding: 16px 16px;
   border: 1px solid var(--border-strong);
   border-radius: var(--radius);
   background: var(--surface);
