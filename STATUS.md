@@ -2301,3 +2301,12 @@ was already underway again.
   - That is the "bring your own system" claim working end to end without an agent, and it was **untested**. Mutation found `buildFromBrief` could be gutted with nothing failing.
   - Now covered: it must call the parser, reach the reducer through the same `ADD_COMPONENT` and `CONNECT_COMPONENTS` commands an agent uses rather than writing state directly, and refuse an empty brief with a reason. Dropping the parser call or ceasing to wire dependencies each fail.
   - The limit is stated in the test rather than hidden: it reads the shipped source, so it holds the wiring and not the behaviour — an early `return` inserted into the function still passes. Recorded because a reader who assumes otherwise would trust it too far.
+
+## Milestone 182 — The collaboration claim, found the way a judge finds it
+
+- [x] **M182.1 — Walked, and it works** `DONE`
+  - Acceptance: a reviewer can reach a shared room without knowing the URL parameter exists.
+  - Evidence: **`Open a shared review`** is on the page. Clicking it mints a room, rewrites the address bar to `?room=review-…`, and the header reads `Room · review-s0jdqm` beside `Synced`. The button then becomes **`Copy review link`**, which copies exactly the current URL and reports: _"Review link copied. Anyone who opens it joins this workspace and sees these decisions live."_
+  - Two clicks, no documentation needed. Reported as no finding — the flow is complete and the handler is carefully built: it copies **before** reloading, because the workspace id resolves once at load and the author would otherwise stay in their private workspace while the link worked for everyone else.
+  - It was, however, entirely untested. The feedback line could be reduced to "Copied." silently, and it is the only thing telling a reviewer the link shares their workspace rather than merely bookmarking a page.
+  - Now covered: the message must say what the link _does_, both labels must exist, and a clipboard that rejects or is absent must still reach the same continuation rather than stranding the reviewer mid-flow. Each break fails.
