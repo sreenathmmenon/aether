@@ -2014,3 +2014,12 @@ was already underway again.
   - Evidence: the contrast test computes real WCAG ratios rather than asserting colour strings, so it fails on the property rather than the palette. Reverting `--muted` fails it; aliasing a text variant back to its fill fails two tests.
   - Getting it to run took three attempts, each rejected for a reason worth keeping: a `?raw` import of CSS returns an **empty string** under this Vitest config, so the first version passed while measuring nothing. Reading the file with `node:fs` broke typecheck, and adding Node types to the app tsconfig would let Node APIs into the browser bundle unnoticed. Excluding the helper did not work either, because the test imports it transitively.
   - Settled by declaring the palette in TypeScript and comparing it to the stylesheet in a gate script rather than a test. Drift in either direction now fails `npm run typecheck` by name and value.
+
+## Milestone 151 — Two grounds were not enough
+
+- [x] **M151.1 — Re-measure live, and find what the calibration missed** `DONE`
+  - Acceptance: text clears 4.5:1 on every surface it is actually drawn on.
+  - Evidence: after M150 the live count fell from 25 failures to 5, and the survivors showed the calibration had been too narrow. Three sat at 4.42–4.49 on **tinted panels** a few points darker than `--paper`, which the first pass never measured. Two more points of darkening clears them.
+  - The fifth was the opposite mistake and the more interesting one: `Shared state` measured **3.0:1**, cyan text on the dark ink strip. The text variants are darkened for light grounds, so on a dark ground they are the wrong direction entirely — the original `--cyan` reaches 5.36:1 there. A blanket substitution of every `color:` rule had made that one worse. **Darker is not universally safer.**
+  - The contrast test now checks all three grounds, and extending it immediately caught two more colours the live page had not shown — coral and amber at 4.39:1 on tinted panels. Both are fixed, and every text colour now clears 4.5:1 against paper, panel and tinted panel together.
+  - The dark-strip rule is guarded in the gate script rather than a test, because no test can see which CSS rule uses which token. Reverting it to the text variant fails `npm run typecheck` with the measured ratio in the message.

@@ -12,15 +12,15 @@
  */
 export const textTokens = `
   --ink: #112440;
-  --muted: #606e84;
+  --muted: #5e6c82;
   --paper: #f3f0e9;
   --panel: #fbfaf6;
   --blue: #2068bf;
   --cyan: #11a7b8;
   --coral: #d95d4f;
   --green: #248765;
-  --cyan-text: #007889;
-  --coral-text: #bf4335;
-  --green-text: #197c5a;
-  --amber-text: #9e5e14;
+  --cyan-text: #007687;
+  --coral-text: #b93e30;
+  --green-text: #177a58;
+  --amber-text: #9c5c12;
 `;

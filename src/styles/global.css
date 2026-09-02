@@ -1426,7 +1426,10 @@ button {
 }
 .activity-strip .eyebrow {
   margin: 0;
-  color: var(--cyan-text);
+  /* On the dark ink strip the text variant is the wrong direction: it was
+     darkened for light grounds and measures 3.0:1 here, while the original
+     accent reaches 5.36:1. Darker is not universally safer. */
+  color: var(--cyan);
 }
 .activity-strip p {
   margin: 0;

@@ -29,4 +29,24 @@ if (wrong.length) {
     );
   process.exit(1);
 }
+// The text variants are darkened for light grounds, so on the dark ink
+// strip they are the wrong direction — the darkened cyan measures 3.0:1
+// there while the original accent reaches 5.36:1. A blanket substitution of
+// every `color:` rule made that one worse, and no test can see which rule
+// uses which token, so it is checked here.
+const global = readFileSync("src/styles/global.css", "utf8");
+const darkStrip = global.slice(
+  global.indexOf(".activity-strip .eyebrow {"),
+  global.indexOf("}", global.indexOf(".activity-strip .eyebrow {")),
+);
+if (
+  !darkStrip.includes("var(--cyan)") ||
+  darkStrip.includes("var(--cyan-text)")
+) {
+  console.error(
+    ".activity-strip .eyebrow sits on the dark ink strip and must use --cyan, not --cyan-text, which is darkened for light grounds and measures 3.0:1 there.",
+  );
+  process.exit(1);
+}
+
 console.log(`tokens agree (${pairs.length} colours)`);
