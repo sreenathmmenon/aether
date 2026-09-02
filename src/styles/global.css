@@ -436,7 +436,17 @@ button {
      flex row with the third pushed right by auto margin, the first two
      bunched at the left and the row read as unbalanced. */
   display: grid;
-  grid-template-columns: 1fr 1fr max-content;
+  /* `1fr 1fr max-content` sizes to the viewport, not the content: on a
+     1920px monitor each fact got a 728px cell to hold ~250px of text and
+     the strip read thin and stretched, where at 1274px it read dense. The
+     columns cap so the three facts stay a group the eye takes in at once,
+     and the row itself still spans the page like every band around it.
+     26rem is measured, not chosen: the longest state sentence across the
+     four systems sets at 378px and the longest eyebrow at 369px, so the
+     facts each hold one line with room rather than wrapping in a strip
+     that has 800px to spare beside them. */
+  grid-template-columns: minmax(0, 26rem) minmax(0, 26rem) max-content;
+  justify-content: start;
   gap: var(--space-12);
   align-items: baseline;
   padding: var(--space-6) var(--space-12);
