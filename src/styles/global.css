@@ -2862,12 +2862,43 @@ button {
    brief takes the canvas. */
 .studio:has(.canvas-empty) {
   grid-template-columns: 300px minmax(560px, 1fr) 0;
+  /* The row is capped at 78vh so a large graph cannot inflate the page, but
+     with no graph the brief takes the canvas and needs its own height --
+     the cap was clipping "Build this architecture" off the bottom edge. */
+  max-height: none;
+}
+.studio:has(.canvas-empty) .future-rail {
+  max-height: none;
 }
 .studio:has(.canvas-empty) .intelligence-panel {
   display: none;
 }
 .studio:has(.canvas-empty) .canvas-stage {
   max-height: none;
+}
+/* With no graph the brief takes the canvas, so the world must grow to the
+   composer rather than scrolling it: at 314px tall it was clipping a 440px
+   form and the causal timeline was overlapping the submit button. The
+   timeline describes a failure path that does not exist yet, so it goes. */
+/* `.canvas-stage > :last-child` gives the world `flex: 1; min-height: 0`,
+   which is right for a graph that scrolls inside a bounded stage and wrong
+   for a brief that has to be fully visible. The composer is absolutely
+   positioned so it can float over a graph; with no graph it belongs in
+   normal flow, where it gives the world its height instead of being clipped
+   by it. */
+.studio:has(.canvas-empty) .canvas-stage > :last-child {
+  flex: none;
+  height: auto;
+  overflow: visible;
+}
+.studio:has(.canvas-empty) .canvas-empty {
+  position: static;
+  transform: none;
+  margin: var(--space-12) auto;
+}
+.studio:has(.canvas-empty) .causal-timeline,
+.studio:has(.canvas-empty) .canvas-hint {
+  display: none;
 }
 .studio:has(.canvas-empty) .canvas-empty {
   max-width: 620px;
