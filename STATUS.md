@@ -1975,3 +1975,11 @@ was already underway again.
 - [x] **M146.2 — Two survivors that are redundant, not untested** `DONE`
   - Evidence: the template and region components of the key also survived mutation, and were checked rather than assumed to need tests. Switching template on one registry gives `5, 10` **with or without** the template component, because editability and the component-id list already change when the template does. And no command adds a region — regions come only from the template — so `regionIds()` can never change while `componentIds()` stays fixed.
   - Both are defensive and inert. Recorded as such rather than papered over with a test that would assert nothing, and left in place rather than removed, because a future template with regions but no components would make them load-bearing.
+
+## Milestone 147 — Finishing the sweep
+
+- [x] **M147.1 — The last untested default** `DONE`
+  - Evidence: mutating the remaining modules left one real survivor — the edge-geometry clearance could be raised from 2 to 40 with nothing failing. The helper's own comment says a larger gap "consumes the edge it is meant to reveal", and that claim was untested while the defect it was written to fix was an invisible dependency graph.
+  - A test now places two cards a realistic distance apart and requires a usable line actually be drawn between them, while still stopping short of both. Raising the gap fails it.
+  - Everything else in the sweep was killed: an origin-trial token that never expires, a reversed shift-tab direction in the focus trap, and a changed default component kind in the brief parser. Two deliberate no-op mutations survived, as they must — a mutation that changes nothing is a control, not a gap, and including them is what makes the surviving-versus-killed distinction meaningful.
+  - Across this session's sweeps: **forty-one mutations applied**, seven genuine gaps found and closed, two survivors judged redundant rather than untested, and three no-op controls confirmed to survive.

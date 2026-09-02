@@ -51,4 +51,21 @@ describe("dependency edge geometry", () => {
     expect(Number.isFinite(edge.x1)).toBe(true);
     expect(Number.isFinite(edge.y2)).toBe(true);
   });
+
+  it("leaves a visible edge between adjacent cards", () => {
+    // The default clearance is the whole point of this helper: the shipped
+    // systems leave about twelve pixels between adjacent cards, so a gap
+    // large enough to eat that leaves nothing drawn between them. Mutation
+    // testing found the default could be raised twentyfold with no failure.
+    const extent = { width: 176, height: 78 };
+    // Two cards a realistic distance apart, horizontally adjacent.
+    const line = edgeBetween({ x: 0, y: 0 }, { x: 188, y: 0 }, extent);
+    const drawn = Math.hypot(line.x2 - line.x1, line.y2 - line.y1);
+    // Something is actually drawn, and it is a usable length rather than a
+    // dot — the defect this helper exists to fix was an invisible graph.
+    expect(drawn).toBeGreaterThan(4);
+    // And it still stops short of both cards rather than running under them.
+    expect(line.x1).toBeGreaterThan(0);
+    expect(line.x2).toBeLessThan(188);
+  });
 });
