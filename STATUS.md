@@ -2560,3 +2560,12 @@ was already underway again.
   - Each future now leads with its own axis — cost for Lowest cost, recovery for Fastest recovery, availability for Highest resilience. The card and its `aria-label` quote the same call, because they were built separately and could have announced a figure different from the one on screen.
   - The map is held to the reducer's canonical intent names, so a renamed intent cannot leave a card silently reporting the wrong axis, and the three headlines are asserted to stay distinct. Collapsing them back onto availability — the original defect — fails two tests.
   - Checked the comparison overlay for the same shape: it already shows availability, recovery, cost and violations side by side, which is right for comparing. The rail card is the summary, so the distinguishing axis belongs there.
+
+## Milestone 207 — A script that quoted numbers the screen stopped showing
+
+- [x] **M207.1 — The film described three availability figures for cards that no longer show them** `DONE`
+  - Acceptance: every figure the script reads out is the figure that will be on screen.
+  - Evidence: `docs/DEMO.md` read "lowest cost at 93.96%, fastest recovery at 96.36%, highest resilience at 97.11%" — correct while every card reported availability, wrong the moment they each began leading with their own axis (M206).
+  - The script now reads **$5,920 / month · 12m recovery · 97.11% availability**, which is the stronger moment anyway: the cheap future is not a worse version of the safe one, it is a different answer to the same failure, and that is what a trade-off rail exists to show.
+  - The guarding test had two faults of its own. It computed three simulation runs and discarded them with `void run` before asserting hardcoded strings, so it pinned the prose to itself rather than to the engine; and it read each branch's **base revision** instead of its derived graph, measuring the unrepaired architecture. It now asserts the exact headline each card renders, computed. Changing a quoted figure by twenty dollars fails.
+  - Verified live on the deployed origin: the three cards announce `$5,920 / month`, `12m recovery`, `97.11% availability`, matching the script exactly.
