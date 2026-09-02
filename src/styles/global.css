@@ -1928,9 +1928,17 @@ button {
      around the message rather than a hole beneath it. */
   grid-area: diff;
   display: flex;
+  /* The changes ran off the right edge on one nowrap line: six semantic
+     changes, five and a half visible, the last name clipped mid-word. The
+     row did scroll, but a trackpad shows no scrollbar, so a reviewer had no
+     reason to believe there was anything past the edge -- the count said
+     six and the eye found five. Wrapping shows every change at once; the
+     max-height above still scrolls vertically when a system has many. */
+  flex-wrap: wrap;
+  align-content: center;
   align-items: center;
   gap: var(--space-2);
-  overflow: auto;
+  overflow: hidden auto;
   padding: var(--space-4) var(--space-6);
 }
 .diff-list > p {
