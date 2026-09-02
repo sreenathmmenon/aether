@@ -28,3 +28,37 @@ describe("a missing asset is a missing asset", () => {
     expect(fallbackAt).toBeGreaterThan(terminatorAt);
   });
 });
+
+/**
+ * The same failure one namespace over. An unmatched /api/ path fell through
+ * to the single-page fallback, so a client calling a mistyped endpoint got
+ * 200 and an HTML document — which reads exactly like a guard that failed
+ * open. It cost a probe of the stale-write guard, which appeared to accept a
+ * stale version three times when the request had never reached the route.
+ */
+describe("an unknown API endpoint is a 404, not a web page", () => {
+  it("terminates /api/* rather than serving the shell", () => {
+    const apiTerminator = serverSource.slice(
+      serverSource.indexOf('app.all("/api/*"'),
+      serverSource.indexOf('app.use("*", serveStatic'),
+    );
+    expect(
+      apiTerminator,
+      "an unmatched /api path falls through to index.html",
+    ).toMatch(/404/);
+    // JSON, because every other answer from this namespace is JSON and a
+    // client should not have to sniff the content type to tell them apart.
+    expect(apiTerminator).toMatch(/context\.json/);
+  });
+
+  it("keeps it after the real routes and before the shell", () => {
+    // Ordering is the whole behaviour: placed above the handlers it would
+    // 404 every endpoint that exists.
+    const realRoute = serverSource.indexOf('app.put("/api/workspaces/:id"');
+    const terminatorAt = serverSource.indexOf('app.all("/api/*"');
+    const fallbackAt = serverSource.indexOf('app.use("*", serveStatic');
+    expect(realRoute).toBeGreaterThan(0);
+    expect(terminatorAt).toBeGreaterThan(realRoute);
+    expect(fallbackAt).toBeGreaterThan(terminatorAt);
+  });
+});

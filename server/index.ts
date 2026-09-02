@@ -163,6 +163,15 @@ app.use("/assets/*", serveStatic({ root: "./dist" }));
 // failed on a parse error rather than a missing file. A stale cached
 // index.html naming an old hash is exactly how that happens.
 app.all("/assets/*", (context) => context.text("Not found", 404));
+// The same failure one namespace over: an unmatched /api/ path fell through
+// to the single-page fallback, so a client calling a mistyped endpoint got
+// 200 and an HTML document. That reads exactly like a guard that failed open
+// -- it cost a probe of the stale-write guard, which appeared to accept a
+// stale version three times when the request had never reached the route.
+// An API namespace answers in JSON or it answers 404.
+app.all("/api/*", (context) =>
+  context.json({ error: "NOT_FOUND", problems: ["No such endpoint."] }, 404),
+);
 app.use("*", serveStatic({ root: "./dist", path: "index.html" }));
 
 const port = Number(process.env.PORT ?? 3000);
