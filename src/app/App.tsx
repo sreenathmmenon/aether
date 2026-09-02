@@ -1616,7 +1616,11 @@ export function App() {
                 disabled={unbuilt}
                 onClick={createFutures}
               >
-                <span>✦</span>{" "}
+                {/* Decorative. Unmarked it is announced before the label, so
+                    a screen reader reads "✦ Build system first", and it is
+                    counted as text by a contrast check it cannot meet at
+                    2.92:1 — the button's meaning is entirely in its words. */}
+                <span aria-hidden="true">✦</span>{" "}
                 {unbuilt ? "Build system first" : "Create repair futures"}
               </button>
               {unbuilt && (

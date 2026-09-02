@@ -69,6 +69,19 @@ describe("the interface honours the ARIA it declares", () => {
       ).toBe(true);
   });
 
+  it("hides decorative glyphs from the accessible name", () => {
+    // A bare "✦" inside a button is announced before the label — a screen
+    // reader reads "✦ Build system first" — and is counted as text by a
+    // contrast check it cannot meet at 2.92:1. Marking it decorative fixes
+    // both, and the button's meaning was always in its words.
+    const glyphs = [...appSource.matchAll(/<span([^>]*)>✦<\/span>/g)];
+    expect(glyphs.length, "the decorative glyph moved").toBeGreaterThan(0);
+    for (const [, attributes] of glyphs)
+      expect(attributes, "a decorative glyph is announced as text").toContain(
+        'aria-hidden="true"',
+      );
+  });
+
   it("gives every modal dialog an accessible name", () => {
     // A dialog announced only as "dialog" tells a screen reader nothing about
     // what it interrupted the page for.

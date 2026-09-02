@@ -2024,3 +2024,11 @@ was already underway again.
   - The contrast test now checks all three grounds, and extending it immediately caught two more colours the live page had not shown — coral and amber at 4.39:1 on tinted panels. Both are fixed, and every text colour now clears 4.5:1 against paper, panel and tinted panel together.
   - Verified against the deployed origin: **127 text elements measured, zero failing**, down from 25. A screenshot confirms the interface is visually unchanged — the adjustments are two to six points per channel and imperceptible, which is the point: the palette was already close, and nothing about the design had to be traded for the standard.
   - The dark-strip rule is guarded in the gate script rather than a test, because no test can see which CSS rule uses which token. Reverting it to the text variant fails `npm run typecheck` with the measured ratio in the message.
+
+## Milestone 152 — The states the first measurement never opened
+
+- [x] **M152.1 — Measure the onboarding modal and the blank canvas too** `DONE`
+  - Acceptance: contrast holds in every state a judge passes through, not only the one that happens to be on screen.
+  - Evidence: the M151 measurement ran on the seeded decision room. Re-running it on the onboarding modal and the blank canvas — 102 and 94 text elements — found both clean but for one item present in both: a bare `✦` at **2.92:1** inside the `Build system first` button.
+  - It is purely decorative; the button's meaning is entirely in its words. But unmarked it was doing two wrong things at once — announced before the label, so a screen reader reads "✦ Build system first", and counted as text by a contrast check it can never meet. `aria-hidden="true"` fixes both, and is the correct answer rather than darkening an ornament.
+  - A test now requires every decorative glyph span to carry the attribute, so a future one cannot ship announced. Removing it fails.
