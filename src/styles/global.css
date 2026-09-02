@@ -1908,13 +1908,21 @@ button {
 }
 .decision-replay li {
   display: grid;
-  grid-template-columns: 24px 1fr auto;
+  /* Measured: the sentence needs 166px and the evidence chip 229px, which
+     with the marker and gaps cannot share a 400px row. Rather than let one
+     of them wrap, the evidence chip and its timestamp sit on their own line
+     beneath the actor -- the same two facts, each with the full width. */
+  grid-template-columns: 24px minmax(0, 1fr);
+  grid-template-areas:
+    "marker actor"
+    ". evidence";
   align-items: start;
-  gap: 8px;
-  padding: 8px 0;
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
   border-top: 1px solid var(--border);
 }
 .decision-replay li i {
+  grid-area: marker;
   display: grid;
   place-items: center;
   width: 20px;
@@ -1927,6 +1935,7 @@ button {
   font-weight: 650;
 }
 .decision-replay li div {
+  grid-area: actor;
   display: grid;
   gap: 2px;
 }
@@ -1939,6 +1948,14 @@ button {
   font-size: 12px;
 }
 .decision-replay li small {
+  grid-area: evidence;
+  /* Its two children -- the evidence chip and the timestamp -- stacked once
+     this took a full-width row of its own, which is three lines for two
+     short facts. They sit side by side. */
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
   color: var(--human);
   text-transform: capitalize;
 }
