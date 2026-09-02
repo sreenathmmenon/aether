@@ -54,6 +54,15 @@ const currentRuns = (state: AetherState, branch: Branch): ScenarioResult[] =>
     (run) => run.branchVersion === branch.version,
   );
 
+/**
+ * A scenario key as a person would say it: `traffic_spike` is a traffic
+ * spike. The interface has richer per-architecture labels, but those are
+ * derived from the graph on screen and this runs without one.
+ */
+function readableScenario(scenario: string) {
+  return scenario.replaceAll("_", " ");
+}
+
 function standingOf(state: AetherState, branch: Branch): FutureStanding {
   const runs = currentRuns(state, branch);
   const blocking = runs
@@ -80,7 +89,14 @@ function standingOf(state: AetherState, branch: Branch): FutureStanding {
       ? undefined
       : runs.length === 0
         ? "no current evidence"
-        : `${blocking.length} ${blocking.length === 1 ? "scenario reports" : "scenarios report"} violations`,
+        : // The interface names the blocking scenario rather than counting
+          // it, and this is the same fact told to an agent -- so counting
+          // here left the two surfaces describing one blocker in two
+          // different ways, and gave the agent the less useful of them.
+          // Scenario keys read as identifiers, so they become words.
+          `${blocking.map(readableScenario).join(" and ")} ${
+            blocking.length === 1 ? "reports" : "report"
+          } violations`,
   };
 }
 

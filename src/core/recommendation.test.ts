@@ -127,4 +127,42 @@ describe("the agent can say which future the evidence favours", () => {
     expect(unsimulated?.approvable).toBe(false);
     expect(unsimulated?.blockedBy).toBe("no current evidence");
   });
+
+  it("names the scenarios blocking a future rather than counting them", () => {
+    // The interface names the blocker; this is the same fact told to an
+    // agent, and counting here left one blocker described two different
+    // ways on two surfaces -- with the agent given the less useful one.
+    let state = createInitialState(paymentPlatformBaseline);
+    const created = dispatch(
+      state,
+      {
+        type: "CREATE_BRANCH",
+        input: { name: "Repair", intent: "highest_resilience" },
+      },
+      human,
+    );
+    if (!created.ok) throw new Error("the branch must be creatable");
+    state = created.value;
+    const branchId = "branch-highest_resilience";
+
+    for (const scenario of ["regional_outage", "traffic_spike"] as const) {
+      const ran = dispatch(
+        state,
+        { type: "RUN_SCENARIO", input: { branchId, scenario } },
+        human,
+      );
+      if (!ran.ok) throw new Error(`${scenario}: ${ran.message}`);
+      state = ran.value;
+    }
+
+    const standing = recommendFuture(state).standings.find(
+      (entry) => entry.branchId === branchId,
+    );
+    expect(standing?.blocking.length).toBeGreaterThan(0);
+    // The blocker is named, reads as words rather than an identifier, and
+    // carries no bare count.
+    expect(standing?.blockedBy).toContain("traffic spike");
+    expect(standing?.blockedBy).not.toContain("_");
+    expect(standing?.blockedBy).not.toMatch(/^\d+ scenario/);
+  });
 });
