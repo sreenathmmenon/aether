@@ -8,6 +8,9 @@ The deployable Aether product, its WebMCP integration, production persistence, b
 
 Latest live release: Railway deployment `58abce1a-31f4-43df-9f49-102654dc1e66`, commit `dd6ba87`, verified on 2026-09-01 with PostgreSQL `/health`, origin-isolation headers, WebMCP origin-trial header, and a first-time browser smoke test showing "Your own system", "Build the model first", the guided system-brief panel, WebMCP live, durable sync, and the nine-tool editable WebMCP surface.
 
+**The three items only the owner can finish, with exact commands, are in
+[`docs/OWNER_CHECKLIST.md`](docs/OWNER_CHECKLIST.md).**
+
 Two external/submission items remain deliberately open:
 
 - `M10.4b` is verified on the server side: the issued Chrome origin-trial token is configured on Railway and the live origin emits the `Origin-Trial` header. Confirming `document.modelContext` in a Chrome profile with no experimental flag enabled is still outstanding.
