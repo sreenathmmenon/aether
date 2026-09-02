@@ -17,6 +17,8 @@ import registrySource from "./registry.ts?raw";
 import type { ToolCall } from "./registry";
 import webmcpDoc from "../../../docs/WEBMCP.md?raw";
 import complianceDoc from "../../../docs/WEBMCP_COMPLIANCE.md?raw";
+import submissionDoc from "../../../docs/SUBMISSION.md?raw";
+import readmeDoc from "../../../README.md?raw";
 import planDoc from "../../../docs/V3_REVERSE_WINNER_PLAN.md?raw";
 import evalsDoc from "../../../docs/WEBMCP_EVALS.md?raw";
 import appSource from "../../app/App.tsx?raw";
@@ -891,13 +893,39 @@ describe("Aether WebMCP registry", () => {
       ["docs/WEBMCP_COMPLIANCE.md", complianceDoc],
       ["docs/V3_REVERSE_WINNER_PLAN.md", planDoc],
       ["docs/WEBMCP_EVALS.md", evalsDoc],
+      ["docs/SUBMISSION.md", submissionDoc],
+      ["README.md", readmeDoc],
     ] as const) {
       for (const [word, value] of Object.entries(words)) {
-        if (!text.includes(`${word} tools`)) continue;
-        expect(
-          truthful.has(value),
-          `${name} claims "${word} tools"; the registry publishes ${[...truthful].sort((a, b) => a - b).join(", ")}`,
-        ).toBe(true);
+        // Matching only "<word> tools" let five wrong numbers survive a
+        // change to the surface, because none of them was phrased that way:
+        // "the surface to twelve", "five to twelve", "the twelve-tool
+        // surface", "twelve when a repair future also exists". The number is
+        // a claim about the surface however the sentence is built around it,
+        // so the match is the word itself wherever the passage is about
+        // tools -- and the words are spelled out precisely so this can find
+        // them.
+        // A qualified subset is a different quantity from the surface size:
+        // "seven write tools" is true while the surface is thirteen, and
+        // flagging it would be a false alarm that teaches the next reader to
+        // ignore this test. Only an unqualified count of tools is a claim
+        // about the surface.
+        const claims = new RegExp(
+          `\\b${word}\\b(?!\\s+(?:write|read|read-only|mutating|branch-gated|editable)\\b)`,
+          "i",
+        );
+        for (const sentence of text.split(/(?<=[.|])\s+/)) {
+          // "bringing the surface to thirteen" is a claim about the tool
+          // surface that never says the word "tools", so requiring it let a
+          // wrong number through this very test. The subject is the surface,
+          // however the sentence names it.
+          if (!/\btools?\b|\btool-\w+|\bsurface\b/i.test(sentence)) continue;
+          if (!claims.test(sentence)) continue;
+          expect(
+            truthful.has(value),
+            `${name} claims "${word}" of a tool surface in: "${sentence.trim().slice(0, 140)}" — the registry publishes ${[...truthful].sort((a, b) => a - b).join(", ")}`,
+          ).toBe(true);
+        }
       }
     }
   });
