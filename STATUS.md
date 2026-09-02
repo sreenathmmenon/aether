@@ -2676,3 +2676,10 @@ was already underway again.
 - [x] **M217.3 — Keyboard and labelling swept, and two of my own probes corrected** `DONE`
   - Evidence: all 14 interactive controls show a visible focus indicator under keyboard-style focus, and every input is named by a `label[for]` or `aria-label`.
   - **Both probes were wrong before the code was.** The first read `textContent` of `<input>` elements, which is always empty, and reported two controls as unnamed. The second called `.focus()` from script, which deliberately does not trigger `:focus-visible`, and reported 14 controls as having no focus ring — the stylesheet has a global `:where(button, a[href], input, select, textarea, [tabindex]):focus-visible` rule all along. Re-run with `focus({focusVisible:true})`, nothing is missing. Recorded because a probe that cries wolf is how real findings get ignored.
+
+## Milestone 218 — The concurrent-writer guard, tested against the live database
+
+- [x] **M218.1 — Optimistic concurrency verified end to end** `DONE`
+  - Acceptance: two writers cannot silently overwrite each other.
+  - Evidence: three sequential PUTs to `/api/workspaces/<room>` on the deployed origin. `expectedVersion 0` → **200 `{"version":1}`**; the same stale `expectedVersion 0` again → **409 `{"error":"STALE_WORKSPACE"}`**; `expectedVersion 1` → **200 `{"version":2}`**. The conditional `UPDATE … WHERE version = $3` holds against real PostgreSQL, not a mock.
+  - **A third probe error of my own, recorded:** the first attempt used `/api/workspace/` (singular). No such route exists, so all three writes fell through to the SPA catch-all and returned the HTML app shell with status 200 — which read exactly like a guard that had failed open. Reading the response body rather than the status code exposed it. The route is `/api/workspaces/:id`.
