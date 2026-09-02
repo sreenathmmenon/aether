@@ -56,16 +56,35 @@ describe("agent-placed components stay on the canvas", () => {
     }
   });
 
-  it("keeps every placement row clear of both edges", () => {
-    const match = engineSource.match(/const rows = \[([\d, ]+)\]/);
-    if (!match) throw new Error("placement rows are not where they were");
-    const rows = match[1]!.split(",").map((value) => Number(value.trim()));
-    // The cards are 104 units tall as declared; only the width was off.
-    const halfHeight = 52;
-    for (const row of rows) {
-      expect(row, `row ${row} clips the top edge`).toBeGreaterThanOrEqual(
-        halfHeight,
-      );
+  it("keeps every row clear of the edges and of the other region's band", () => {
+    // Each region owns a horizontal band. Without that the grid filled row 1
+    // left to right regardless of region, the two regions interleaved, and
+    // their bounding boxes came out at the same origin -- the bands drew on
+    // top of each other and their labels rendered as one word.
+    const match = engineSource.match(/const bands = \[([\s\S]*?)\];/);
+    if (!match) throw new Error("placement bands are not where they were");
+    const bands = [...match[1]!.matchAll(/\[([\d, ]+)\]/g)].map((row) =>
+      row[1]!.split(",").map((value) => Number(value.trim())),
+    );
+    const halfHeight = 55;
+
+    expect(bands.length).toBeGreaterThanOrEqual(2);
+    for (const rows of bands) {
+      for (const row of rows) {
+        expect(row, `row ${row} clips the top edge`).toBeGreaterThanOrEqual(
+          halfHeight,
+        );
+      }
+    }
+    // And the bands themselves must not overlap, or the regions collide
+    // however carefully each one packs its own rows.
+    for (let index = 1; index < bands.length; index += 1) {
+      const previousLowest = Math.max(...bands[index - 1]!);
+      const nextHighest = Math.min(...bands[index]!);
+      expect(
+        nextHighest - previousLowest,
+        `bands ${index - 1} and ${index} overlap`,
+      ).toBeGreaterThanOrEqual(halfHeight * 2);
     }
   });
 });

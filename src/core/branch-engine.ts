@@ -608,12 +608,27 @@ export function dispatch(
     // edge with their names truncated to "Checkout Edg".
     //
     // Four columns at a 250-unit pitch: every card clears both canvas edges
-    // and its neighbours. A fifth component takes the next row, which is
-    // what the rows exist for.
+    // and its neighbours. A fifth component takes the next row.
     const columns = [130, 380, 630, 880];
-    // Rows clear a card's height (110 units) with room to spare, and the top
-    // row clears the canvas edge by half of it.
-    const rows = [190, 330, 60];
+    // Each region gets its own horizontal band, the way the seeded fixtures
+    // are laid out. Without this the grid filled row 1 left to right
+    // regardless of region, the two regions interleaved, and their bounding
+    // boxes came out at the same origin -- so the bands drew on top of each
+    // other and their labels rendered as one word. The band a component
+    // lands in is now the band its region owns.
+    const regionOrder = Object.values(graph.entities)
+      .filter((entity) => entity.kind === "region")
+      .map((entity) => entity.id);
+    const bandIndex = Math.max(0, regionOrder.indexOf(command.input.regionId));
+    // Rows clear a card's height (110 units) with room to spare.
+    // The first band starts low enough that its region label clears the
+    // failure beacon pinned at the top of the canvas -- they overlapped at
+    // "PRIMARY" over "Primary unavailable".
+    const bands = [
+      [190, 310],
+      [470, 590],
+    ];
+    const rows = bands[Math.min(bandIndex, bands.length - 1)]!;
     // A card is about 230 x 110 units on this 1000-unit canvas, so two of
     // them clear each other only beyond those distances. The thresholds were
     // 150 x 120 -- 80 units short horizontally -- and a fifth component
