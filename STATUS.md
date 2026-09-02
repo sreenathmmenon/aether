@@ -2550,3 +2550,13 @@ was already underway again.
   - The caller already held the failing runs as an array and reduced them to a length; it now passes the scenario labels through. The sentence reads "Regional outage and Traffic spike report violations."
   - Degrades deliberately: beyond three it returns to the count, because four scenario names in one sentence is a wall and the failing runs are on screen anyway, and a caller with no names still produces the original correct sentence. Both paths are tested; removing the naming fails.
   - Swept the interface for the same shape — a count standing in for the thing itself. The two other candidates already name what they describe: the unmeasured-components note lists the components, and the capacity button names the single bottleneck and counts only in the plural case, where a button label cannot list them.
+
+## Milestone 206 — A trade-off rail that hid the trade-off
+
+- [x] **M206.1 — The cheap future looked like it did nothing** `DONE`
+  - Acceptance: each repair future states the axis it optimises.
+  - Evidence: found walking the ride-hailing system. Three futures sat in the rail reading **93.96%**, 96.36% and 97.86% availability — and the first, named **"Lowest cost"**, matched the baseline breach exactly. That is correct engine behaviour: `lowest_cost` trims spend on the tightest component and deliberately accepts the availability risk. But every card reported availability, so the one intent that trades availability away showed a figure identical to doing nothing.
+  - A reviewer scanning the rail saw the cheap option as strictly worse than the other two, when being cheaper is its entire purpose. The card hid the one variable it moved, on the surface whose whole job is to make a trade-off comparable.
+  - Each future now leads with its own axis — cost for Lowest cost, recovery for Fastest recovery, availability for Highest resilience. The card and its `aria-label` quote the same call, because they were built separately and could have announced a figure different from the one on screen.
+  - The map is held to the reducer's canonical intent names, so a renamed intent cannot leave a card silently reporting the wrong axis, and the three headlines are asserted to stay distinct. Collapsing them back onto availability — the original defect — fails two tests.
+  - Checked the comparison overlay for the same shape: it already shows availability, recovery, cost and violations side by side, which is right for comparing. The rail card is the summary, so the distinguishing axis belongs there.
