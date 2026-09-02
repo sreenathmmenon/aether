@@ -827,7 +827,9 @@ button {
   /* The shipped systems space components 180 canvas units apart. At 146px a
      card measured about 177 of those units, leaving a three-unit gap that a
      dependency edge could not be drawn in at all. */
-  width: 128px;
+  /* Widened with the type: the name moved from 12px to 14px on the ramp and
+     "Primary Ledger" began wrapping inside a card sized for the old step. */
+  width: 152px;
   min-height: 80px;
   display: grid;
   gap: 4px;
@@ -1150,6 +1152,15 @@ button {
 .baseline-card small {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
+}
+.baseline-card small {
+  /* "93.96% availability · 1 violation" is two facts, and wrapping split it
+     mid-phrase. Mono is wider than the body face, so the line that fitted
+     before the numerals changed no longer does; the two facts stack
+     deliberately instead. */
+  display: grid;
+  gap: var(--space-1);
+  font-size: var(--text-xs);
 }
 .critical {
   color: var(--failure-text);

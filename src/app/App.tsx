@@ -1669,10 +1669,24 @@ export function App() {
           >
             <span className="future-kicker">CURRENT</span>
             <strong>{unbuilt ? "Unbuilt baseline" : "Baseline breach"}</strong>
+            {/* Two separate facts. As one string they wrapped mid-phrase in
+                a 175px card, breaking "1 violation" across lines. */}
             <small>
-              {unbuilt
-                ? "Waiting for architecture"
-                : `${baselineEvidence.availability.toFixed(2)}% availability · ${baselineEvidence.sloViolations.length} ${baselineEvidence.sloViolations.length === 1 ? "violation" : "violations"}`}
+              {unbuilt ? (
+                "Waiting for architecture"
+              ) : (
+                <>
+                  <span>
+                    {baselineEvidence.availability.toFixed(2)}% availability
+                  </span>
+                  <span>
+                    {baselineEvidence.sloViolations.length}{" "}
+                    {baselineEvidence.sloViolations.length === 1
+                      ? "violation"
+                      : "violations"}
+                  </span>
+                </>
+              )}
             </small>
           </button>
           {branchCount === 0 ? (
