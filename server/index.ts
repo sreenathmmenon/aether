@@ -158,6 +158,14 @@ app.get("/llms.txt", (context) =>
 );
 
 app.use("/assets/*", serveStatic({ root: "./dist" }));
+// The fonts live outside /assets because Vite copies public/ verbatim, so
+// they fell through to the single-page fallback and every request for a
+// woff2 returned index.html with a 200. The browser cannot parse that as a
+// font, declines it silently, and the page renders in system-ui -- which is
+// exactly the failure the self-hosting was meant to remove. Third instance
+// of this same shape in this file, after /assets/* and /api/*.
+app.use("/fonts/*", serveStatic({ root: "./dist" }));
+app.all("/fonts/*", (context) => context.text("Not found", 404));
 // A missing bundle fell through to the single-page fallback below, so a
 // browser asking for JavaScript received an HTML document with a 200 and
 // failed on a parse error rather than a missing file. A stale cached

@@ -6,7 +6,7 @@
 // It runs in the quality gate rather than the test suite because reading a
 // file needs Node types, and pulling those into the app tsconfig would let
 // Node APIs into the browser bundle unnoticed.
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 
 const declared = readFileSync("src/styles/text-tokens.ts", "utf8");
 const shipped = readFileSync("src/styles/tokens.css", "utf8");
@@ -193,6 +193,22 @@ if (offences.length) {
     `\n${offences.length} values bypass the design system. Use a role token, or mark the line /* off-scale: reason */ if it genuinely cannot.`,
   );
   process.exit(1);
+}
+
+/**
+ * A @font-face pointing at a file that was never added renders in the
+ * fallback stack with nothing failing anywhere — the page just quietly loses
+ * its typeface. Checked from disk, because a CSS `?raw` import returns empty
+ * in the test environment.
+ */
+for (const [, url] of shipped.matchAll(/url\("([^"]+\.woff2)"\)/g)) {
+  const path = `public${url}`;
+  if (!existsSync(path)) {
+    console.error(
+      `tokens.css declares ${url} but ${path} does not exist; the page would silently render in the fallback font.`,
+    );
+    process.exit(1);
+  }
 }
 
 console.log(

@@ -62,3 +62,36 @@ describe("an unknown API endpoint is a 404, not a web page", () => {
     expect(fallbackAt).toBeGreaterThan(terminatorAt);
   });
 });
+
+/**
+ * The fonts are the third instance of this shape, after /assets/* and
+ * /api/*. They live outside /assets because Vite copies public/ verbatim, so
+ * a request for a woff2 fell through to the single-page fallback and
+ * returned index.html with a 200. The browser cannot parse that as a font,
+ * declines it without an error, and the page renders in system-ui — exactly
+ * the failure that self-hosting them was meant to remove. It was invisible
+ * locally, where the dev server serves public/ directly.
+ */
+describe("the fonts are served as fonts", () => {
+  it("has a static handler for /fonts/*, not just /assets/*", () => {
+    expect(
+      serverSource,
+      "a font request falls through to index.html and the page silently loses its typeface",
+    ).toContain('app.use("/fonts/*", serveStatic');
+  });
+
+  it("terminates a missing font rather than serving the shell", () => {
+    const fontRoutes = serverSource.slice(
+      serverSource.indexOf('app.use("/fonts/*"'),
+      serverSource.indexOf('app.use("*", serveStatic'),
+    );
+    expect(fontRoutes).toMatch(/app\.all\("\/fonts\/\*"/);
+    expect(fontRoutes).toMatch(/404/);
+  });
+
+  // Whether every declared @font-face has a file behind it is checked by
+  // scripts/check-tokens.mjs, which reads both from disk. A CSS `?raw`
+  // import returns an empty string here — the limitation already recorded
+  // for the contrast tests — so asserting on it would pass whatever the
+  // stylesheet said.
+});
