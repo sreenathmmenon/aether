@@ -2819,3 +2819,16 @@ Two of the three references ship a light ground; Vercel — the supposedly dark 
 - [x] **M227.4 — Every system, every state** `DONE`
   - Swept payment platform, ride-hailing, AI platform and the blank canvas — at arrival, after branching, after repair, after approval and after commit. **Zero text below AA in every state.** The blank canvas was built from both a prose brief and an arrow chain, producing the right components each way.
   - Each system yields its own trade-off spread — ride-hailing reads `$18,970 / month · 9m recovery · 97.86% availability` — so nothing is special-cased to the fixture the redesign was built against.
+
+## Milestone 228 — The approve button rendered blank
+
+- [x] **M228.1 — A stalled transition left the most important control white on white** `DONE`
+  - The approve button rendered **white on white the moment it became enabled**, and stayed that way — stable after 800ms, not a flash. A reviewer arriving at the decision would have seen an empty rectangle where the approve control should be.
+  - Cause: a `background` transition on `.review-actions button`. The colour changes as React re-renders the element from disabled to enabled, so the transition never advances and the button holds the disabled white indefinitely.
+  - Proven rather than guessed: setting `transition: none` on the live element turns it green instantly, and inserting an identical button beside it — same class, same parent — produced **every computed property identical except `background-color`**.
+  - Transform and shadow still transition. Availability is a state change rather than a movement, so it is immediate — which is also what the contract's motion rule asks for.
+- [x] **M228.2 — Commit had no rule of its own** `DONE`
+  - It inherited the generic dark ink over the approve treatment's green ground at 2.89:1. It is the same primary action one step further on, and now reads that way.
+- [x] **M228.3 — Two false alarms, recorded because they cost real time** `DONE`
+  - **A cached stylesheet made an already-fixed defect look unfixed.** The origin was serving the correct rule while the browser held the old one; only a hard reload showed it. Comparing bundle hashes said "deployed" and was not enough.
+  - **A workspace restored from PostgreSQL started a fresh walk in the merged state**, which reads exactly like a broken journey until you notice `localStorage.clear()` does not reset durable storage. The product was behaving correctly — durable sync is the feature.
