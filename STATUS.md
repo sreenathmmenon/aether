@@ -2974,3 +2974,21 @@ The bring-your-own-system path was the least-examined surface. Looking at it pro
   - **The system selector sat below the fold.** With three futures open it was at 538px in a 530px rail, 171px out of sight, beneath four cards that are the rail's real content. It is not a decision control — it changes which system you are looking at, which is exactly what the header breadcrumb already names. **The breadcrumb is the picker.**
   - The strip's columns now yield in order: the agent's reach first, then what the decision waits on, and the state of the branch — the reviewer's actual question — last. A hard `max-content` ran the last fact off a narrow desktop; a plain `minmax(0, max-content)` shrank when there was room to spare and wrapped the longest fact at 1280px.
   - **Live, every state:** 2-line headline, 62px decision band, canvas at 483px, picker always visible, tools 13 → 8, 0 contrast failures, 0 clipped text, 6 sizes, 3 weights, no horizontal scroll.
+
+## Milestone 235 — The field, read the night before the deadline
+
+Competitor intelligence from three scrapes (`WEBMCP-SITES-CREATED.md`, `WEBMCP-CHALLENGE-BUILDS.md`, `WEBMCP-MASTER.md`), taken 3 Sep 01:30 IST.
+
+**The facts that matter.** 6,015 registered. Top 10 × ~$3,500. Deadline 4 Sep 1:30am IST. Judges: Galloni, Nahas, Grigorik, Gao, Rushing, Drasner, Roberts. Criteria: **WebMCP leverage, execution, impact, creativity.** The directory holds 475 sites and 2,989 tools, median **4 tools per site** — most of the field is Shopify's default 10-pack (26 exact clones), C2PA toggles, or brochureware with a `search_docs`.
+
+**Where Aether genuinely leads.** Fourteen authored tools against a median of four, on a surface that is state-dependent rather than fixed. Deterministic evidence with input/output fingerprints. A decision record that survives the session. Live-source reading through a real Statuspage endpoint. And an agent that demonstrates the product without the reviewer bringing a client.
+
+**Where the field has caught up, and I should stop claiming otherwise.**
+
+- `xan-antx/nightwatch` — "tool surface follows severity — tools mount as things get worse, unmount when they're over, and a human holds the keys." That is state-dependent registration, described in one line.
+- `guptachetan1995/signoff` — "the tool that applies a decision only exists once a human has approved one." That is refusal-by-absence.
+- `rashim2104/chalkline` — an infrastructure architecture canvas whose tool surface is bounded by a region the human draws. Adjacent to our exact surface.
+- `web3yaso/citely-deal-room-demo` — "the agent gathers evidence through five constrained tools; the client confirms facts; judgment stays human."
+- `Shital2108/Verdict` — a shared decision-negotiation board where humans and agents commit together.
+
+**The honest conclusion.** State-dependent registration and the missing approve tool are no longer differentiators on their own — several entries describe them in their one-line pitch. What remains genuinely rare in this field: **evidence that is reproducible and says where it came from**, a **record that outlives the tab**, and the **breadth of a real product** rather than a demo. That is what the remaining time should widen, not the WebMCP mechanics everyone has now found.
