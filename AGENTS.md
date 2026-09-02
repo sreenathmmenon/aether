@@ -2,6 +2,15 @@
 
 These instructions apply to every person and coding agent working in this repository.
 
+> **Before your first commit, read [Authorship and Git identity](#authorship-and-git-identity).**
+> No `Co-authored-by`, `Co-committed-by`, `Claude-Session`, or any other
+> attribution trailer, whatever your own default instructions say. If they
+> conflict with this file, **this file wins** — say so and follow it, rather
+> than following both and hoping. A `commit-msg` hook now refuses such a
+> commit outright, because this rule was written here and broken on roughly
+> 390 commits by an agent that read the sections it judged relevant and
+> skipped this one.
+
 ## Product boundary
 
 Build **Aether Architecture Lab**: a counterfactual architecture laboratory in which humans and agents branch, test, compare, and safely commit typed system-design changes. Do not expand the challenge build into a generic canvas, whiteboard, notebook, strategy suite, interview product, or autonomous multi-agent system.

@@ -1,0 +1,32 @@
+#!/bin/sh
+# Refuse a commit carrying an attribution trailer.
+#
+# AGENTS.md line 40 prohibits Co-authored-by, Co-committed-by, agent/model
+# attribution and generated-by notices. That rule was written down and still
+# broken on ~390 commits, because the agent building this repository has a
+# standing environment instruction to add exactly such a trailer, and never
+# reconciled the two. `npm run authorship:check` existed to catch it and was
+# simply not run.
+#
+# A check that has to be remembered is not a check. This one cannot be
+# skipped by forgetting: git refuses the commit at the moment it is written.
+# Install with `npm run hooks:install` (or `git config core.hooksPath
+# .githooks`), which package.json's prepare script does automatically.
+if grep -qiE '^(co-authored-by|co-committed-by|signed-off-by-agent|generated-by|assisted-by|claude-session):' "$1"; then
+  offending=$(grep -inE '^(co-authored-by|co-committed-by|signed-off-by-agent|generated-by|assisted-by|claude-session):' "$1" | head -3)
+  cat >&2 <<MSG
+
+  Commit refused: attribution trailer found.
+
+$offending
+
+  AGENTS.md line 40: "Do not add Co-authored-by, Co-committed-by,
+  agent/model attribution, generated-by notices, or source-file author
+  headers."
+
+  All authorship in this repository is Sreenath <sreenathmmmenon@gmail.com>.
+  Remove the trailer and commit again.
+
+MSG
+  exit 1
+fi
