@@ -918,6 +918,20 @@ export function App() {
     id: seatId,
     name: seatName,
   });
+  // An agent that takes a turn is present. Tool-joined agents have no tab
+  // keeping them warm, so their rows aged out while they were working.
+  const keepAgentPresent = useCallback(
+    (agentId: string) =>
+      setState((current) => ({
+        ...current,
+        participants: (current.participants ?? []).map((participant) =>
+          participant.id === agentId
+            ? { ...participant, lastSeen: Date.now() }
+            : participant,
+        ),
+      })),
+    [],
+  );
   const warRoom = useWarRoom(
     registryRef.current,
     threads,
@@ -934,6 +948,7 @@ export function App() {
         name: agent.name,
         role: (agent.role ?? "external") as AgentRole,
       })),
+    keepAgentPresent,
   );
   const compareRef = useRef<HTMLDivElement>(null);
   useEffect(() => {

@@ -27,6 +27,12 @@ export function useWarRoom(
   // The agents in the room. Several can work at once, each taking the
   // threads its role is for, so two agents do not chase the same one.
   crew: { id: string; name: string; role: AgentRole }[] = [],
+  /**
+   * Called with an agent's id each time it takes a turn, so it stays on the
+   * roster while it is working. An agent that joined through the tool has no
+   * tab keeping its row warm, and aged out mid-turn.
+   */
+  onWorking?: (agentId: string) => void,
 ) {
   const [running, setRunning] = useState(false);
   const [saying, setSaying] = useState("");
