@@ -667,7 +667,19 @@ export function App() {
       )
       .map((run) => run.monthlyCostUsd)
       .sort((left, right) => left - right)[0];
-    const basis = clean ?? evidence.monthlyCostUsd * 0.85;
+    // A suggestion has to be reachable on the architecture in front of the
+    // reviewer. A run recorded before this system was loaded can survive in
+    // the workspace and offer a figure from a different graph entirely --
+    // the live-event platform costs $57,400 a month and was offered an
+    // $8,700 ceiling, which no arrangement of its components can meet, so
+    // the refusal it produced told the reviewer to keep a component "at or
+    // below $0". Anything under half the current cost is from another
+    // system or another era of this one.
+    const reachable =
+      typeof clean === "number" && clean >= evidence.monthlyCostUsd * 0.5
+        ? clean
+        : undefined;
+    const basis = reachable ?? evidence.monthlyCostUsd * 0.85;
     return Math.max(1000, Math.ceil(basis / 100) * 100);
   }, [futures, state.simulations, selectedScenario, evidence.monthlyCostUsd]);
   /**
