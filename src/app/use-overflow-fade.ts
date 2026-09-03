@@ -13,7 +13,7 @@ import { useEffect } from "react";
  * "93.96% availability · 46m recovery" sat 14px above the edge inside a 16px
  * fade, on a panel with nothing to scroll to.
  */
-export function useOverflowFade(selector: string, deps: readonly unknown[]) {
+export function useOverflowFade(selector: string, refreshKey: unknown) {
   useEffect(() => {
     const panels = [...document.querySelectorAll<HTMLElement>(selector)];
     const mark = () => {
@@ -28,5 +28,5 @@ export function useOverflowFade(selector: string, deps: readonly unknown[]) {
     const observer = new ResizeObserver(mark);
     for (const panel of panels) observer.observe(panel);
     return () => observer.disconnect();
-  }, [selector, ...deps]);
+  }, [selector, refreshKey]);
 }

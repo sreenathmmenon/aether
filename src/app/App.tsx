@@ -822,7 +822,7 @@ export function App() {
   // fade that says "this continues" only appears where it is true.
   useOverflowFade(
     ".intelligence-panel, .future-rail, .thread-notes, .replay-list, .decision-replay ol",
-    [state, selectedScenario],
+    `${state.workspace.updatedAt}:${state.workspace.activeBranchId}:${selectedScenario}`,
   );
   const activityEntries = useMemo(
     () =>
