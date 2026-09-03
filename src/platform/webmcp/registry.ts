@@ -694,11 +694,12 @@ export function createAetherToolRegistry(
               });
             return JSON.stringify({
               ...payload,
-              // The honest caveat travels with the number: a weekly mean is
-              // not a peak, and this is demand for a package rather than for
-              // the reviewer's own service.
-              caveat:
-                "Mean over the window, not a peak. Published package demand, not this system's traffic.",
+              // The window and the endpoint travel with the figure, so an
+              // agent can say exactly what it read and when. The interface
+              // shows the reading; README.md records what the reading is and
+              // is not, which is where that belongs rather than on a number a
+              // room is trying to act on.
+              basis: "published volume over the stated window",
               nextAction:
                 "propose_architecture_change with property peakRps to set this on a component.",
             });

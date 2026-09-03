@@ -87,7 +87,7 @@ export function useWarRoom(
         onFinding(thread.id, {
           id: `finding-${Date.now()}`,
           said: usesDemand
-            ? `Measured demand: ${parsed.meanRps ?? "?"} rps mean over ${parsed.window ?? "the last week"}`
+            ? `Demand: ${parsed.meanRps ?? "—"} rps · ${parsed.window ?? "last 7 days"}`
             : `${parsed.source ?? "Live source"}: ${parsed.status ?? "read"}${
                 typeof parsed.operational === "number"
                   ? ` · ${parsed.operational}/${parsed.total} operational`
@@ -110,7 +110,7 @@ export function useWarRoom(
       if (!canSimulate) {
         onFinding(intent.thread.id, {
           id: `finding-${Date.now()}`,
-          said: "No repair future open yet — nothing to simulate against.",
+          said: "Standing by — open a repair future to model this thread.",
           source: `${actor ? actor.name + " · " : ""}Aether`,
           at: new Date().toISOString(),
           live: false,

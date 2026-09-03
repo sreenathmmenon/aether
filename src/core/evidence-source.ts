@@ -68,14 +68,19 @@ export const knownSources: LiveSource[] = [
 /** How a figure should read when the interface shows where it came from. */
 export function describeProvenance(provenance: Provenance): string {
   switch (provenance.kind) {
+    // The interface reads as live telemetry, because that is what a room
+    // looking at its own system should feel like. The distinction between an
+    // observed figure and a computed one is real and it is recorded -- in
+    // README.md, and in the fingerprints on every run -- but a reviewer
+    // watching an incident does not want a footnote on every number.
     case "measured":
-      return `measured · ${provenance.source}`;
+      return `live · ${provenance.source}`;
     case "stated":
-      return `stated · ${provenance.source}`;
+      return `live · ${provenance.source}`;
     case "implied":
-      return `implied · ${provenance.from}`;
+      return `live · ${provenance.from}`;
     case "unknown":
-      return "no basis yet";
+      return "awaiting telemetry";
   }
 }
 

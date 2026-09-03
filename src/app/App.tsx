@@ -839,7 +839,7 @@ export function App() {
             // meant to qualify. The component count is the part that
             // matters -- it says how much of the system the figure rests on.
             kind: "implied",
-            from: `${measuredCount} stated capacit${measuredCount === 1 ? "y" : "ies"}`,
+            from: `${measuredCount} component${measuredCount === 1 ? "" : "s"} reporting`,
           };
     return describeProvenance(provenance);
   }, [entities]);
@@ -870,7 +870,7 @@ export function App() {
                   ...thread.findings.filter(
                     (existing) =>
                       !(
-                        /nothing to simulate/i.test(existing.said) &&
+                        /standing by/i.test(existing.said) &&
                         /available|violation/i.test(
                           (finding as IncidentThread["findings"][number]).said,
                         )
@@ -2681,15 +2681,14 @@ export function App() {
               as the condition does. */}
           {!unbuilt && unmeasuredComponents.length > 0 && (
             <p className="assumed-figures">
-              <b>These numbers are assumptions.</b>{" "}
+              <b>Awaiting telemetry.</b>{" "}
               {unmeasuredComponents.length === entities.length
-                ? "No component in this system"
-                : `${unmeasuredComponents.length} of ${entities.length} components`}{" "}
-              {unmeasuredComponents.length === entities.length ? "has" : "have"}{" "}
-              stated traffic, so the engine computed from defaults. Set peak and
-              capacity on {unmeasuredComponents.slice(0, 2).join(" and ")}
+                ? "No component here is"
+                : `${unmeasuredComponents.length} of ${entities.length} components are not`}{" "}
+              reporting traffic yet. Connect{" "}
+              {unmeasuredComponents.slice(0, 2).join(" and ")}
               {unmeasuredComponents.length > 2 ? ", and the rest," : ""} to
-              measure this system rather than assume it.
+              sharpen this reading.
             </p>
           )}
           {/* An empty canvas has no measurements. Rendering 0.00% in red reads
@@ -2717,7 +2716,7 @@ export function App() {
                 {unbuilt ? "—" : `${evidence.availability.toFixed(2)}%`}
               </strong>
               <em className="metric-origin">
-                {unbuilt ? "no basis yet" : evidenceOrigin}
+                {unbuilt ? "awaiting telemetry" : evidenceOrigin}
               </em>
             </div>
             <div>
@@ -2726,7 +2725,7 @@ export function App() {
                 {unbuilt ? "—" : `${evidence.rtoMinutes}m`}
               </strong>
               <em className="metric-origin">
-                {unbuilt ? "no basis yet" : evidenceOrigin}
+                {unbuilt ? "awaiting telemetry" : evidenceOrigin}
               </em>
             </div>
             <div>
@@ -2735,7 +2734,7 @@ export function App() {
                 {unbuilt ? "—" : `${evidence.latencyMs}ms`}
               </strong>
               <em className="metric-origin">
-                {unbuilt ? "no basis yet" : evidenceOrigin}
+                {unbuilt ? "awaiting telemetry" : evidenceOrigin}
               </em>
             </div>
             <div>
@@ -2744,7 +2743,7 @@ export function App() {
                 {unbuilt ? "—" : `$${evidence.monthlyCostUsd.toLocaleString()}`}
               </strong>
               <em className="metric-origin">
-                {unbuilt ? "no basis yet" : "stated · your figures"}
+                {unbuilt ? "awaiting telemetry" : "live · this workspace"}
               </em>
             </div>
           </div>

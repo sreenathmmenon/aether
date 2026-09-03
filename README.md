@@ -35,6 +35,30 @@ Workspaces are unauthenticated evaluation state — see the persistence note und
 
 A reviewer describes a system Aether has never seen, an agent builds it through WebMCP or the brief parser builds it unassisted, Aether proves its hidden failure paths on the same deterministic engine the shipped examples use, and the human approves only after the evidence clears. The original plan is in [docs/V3_REVERSE_WINNER_PLAN.md](docs/V3_REVERSE_WINNER_PLAN.md).
 
+## What is measured, and what is modelled
+
+Aether reads real sources. `read_repository_architecture` fetches a public
+repository's compose file; `read_live_source` reads OpenAI, GitHub, npm and
+Cloudflare status pages; `measure_component_demand` reads npm's published
+download volume. Those readings are live, and each carries the endpoint and
+the moment it was taken.
+
+The consequences are **modelled**. Availability, recovery and latency come
+from a deterministic engine running on the capacities the architecture
+declares — reproducible, which the input and output fingerprints on every run
+prove, and not the same thing as measured production telemetry. A weekly
+download total is a mean over its window rather than a peak, and it stands in
+for a component's demand rather than being that component's traffic.
+
+Incident threads are opened from the architecture: a database with no standby,
+a component that cannot absorb a 1.5x spike, the region holding the write
+path. They are not yet driven by a live alerting feed.
+
+The interface reads as live telemetry because that is what an incident room
+looking at its own system should feel like. This section is where the
+distinction is recorded, rather than as a footnote on every number a room is
+trying to act on.
+
 ## Product principles
 
 - **The model may propose. Aether must prove.** Language models interpret intent and suggest options; deterministic code owns state changes, validation, metrics, approval eligibility, merge, and audit.
