@@ -220,6 +220,20 @@ function requestedTemplate() {
   }
 }
 
+/**
+ * Local registration context for the resident agent demonstration.
+ *
+ * It does not make WebMCP "available" and it is not exposed to ChatGPT or
+ * Chrome. It only gives the in-page agent the same registered tool objects
+ * and observed wrappers the external surface would receive, so a reviewer in
+ * an ordinary browser can still watch the guardrails prove themselves.
+ */
+function residentAgentContext(): Pick<WebMCP.ModelContext, "registerTool"> {
+  return {
+    registerTool: async () => undefined,
+  };
+}
+
 /** Plain-language labels so the replay reads as decisions, not opcodes. */
 const commandLabels: Record<string, { label: string; impact: string }> = {
   CREATE_BRANCH: { label: "branched a repair future", impact: "branch" },
@@ -242,6 +256,7 @@ function display(value: string | number | boolean) {
 
 export function App() {
   const webMcp = getWebMcpAvailability();
+  const webMcpAvailable = webMcp.available;
   // The state the page currently holds, readable outside React's render
   // cycle. The registry composes an agent's write onto this rather than onto
   // a copy the reconcile poll may already have replaced.
@@ -804,7 +819,7 @@ export function App() {
             }
           })();
         },
-        undefined,
+        webMcpAvailable ? undefined : residentAgentContext(),
         (call) => {
           setToolCalls((current) => [call, ...current].slice(0, 6));
           setLatestCall(call);
@@ -815,7 +830,7 @@ export function App() {
     // render off the registry see it the moment it exists.
     setRegistry((current) => current ?? registryRef.current);
     void registryRef.current?.refresh(state);
-  }, [state]);
+  }, [state, webMcpAvailable]);
   useEffect(() => () => registryRef.current?.dispose(), []);
   // Both dialogs declare aria-modal, so both must behave like one.
   // Scrolling regions report whether they actually overflow, so the bottom
@@ -1869,7 +1884,7 @@ export function App() {
           <button
             className="run-agent"
             onClick={runResidentAgent}
-            disabled={agentRunning || !webMcp.available}
+            disabled={agentRunning || !registry}
           >
             {agentRunning || agentSaid
               ? agentSaid || "Working…"
@@ -3396,7 +3411,7 @@ export function App() {
             <strong>
               {webMcp.available
                 ? `can do ${toolCount} things`
-                : `${offlineToolSurface.length} tools published · no agent detected`}
+                : `${toolCount || offlineToolSurface.length} tools published · no external agent detected`}
             </strong>
           </div>
           {/* Only the arriving call is announced. Without this the whole

@@ -63,5 +63,18 @@ describe("the agent on the page has no privileged path", () => {
     // bring an agent is exactly who this exists for.
     expect(appSource).toContain('className="run-agent"');
     expect(appSource).toContain("runResidentAgent");
+    expect(appSource).toContain("residentAgentContext()");
+    expect(appSource).not.toContain(
+      "disabled={agentRunning || !webMcp.available}",
+    );
+    expect(appSource).toContain("no external agent detected");
+  });
+
+  it("does not duplicate replay command labels", () => {
+    const labels = appSource.slice(
+      appSource.indexOf("const commandLabels"),
+      appSource.indexOf("function display"),
+    );
+    expect(labels.match(/REMOVE_COMPONENT/g) ?? []).toHaveLength(1);
   });
 });

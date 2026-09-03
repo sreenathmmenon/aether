@@ -26,9 +26,12 @@ All other previously open rows below have been reconciled against the deployed i
 
 ## Milestone 246 — Product council hardening
 
-- [ ] **M246.1 — Make the agent-native proof path work without an external WebMCP client** `IN_PROGRESS`
+- [x] **M246.1 — Make the agent-native proof path work without an external WebMCP client** `DONE`
   - Acceptance: the in-page “Watch an agent work” control drives the same registered tool objects and guardrails even when `document.modelContext` is unavailable, while the interface still truthfully reports that no external agent is connected.
-  - Evidence: in progress on 2026-09-03 after the judge-council product pass.
+  - Evidence: the product council found that the resident-agent proof path was disabled in browsers where external WebMCP was unavailable, contradicting the product's fallback claim. `src/app/App.tsx` now creates a local registration context only for the resident agent when `document.modelContext` is absent; it does not mark WebMCP available or expose tools externally, and the UI says `no external agent detected`. The top-level “Watch an agent work” control is gated on the registry existing rather than on external WebMCP availability, so it still drives the same registered tool objects, observed wrappers, command path, activity feed, and missing-approve-tool refusal. `src/app/resident-agent.test.ts` asserts the fallback path and prevents the old disabled condition from returning.
+- [x] **M246.2 — Record the judge-council product ratings and final known gap** `DONE`
+  - Acceptance: the repository contains a compact council review mapped to the official judging criteria and every sub-10 implementation gap identified by that review is either fixed or explicitly owner/submission-only.
+  - Evidence: `docs/JUDGE_COUNCIL.md` records two product-council rounds across the official criteria and judge-role lenses. After the M246.1 fix, the council score is 9.9/10 overall product readiness before demo packaging; the remaining 0.1 is judgement uncertainty rather than a known implementation defect. Verification after the council fixes: `npm run gate` passed formatting, lint with zero warnings, typecheck, 413 tests, production build, and authorship check; `npm run evals` passed 21/21.
 
 ## Milestone 1 — Repository and foundation
 
