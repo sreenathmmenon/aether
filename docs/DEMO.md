@@ -91,7 +91,7 @@ is a different answer to the same failure. The header chip changes to
 **`WebMCP live · 13 state-aware tools`**.
 
 Say it plainly: _this is the second time the surface has grown on camera —
-thirteen to sixteen on the reviewer's own system, eight to sixteen here. The
+fourteen to seventeen on the reviewer's own system, nine to seventeen here. The
 agent can do things it could not do a moment ago, because the state
 changed._
 
@@ -179,7 +179,7 @@ Click approve. The record entry is the whole thesis in one row:
 > "Reviewer approved the exact plan — 4 clean scenarios · worst 97.11%"
 
 The actor, the evidence they had, and the worst case they accepted.
-Then commit. The surface **shrinks to eleven tools**: a committed
+Then commit. The surface **shrinks to twelve tools**: a committed
 architecture is read-only to an agent. **`Rollback this merge`** appears
 as a human control.
 

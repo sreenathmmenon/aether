@@ -9,6 +9,7 @@
  */
 export const offlineToolSurface = [
   "get_decision_record",
+  "join_incident_room",
   "read_repository_architecture",
   "measure_component_demand",
   "read_live_source",

@@ -5,6 +5,7 @@ import {
   type ThreadFinding,
 } from "@core/war-room";
 import type { ToolRegistry } from "@platform/webmcp/registry";
+import { threadsForRole, type AgentRole } from "@core/room-presence";
 
 /**
  * Keep the room working while nobody is typing.
@@ -23,16 +24,36 @@ export function useWarRoom(
   threads: IncidentThread[],
   onFinding: (threadId: string, finding: ThreadFinding) => void,
   onStatus: (threadId: string, status: IncidentThread["status"]) => void,
+  // The agents in the room. Several can work at once, each taking the
+  // threads its role is for, so two agents do not chase the same one.
+  crew: { id: string; name: string; role: AgentRole }[] = [],
 ) {
   const [running, setRunning] = useState(false);
   const [saying, setSaying] = useState("");
   const busy = useRef(false);
   const threadsRef = useRef(threads);
   threadsRef.current = threads;
+  const crewRef = useRef(crew);
+  crewRef.current = crew;
+  // Round-robin, so attention rotates between the agents in the room
+  // rather than the first one taking every turn.
+  const turn = useRef(0);
 
   const step = useCallback(async () => {
     if (!registry || busy.current) return;
-    const intent = nextIntent(threadsRef.current);
+    // Each agent looks only at the threads its role is for. An observer
+    // brings readings everywhere; an engineer stays off the region thread
+    // it cannot repair; an auditor watches capacity. Same surface for all
+    // of them -- this only decides who picks up what.
+    const actor =
+      crewRef.current[turn.current % Math.max(1, crewRef.current.length)];
+    turn.current += 1;
+    const mine = actor
+      ? threadsRef.current.filter(
+          (thread) => threadsForRole(actor.role, [thread.scenario]).length > 0,
+        )
+      : threadsRef.current;
+    const intent = nextIntent(mine.length ? mine : threadsRef.current);
     if (intent.kind === "idle") {
       setSaying(intent.why);
       return;
@@ -60,7 +81,7 @@ export function useWarRoom(
                   ? ` · ${parsed.operational}/${parsed.total} operational`
                   : ""
               }`,
-          source: String(parsed.source ?? "live source"),
+          source: `${actor ? actor.name + " · " : ""}${String(parsed.source ?? "live source")}`,
           at: new Date().toISOString(),
           live: true,
         });
@@ -80,7 +101,7 @@ export function useWarRoom(
           said: violations.length
             ? `${violations.length} violation${violations.length === 1 ? "" : "s"}: ${String(violations[0])}`
             : `Clean under ${thread.scenario.replace(/_/g, " ")} — ${parsed.availability ?? "?"}% available`,
-          source: "Aether engine",
+          source: `${actor ? actor.name + " · " : ""}Aether engine`,
           at: new Date().toISOString(),
           live: false,
         });

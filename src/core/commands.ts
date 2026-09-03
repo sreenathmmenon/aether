@@ -1,5 +1,18 @@
 import { z } from "zod";
 
+/**
+ * Announcing yourself in a room.
+ *
+ * A room is a link and the participants are whoever has it, so this asks
+ * for a name and what you are here to do. The role is a label: it is read
+ * on the board and grants nothing, because the registered surface is the
+ * same for every agent in the room.
+ */
+export const joinRoomInput = z.object({
+  name: z.string().trim().min(2).max(40),
+  role: z.enum(["observer", "engineer", "auditor", "external"]).optional(),
+});
+
 export const createBranchInput = z.object({
   name: z
     .string()

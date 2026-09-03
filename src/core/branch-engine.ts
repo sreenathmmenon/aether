@@ -1,5 +1,6 @@
 import type { Actor, BranchId, CommandResult, RevisionId } from "@core/types";
 import { commandFailure } from "@core/types";
+import type { Participant } from "@core/room-presence";
 import type { AetherCommand } from "@core/commands";
 import type {
   ArchitectureEntity,
@@ -22,6 +23,13 @@ export type AetherState = {
   audit: AuditEvent[];
   decisionNotes: DecisionNote[];
   simulations: Record<BranchId, ScenarioResult[]>;
+  /**
+   * Who is in the room. An incident room is several people, each with
+   * whatever agent they brought, and the board has to say so -- that is the
+   * fact a person wants when they join. It rides on the workspace because
+   * the reconcile already carries it between participants.
+   */
+  participants?: Participant[];
 };
 
 // A role rather than a person: this product has no accounts, and naming one

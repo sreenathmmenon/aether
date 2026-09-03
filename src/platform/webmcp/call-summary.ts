@@ -149,6 +149,13 @@ export function narrateCall(
         did: `Traced ${text(args.entityId) ?? "a dependency"}`,
         effect: text(data.entity),
       };
+    case "join_incident_room": {
+      const who = text(data.joined);
+      return {
+        did: who ? `${who} joined the room` : "Joined the room",
+        effect: text(data.room),
+      };
+    }
     case "read_repository_architecture": {
       // What it found, in the terms the canvas is about to show.
       const repo = text(data.repository);

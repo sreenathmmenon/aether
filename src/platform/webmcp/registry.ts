@@ -7,6 +7,7 @@ import {
   connectComponentsInput,
   addDecisionNoteInput,
   createBranchInput,
+  joinRoomInput,
   runScenarioInput,
   setPropertyInput,
 } from "@core/commands";
@@ -515,6 +516,62 @@ export function createAetherToolRegistry(
                 branchId: event.branchId,
                 outcome: event.result.nextState,
               })),
+          });
+        },
+      });
+      await register({
+        name: "join_incident_room",
+        description:
+          "Announce yourself in this incident room so the people and agents already here can see you. Roles are labels for what you are here to do -- they grant nothing. Every agent gets the same tool surface, and none of them can approve or commit.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            name: {
+              type: "string",
+              description: "What to call you on the board.",
+            },
+            role: {
+              type: "string",
+              enum: ["observer", "engineer", "auditor", "external"],
+              description:
+                "What you are here to do. A label, not a permission.",
+            },
+          },
+          required: ["name"],
+          additionalProperties: false,
+        },
+        annotations: { readOnlyHint: false, untrustedContentHint: false },
+        execute: async (input) => {
+          const parsed = joinRoomInput.safeParse(input);
+          if (!parsed.success)
+            return invalidInput(
+              parsed.error,
+              "Supply a name of 2-40 characters, and optionally a role of observer, engineer, auditor or external.",
+            );
+          const state = snapshot();
+          const participant = {
+            id: `agent-${parsed.data.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
+            kind: "agent" as const,
+            name: parsed.data.name,
+            role: parsed.data.role ?? ("external" as const),
+            lastSeen: Date.now(),
+          };
+          const others = (state.participants ?? []).filter(
+            (existing) => existing.id !== participant.id,
+          );
+          await commit({
+            ...state,
+            participants: [...others, participant],
+          });
+          const room = [...others, participant];
+          return toolResult({
+            joined: participant.name,
+            role: participant.role,
+            room: `${room.filter((p) => p.kind === "human").length} people, ${room.filter((p) => p.kind === "agent").length} agents`,
+            // Said plainly, because it is the point: a role is a label.
+            authority:
+              "Same surface as every other agent here. No approve, merge or commit tool exists in any state.",
+            nextAction: "get_decision_record",
           });
         },
       });

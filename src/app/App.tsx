@@ -19,7 +19,13 @@ import {
 } from "./region-bounds";
 import { edgeBetween } from "./edge-geometry";
 import { capacityChoices } from "./capacity-choices";
-import { actorName, reviewerId, reviewerName } from "./reviewer-identity";
+import {
+  actorName,
+  reviewerId,
+  reviewerName,
+  seatId,
+  seatName,
+} from "./reviewer-identity";
 import { futuresMessage } from "./futures-message";
 import { futureHeadline, futureHeadlineParts } from "./future-headline";
 import { gateReason } from "./gate-reason";
@@ -46,6 +52,13 @@ import { describeProvenance, type Provenance } from "@core/evidence-source";
 import { reviewPlan, wasRefused, type StepResult } from "./resident-agent";
 import { incidentThreads } from "./incident-threads";
 import { useWarRoom } from "./use-war-room";
+import { usePresence } from "./use-presence";
+import {
+  describeRoom,
+  roleDescription,
+  type AgentRole,
+  type Participant,
+} from "@core/room-presence";
 import {
   promptOnSilence,
   respondToDecision,
@@ -888,11 +901,33 @@ export function App() {
     }, 5000);
     return () => window.clearInterval(timer);
   }, [threads]);
+  // Who is in the room. Presence rides on the workspace the reconcile
+  // already carries between participants, so a second person opening the
+  // link appears on everybody's board within a few seconds.
+  const announce = useCallback((participant: Participant) => {
+    setState((current) => {
+      const others = (current.participants ?? []).filter(
+        (existing) => existing.id !== participant.id,
+      );
+      return { ...current, participants: [...others, participant] };
+    });
+  }, []);
+  const presence = usePresence(state.participants ?? [], announce, {
+    // A seat, not the role: two people in the same room are two rows on the
+    // board, even though both write notes as "the reviewer".
+    id: seatId,
+    name: seatName,
+  });
   const warRoom = useWarRoom(
     registryRef.current,
     threads,
     addFinding,
     setThreadStatus,
+    presence.agents.map((agent) => ({
+      id: agent.id,
+      name: agent.name,
+      role: (agent.role ?? "external") as AgentRole,
+    })),
   );
   const compareRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -3322,7 +3357,8 @@ export function App() {
           <div className="war-room-head">
             <h2 className="eyebrow">War room</h2>
             <span className="war-room-count">
-              {undecided(threads).length} of {threads.length} undecided
+              {describeRoom(presence.room)} · {undecided(threads).length} of{" "}
+              {threads.length} undecided
             </span>
             <button
               className="run-agent"
@@ -3336,6 +3372,58 @@ export function App() {
               {agentReply || warRoom.saying}
             </p>
           )}
+          {/* Who is in the room, human and agent alike. An incident room is
+              several people, each with whatever agent they brought -- and
+              the roles are labels, not permissions: every agent gets the
+              same registered surface, and none of them can commit. */}
+          <div className="room-roster">
+            <ul className="roster-list">
+              {presence.room.map((participant) => (
+                <li
+                  key={participant.id}
+                  className={`roster-${participant.kind}`}
+                  title={
+                    participant.role
+                      ? roleDescription[participant.role]
+                      : "In the room"
+                  }
+                >
+                  <span className="roster-dot" aria-hidden="true" />
+                  {/* The name already carries the role -- "Observer agent" --
+                      so repeating it ran the two together as one word. What
+                      belongs beside a name is what that participant is here
+                      to do. */}
+                  {/* The role, not its description: eight participants with
+                      a sentence each turned the roster into paragraphs that
+                      truncated mid-word. The sentence is the title, where a
+                      person can reach it without it crowding the board. */}
+                  {participant.name}
+                  {participant.role && <em>{participant.role}</em>}
+                </li>
+              ))}
+            </ul>
+            <div className="roster-add">
+              {(["observer", "engineer", "auditor"] as AgentRole[])
+                .filter(
+                  (role) =>
+                    !presence.agents.some((agent) => agent.role === role),
+                )
+                .map((role) => (
+                  <button
+                    key={role}
+                    onClick={() =>
+                      presence.bringAgent(
+                        role,
+                        `${role[0]!.toUpperCase()}${role.slice(1)} agent`,
+                      )
+                    }
+                    title={roleDescription[role]}
+                  >
+                    + {role}
+                  </button>
+                ))}
+            </div>
+          </div>
           <ol className="thread-board">
             {threads.map((thread) => (
               <li
