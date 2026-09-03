@@ -402,6 +402,27 @@ for (const selector of [
   }
 }
 
+// A link preview that points at a missing image renders worse than one with
+// no image at all. `src/app/share-metadata.test.ts` asserts the tag is
+// declared; the file it names has to actually be here, and that needs the
+// filesystem -- which the app's own test config deliberately has no types
+// for.
+{
+  const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
+  const declared = html.match(
+    /property="og:image"\s+content="[^"]*\/([^"/]+)"/,
+  )?.[1];
+  if (
+    declared &&
+    !existsSync(new URL(`../public/${declared}`, import.meta.url))
+  ) {
+    console.error(
+      `index.html points og:image at ${declared} and public/${declared} does not exist`,
+    );
+    process.exit(1);
+  }
+}
+
 console.log(
   `design system holds (${exempted} justified exception${exempted === 1 ? "" : "s"})`,
 );

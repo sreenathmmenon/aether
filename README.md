@@ -2,13 +2,15 @@
 
 > **Branch it. Break it. Commit with confidence.**
 
-Aether is where an agent's proposal meets proof. When a language model suggests a change to a running system, there is normally nothing to check it against — the claim is only as good as the model's confidence. Aether makes the consequence computable: people and agents work the same typed system model, branch a change in isolation, run a deterministic failure simulation, and see what the change actually does before anyone commits it.
+When a language model proposes a change to a running system, there is normally nothing to check it against. Aether makes the agent's recommendation lose an argument to a computation.
 
-Architecture resilience is the domain it demonstrates. The mechanism — typed model, isolated branch, deterministic evidence, bounded agent authority, human-only commit — is what any team faces the moment they let an agent propose changes to something that matters.
+The agent finds the strongest repair for a regional outage and recommends it. Aether refuses to approve it — a traffic spike still breaches capacity. Fix that, and a third bottleneck appears that was hidden behind the first two. Only then does the approve control unlock, and only for a person: no approve, merge, or rollback tool is registered for an agent in any state.
+
+![Aether's decision room: Mumbai is down, the committed architecture at 93.96% availability with one violation, and the causal read naming Primary Ledger as the break.](public/share-card.png)
 
 **Live app:** [webmcp-production-38e5.up.railway.app](https://webmcp-production-38e5.up.railway.app)
 
-It is not a generic whiteboard or an AI diagram generator. Describe your own architecture to an agent and it builds the model here — components, dependencies, and all — then the deterministic engine proves what a failure would do to it. Four worked systems ship for anyone who wants the story immediately, and every metric, repair alternative, and narrative re-derives from the graph you are actually looking at. Architecture Lab is Aether's first domain package; the core is designed so other structured decision domains can follow without changing its command, branch, approval, or audit foundations.
+People and agents work the same typed model through the same validated commands: branch a change in isolation, run a deterministic failure simulation, and see what it actually does before anyone commits. Describe your own architecture aloud and an agent builds it here — components, dependencies and all — then the same engine proves its failure paths. Four worked systems ship for anyone who wants the story immediately, and every metric, repair alternative and narrative re-derives from the graph in front of you.
 
 ## What Aether does that other tools do not
 

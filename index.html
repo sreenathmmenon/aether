@@ -11,9 +11,11 @@
     <title>Aether - Architecture futures</title>
     <!-- A submission link is shared before it is opened. Without these a
          Devpost entry, a chat message or a bookmark shows a bare URL and says
-         nothing about what the page is. No image tag: there is no share image
-         in this repository, and pointing at one that does not exist renders
-         worse than omitting it. -->
+         nothing about what the page is. The share image is a real capture of
+         the opening decision room -- the Mumbai incident, the baseline
+         breach, the causal read and the tool count -- taken from the
+         deployed origin at 1200x630, so what a link preview shows is what
+         the page shows. -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Aether" />
     <meta
@@ -28,7 +30,21 @@
       property="og:url"
       content="https://webmcp-production-38e5.up.railway.app"
     />
-    <meta name="twitter:card" content="summary" />
+    <meta
+      property="og:image"
+      content="https://webmcp-production-38e5.up.railway.app/share-card.png"
+    />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="Aether's decision room: Mumbai is down, the committed architecture at 93.96% availability with one violation, and the causal read naming Primary Ledger as the break."
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      name="twitter:image"
+      content="https://webmcp-production-38e5.up.railway.app/share-card.png"
+    />
     <meta
       name="twitter:title"
       content="Aether — branch it, break it, commit with confidence"

@@ -32,9 +32,26 @@ describe("the page describes itself when its link is shared", () => {
     expect(description.length).toBeGreaterThan(120);
   });
 
-  it("does not reference a share image that is not in this repository", () => {
+  it("ships the share image it points a link preview at", () => {
     // A card pointing at a missing image renders worse than one with no
-    // image at all, and this repository ships no such file.
-    expect(indexHtml).not.toContain("og:image");
+    // image at all. The rule was previously kept by having no image tag,
+    // which meant every Devpost card, Slack paste and bookmark of this
+    // entry showed bare text while its rivals showed a screenshot. The
+    // image exists now, so the rule is that the file has to be there.
+    // That the file is actually on disk is checked in
+    // `scripts/check-tokens.mjs`, which already reads the repository from
+    // Node; this config has no Node types by design.
+    const declared = indexHtml.match(
+      /property="og:image"\s+content="[^"]*\/([^"/]+)"/,
+    )?.[1];
+    expect(declared, "index.html declares no og:image").toBeTruthy();
+    // A link preview needs the dimensions to reserve space before the image
+    // loads, and Twitter needs to be told it is a large card or it crops to
+    // a thumbnail.
+    expect(indexHtml).toContain('property="og:image:width" content="1200"');
+    expect(indexHtml).toContain('property="og:image:height" content="630"');
+    expect(indexHtml).toContain(
+      'name="twitter:card" content="summary_large_image"',
+    );
   });
 });
