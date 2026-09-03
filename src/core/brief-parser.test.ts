@@ -309,7 +309,7 @@ describe("system brief parser", () => {
     const parsed = parseBrief(
       "Users hit an API gateway, checkout calls fraud scoring, fraud writes to Postgres, events flow through Kafka",
     );
-    let state = createInitialState(blankBaseline, "blank");
+    let state = createInitialState(blankBaseline, "blank", ["regional_outage"]);
     const created: string[] = [];
     parsed.components.forEach((component, index) => {
       const added = dispatch(

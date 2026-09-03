@@ -9,7 +9,9 @@ import {
 } from "./remote-workspace";
 import { isValidWorkspaceId } from "./workspace-contract";
 
-const state = createInitialState(paymentPlatformBaseline);
+const state = createInitialState(paymentPlatformBaseline, "payment-platform", [
+  "regional_outage",
+]);
 
 afterEach(() => vi.unstubAllGlobals());
 

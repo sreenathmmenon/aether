@@ -160,9 +160,9 @@ describe("dependency-graph simulation", () => {
       2,
       5000,
     );
-    expect(result.monthlyCostUsd).toBe(9400);
+    expect(result.monthlyCostUsd).toBe(11675);
     expect(result.sloViolations).toContain(
-      "Human cost ceiling exceeded: $9,400 > $5,000",
+      "Human cost ceiling exceeded: $11,675 > $5,000",
     );
     expect(result.rerunScope).toBe("affected");
   });
@@ -376,10 +376,10 @@ describe("dependency-graph simulation", () => {
     // only that scenario moved, which is the check that the charge landed
     // where sharing is actually being asked about.
     const expected: [Scenario, string][] = [
-      ["regional_outage", "fnv1a-236f2715"],
-      ["traffic_spike", "fnv1a-696fbc08"],
-      ["database_failure", "fnv1a-05954ff8"],
-      ["dependency_failure", "fnv1a-53c7e42a"],
+      ["regional_outage", "fnv1a-9c3c589b"],
+      ["traffic_spike", "fnv1a-53230804"],
+      ["database_failure", "fnv1a-3dd58c72"],
+      ["dependency_failure", "fnv1a-ea49058d"],
     ];
     for (const [scenario, hash] of expected) {
       const run = runScenario(

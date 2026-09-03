@@ -46,7 +46,11 @@ describe("the demo script quotes what the product reports", () => {
   });
 
   it("states the three repair futures and their availability", () => {
-    let state = createInitialState(paymentPlatformBaseline);
+    let state = createInitialState(
+      paymentPlatformBaseline,
+      "payment-platform",
+      ["regional_outage"],
+    );
     for (const intent of [
       "lowest_cost",
       "fastest_recovery",
@@ -54,7 +58,7 @@ describe("the demo script quotes what the product reports", () => {
     ] as const) {
       const created = dispatch(state, {
         type: "CREATE_BRANCH",
-        input: { name: intent, intent },
+        input: { name: intent.replace(/_/g, " "), intent },
       });
       if (!created.ok) throw new Error(`${intent} must be creatable`);
       state = created.value;
@@ -89,7 +93,11 @@ describe("the demo script quotes what the product reports", () => {
     // The arc only works if the highest-resilience future is clean under a
     // regional outage and breaches under a spike — otherwise there is
     // nothing to repair on camera.
-    let state = createInitialState(paymentPlatformBaseline);
+    let state = createInitialState(
+      paymentPlatformBaseline,
+      "payment-platform",
+      ["regional_outage"],
+    );
     const created = dispatch(state, {
       type: "CREATE_BRANCH",
       input: { name: "Highest resilience", intent: "highest_resilience" },
@@ -176,7 +184,7 @@ describe("the demo script quotes what the product reports", () => {
       "10 things it may do here",
       "18 things it may do here",
       "ten to eighteen",
-      "shrinks to thirteen tools",
+      "shrinks to twelve tools",
     ])
       expect(flat, `the script no longer says "${phrase}"`).toContain(phrase);
   });
@@ -435,7 +443,11 @@ describe("the demo script quotes what the product reports", () => {
 
     // Each card's headline comes from futureHeadline, so the checklist has
     // to quote what that function returns rather than three availabilities.
-    let state = createInitialState(paymentPlatformBaseline);
+    let state = createInitialState(
+      paymentPlatformBaseline,
+      "payment-platform",
+      ["regional_outage"],
+    );
     for (const intent of [
       "lowest_cost",
       "fastest_recovery",
@@ -443,7 +455,7 @@ describe("the demo script quotes what the product reports", () => {
     ] as const) {
       const created = dispatch(state, {
         type: "CREATE_BRANCH",
-        input: { name: intent, intent },
+        input: { name: intent.replace(/_/g, " "), intent },
       });
       if (!created.ok) throw new Error(`${intent} must be creatable`);
       state = created.value;

@@ -45,6 +45,16 @@ export const availabilityModel = {
   replicaCushionCredit: 0.28,
   /** Redundant replicas beyond this stop adding credit. */
   replicaCushionCap: 4,
+  /**
+   * How much of a replica's credit survives the component being impacted.
+   *
+   * Full credit meant a downed component's redundancy paid as though it were
+   * serving, so a bigger broken system scored better than a smaller one.
+   * Zero credit meant adding replicas to a component inside the blast radius
+   * changed nothing at all, which is also wrong: replicas are how it comes
+   * back.
+   */
+  impactedReplicaShare: 0.35,
   /** Points lost per 10,000 RPS of unmet demand on the worst component. */
   capacityDeficitWeight: 2.4,
   /** The most availability a capacity shortfall alone can remove. */
@@ -165,6 +175,13 @@ export type ScenarioResult = {
   latencyMs: number;
   monthlyCostUsd: number;
   sloViolations: string[];
+  /**
+   * Findings worth stating that do not block approval. A violation is a
+   * refusal; an observation is something a reviewer should see and may
+   * accept -- single-region concentration is the archetype, true of most
+   * half-built architectures and of plenty of deliberate ones.
+   */
+  observations?: string[];
   // Capacity deficits found beyond the two the evidence names, and the
   // sentence disclosing them. Absent when nothing was left out.
   deficitsNotListed?: number;
@@ -215,7 +232,7 @@ const backwardKinds = new Set([
 ]);
 
 /** Entities that stop working when `id` is lost. */
-function dependentsOf(graph: ArchitectureGraph, id: string) {
+export function dependentsOf(graph: ArchitectureGraph, id: string) {
   return Object.values(graph.relationships)
     .flatMap((relationship) => {
       const backward = backwardKinds.has(relationship.kind);
@@ -311,9 +328,19 @@ export const costModel = {
   synchronousReplicaMultiplier: 1.9,
   /** An asynchronous standby costs less: it lags, so it can be smaller. */
   asynchronousReplicaMultiplier: 1.45,
+  /**
+   * What a unit of provisioned capacity costs a month beyond what the
+   * component already declares it needs.
+   *
+   * Without this, capacity was the one resilience lever that stayed free:
+   * a reviewer locked a ceiling and an agent set a component to 200,000 RPS
+   * with no budget consequence at all. Headroom is bought, like everything
+   * else here.
+   */
+  costPerHeadroomRps: 0.35,
 } as const;
 
-function monthlyCostOf(entity: ArchitectureEntity) {
+export function monthlyCostOf(entity: ArchitectureEntity) {
   const properties = propertiesOf(entity);
   const declared = properties.monthlyCostUsd;
   if (typeof declared !== "number") return 0;
@@ -324,10 +351,15 @@ function monthlyCostOf(entity: ArchitectureEntity) {
   const replication = replicationOf(entity);
   if (replication === "sync") cost *= costModel.synchronousReplicaMultiplier;
   if (replication === "async") cost *= costModel.asynchronousReplicaMultiplier;
+  // Headroom past declared demand is provisioned capacity somebody pays for.
+  const capacity = properties.capacityRps;
+  const peak = properties.peakRps;
+  if (typeof capacity === "number" && typeof peak === "number")
+    cost += Math.max(0, capacity - peak) * costModel.costPerHeadroomRps;
   return cost;
 }
 
-function totalMonthlyCost(graph: ArchitectureGraph) {
+export function totalMonthlyCost(graph: ArchitectureGraph) {
   return Math.round(
     operationalEntities(graph).reduce(
       (sum, entity) => sum + monthlyCostOf(entity),
@@ -425,6 +457,36 @@ function recoveryMinutes(
   return Math.max(3, Math.round(worst * 0.85));
 }
 
+/**
+ * The region a regional outage takes: the one carrying the most stateful
+ * load, then the most components, then by id so the choice is stable.
+ *
+ * Exported because the incident room names this region in a thread a person
+ * reads beside the evidence, and it was naming `regions[0]` -- insertion
+ * order. They coincide on every shipped fixture, so nothing caught it, but
+ * on a graph a reviewer built the agenda item and the evidence under it
+ * would name different regions. One implementation, two readers.
+ */
+export function primaryRegion(graph: ArchitectureGraph) {
+  const operational = operationalEntities(graph);
+  return Object.values(graph.entities)
+    .filter((entity) => entity.kind === "region")
+    .map((region) => ({
+      region,
+      databases: databasesIn(graph).filter(
+        (entity) => regionOf(entity) === region.id,
+      ).length,
+      members: operational.filter((entity) => regionOf(entity) === region.id)
+        .length,
+    }))
+    .sort(
+      (left, right) =>
+        right.databases - left.databases ||
+        right.members - left.members ||
+        left.region.id.localeCompare(right.region.id),
+    )[0]?.region;
+}
+
 export function runScenario(
   graph: ArchitectureGraph,
   scenario: Scenario,
@@ -475,27 +537,9 @@ export function runScenario(
   let demandMultiplier = 1;
 
   if (scenario === "regional_outage") {
-    // The region carrying the most stateful load is the one worth failing.
-    const regions = Object.values(graph.entities).filter(
-      (entity) => entity.kind === "region",
-    );
-    const primary = regions
-      .map((region) => ({
-        region,
-        databases: databasesIn(graph).filter(
-          (entity) => regionOf(entity) === region.id,
-        ).length,
-        members: operational.filter((entity) => regionOf(entity) === region.id)
-          .length,
-      }))
-      .sort(
-        (left, right) =>
-          right.databases - left.databases ||
-          right.members - left.members ||
-          left.region.id.localeCompare(right.region.id),
-      )[0];
-    const failedRegionId = primary?.region.id;
-    const failedName = primary?.region.name ?? "primary region";
+    const primary = primaryRegion(graph);
+    const failedRegionId = primary?.id;
+    const failedName = primary?.name ?? "primary region";
     seeds = operational
       .filter((entity) => regionOf(entity) === failedRegionId)
       .map((entity) => ({ id: entity.id, cause: `${failedName} unavailable` }));
@@ -589,12 +633,45 @@ export function runScenario(
     (entity) => replicationOf(entity) === "sync",
   );
 
-  const replicaCushion = operational
-    .filter((entity) => impacted.has(entity.id))
-    .reduce((sum, entity) => {
-      const replicas = propertiesOf(entity).replicas;
-      return sum + (typeof replicas === "number" && replicas > 1 ? 1 : 0);
-    }, 0);
+  // Redundancy that survived the fault, on a curve.
+  //
+  // This credited replicas on components the scenario had already taken out,
+  // which is where "a bigger broken system scores better" actually came
+  // from: eight downed services with replicas paid 0.28 each up to the cap,
+  // so the same total outage rose 0.84 points as the system grew. Weighting
+  // the impact share could never reach it -- when everything is impacted the
+  // share is 1.0 however it is weighted.
+  //
+  // The count is a curve rather than a boolean because cost now scales with
+  // replicas. Flat credit meant 2 replicas and 100 replicas scored the same
+  // while costing $390 and $10,190, so the product would confidently
+  // recommend cutting to 2 and banking the difference with no model of what
+  // that buys. One side of a trade-off priced and the other flat is worse
+  // than neither.
+  // Averaged, not summed. A sum over impacted components rewarded having
+  // more of them: a fan-out of eight downed replicated services scored 0.84
+  // points better than one, for being bigger and equally broken. A sum over
+  // only the survivors fixed that but made replicas on an impacted component
+  // worth nothing at all, so adding redundancy where the fault actually
+  // landed changed no number -- and that is the component a reviewer is
+  // usually repairing.
+  //
+  // The mean says how well replicated the architecture is, which does not
+  // move when the same architecture is copied wider. Redundancy inside the
+  // blast radius counts for less than redundancy that survived, because it
+  // is what the component comes back on rather than what kept it serving.
+  const replicaScores = operational.map((entity) => {
+    const replicas = propertiesOf(entity).replicas;
+    if (typeof replicas !== "number" || replicas <= 1) return 0;
+    const survived = impacted.has(entity.id)
+      ? availabilityModel.impactedReplicaShare
+      : 1;
+    return Math.log2(replicas) * survived;
+  });
+  const replicaCushion = replicaScores.length
+    ? replicaScores.reduce((sum, score) => sum + score, 0) /
+      replicaScores.length
+    : 0;
 
   const deficits = capacityDeficits(
     graph,
@@ -623,12 +700,23 @@ export function runScenario(
   // any architecture with a well-connected store, which is most of them, and
   // said nothing about sharing.
   if (scenario === "dependency_failure") {
-    const correlated = seeds.reduce((worst, seed) => {
-      const entity = graph.entities[seed.id];
-      if (!entity || entity.kind === "region") return worst;
-      return Math.max(worst, dependentsOf(graph, seed.id).length - 1);
-    }, 0);
-    availability -= model.correlatedPathPenalty * Math.max(0, correlated);
+    // Charged across the blast radius, not only the seed. The seed is
+    // whichever component the most others depend on, and on any realistic
+    // graph that is the datastore -- so a shared queue further down the
+    // chain was never priced, and a matched shared/isolated pair came back
+    // 0.00 points apart. The correlation is worth naming wherever it sits.
+    //
+    // Capped at two contributors: summing every well-connected component
+    // turns this back into the flat penalty on any connected architecture
+    // that it already had to be scoped away from once.
+    const correlated = operational
+      .filter((entity) => impacted.has(entity.id))
+      .map((entity) => dependentsOf(graph, entity.id).length - 1)
+      .filter((paths) => paths > 0)
+      .sort((left, right) => right - left)
+      .slice(0, 2)
+      .reduce((sum, paths) => sum + paths, 0);
+    availability -= model.correlatedPathPenalty * correlated;
   }
   availability += model.synchronousReplicaCredit * synchronous.length;
   availability +=
@@ -676,6 +764,29 @@ export function runScenario(
     operational.length > 0 &&
     operational.every((entity) => seededIds.has(entity.id)) &&
     !(scenario === "regional_outage" && placedRegions.size < 2);
+  // Single-region concentration is the most common real finding in an
+  // architecture review, and it was the one thing this scenario could not
+  // say. Exempting it from total loss left no verdict at all: components in
+  // one region were exempt, and components spread across two never had every
+  // one seeded, so the branch was unreachable under `regional_outage` on
+  // every possible graph. It is named rather than scored to zero, which is
+  // what keeps a half-built canvas usable.
+  //
+  // Recorded as an observation, not a violation. Violations block approval,
+  // so stating this as one made every single-region architecture permanently
+  // unapprovable -- including a canvas a reviewer has only half built, where
+  // nothing has been placed elsewhere yet. The finding is worth surfacing;
+  // refusing to let anyone proceed past it is not what it means.
+  const observations: string[] = [];
+  if (
+    scenario === "regional_outage" &&
+    placedRegions.size === 1 &&
+    operational.length > 0 &&
+    operational.every((entity) => seededIds.has(entity.id))
+  )
+    observations.push(
+      "Every component is in one region; a regional outage takes the whole system",
+    );
   if (everythingSeeded) {
     availability = model.totalLoss;
     violations.push("Every component is lost; the system serves nothing");
@@ -691,10 +802,13 @@ export function runScenario(
     // one -- adding redundancy, relieving a deficit -- showed no change at
     // all, and the reviewer could not tell a good stateless design from a
     // bad one. Compressing the range keeps the bound and keeps the ordering.
+    // Scaled from zero rather than from the floor, so a design already at
+    // the ceiling still has room to differ from one just below it. Scaling
+    // across the floor..ceiling band compressed everything at 99.99 onto
+    // exactly 92, which made a stateless architecture unimprovable: replicas
+    // and capacity moved nothing.
     availability = round(
-      model.floor +
-        ((availability - model.floor) / (model.ceiling - model.floor)) *
-          (model.statelessCeiling - model.floor),
+      (availability / model.ceiling) * model.statelessCeiling,
     );
     violations.push(
       "No datastore on this architecture; nothing here holds state to lose",
@@ -771,6 +885,7 @@ export function runScenario(
     latencyMs,
     monthlyCostUsd,
     sloViolations: [...new Set(violations)],
+    observations: observations.length ? [...new Set(observations)] : undefined,
     ...(furtherDeficits > 0
       ? {
           deficitsNotListed: furtherDeficits,

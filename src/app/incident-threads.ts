@@ -1,3 +1,4 @@
+import { dependentsOf, primaryRegion } from "@simulation/engine";
 import type { IncidentThread } from "@core/war-room";
 import type { ArchitectureGraph } from "@domain/architecture/types";
 
@@ -70,22 +71,35 @@ export function incidentThreads(
   const regions = Object.values(graph.entities).filter(
     (entity) => entity.kind === "region",
   );
-  if (regions.length > 1)
+  // The region the engine actually fails, not whichever was declared first.
+  // These coincide on every shipped fixture, so no test caught the
+  // difference -- but on a graph a reviewer built, the thread named one
+  // region while the evidence beside it named another.
+  const failing = primaryRegion(graph) ?? regions[0];
+  if (regions.length > 1 && failing)
     threads.push({
       id: "thread-region",
-      title: `${regions[0]!.name} holds the write path`,
+      title: `${failing.name} holds the write path`,
       summary:
         "Losing this region is the failure the room was opened for. What survives it?",
       severity: "critical",
       status: "open",
       scenario: "regional_outage",
-      entityId: regions[0]!.id,
+      entityId: failing.id,
       findings: [],
       awaiting: "Evidence that a repair holds",
       openedAt,
     });
 
-  const shared = components.find((entity) => entity.kind === "queue");
+  // A queue with more than one dependent. This fired on any queue at all, so
+  // a single-publisher, zero-consumer queue produced "is depended on by more
+  // than one path" -- a false statement about the reviewer's own
+  // architecture, on the surface whose whole claim is that every statement is
+  // derived from the graph.
+  const shared = components.find(
+    (entity) =>
+      entity.kind === "queue" && dependentsOf(graph, entity.id).length > 1,
+  );
   if (shared)
     threads.push({
       id: "thread-shared",

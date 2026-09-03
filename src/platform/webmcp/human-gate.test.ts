@@ -93,10 +93,15 @@ describe("the human gate holds by construction", () => {
     // agent. What it does not cover is the other three, or the fact that the
     // set is five — dropping the check from rollback would leave both those
     // tests green. This walks whatever the reducer currently marks human-only.
-    const created = dispatch(createInitialState(paymentPlatformBaseline), {
-      type: "CREATE_BRANCH",
-      input: { name: "gate probe", intent: "lowest_cost" },
-    });
+    const created = dispatch(
+      createInitialState(paymentPlatformBaseline, "payment-platform", [
+        "regional_outage",
+      ]),
+      {
+        type: "CREATE_BRANCH",
+        input: { name: "gate probe", intent: "lowest_cost" },
+      },
+    );
     if (!created.ok) throw new Error("fixture branch must be created");
     const state = created.value;
 
@@ -116,7 +121,11 @@ describe("the human gate holds by construction", () => {
     // still hand out a tool three calls later. Walk to the richest state the
     // agent can reach and check the whole surface at each step.
     const tools: { name: string }[] = [];
-    let state = createInitialState(paymentPlatformBaseline);
+    let state = createInitialState(
+      paymentPlatformBaseline,
+      "payment-platform",
+      ["regional_outage"],
+    );
     const registry = createAetherToolRegistry(
       (next) => {
         state = next;

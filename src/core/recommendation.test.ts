@@ -14,11 +14,13 @@ import type { AetherState } from "./branch-engine";
 const human = { id: "r", kind: "human" as const, displayName: "R" };
 
 function withFutures(intents: readonly string[]): AetherState {
-  let state = createInitialState(paymentPlatformBaseline);
+  let state = createInitialState(paymentPlatformBaseline, "payment-platform", [
+    "regional_outage",
+  ]);
   for (const intent of intents) {
     const created = dispatch(state, {
       type: "CREATE_BRANCH",
-      input: { name: intent, intent },
+      input: { name: intent.replace(/_/g, " "), intent },
     } as Parameters<typeof dispatch>[1]);
     if (!created.ok) throw new Error(`${intent} must be creatable`);
     state = created.value;
@@ -41,7 +43,9 @@ function simulate(state: AetherState, branchId: string, scenarios: string[]) {
 describe("the agent can say which future the evidence favours", () => {
   it("says what to do first when nothing has been branched", () => {
     const recommendation = recommendFuture(
-      createInitialState(paymentPlatformBaseline),
+      createInitialState(paymentPlatformBaseline, "payment-platform", [
+        "regional_outage",
+      ]),
     );
     expect(recommendation.recommended).toBeUndefined();
     expect(recommendation.nextAction).toContain("create_architecture_branch");
@@ -132,7 +136,11 @@ describe("the agent can say which future the evidence favours", () => {
     // The interface names the blocker; this is the same fact told to an
     // agent, and counting here left one blocker described two different
     // ways on two surfaces -- with the agent given the less useful one.
-    let state = createInitialState(paymentPlatformBaseline);
+    let state = createInitialState(
+      paymentPlatformBaseline,
+      "payment-platform",
+      ["regional_outage"],
+    );
     const created = dispatch(
       state,
       {
@@ -172,7 +180,11 @@ describe("the agent can say which future the evidence favours", () => {
     // report violations" -- worse to read than the count it replaced. Past
     // three the count is the clearer sentence, the same threshold the
     // interface uses.
-    let state = createInitialState(paymentPlatformBaseline);
+    let state = createInitialState(
+      paymentPlatformBaseline,
+      "payment-platform",
+      ["regional_outage"],
+    );
     const created = dispatch(
       state,
       {

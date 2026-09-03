@@ -475,7 +475,56 @@ async function main() {
     );
   }
 
-  // 12. The workspace has to stay inside the size the server accepts, for
+  // 12. What a tool advertises and what it enforces have to be the same
+  //     surface. `read_component_telemetry` took a `branchId` in its Zod
+  //     schema -- load-bearing, since it decides which future the reading is
+  //     held against -- and never advertised it, so a client validating
+  //     against the published schema would strip the field, silently fall
+  //     back to the active branch, and report the capacity of a future
+  //     nobody asked about.
+  {
+    const page = surface();
+    await withRepair(page);
+    const mismatched: string[] = [];
+    for (const tool of page.tools()) {
+      const schema = (
+        typeof tool.inputSchema === "string"
+          ? JSON.parse(tool.inputSchema)
+          : tool.inputSchema
+      ) as { properties?: Record<string, unknown> };
+      const advertised = new Set(Object.keys(schema?.properties ?? {}));
+      // An accepted call carrying a field the schema never mentioned would
+      // mean the enforced contract is wider than the advertised one.
+      if (!advertised.has("branchId")) continue;
+      const reply = await page.call(tool.name, {
+        branchId: "branch-highest_resilience",
+        entityId: "ledger",
+        scenario: "regional_outage",
+        property: "capacityRps",
+        value: 21000,
+        sourceId: "ledger",
+        targetId: "queue",
+        kind: "calls",
+        body: "parity probe",
+        components: [],
+        dependencies: [],
+      });
+      // A tool refusing an unadvertised field is the point; one that refuses
+      // `branchId` itself is advertising something it does not accept.
+      const problems = JSON.stringify(reply.problems ?? "");
+      if (problems.includes("branchId")) mismatched.push(tool.name);
+    }
+    record(
+      "tools/schema-matches-runtime",
+      "Does every tool accept the branch field it advertises?",
+      mismatched.length === 0 ? "pass" : "fail",
+      mismatched.length === 0
+        ? "every tool advertising branchId accepts it"
+        : `advertised but refused by: ${mismatched.join(", ")}`,
+    );
+  }
+
+  // 13. The workspace has to stay inside the size the server accepts, for
   //     as long as a room is used. This is the one that would have lost it:
   //     a shared room on the deployed origin reached 2,340 audit entries and
   //     1.04 MB against a 1 MB ceiling, so every further action by anyone
@@ -552,7 +601,7 @@ async function main() {
     );
   }
 
-  // 13. Telemetry read at the component's own scale. A reading that argues
+  // 14. Telemetry read at the component's own scale. A reading that argues
   //    for shrinking a correctly sized component is worse than no reading.
   if (liveServer) {
     const response = await fetch(
@@ -579,7 +628,7 @@ async function main() {
     );
   }
 
-  // 14. A live source, read through the allowlisted proxy. Real network, so
+  // 15. A live source, read through the allowlisted proxy. Real network, so
   //     this is the check that proves the room is not reading a fixture.
   if (liveServer) {
     try {
@@ -615,7 +664,7 @@ async function main() {
     );
   }
 
-  // 15. The proxy is an allowlist, not an open relay. Anybody can load this
+  // 16. The proxy is an allowlist, not an open relay. Anybody can load this
   //     site, so a proxy forwarding arbitrary URLs would be the whole
   //     internet's problem, not just this app's.
   if (liveServer) {

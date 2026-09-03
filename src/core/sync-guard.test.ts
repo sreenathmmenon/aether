@@ -11,7 +11,7 @@ describe("shared state never destroys local work", () => {
   it("refuses an emptier workspace from another tab", () => {
     // A reviewer builds an architecture in one tab while a second tab still
     // shows the unbuilt default. The idle tab must not overwrite the work.
-    let built = createInitialState(blankBaseline, "blank");
+    let built = createInitialState(blankBaseline, "blank", ["regional_outage"]);
     for (const name of ["Api", "Db"]) {
       const added = dispatch(
         built,
@@ -32,7 +32,9 @@ describe("shared state never destroys local work", () => {
       if (!added.ok) throw new Error("component must be addable");
       built = added.value;
     }
-    const idleTab = createInitialState(blankBaseline, "blank");
+    const idleTab = createInitialState(blankBaseline, "blank", [
+      "regional_outage",
+    ]);
 
     expect(wouldDiscardWork(built, idleTab)).toBe(true);
     // The reverse is welcome: a richer workspace may arrive.
@@ -46,7 +48,11 @@ describe("shared state never destroys local work", () => {
     // reconcile adopted it. Measured on the live origin: the approval landed
     // and was gone again inside 250ms. It is the one act this product exists
     // to protect.
-    const seeded = createInitialState(paymentPlatformBaseline);
+    const seeded = createInitialState(
+      paymentPlatformBaseline,
+      "payment-platform",
+      ["regional_outage"],
+    );
     const branched = dispatch(seeded, {
       type: "CREATE_BRANCH",
       input: { name: "Repair", intent: "highest_resilience" },
@@ -87,7 +93,11 @@ describe("shared state never destroys local work", () => {
     // fewer of them: running a second scenario dropped the first, and a
     // future approved on one scenario then reported no evidence at all.
     // Reproduced against the deployed origin before this test existed.
-    const seeded = createInitialState(paymentPlatformBaseline);
+    const seeded = createInitialState(
+      paymentPlatformBaseline,
+      "payment-platform",
+      ["regional_outage"],
+    );
     const branched = dispatch(
       seeded,
       {
@@ -132,10 +142,17 @@ describe("shared state never destroys local work", () => {
   it("still accepts an equally rich update so real collaboration works", () => {
     // A seeded system, because a repair future needs an architecture with
     // something to repair; the blank canvas here was incidental.
-    const state = createInitialState(paymentPlatformBaseline);
+    const state = createInitialState(
+      paymentPlatformBaseline,
+      "payment-platform",
+      ["regional_outage"],
+    );
     const branched = dispatch(
       state,
-      { type: "CREATE_BRANCH", input: { name: "R", intent: "lowest_cost" } },
+      {
+        type: "CREATE_BRANCH",
+        input: { name: "Repair", intent: "lowest_cost" },
+      },
       human,
     );
     if (!branched.ok) throw new Error("branch must be created");
@@ -148,7 +165,7 @@ describe("shared state never destroys local work", () => {
     // is emptier than what they have open, adopting it deletes their work in
     // front of them — and this was the one remote-apply path that did not
     // check, while the reconcile and the storage event both did.
-    let mine = createInitialState(blankBaseline, "blank");
+    let mine = createInitialState(blankBaseline, "blank", ["regional_outage"]);
     for (const name of ["Api", "Store", "Queue"]) {
       const added = dispatch(
         mine,
@@ -169,7 +186,9 @@ describe("shared state never destroys local work", () => {
       if (!added.ok) throw new Error(`${name} must be addable`);
       mine = added.value;
     }
-    const theirs = createInitialState(blankBaseline, "blank");
+    const theirs = createInitialState(blankBaseline, "blank", [
+      "regional_outage",
+    ]);
     expect(wouldDiscardWork(mine, theirs)).toBe(true);
 
     // And once their state is the richer one, adopting it is correct.
@@ -204,7 +223,11 @@ describe("shared state never destroys local work", () => {
     // branches and audit entries at once, so any single surviving check
     // catches them and the other three are never exercised. This isolates
     // each dimension so the guard is tested rather than its combination.
-    const base = createInitialState(paymentPlatformBaseline);
+    const base = createInitialState(
+      paymentPlatformBaseline,
+      "payment-platform",
+      ["regional_outage"],
+    );
 
     // Fewer components, everything else equal.
     const lostComponent = structuredClone(base);

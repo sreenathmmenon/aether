@@ -34,7 +34,9 @@ function graphOf(state: ReturnType<typeof createInitialState>) {
 
 describe("the blank canvas's opening prompt", () => {
   it("shows while the canvas is empty and stops once it is modelled", () => {
-    const blank = createInitialState(blankBaseline, "blank");
+    const blank = createInitialState(blankBaseline, "blank", [
+      "regional_outage",
+    ]);
     expect(visibleNotes(blank.decisionNotes, graphOf(blank))).toHaveLength(2);
 
     const built = addOrderStore(blank);
@@ -47,8 +49,12 @@ describe("the blank canvas's opening prompt", () => {
     // tell a deliberate removal from an entry it has not seen yet -- it put
     // them straight back. Visibility is derived from the canvas for exactly
     // this reason, so a merge that carries the notes forward changes nothing.
-    const built = addOrderStore(createInitialState(blankBaseline, "blank"));
-    const stale = createInitialState(blankBaseline, "blank");
+    const built = addOrderStore(
+      createInitialState(blankBaseline, "blank", ["regional_outage"]),
+    );
+    const stale = createInitialState(blankBaseline, "blank", [
+      "regional_outage",
+    ]);
 
     const merged = mergeEvidence(stale, built);
     expect(merged.decisionNotes.length).toBeGreaterThan(0);
@@ -58,7 +64,11 @@ describe("the blank canvas's opening prompt", () => {
   it("leaves a seeded system's opening notes alone", () => {
     // Only the blank workspace seeds this prompt. A shipped system's opening
     // notes are findings about a real architecture and must never be hidden.
-    const seeded = createInitialState(paymentPlatformBaseline);
+    const seeded = createInitialState(
+      paymentPlatformBaseline,
+      "payment-platform",
+      ["regional_outage"],
+    );
     expect(visibleNotes(seeded.decisionNotes, graphOf(seeded))).toEqual(
       seeded.decisionNotes,
     );

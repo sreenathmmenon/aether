@@ -18,11 +18,18 @@ const human = {
  */
 describe("how many futures the headline offers", () => {
   it("stops counting a future the reviewer has rolled back", () => {
-    let state = createInitialState(paymentPlatformBaseline);
+    let state = createInitialState(
+      paymentPlatformBaseline,
+      "payment-platform",
+      ["regional_outage"],
+    );
     for (const intent of ["lowest_cost", "highest_resilience"] as const) {
       const created = dispatch(
         state,
-        { type: "CREATE_BRANCH", input: { name: intent, intent } },
+        {
+          type: "CREATE_BRANCH",
+          input: { name: intent.replace(/_/g, " "), intent },
+        },
         human,
       );
       if (!created.ok) throw new Error(`${intent} must be creatable`);

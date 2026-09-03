@@ -43,7 +43,11 @@ describe("Aether WebMCP registry", () => {
     // which names the problem and no way out of it. The registry knows the
     // answer, so it says it.
     const live = new Set<RegisteredTool>();
-    let state = createInitialState(paymentPlatformBaseline);
+    let state = createInitialState(
+      paymentPlatformBaseline,
+      "payment-platform",
+      ["regional_outage"],
+    );
     const registry = createAetherToolRegistry(
       (next) => {
         state = next;
@@ -159,7 +163,11 @@ describe("Aether WebMCP registry", () => {
     // has to drop those the way the browser does. Keeping them would let a
     // tool that had been unregistered still look present.
     const live = new Set<RegisteredTool>();
-    let state = createInitialState(paymentPlatformBaseline);
+    let state = createInitialState(
+      paymentPlatformBaseline,
+      "payment-platform",
+      ["regional_outage"],
+    );
     const registry = createAetherToolRegistry(
       (next) => {
         state = next;
@@ -216,7 +224,11 @@ describe("Aether WebMCP registry", () => {
       },
     });
     // The fullest surface: an open repair future publishes everything.
-    const seeded = createInitialState(paymentPlatformBaseline);
+    const seeded = createInitialState(
+      paymentPlatformBaseline,
+      "payment-platform",
+      ["regional_outage"],
+    );
     const branched = dispatch(seeded, {
       type: "CREATE_BRANCH",
       input: { name: "Doc probe", intent: "highest_resilience" },
@@ -257,7 +269,11 @@ describe("Aether WebMCP registry", () => {
     };
     const human = { id: "s", kind: "human" as const, displayName: "S" };
 
-    const committed = createInitialState(paymentPlatformBaseline);
+    const committed = createInitialState(
+      paymentPlatformBaseline,
+      "payment-platform",
+      ["regional_outage"],
+    );
     await snapshot(committed);
     const branched = dispatch(committed, {
       type: "CREATE_BRANCH",
@@ -297,7 +313,11 @@ describe("Aether WebMCP registry", () => {
 
     // Each transition re-registers, and a zero here means the cache decided
     // nothing changed when the whole write surface had to close.
-    expect(seen, `surfaces were ${seen.join(",")}`).toEqual([10, 18, 13]);
+    // Twelve after a merge, not thirteen: `propose_architecture_change` used
+    // to stay registered with `enum: []` -- a field advertising no valid
+    // value, and every call refused. It now leaves with the last writable
+    // branch, which is one fewer tool and one fewer dead end.
+    expect(seen, `surfaces were ${seen.join(",")}`).toEqual([10, 18, 12]);
     for (const name of afterMerge)
       expect(name, `${name} survives a merge`).not.toMatch(
         /^(add_|connect_|model_|run_failure)/,
@@ -311,7 +331,11 @@ describe("Aether WebMCP registry", () => {
     // region enum makes creation impossible while the tool stays advertised
     // — `regionId` is required, so there is no valid call at all.
     const registered: RegisteredTool[] = [];
-    let state = createInitialState(paymentPlatformBaseline);
+    let state = createInitialState(
+      paymentPlatformBaseline,
+      "payment-platform",
+      ["regional_outage"],
+    );
     const registry = createAetherToolRegistry(
       (next) => {
         state = next;
@@ -394,10 +418,15 @@ describe("Aether WebMCP registry", () => {
         registered.push(tool as unknown as RegisteredTool);
       },
     });
-    const branched = dispatch(createInitialState(paymentPlatformBaseline), {
-      type: "CREATE_BRANCH",
-      input: { name: "Required probe", intent: "highest_resilience" },
-    });
+    const branched = dispatch(
+      createInitialState(paymentPlatformBaseline, "payment-platform", [
+        "regional_outage",
+      ]),
+      {
+        type: "CREATE_BRANCH",
+        input: { name: "Required probe", intent: "highest_resilience" },
+      },
+    );
     if (!branched.ok) throw new Error("fixture branch must be created");
     await registry?.refresh(branched.value);
 
@@ -446,10 +475,15 @@ describe("Aether WebMCP registry", () => {
         registered.push(tool as unknown as RegisteredTool);
       },
     });
-    const branched = dispatch(createInitialState(paymentPlatformBaseline), {
-      type: "CREATE_BRANCH",
-      input: { name: "Describe probe", intent: "highest_resilience" },
-    });
+    const branched = dispatch(
+      createInitialState(paymentPlatformBaseline, "payment-platform", [
+        "regional_outage",
+      ]),
+      {
+        type: "CREATE_BRANCH",
+        input: { name: "Describe probe", intent: "highest_resilience" },
+      },
+    );
     if (!branched.ok) throw new Error("fixture branch must be created");
     await registry?.refresh(branched.value);
     registry?.dispose();
@@ -481,10 +515,15 @@ describe("Aether WebMCP registry", () => {
         registered.push(tool as unknown as RegisteredTool);
       },
     });
-    const branched = dispatch(createInitialState(paymentPlatformBaseline), {
-      type: "CREATE_BRANCH",
-      input: { name: "Strict probe", intent: "highest_resilience" },
-    });
+    const branched = dispatch(
+      createInitialState(paymentPlatformBaseline, "payment-platform", [
+        "regional_outage",
+      ]),
+      {
+        type: "CREATE_BRANCH",
+        input: { name: "Strict probe", intent: "highest_resilience" },
+      },
+    );
     if (!branched.ok) throw new Error("fixture branch must be created");
     await registry?.refresh(branched.value);
     registry?.dispose();
@@ -513,7 +552,11 @@ describe("Aether WebMCP registry", () => {
     // `propose_architecture_change`, which are exactly the tools an agent
     // uses to wire and tune a system it has just built.
     const registered: RegisteredTool[] = [];
-    let state = createInitialState(paymentPlatformBaseline);
+    let state = createInitialState(
+      paymentPlatformBaseline,
+      "payment-platform",
+      ["regional_outage"],
+    );
     const registry = createAetherToolRegistry(
       (next) => {
         state = next;
@@ -589,7 +632,11 @@ describe("Aether WebMCP registry", () => {
     // including a merged one — a committed architecture presented to an
     // agent as somewhere to write.
     const registered: RegisteredTool[] = [];
-    let state = createInitialState(paymentPlatformBaseline);
+    let state = createInitialState(
+      paymentPlatformBaseline,
+      "payment-platform",
+      ["regional_outage"],
+    );
     const registry = createAetherToolRegistry(
       (next) => {
         state = next;
@@ -650,6 +697,20 @@ describe("Aether WebMCP registry", () => {
     registry?.dispose();
 
     const enums = registered
+      .filter((tool) => {
+        // Only the tools that write. A merged future still holds evidence
+        // worth reading, and `read_component_telemetry` takes a branch so a
+        // reading is held against the future it was asked about rather than
+        // whichever one happens to be active -- offering a merged branch to
+        // a reader is correct, and refusing it would put the advertised
+        // schema back at odds with the one that is enforced.
+        const annotations = (
+          tool as unknown as {
+            annotations?: { readOnlyHint?: boolean };
+          }
+        ).annotations;
+        return annotations?.readOnlyHint !== true;
+      })
       .map(
         (tool) =>
           (
@@ -684,7 +745,11 @@ describe("Aether WebMCP registry", () => {
       },
     });
     return (async () => {
-      await registry?.refresh(createInitialState(paymentPlatformBaseline));
+      await registry?.refresh(
+        createInitialState(paymentPlatformBaseline, "payment-platform", [
+          "regional_outage",
+        ]),
+      );
       const trace = registered
         .filter((tool) => tool.name === "trace_architecture_dependency")
         .at(-1);
@@ -714,10 +779,15 @@ describe("Aether WebMCP registry", () => {
         registered.push(tool as unknown as RegisteredTool);
       },
     });
-    const branched = dispatch(createInitialState(paymentPlatformBaseline), {
-      type: "CREATE_BRANCH",
-      input: { name: "Format probe", intent: "highest_resilience" },
-    });
+    const branched = dispatch(
+      createInitialState(paymentPlatformBaseline, "payment-platform", [
+        "regional_outage",
+      ]),
+      {
+        type: "CREATE_BRANCH",
+        input: { name: "Format probe", intent: "highest_resilience" },
+      },
+    );
     if (!branched.ok) throw new Error("fixture branch must be created");
     const locked = dispatch(
       branched.value,
@@ -769,7 +839,11 @@ describe("Aether WebMCP registry", () => {
     // showed one — the two paths disagreeing about the same run, which is
     // the opposite of the claim that they work one typed model.
     const registered: RegisteredTool[] = [];
-    let state = createInitialState(paymentPlatformBaseline);
+    let state = createInitialState(
+      paymentPlatformBaseline,
+      "payment-platform",
+      ["regional_outage"],
+    );
     const registry = createAetherToolRegistry(
       (next) => {
         state = next;
@@ -827,7 +901,11 @@ describe("Aether WebMCP registry", () => {
     // advertising tools that always fail; an agent asked to continue a
     // rejected repair would call them and learn nothing from the refusals.
     const registered: RegisteredTool[] = [];
-    let state = createInitialState(paymentPlatformBaseline);
+    let state = createInitialState(
+      paymentPlatformBaseline,
+      "payment-platform",
+      ["regional_outage"],
+    );
     const registry = createAetherToolRegistry(
       (next) => {
         state = next;
@@ -955,7 +1033,11 @@ describe("Aether WebMCP registry", () => {
       return registered.length;
     };
 
-    const seeded = createInitialState(paymentPlatformBaseline);
+    const seeded = createInitialState(
+      paymentPlatformBaseline,
+      "payment-platform",
+      ["regional_outage"],
+    );
     const branched = dispatch(seeded, {
       type: "CREATE_BRANCH",
       input: { name: "Count probe", intent: "highest_resilience" },
@@ -1004,7 +1086,7 @@ describe("Aether WebMCP registry", () => {
     const truthful = new Set(
       await Promise.all([
         sizeOf(seeded),
-        sizeOf(createInitialState(blankBaseline, "blank")),
+        sizeOf(createInitialState(blankBaseline, "blank", ["regional_outage"])),
         sizeOf(branched.value),
         sizeOf(merged.value),
         sizeOf(rolledBack.value),
@@ -1113,7 +1195,11 @@ describe("Aether WebMCP registry", () => {
     // clarifying sentence would put the product outside the limits its own
     // document publishes, silently.
     const registered: RegisteredTool[] = [];
-    const seeded = createInitialState(paymentPlatformBaseline);
+    const seeded = createInitialState(
+      paymentPlatformBaseline,
+      "payment-platform",
+      ["regional_outage"],
+    );
     const branched = dispatch(seeded, {
       type: "CREATE_BRANCH",
       input: { name: "Limit probe", intent: "highest_resilience" },
@@ -1200,7 +1286,7 @@ describe("Aether WebMCP registry", () => {
     // call. The property that decides the violation was unreachable at the
     // only moment the component was being described.
     const live = new Set<RegisteredTool>();
-    let state = createInitialState(blankBaseline, "blank");
+    let state = createInitialState(blankBaseline, "blank", ["regional_outage"]);
     const registry = createAetherToolRegistry(
       (next) => {
         state = next;
@@ -1277,7 +1363,9 @@ describe("Aether WebMCP registry", () => {
     // merely be stored, so this asserts the metric each is supposed to move.
     const model = async (service: object, database: object) => {
       const live = new Set<RegisteredTool>();
-      let state = createInitialState(blankBaseline, "blank");
+      let state = createInitialState(blankBaseline, "blank", [
+        "regional_outage",
+      ]);
       const registry = createAetherToolRegistry(
         (next) => {
           state = next;
@@ -1354,7 +1442,9 @@ describe("Aether WebMCP registry", () => {
         options?.signal?.addEventListener("abort", () => live.delete(entry));
       },
     });
-    await registry?.refresh(createInitialState(blankBaseline, "blank"));
+    await registry?.refresh(
+      createInitialState(blankBaseline, "blank", ["regional_outage"]),
+    );
     const add = [...live].find(
       (tool) => tool.name === "add_architecture_component",
     ) as unknown as {
@@ -1403,7 +1493,11 @@ describe("Aether WebMCP registry", () => {
     // properties, not from canvas position, so this is a real change to the
     // model rather than a drag.
     const live = new Set<RegisteredTool>();
-    let state = createInitialState(paymentPlatformBaseline);
+    let state = createInitialState(
+      paymentPlatformBaseline,
+      "payment-platform",
+      ["regional_outage"],
+    );
     const registry = createAetherToolRegistry(
       (next) => {
         state = next;
@@ -1475,7 +1569,11 @@ describe("Aether WebMCP registry", () => {
         options?.signal?.addEventListener("abort", () => live.delete(entry));
       },
     });
-    const seeded = createInitialState(paymentPlatformBaseline);
+    const seeded = createInitialState(
+      paymentPlatformBaseline,
+      "payment-platform",
+      ["regional_outage"],
+    );
     const branched = dispatch(seeded, {
       type: "CREATE_BRANCH",
       input: { name: "Parity probe", intent: "highest_resilience" },
@@ -1528,7 +1626,7 @@ describe("Aether WebMCP registry", () => {
     // three futures and the agent could neither compare nor propose against
     // them. Reproduced against the deployed origin.
     const live = new Set<RegisteredTool>();
-    let state = createInitialState(blankBaseline, "blank");
+    let state = createInitialState(blankBaseline, "blank", ["regional_outage"]);
     const registry = createAetherToolRegistry(
       (next) => {
         state = next;
@@ -1575,7 +1673,11 @@ describe("Aether WebMCP registry", () => {
     // never been able to attempt a removal at all. The guarantee is stronger
     // than the claim was, and the claim now says so; this holds the fact.
     const surfaces: string[][] = [];
-    const seeded = createInitialState(paymentPlatformBaseline);
+    const seeded = createInitialState(
+      paymentPlatformBaseline,
+      "payment-platform",
+      ["regional_outage"],
+    );
     const branched = dispatch(seeded, {
       type: "CREATE_BRANCH",
       input: { name: "Removal probe", intent: "highest_resilience" },
@@ -1615,7 +1717,11 @@ describe("Aether WebMCP registry", () => {
     // field nor the options, and the generic nextAction. Found by testing the
     // claim against the deployed origin rather than reading the code.
     const live = new Set<RegisteredTool>();
-    let state = createInitialState(paymentPlatformBaseline);
+    let state = createInitialState(
+      paymentPlatformBaseline,
+      "payment-platform",
+      ["regional_outage"],
+    );
     const registry = createAetherToolRegistry(
       (next) => {
         state = next;
@@ -1699,7 +1805,11 @@ describe("Aether WebMCP registry", () => {
       }[];
     };
 
-    const seeded = createInitialState(paymentPlatformBaseline);
+    const seeded = createInitialState(
+      paymentPlatformBaseline,
+      "payment-platform",
+      ["regional_outage"],
+    );
     const branched = dispatch(seeded, {
       type: "CREATE_BRANCH",
       input: { name: "Enum probe", intent: "highest_resilience" },
@@ -1740,7 +1850,9 @@ describe("Aether WebMCP registry", () => {
         live.push(tool as unknown as RegisteredTool);
       },
     });
-    await registry?.refresh(createInitialState(blankBaseline, "blank"));
+    await registry?.refresh(
+      createInitialState(blankBaseline, "blank", ["regional_outage"]),
+    );
     const batch = live.find((tool) => tool.name === "model_architecture") as
       | (RegisteredTool & {
           inputSchema: {
@@ -1807,7 +1919,11 @@ describe("Aether WebMCP registry", () => {
         live.push(tool as unknown as RegisteredTool);
       },
     });
-    await registry?.refresh(createInitialState(paymentPlatformBaseline));
+    await registry?.refresh(
+      createInitialState(paymentPlatformBaseline, "payment-platform", [
+        "regional_outage",
+      ]),
+    );
     const output = String(
       await live
         .find((tool) => tool.name === "inspect_failure_domain")
@@ -1854,7 +1970,11 @@ describe("Aether WebMCP registry", () => {
     // violation string, and the whole comparison became RESULT_TOO_LARGE at
     // exactly the moment there is most to compare. Measured against the
     // deployed origin rather than inferred.
-    let state = createInitialState(paymentPlatformBaseline);
+    let state = createInitialState(
+      paymentPlatformBaseline,
+      "payment-platform",
+      ["regional_outage"],
+    );
     for (const intent of [
       "lowest_cost",
       "fastest_recovery",
@@ -1862,7 +1982,7 @@ describe("Aether WebMCP registry", () => {
     ] as const) {
       const branched = dispatch(state, {
         type: "CREATE_BRANCH",
-        input: { name: `Budget ${intent}`, intent },
+        input: { name: `Budget ${intent.replace(/_/g, " ")}`, intent },
       });
       if (branched.ok) state = branched.value;
       for (const scenario of [
@@ -1916,7 +2036,9 @@ describe("Aether WebMCP registry", () => {
     // cent of the budget, because nothing capped the evidence reference each
     // note carries. One long discussion and the whole record would have
     // become an error.
-    let state = createInitialState(rideHailingBaseline, "ride-hailing");
+    let state = createInitialState(rideHailingBaseline, "ride-hailing", [
+      "regional_outage",
+    ]);
     const branched = dispatch(state, {
       type: "CREATE_BRANCH",
       input: { name: "Record ceiling", intent: "highest_resilience" },
@@ -1971,7 +2093,9 @@ describe("Aether WebMCP registry", () => {
     // RESULT_TOO_LARGE — 109 characters naming no field at all. An agent that
     // submits a large brief and gets it wrong learned nothing about what to
     // correct, which is the moment the guidance matters most.
-    const seeded = createInitialState(rideHailingBaseline, "ride-hailing");
+    const seeded = createInitialState(rideHailingBaseline, "ride-hailing", [
+      "regional_outage",
+    ]);
     const branched = dispatch(seeded, {
       type: "CREATE_BRANCH",
       input: { name: "Batch reject", intent: "highest_resilience" },
@@ -2053,7 +2177,11 @@ describe("Aether WebMCP registry", () => {
         registerTool: async () => {},
       },
     );
-    const seeded = createInitialState(paymentPlatformBaseline);
+    const seeded = createInitialState(
+      paymentPlatformBaseline,
+      "payment-platform",
+      ["regional_outage"],
+    );
     await registry?.refresh(seeded);
     const branched = dispatch(seeded, {
       type: "CREATE_BRANCH",
@@ -2074,7 +2202,11 @@ describe("Aether WebMCP registry", () => {
     // nothing else — so an agent that compared before simulating saw an
     // empty evidence array and no way forward.
     const live = new Set<RegisteredTool>();
-    let state = createInitialState(paymentPlatformBaseline);
+    let state = createInitialState(
+      paymentPlatformBaseline,
+      "payment-platform",
+      ["regional_outage"],
+    );
     const registry = createAetherToolRegistry(
       (next) => {
         state = next;
@@ -2120,7 +2252,11 @@ describe("Aether WebMCP registry", () => {
     // as unknown. A trace that did succeed described the original
     // architecture rather than the one the agent had built.
     const live = new Set<RegisteredTool>();
-    let state = createInitialState(paymentPlatformBaseline);
+    let state = createInitialState(
+      paymentPlatformBaseline,
+      "payment-platform",
+      ["regional_outage"],
+    );
     const registry = createAetherToolRegistry(
       (next) => {
         state = next;
@@ -2192,7 +2328,9 @@ describe("Aether WebMCP registry", () => {
     // agent could not tell a seeded platform from an empty canvas, nor see
     // any simulation result, without spending further calls to find out.
     const tools: RegisteredTool[] = [];
-    let state = createInitialState(rideHailingBaseline);
+    let state = createInitialState(rideHailingBaseline, "payment-platform", [
+      "regional_outage",
+    ]);
     const registry = createAetherToolRegistry(
       (next) => {
         state = next;
@@ -2252,7 +2390,7 @@ describe("Aether WebMCP registry", () => {
     const tools: RegisteredTool[] = [];
     // The blank template is the one an agent builds into directly, so the
     // unbounded graph is reachable there.
-    let state = createInitialState(blankBaseline, "blank");
+    let state = createInitialState(blankBaseline, "blank", ["regional_outage"]);
     const registry = createAetherToolRegistry(
       (next) => {
         state = next;
@@ -2304,7 +2442,11 @@ describe("Aether WebMCP registry", () => {
     // tool for it. The tool that opens that path must say so itself, because
     // an agent that never calls the summary has nothing else to read.
     const tools: { name: string; description?: string }[] = [];
-    const state = createInitialState(paymentPlatformBaseline);
+    const state = createInitialState(
+      paymentPlatformBaseline,
+      "payment-platform",
+      ["regional_outage"],
+    );
     const registry = createAetherToolRegistry(() => {}, undefined, {
       registerTool: async (tool) => {
         tools.push(tool as unknown as { name: string; description?: string });
@@ -2332,7 +2474,11 @@ describe("Aether WebMCP registry", () => {
 
   it("registers state-aware tools and returns concise structured results", async () => {
     const tools: RegisteredTool[] = [];
-    let state = createInitialState(paymentPlatformBaseline);
+    let state = createInitialState(
+      paymentPlatformBaseline,
+      "payment-platform",
+      ["regional_outage"],
+    );
     const registry = createAetherToolRegistry(
       (next) => {
         state = next;
@@ -2432,7 +2578,9 @@ describe("Aether WebMCP registry", () => {
           emptyTools.push(tool as unknown as RegisteredTool);
         },
       });
-      await emptyRegistry?.refresh(createInitialState(blankBaseline, "blank"));
+      await emptyRegistry?.refresh(
+        createInitialState(blankBaseline, "blank", ["regional_outage"]),
+      );
       const emptyRecord = JSON.parse(
         String(
           await emptyTools
@@ -2501,7 +2649,11 @@ describe("Aether WebMCP registry", () => {
 
   it("returns evidence for the scenario the agent actually requested", async () => {
     const tools: RegisteredTool[] = [];
-    let state = createInitialState(paymentPlatformBaseline);
+    let state = createInitialState(
+      paymentPlatformBaseline,
+      "payment-platform",
+      ["regional_outage"],
+    );
     const created = dispatch(state, {
       type: "CREATE_BRANCH",
       input: { name: "Recovery future", intent: "fastest_recovery" },
@@ -2539,7 +2691,11 @@ describe("Aether WebMCP registry", () => {
         tools.push(tool as RegisteredTool);
       },
     });
-    await registry?.refresh(createInitialState(paymentPlatformBaseline));
+    await registry?.refresh(
+      createInitialState(paymentPlatformBaseline, "payment-platform", [
+        "regional_outage",
+      ]),
+    );
     const create = tools.find(
       (tool) => tool.name === "create_architecture_branch",
     );
@@ -2551,7 +2707,11 @@ describe("Aether WebMCP registry", () => {
         }),
       ),
     ).toContain("INVALID_INPUT");
-    const state = createInitialState(paymentPlatformBaseline);
+    const state = createInitialState(
+      paymentPlatformBaseline,
+      "payment-platform",
+      ["regional_outage"],
+    );
     const created = dispatch(state, {
       type: "CREATE_BRANCH",
       input: {
@@ -2570,7 +2730,11 @@ describe("Aether WebMCP registry", () => {
 
   it("returns parseable bounded results in the full three-future demo state", async () => {
     const tools: RegisteredTool[] = [];
-    let state = createInitialState(paymentPlatformBaseline);
+    let state = createInitialState(
+      paymentPlatformBaseline,
+      "payment-platform",
+      ["regional_outage"],
+    );
     for (const intent of [
       "lowest_cost",
       "fastest_recovery",
@@ -2639,7 +2803,11 @@ describe("Aether WebMCP registry", () => {
     // fail again on branchId, regionId and the three numbers it was never
     // told about. That is the loop this text exists to prevent.
     const tools: RegisteredTool[] = [];
-    let state = createInitialState(paymentPlatformBaseline);
+    let state = createInitialState(
+      paymentPlatformBaseline,
+      "payment-platform",
+      ["regional_outage"],
+    );
     const registry = createAetherToolRegistry(
       (next) => {
         state = next;
@@ -2713,7 +2881,11 @@ describe("Aether WebMCP registry", () => {
         tools.push(tool as RegisteredTool);
       },
     });
-    await registry?.refresh(createInitialState(paymentPlatformBaseline));
+    await registry?.refresh(
+      createInitialState(paymentPlatformBaseline, "payment-platform", [
+        "regional_outage",
+      ]),
+    );
 
     const branch = JSON.parse(
       String(
@@ -2754,7 +2926,11 @@ describe("Aether WebMCP registry", () => {
       },
       (call) => calls.push(call),
     );
-    await registry?.refresh(createInitialState(paymentPlatformBaseline));
+    await registry?.refresh(
+      createInitialState(paymentPlatformBaseline, "payment-platform", [
+        "regional_outage",
+      ]),
+    );
 
     await tools
       .find((tool) => tool.name === "inspect_failure_domain")
@@ -2803,7 +2979,11 @@ describe("Aether WebMCP registry", () => {
         },
       },
     );
-    await registry?.refresh(createInitialState(paymentPlatformBaseline));
+    await registry?.refresh(
+      createInitialState(paymentPlatformBaseline, "payment-platform", [
+        "regional_outage",
+      ]),
+    );
     // A reviewer with no agent connected still sees what this page publishes.
     expect(reported).toEqual(tools.map((tool) => tool.name));
     expect(reported).toContain("create_architecture_branch");
@@ -2814,7 +2994,11 @@ describe("Aether WebMCP registry", () => {
 
   it("carries an agent through the whole journey via the registered tools", async () => {
     const tools: RegisteredTool[] = [];
-    let state = createInitialState(paymentPlatformBaseline);
+    let state = createInitialState(
+      paymentPlatformBaseline,
+      "payment-platform",
+      ["regional_outage"],
+    );
     const registry = createAetherToolRegistry(
       (next) => {
         state = next;
@@ -2893,7 +3077,7 @@ describe("Aether WebMCP registry", () => {
 
   it("lets an agent build and simulate the user's own system", async () => {
     const tools: RegisteredTool[] = [];
-    let state = createInitialState(blankBaseline, "blank");
+    let state = createInitialState(blankBaseline, "blank", ["regional_outage"]);
     const registry = createAetherToolRegistry(
       (next) => {
         state = next;
@@ -2950,14 +3134,14 @@ describe("Aether WebMCP registry", () => {
       branchId: "branch-baseline",
       scenario: "regional_outage",
     })) as { monthlyCostUsd: number; affectedEntityIds: string[] };
-    expect(run.monthlyCostUsd).toBe(4300);
+    expect(run.monthlyCostUsd).toBe(5700);
     expect(run.affectedEntityIds).toContain("entity-orders-db");
     registry?.dispose();
   });
 
   it("models a brief-shaped architecture in one WebMCP call with partial failures", async () => {
     const tools: RegisteredTool[] = [];
-    let state = createInitialState(blankBaseline, "blank");
+    let state = createInitialState(blankBaseline, "blank", ["regional_outage"]);
     const registry = createAetherToolRegistry(
       (next) => {
         state = next;
@@ -3102,9 +3286,15 @@ describe("Aether WebMCP registry", () => {
     if (!branched.ok) throw new Error("fixture branch must be created");
     expect(await surfaceFor(branched.value)).toBe(18);
 
-    expect(await surfaceFor(createInitialState(blankBaseline, "blank"))).toBe(
-      15,
-    );
+    // Sixteen, not fifteen: `propose_architecture_change` registers on a
+    // blank canvas now. Its guard counted branches, which excluded the one
+    // surface where an agent builds from nothing, and it now asks whether
+    // anything is writable -- which on an editable baseline it is.
+    expect(
+      await surfaceFor(
+        createInitialState(blankBaseline, "blank", ["regional_outage"]),
+      ),
+    ).toBe(16);
 
     // Once a future is committed the architecture is read-only again, and the
     // editing tools must actually leave the page. Keying the surface on "does
@@ -3154,10 +3344,13 @@ describe("Aether WebMCP registry", () => {
       if (!scaled.ok) throw new Error(`${entityId} must be scalable`);
       committed = scaled.value;
     }
+    // All four, because approval requires every scenario answered at the
+    // version being approved. Three used to be enough.
     for (const scenario of [
       "regional_outage",
       "traffic_spike",
       "database_failure",
+      "dependency_failure",
     ] as const) {
       const run = dispatch(
         committed,
@@ -3233,6 +3426,10 @@ describe("Aether WebMCP registry", () => {
         "add_decision_note",
         "connect_components",
         "model_architecture",
+        // Withdrawn on a merge now: its guard asks whether anything is
+        // writable rather than counting branches, so it leaves with the last
+        // writable one instead of staying registered with an empty enum.
+        "propose_architecture_change",
         "run_failure_scenario",
       ].sort(),
     );
@@ -3247,10 +3444,15 @@ describe("Aether WebMCP registry", () => {
     // once — a scenario list missing a scenario, a name field the engine
     // discards, and answers naming a fixture rather than the live graph.
     const tools: RegisteredTool[] = [];
-    const state = dispatch(createInitialState(paymentPlatformBaseline), {
-      type: "CREATE_BRANCH",
-      input: { name: "Repair", intent: "highest_resilience" },
-    });
+    const state = dispatch(
+      createInitialState(paymentPlatformBaseline, "payment-platform", [
+        "regional_outage",
+      ]),
+      {
+        type: "CREATE_BRANCH",
+        input: { name: "Repair", intent: "highest_resilience" },
+      },
+    );
     if (!state.ok) throw new Error("fixture branch must be created");
     const registry = createAetherToolRegistry(() => {}, undefined, {
       registerTool: async (tool) => {
@@ -3312,7 +3514,9 @@ describe("Aether WebMCP registry", () => {
         tools.push(tool as unknown as RegisteredTool);
       },
     });
-    await registry?.refresh(createInitialState(blankBaseline, "blank"));
+    await registry?.refresh(
+      createInitialState(blankBaseline, "blank", ["regional_outage"]),
+    );
     const add = tools.find(
       (tool) => tool.name === "add_architecture_component",
     );
@@ -3362,7 +3566,7 @@ describe("Aether WebMCP registry", () => {
         tools.push(tool as unknown as RegisteredTool);
       },
     });
-    let state = createInitialState(blankBaseline, "blank");
+    let state = createInitialState(blankBaseline, "blank", ["regional_outage"]);
     const agent = { id: "probe", kind: "agent" as const, displayName: "Probe" };
     const noted = dispatch(
       state,
@@ -3459,8 +3663,10 @@ describe("Aether WebMCP registry", () => {
       ].sort(),
     );
 
-    const own = await surface(createInitialState(blankBaseline, "blank"));
-    expect(own).toHaveLength(15);
+    const own = await surface(
+      createInitialState(blankBaseline, "blank", ["regional_outage"]),
+    );
+    expect(own).toHaveLength(16);
 
     const branched = dispatch(
       createInitialState(paymentPlatformBaseline, "payment-platform"),
@@ -3500,7 +3706,9 @@ describe("Aether WebMCP registry", () => {
         tools.push(tool as unknown as RegisteredTool);
       },
     });
-    await registry?.refresh(createInitialState(blankBaseline, "blank"));
+    await registry?.refresh(
+      createInitialState(blankBaseline, "blank", ["regional_outage"]),
+    );
     const model = tools.find((tool) => tool.name === "model_architecture") as
       | (RegisteredTool & {
           inputSchema: {
@@ -3765,7 +3973,7 @@ describe("Aether WebMCP registry", () => {
       registered.filter((tool) => tool.name === "add_decision_note").at(-1)
         ?.inputSchema.properties.entityId?.enum;
 
-    let state = createInitialState(blankBaseline, "blank");
+    let state = createInitialState(blankBaseline, "blank", ["regional_outage"]);
     await registry?.refresh(state);
     expect(entityEnum()).toEqual([]);
 
@@ -3819,10 +4027,10 @@ describe("Aether WebMCP registry", () => {
       },
     });
 
-    let state = createInitialState(blankBaseline, "blank");
+    let state = createInitialState(blankBaseline, "blank", ["regional_outage"]);
     await registry?.refresh(state);
     const surfaceSize = live;
-    expect(surfaceSize).toBe(15);
+    expect(surfaceSize).toBe(16);
 
     for (let index = 0; index < 5; index += 1) {
       const added = dispatch(
@@ -4029,7 +4237,11 @@ describe("Aether WebMCP registry", () => {
         tools.push(tool as unknown as RegisteredTool);
       },
     });
-    let state = createInitialState(paymentPlatformBaseline, "payment-platform");
+    let state = createInitialState(
+      paymentPlatformBaseline,
+      "payment-platform",
+      ["regional_outage"],
+    );
     for (const intent of [
       "lowest_cost",
       "fastest_recovery",
@@ -4037,7 +4249,7 @@ describe("Aether WebMCP registry", () => {
     ] as const) {
       const made = dispatch(state, {
         type: "CREATE_BRANCH",
-        input: { name: `Future ${intent}`, intent },
+        input: { name: `Future ${intent.replace(/_/g, " ")}`, intent },
       });
       if (!made.ok) throw new Error("branch must be created");
       state = made.value;
@@ -4110,7 +4322,11 @@ describe("Aether WebMCP registry", () => {
       },
     });
 
-    let state = createInitialState(paymentPlatformBaseline, "payment-platform");
+    let state = createInitialState(
+      paymentPlatformBaseline,
+      "payment-platform",
+      ["regional_outage"],
+    );
     for (const intent of [
       "lowest_cost",
       "fastest_recovery",
@@ -4118,7 +4334,7 @@ describe("Aether WebMCP registry", () => {
     ] as const) {
       const made = dispatch(state, {
         type: "CREATE_BRANCH",
-        input: { name: `Future ${intent}`, intent },
+        input: { name: `Future ${intent.replace(/_/g, " ")}`, intent },
       });
       if (made.ok) state = made.value;
     }

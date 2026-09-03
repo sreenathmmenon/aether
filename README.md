@@ -6,7 +6,7 @@ When a language model proposes a change to a running system, there is normally n
 
 The agent finds the strongest repair for a regional outage and recommends it. Aether refuses to approve it — a traffic spike still breaches capacity. Fix that, and a third bottleneck appears that was hidden behind the first two. Only then does the approve control unlock, and only for a person: no approve, merge, or rollback tool is registered for an agent in any state.
 
-![Aether's decision room: Mumbai is down, the committed architecture at 93.96% availability with one violation, and the causal read naming Primary Ledger as the break.](public/share-card.png)
+![Aether's decision room: Mumbai is down, the committed architecture at 93.45% availability with one violation, and the causal read naming Primary Ledger as the break.](public/share-card.png)
 
 **Live app:** [webmcp-production-38e5.up.railway.app](https://webmcp-production-38e5.up.railway.app)
 

@@ -24,7 +24,9 @@ describe("the empty-canvas invitation", () => {
     // dependency lost · most depended on" -- and produced text like "show
     // you what shared dependency lost · most depended on costs". `label` is
     // the readable name, and this holds it to that.
-    const state = createInitialState(blankBaseline);
+    const state = createInitialState(blankBaseline, "payment-platform", [
+      "regional_outage",
+    ]);
     const copy = scenarioNarrative(
       deriveGraph(state, state.branches["branch-baseline"]!),
       {},

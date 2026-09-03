@@ -379,6 +379,16 @@ export function createAetherToolRegistry(
    * of the branch it had just created — the one field every write tool
    * requires was the one it got no help with.
    */
+  /**
+   * Every branch a reading can be taken against, which is not the same set a
+   * write can target: a merged future still holds evidence worth reading.
+   */
+  function readableBranchIds(state: AetherState = snapshot()) {
+    return Object.values(state.branches)
+      .filter((branch) => branch.status !== "discarded")
+      .map((branch) => branch.id);
+  }
+
   function writableBranchIds(state: AetherState = snapshot()) {
     return Object.values(state.branches)
       .filter((branch) => {
@@ -708,6 +718,20 @@ export function createAetherToolRegistry(
               type: "string",
               description:
                 "Optional. A published npm package whose real download volume stands in for this component's demand.",
+            },
+            // Advertised because it is load-bearing. The Zod schema has taken
+            // this since the reading started being held against the future it
+            // was asked about, but the published schema did not -- so a
+            // client validating against what was advertised would strip it,
+            // fall back to the active branch, and report the capacity of a
+            // future nobody asked about. The compliance document claims the
+            // advertised contract and the enforced one cannot disagree; here
+            // they did.
+            branchId: {
+              type: "string",
+              enum: readableBranchIds(),
+              description:
+                "Which future to read the reading against. Defaults to the active branch.",
             },
           },
           required: ["entityId"],
@@ -1703,7 +1727,12 @@ export function createAetherToolRegistry(
           },
         });
       }
-      if (Object.keys(snapshot().branches).length > 1) {
+      // Registered only while something can actually receive a change. This
+      // counted branches, so after a merge the tool stayed on the surface
+      // advertising `enum: []` -- a field with no valid value, and every call
+      // refused with NOT_AVAILABLE. An absent tool tells an agent the truth;
+      // a present one that cannot be used sends it into a retry loop.
+      if (writableBranchIds().length > 0) {
         await register({
           name: "propose_architecture_change",
           description:
@@ -1767,6 +1796,13 @@ export function createAetherToolRegistry(
             });
           },
         });
+      }
+      // The comparison tools read; they do not write. A merged architecture
+      // still has futures worth comparing and a recommendation worth reading,
+      // which is what the thirteen-tool surface after a merge is for -- so
+      // these stay on the branch count while the write tool above leaves with
+      // the last writable branch.
+      if (Object.keys(snapshot().branches).length > 1) {
         await register({
           // The read tools all returned state and left an agent to work the
           // trade-off out of a table of numbers. So it could act fast and had

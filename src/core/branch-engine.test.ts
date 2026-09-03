@@ -13,11 +13,27 @@ const human = {
   displayName: "Sreenath",
 };
 
+/**
+ * A fixture scoped to the one scenario these tests exercise.
+ *
+ * Approval requires every scenario in `workspace.requiredScenarios`
+ * answered at the version being approved -- a gate added because a reviewer
+ * merged on one of four with three violations unexamined. These tests are
+ * about the approval mechanics rather than about coverage, so they narrow
+ * the workspace to the scenario they run instead of pretending the other
+ * three were answered. The coverage rule itself is tested separately, and
+ * the shipped default is every scenario.
+ */
 function branchState() {
-  const created = dispatch(createInitialState(paymentPlatformBaseline), {
-    type: "CREATE_BRANCH",
-    input: { name: "Highest resilience", intent: "highest_resilience" },
-  });
+  const created = dispatch(
+    createInitialState(paymentPlatformBaseline, "payment-platform", [
+      "regional_outage",
+    ]),
+    {
+      type: "CREATE_BRANCH",
+      input: { name: "Highest resilience", intent: "highest_resilience" },
+    },
+  );
   if (!created.ok) throw new Error("fixture branch must be created");
   return created.value;
 }
@@ -410,7 +426,7 @@ describe("Aether command pipeline", () => {
     if (!simulated.ok) throw new Error("fixture simulation must work");
     expect(
       simulated.value.simulations["branch-highest_resilience"]?.[0],
-    ).toMatchObject({ availability: 97.11, rtoMinutes: 7, rerunScope: "full" });
+    ).toMatchObject({ availability: 96.61, rtoMinutes: 7, rerunScope: "full" });
   });
 
   it("keeps a human cost guardrail outside the agent's authority", () => {
@@ -438,7 +454,7 @@ describe("Aether command pipeline", () => {
     expect(
       simulated.value.simulations["branch-highest_resilience"]?.[0]
         ?.sloViolations,
-    ).toContain("Human cost ceiling exceeded: $19,064 > $7,000");
+    ).toContain("Human cost ceiling exceeded: $22,669 > $7,000");
     const approval = dispatch(
       simulated.value,
       {
@@ -537,7 +553,7 @@ describe("Aether command pipeline", () => {
     if (!simulated.ok) throw new Error("simulation must work");
     const run = simulated.value.simulations["branch-highest_resilience"]![0]!;
     expect(run.affectedEntityIds).toContain("entity-fraud-engine");
-    expect(run.monthlyCostUsd).toBe(20464);
+    expect(run.monthlyCostUsd).toBe(25119);
 
     // The same component cannot be added twice, and self-dependency is refused.
     expect(
@@ -693,7 +709,7 @@ describe("Aether command pipeline", () => {
   });
 
   it("lets an agent build an architecture into an empty canvas", () => {
-    let state = createInitialState(blankBaseline, "blank");
+    let state = createInitialState(blankBaseline, "blank", ["regional_outage"]);
     const add = (name: string, kind: "service" | "database") => {
       const result = dispatch(state, {
         type: "ADD_COMPONENT",
@@ -733,12 +749,16 @@ describe("Aether command pipeline", () => {
     const run = runScenario(graph, "regional_outage", "branch-baseline", 1);
     expect(run.availability).toBeGreaterThan(0);
     expect(run.affectedEntityIds).toContain("entity-database");
-    expect(run.monthlyCostUsd).toBe(1800);
+    expect(run.monthlyCostUsd).toBe(3200);
   });
 
   it("keeps a seeded architecture immutable on its baseline", () => {
     // The own-system allowance must not weaken a committed architecture.
-    const seeded = createInitialState(paymentPlatformBaseline);
+    const seeded = createInitialState(
+      paymentPlatformBaseline,
+      "payment-platform",
+      ["regional_outage"],
+    );
     expect(
       dispatch(
         seeded,
@@ -765,7 +785,11 @@ describe("Aether command pipeline", () => {
     // The refusal has to live in the reducer, not in interface copy, so it
     // holds for an agent that never reads the interface at all.
     const agent = { id: "probe", kind: "agent" as const, displayName: "Probe" };
-    const seeded = createInitialState(paymentPlatformBaseline);
+    const seeded = createInitialState(
+      paymentPlatformBaseline,
+      "payment-platform",
+      ["regional_outage"],
+    );
     const entityIds = Object.values(
       deriveGraph(seeded, seeded.branches["branch-baseline"]!).entities,
     )
@@ -837,16 +861,18 @@ describe("Aether command pipeline", () => {
     // And the refusals leave the committed architecture byte-identical.
     expect(deriveGraph(seeded, seeded.branches["branch-baseline"]!)).toEqual(
       deriveGraph(
-        createInitialState(paymentPlatformBaseline),
-        createInitialState(paymentPlatformBaseline).branches[
-          "branch-baseline"
-        ]!,
+        createInitialState(paymentPlatformBaseline, "payment-platform", [
+          "regional_outage",
+        ]),
+        createInitialState(paymentPlatformBaseline, "payment-platform", [
+          "regional_outage",
+        ]).branches["branch-baseline"]!,
       ),
     );
   });
 
   it("carries a self-built architecture through the whole decision journey", () => {
-    let state = createInitialState(blankBaseline, "blank");
+    let state = createInitialState(blankBaseline, "blank", ["regional_outage"]);
     const add = (name: string, kind: "service" | "database") => {
       const result = dispatch(
         state,
@@ -903,10 +929,13 @@ describe("Aether command pipeline", () => {
     ).toContain("entity-db");
     expect(state.branches[branchId]!.operations.length).toBeGreaterThan(0);
 
+    // All four: approval requires every scenario answered at the version
+    // being approved.
     for (const scenario of [
       "regional_outage",
       "traffic_spike",
       "database_failure",
+      "dependency_failure",
     ] as const) {
       const run = dispatch(
         state,
@@ -938,7 +967,7 @@ describe("Aether command pipeline", () => {
 
   it("holds its guarantees on a system with no database", () => {
     // A reviewer's architecture may not look like either shipped example.
-    let state = createInitialState(blankBaseline, "blank");
+    let state = createInitialState(blankBaseline, "blank", ["regional_outage"]);
     const added = dispatch(
       state,
       {
@@ -982,7 +1011,11 @@ describe("Aether command pipeline", () => {
   });
 
   it("states a constraint the repairs actually have to resolve", () => {
-    const state = createInitialState(paymentPlatformBaseline);
+    const state = createInitialState(
+      paymentPlatformBaseline,
+      "payment-platform",
+      ["regional_outage"],
+    );
     const stated = state.decisionNotes.find(
       (note) => note.actor.kind === "human",
     )!.body;
@@ -1006,7 +1039,7 @@ describe("Aether command pipeline", () => {
       .map((intent) => {
         const created = dispatch(
           state,
-          { type: "CREATE_BRANCH", input: { name: "X", intent } },
+          { type: "CREATE_BRANCH", input: { name: "Repair probe", intent } },
           human,
         );
         if (!created.ok) throw new Error("branch must be created");
@@ -1044,7 +1077,7 @@ describe("Aether command pipeline", () => {
     // The baseline card reads the baseline branch, whose components live in
     // its operations. Reading the original revision would report an empty
     // architecture for a system the reviewer just built.
-    let state = createInitialState(blankBaseline, "blank");
+    let state = createInitialState(blankBaseline, "blank", ["regional_outage"]);
     for (const [name, kind] of [
       ["Api", "service"],
       ["Db", "database"],
@@ -1077,7 +1110,7 @@ describe("Aether command pipeline", () => {
       baseline.version,
     );
     expect(evidence.availability).toBeGreaterThan(0);
-    expect(evidence.monthlyCostUsd).toBe(1600);
+    expect(evidence.monthlyCostUsd).toBe(3000);
   });
 
   // The brief parser now lives in `@core/brief-parser`, and
@@ -1089,10 +1122,15 @@ describe("Aether command pipeline", () => {
     // date belongs — on every component an agent or a reviewer added, and
     // that value persisted to the database. The alias IsoTimestamp is a plain
     // string, so the compiler could not tell an id from a date.
-    const created = dispatch(createInitialState(paymentPlatformBaseline), {
-      type: "CREATE_BRANCH",
-      input: { name: "Repair", intent: "highest_resilience" },
-    });
+    const created = dispatch(
+      createInitialState(paymentPlatformBaseline, "payment-platform", [
+        "regional_outage",
+      ]),
+      {
+        type: "CREATE_BRANCH",
+        input: { name: "Repair", intent: "highest_resilience" },
+      },
+    );
     if (!created.ok) throw new Error("fixture branch must be created");
     const branchId = "branch-highest_resilience";
     const added = dispatch(
@@ -1132,10 +1170,15 @@ describe("Aether command pipeline", () => {
     // A person can now remove a component from a future they are shaping, so
     // the guard has to hold against an agent that tries the same command.
     const agent = { id: "probe", kind: "agent" as const, displayName: "Probe" };
-    const created = dispatch(createInitialState(paymentPlatformBaseline), {
-      type: "CREATE_BRANCH",
-      input: { name: "Repair", intent: "highest_resilience" },
-    });
+    const created = dispatch(
+      createInitialState(paymentPlatformBaseline, "payment-platform", [
+        "regional_outage",
+      ]),
+      {
+        type: "CREATE_BRANCH",
+        input: { name: "Repair", intent: "highest_resilience" },
+      },
+    );
     if (!created.ok) throw new Error("fixture branch must be created");
     const branchId = "branch-highest_resilience";
     const state = created.value;
@@ -1219,10 +1262,15 @@ describe("Aether command pipeline", () => {
     // the product, and it had a control in the interface and no test at all.
     // A commit a person cannot undo is worse than one they cannot make.
     const agent = { id: "probe", kind: "agent" as const, displayName: "Probe" };
-    const created = dispatch(createInitialState(paymentPlatformBaseline), {
-      type: "CREATE_BRANCH",
-      input: { name: "Repair", intent: "highest_resilience" },
-    });
+    const created = dispatch(
+      createInitialState(paymentPlatformBaseline, "payment-platform", [
+        "regional_outage",
+      ]),
+      {
+        type: "CREATE_BRANCH",
+        input: { name: "Repair", intent: "highest_resilience" },
+      },
+    );
     if (!created.ok) throw new Error("fixture branch must be created");
     let state = created.value;
     const branchId = "branch-highest_resilience";
@@ -1330,7 +1378,9 @@ describe("the blank canvas opens itself on the first component", () => {
     // branch to proposed, after which every other command sees an ordinary
     // editable branch. The mechanism the whole bring-your-own-system path
     // rests on, and it reads like an inconsistency until you follow it.
-    const blank = createInitialState(blankBaseline, "blank");
+    const blank = createInitialState(blankBaseline, "blank", [
+      "regional_outage",
+    ]);
     expect(blank.branches["branch-baseline"]!.status).toBe("merged");
 
     const added = dispatch(
@@ -1378,7 +1428,9 @@ describe("the blank canvas opens itself on the first component", () => {
 
     // The exception is scoped to the blank template. A seeded architecture is
     // committed, and adding to its baseline is refused.
-    const seeded = createInitialState(blankBaseline, "payment-platform");
+    const seeded = createInitialState(blankBaseline, "payment-platform", [
+      "regional_outage",
+    ]);
     expect(
       dispatch(
         seeded,
@@ -1406,7 +1458,11 @@ describe("a dependency joins two components", () => {
     // out of every blast radius and the canvas refuses to draw the edge, so
     // accepting one recorded a dependency that means nothing — and reported
     // success for it: "connected: gateway -> region-bengaluru".
-    let state = createInitialState(paymentPlatformBaseline);
+    let state = createInitialState(
+      paymentPlatformBaseline,
+      "payment-platform",
+      ["regional_outage"],
+    );
     const branched = dispatch(
       state,
       {
@@ -1467,7 +1523,7 @@ describe("a repair future always repairs something", () => {
     // replication at all, so on that architecture it produced a branch with
     // no operations — a repair future that repairs nothing, presented beside
     // two that do.
-    let state = createInitialState(blankBaseline, "blank");
+    let state = createInitialState(blankBaseline, "blank", ["regional_outage"]);
     const add = (name: string, kind: string, extra: object) => {
       const added = dispatch(
         state,
@@ -1501,7 +1557,10 @@ describe("a repair future always repairs something", () => {
     ).map((intent) => {
       const branched = dispatch(
         state,
-        { type: "CREATE_BRANCH", input: { name: `P ${intent}`, intent } },
+        {
+          type: "CREATE_BRANCH",
+          input: { name: `P ${intent.replace(/_/g, " ")}`, intent },
+        },
         human,
       );
       if (!branched.ok) throw new Error(`${intent}: ${branched.message}`);
@@ -1539,7 +1598,7 @@ describe("a future is never offered with nothing to change", () => {
     // `fastest_recovery` has nothing to change on it. Creating the branch
     // anyway produced an empty future presented beside two that repair
     // something, which misrepresents the choice being offered.
-    let state = createInitialState(blankBaseline, "blank");
+    let state = createInitialState(blankBaseline, "blank", ["regional_outage"]);
     const added = dispatch(
       state,
       {
@@ -1590,7 +1649,7 @@ describe("a future is never offered with nothing to change", () => {
     // there is no restore time to shorten. Redundant instances are what
     // shorten a stateless outage, and the intent adds them rather than
     // producing an empty future.
-    let state = createInitialState(blankBaseline, "blank");
+    let state = createInitialState(blankBaseline, "blank", ["regional_outage"]);
     for (const [name, kind] of [
       ["Edge Api", "gateway"],
       ["Order Service", "service"],

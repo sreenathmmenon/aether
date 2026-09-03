@@ -39,7 +39,12 @@ export type Workspace = {
    * say so, and because a guarantee this product makes should be visible in
    * the state a reviewer can read.
    */
-  requireFullScenarioCoverage?: boolean;
+  /**
+   * The failures this workspace expects answered, at the version being
+   * approved, before a human may approve. Not optional: a gate that fails
+   * open when nobody sets it is not a gate.
+   */
+  requiredScenarios: string[];
   persistenceVersion?: number;
   createdAt: IsoTimestamp;
   updatedAt: IsoTimestamp;

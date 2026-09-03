@@ -5,10 +5,15 @@ import { paymentPlatformBaseline } from "../fixtures/payment-platform/baseline";
 
 describe("semantic branch diff", () => {
   it("describes a repair in product language", () => {
-    const created = dispatch(createInitialState(paymentPlatformBaseline), {
-      type: "CREATE_BRANCH",
-      input: { name: "Highest resilience", intent: "highest_resilience" },
-    });
+    const created = dispatch(
+      createInitialState(paymentPlatformBaseline, "payment-platform", [
+        "regional_outage",
+      ]),
+      {
+        type: "CREATE_BRANCH",
+        input: { name: "Highest resilience", intent: "highest_resilience" },
+      },
+    );
     if (!created.ok) throw new Error("fixture branch must be created");
     const branch = created.value.branches["branch-highest_resilience"]!;
     expect(getBranchDiff(created.value, branch)).toEqual(
@@ -30,10 +35,15 @@ describe("semantic branch diff", () => {
     // future that added three services showed nothing, and a human approved
     // changes they were never shown.
     const human = { id: "s", kind: "human" as const, displayName: "S" };
-    const created = dispatch(createInitialState(paymentPlatformBaseline), {
-      type: "CREATE_BRANCH",
-      input: { name: "Repair", intent: "highest_resilience" },
-    });
+    const created = dispatch(
+      createInitialState(paymentPlatformBaseline, "payment-platform", [
+        "regional_outage",
+      ]),
+      {
+        type: "CREATE_BRANCH",
+        input: { name: "Repair", intent: "highest_resilience" },
+      },
+    );
     if (!created.ok) throw new Error("fixture branch must be created");
     let state = created.value;
     const branchId = "branch-highest_resilience";
@@ -110,7 +120,11 @@ describe("semantic branch diff", () => {
     // reviewer reads "resilience" or "cost" while deciding whether to
     // approve. Mutation testing found all four structural labels could be
     // changed to anything with no test failing.
-    const base = createInitialState(paymentPlatformBaseline);
+    const base = createInitialState(
+      paymentPlatformBaseline,
+      "payment-platform",
+      ["regional_outage"],
+    );
     const branched = dispatch(base, {
       type: "CREATE_BRANCH",
       input: { name: "Impact probe", intent: "highest_resilience" },

@@ -63,12 +63,12 @@ restored into their previous workspace.
    agent can propose a system change. Aether proves what it does.", with
    `10 things it may do here` already in the header behind it.
 2. **The decision room, untouched.** The Mumbai headline, the baseline card
-   at `93.96% availability · 1 violation`, the causal evidence naming
+   at `93.45% availability · 1 violation`, the causal evidence naming
    `Primary Ledger has no standby replica`, and the human guardrail — all
    in one frame.
 3. **Immediately after "Create repair futures".** Three futures, each
-   leading with the axis it optimises — `Lowest cost · $9,220 / month`,
-   `Fastest recovery · 12m recovery`, `Highest resilience · 97.11%
+   leading with the axis it optimises — `Lowest cost · $11,495 / month`,
+   `Fastest recovery · 12m recovery`, `Highest resilience · 96.61%
 availability` — and the header chip now reading **18 things it may do
    here** with the `+8` badge beside it. This is the state-dependent registration
    claim and the trade-off in one image.
@@ -81,9 +81,9 @@ availability` — and the header chip now reading **18 things it may do
 Reconciliation capacity deficit: 2,000 RPS` directly beneath it — the
    product refusing to let a passing scenario stand in for the others.
 6. **The approval record.** `Reviewer approved the exact plan — 4 clean
-scenarios · worst 97.11%`: who decided, the evidence they had, and the
+scenarios · worst 96.61%`: who decided, the evidence they had, and the
    worst case they accepted.
-7. **After the commit.** Thirteen tools registered, `Rollback this merge`
+7. **After the commit.** Twelve tools registered, `Rollback this merge`
    present as a human control, and no agent tool that could undo it.
 8. **A different system.** The same journey on ride-hailing dispatch or AI
    inference, live event — four seeded systems ship, and nothing is fixture-specific.
@@ -141,7 +141,7 @@ decides on the evidence.
 - COOP, COEP, and `Permissions-Policy: tools=(self)` on the live app.
 - PostgreSQL-backed persistence with a private workspace per visitor, optimistic expected-version writes, `409` stale-write rejection, and live synchronisation across tabs. An optional `?room=` link puts several people in one workspace for a shared review, with every change still attributable to the human or agent that made it.
 - ChatGPT Site Tools live discovery/calls recorded in `docs/WEBMCP_EVALS.md`; the Chrome origin-trial token is configured on the deployed origin, which serves the `Origin-Trial` header alongside the isolation headers.
-- State-dependent registration: ten read and branch tools on a committed architecture, fifteen once the model is editable — a repair future is open or the reviewer is building their own system — and eighteen when both hold. Component and region enums are enumerated from the live graph rather than a fixed list.
+- State-dependent registration: ten read and branch tools on a committed architecture, sixteen once the model is editable — a repair future is open or the reviewer is building their own system — and eighteen when both hold. Component and region enums are enumerated from the live graph rather than a fixed list.
 - Bounded agent authority: no approve, merge, or removal tool is registered, the engine refuses destructive removal by an agent actor regardless, and every rejection names the failed fields and the values that would succeed.
 - The interface names its own capability surface, so a reviewer can verify what is published and that no approval tool exists without connecting an agent.
 - A unit suite over the command pipeline, the dependency-graph engine, tool registration and annotations, bounded output, persistence and its concurrency guard, the brief parser, canvas layout invariants, and scenario copy. `npm run test` reports the current count; it is deliberately not quoted here, because a number in prose drifts from the suite and a stale one is worse than none.

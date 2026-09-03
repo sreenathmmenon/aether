@@ -7,7 +7,9 @@ import { wouldDiscardWork } from "./sync-guard";
 const human = { id: "s", kind: "human" as const, displayName: "S" };
 
 function withRuns(scenarios: readonly ("regional_outage" | "traffic_spike")[]) {
-  let state = createInitialState(paymentPlatformBaseline);
+  let state = createInitialState(paymentPlatformBaseline, "payment-platform", [
+    "regional_outage",
+  ]);
   const branched = dispatch(
     state,
     {
@@ -45,7 +47,11 @@ describe("a room keeps everyone in it", () => {
     // side's roster wholesale, so agents that joined from another client
     // vanished on the next reconcile -- measured on the deployed origin,
     // four agents joined and the server held one participant.
-    const base = createInitialState(paymentPlatformBaseline);
+    const base = createInitialState(
+      paymentPlatformBaseline,
+      "payment-platform",
+      ["regional_outage"],
+    );
     const now = Date.now();
     const here = {
       ...base,
@@ -88,7 +94,11 @@ describe("a room keeps everyone in it", () => {
   });
 
   it("refreshes a heartbeat rather than duplicating the row", () => {
-    const base = createInitialState(paymentPlatformBaseline);
+    const base = createInitialState(
+      paymentPlatformBaseline,
+      "payment-platform",
+      ["regional_outage"],
+    );
     const older = {
       ...base,
       participants: [
@@ -173,7 +183,11 @@ describe("a write never erases evidence it has not seen", () => {
     // that is real work loss, `wouldDiscardWork` refused the merge and the
     // conflicted tab stayed a local draft with its note never reaching the
     // server. Observed live as PUT 409 → GET 200 → nothing.
-    const base = createInitialState(paymentPlatformBaseline);
+    const base = createInitialState(
+      paymentPlatformBaseline,
+      "payment-platform",
+      ["regional_outage"],
+    );
     const mine = dispatch(base, {
       type: "ADD_DECISION_NOTE",
       input: {
@@ -211,7 +225,11 @@ describe("a write never erases evidence it has not seen", () => {
     // The union is keyed on content and timestamp because ids are positional
     // — two tabs mint `event-5` for different events — so a shared entry must
     // not appear twice after a reconcile.
-    const base = createInitialState(paymentPlatformBaseline);
+    const base = createInitialState(
+      paymentPlatformBaseline,
+      "payment-platform",
+      ["regional_outage"],
+    );
     const shared = dispatch(base, {
       type: "ADD_DECISION_NOTE",
       input: {

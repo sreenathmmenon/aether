@@ -1,7 +1,22 @@
+import { z } from "zod";
 import type { Actor, BranchId, CommandResult, RevisionId } from "@core/types";
 import { commandFailure } from "@core/types";
 import type { Participant } from "@core/room-presence";
 import type { AetherCommand } from "@core/commands";
+import {
+  addComponentInput,
+  addDecisionNoteInput,
+  approveBranchInput,
+  connectComponentsInput,
+  createBranchInput,
+  mergeBranchInput,
+  moveEntityInput,
+  removeComponentInput,
+  rollbackMergeInput,
+  runScenarioInput,
+  setCostCeilingInput,
+  setPropertyInput,
+} from "@core/commands";
 import type {
   ArchitectureEntity,
   ArchitectureGraph,
@@ -15,8 +30,11 @@ import type {
   Workspace,
 } from "./workspace";
 import {
+  monthlyCostOf,
   requiredScenarios,
   runScenario,
+  totalMonthlyCost,
+  type Scenario,
   type ScenarioResult,
 } from "@simulation/engine";
 
@@ -235,28 +253,35 @@ function wouldBreachCeiling(
 ) {
   const ceiling = state.workspace.costCeilingUsd;
   if (!ceiling) return undefined;
-  const costOf = (entity: { properties: unknown }) => {
-    const cost = (entity.properties as { monthlyCostUsd?: number })
-      .monthlyCostUsd;
-    return typeof cost === "number" ? cost : 0;
-  };
-  const components = Object.values(graph.entities).filter(
-    (entity) => entity.kind !== "region",
-  );
-  let total = components.reduce((sum, entity) => sum + costOf(entity), 0);
+  // The guard measures what the evidence displays. It summed the declared
+  // `monthlyCostUsd` and skipped every other property, so once cost started
+  // being derived from the configuration the two diverged: a locked ceiling
+  // of $8,700 read as under budget against a declared $6,100 while the
+  // reviewer's screen showed $9,400 for the same architecture. Worse, an
+  // agent could buy a synchronous standby or eight replicas -- real money --
+  // and the guard saw no change at all, because neither is the one property
+  // it looked at.
+  //
+  // Projecting the change onto a copy of the graph and pricing that copy
+  // makes every cost-moving property bind, and makes the number the guard
+  // enforces the same number the evidence reports.
+  const projected = structuredClone(graph);
   for (const change of changes) {
-    if (change.property !== "monthlyCostUsd") continue;
-    const next = Number(change.value);
-    if (!Number.isFinite(next)) continue;
-    const current = graph.entities[change.entityId];
-    total += next - (current ? costOf(current) : 0);
+    const entity = projected.entities[change.entityId];
+    if (!entity) continue;
+    (entity.properties as Record<string, unknown>)[change.property] =
+      change.value;
   }
+  const total = totalMonthlyCost(projected);
   if (total <= ceiling) return undefined;
-  const headroom = Math.max(
-    0,
-    ceiling -
-      (total - changes.reduce((sum, c) => sum + Number(c.value ?? 0), 0)),
-  );
+  // What this component would have to cost for the architecture to fit. Its
+  // own projected cost is taken back out, so the figure is a budget for the
+  // component rather than for everything else around it.
+  const changed = new Set(changes.map((change) => change.entityId));
+  const others = Object.values(projected.entities)
+    .filter((entity) => entity.kind !== "region" && !changed.has(entity.id))
+    .reduce((sum, entity) => sum + monthlyCostOf(entity), 0);
+  const headroom = Math.max(0, Math.round(ceiling - others));
   return commandFailure(
     "NOT_AVAILABLE",
     `This change would put monthly cost at $${total.toLocaleString()}, past the $${ceiling.toLocaleString()} ceiling the reviewer locked. Keep this component at or below $${headroom.toLocaleString()}, or ask the reviewer to raise the ceiling — only they can.`,
@@ -387,6 +412,17 @@ function openingNotes(
 export function createInitialState(
   graph: ArchitectureGraph,
   templateId = "payment-platform",
+  /**
+   * Which failures this workspace expects answered before a human may
+   * approve. Defaults to every scenario the engine models, because a safety
+   * gate that fails open is not a gate -- the flag was optional and only the
+   * React app set it, so any other caller approved on partial evidence.
+   *
+   * A workspace deliberately scoped to a single failure mode can narrow it,
+   * which is also how a test exercises one scenario without pretending the
+   * others were answered.
+   */
+  coverage: readonly Scenario[] = requiredScenarios,
 ): AetherState {
   const timestamp = new Date().toISOString();
   const baseRevision: Revision = {
@@ -414,6 +450,7 @@ export function createInitialState(
       domain: "architecture",
       activeBranchId: baseline.id,
       templateId,
+      requiredScenarios: [...coverage],
       persistenceVersion: 0,
       createdAt: timestamp,
       updatedAt: timestamp,
@@ -501,6 +538,26 @@ export function deriveGraph(
   return graph;
 }
 
+/**
+ * The schema each command validates its input against, by command type.
+ * Held here rather than inline so a command added without one is visible as
+ * a missing key rather than as an absence nobody notices.
+ */
+const commandSchemas: Partial<Record<AetherCommand["type"], z.ZodType>> = {
+  CREATE_BRANCH: createBranchInput,
+  SET_PROPERTY: setPropertyInput,
+  MOVE_ENTITY: moveEntityInput,
+  ADD_COMPONENT: addComponentInput,
+  CONNECT_COMPONENTS: connectComponentsInput,
+  REMOVE_COMPONENT: removeComponentInput,
+  RUN_SCENARIO: runScenarioInput,
+  SET_COST_CEILING: setCostCeilingInput,
+  APPROVE_BRANCH: approveBranchInput,
+  MERGE_BRANCH: mergeBranchInput,
+  ROLLBACK_MERGE: rollbackMergeInput,
+  ADD_DECISION_NOTE: addDecisionNoteInput,
+};
+
 export function dispatch(
   state: AetherState,
   command: AetherCommand,
@@ -513,6 +570,27 @@ export function dispatch(
    */
   signal?: AbortSignal,
 ): CommandResult<AetherState> {
+  // The command layer validates its own input rather than trusting whoever
+  // called it. `llms.txt` claims this boundary is enforced independently of
+  // the tool list, and it was not: `SET_COST_CEILING` with the wrong field
+  // name returned ok and set the ceiling to `undefined`, and with
+  // `amountUsd: "banana"` it stored the string. Unreachable through the
+  // shipped tools, which validate first -- but a boundary that only holds
+  // when something else already checked is not a boundary.
+  const schema = commandSchemas[command.type];
+  if (schema) {
+    const parsed = schema.safeParse(command.input);
+    if (!parsed.success)
+      return commandFailure(
+        "INVALID_INPUT",
+        parsed.error.issues
+          .slice(0, 3)
+          .map(
+            (issue) => `${issue.path.join(".") || "input"}: ${issue.message}`,
+          )
+          .join("; "),
+      );
+  }
   const next = structuredClone(state) as AetherState;
   const now = new Date().toISOString();
   let affectedEntityIds: string[] = [];
@@ -1123,14 +1201,15 @@ export function dispatch(
     // and an agent that wants a merge only has to pick the scenario that
     // comes back clean. Every failure the architecture is expected to answer
     // for has to have been answered at this version.
-    const answered = new Set(currentEvidence.map((run) => run.scenario));
-    const unanswered = next.workspace.requireFullScenarioCoverage
-      ? requiredScenarios.filter((scenario) => !answered.has(scenario))
-      : [];
+    const answered = new Set<string>(
+      currentEvidence.map((run) => run.scenario),
+    );
+    const expected = next.workspace.requiredScenarios ?? requiredScenarios;
+    const unanswered = expected.filter((scenario) => !answered.has(scenario));
     if (unanswered.length)
       return commandFailure(
         "NOT_AVAILABLE",
-        `${unanswered.length} of ${requiredScenarios.length} scenarios have not been run at this version: ${unanswered.join(", ")}.`,
+        `${unanswered.length} of ${expected.length} scenarios have not been run at this version: ${unanswered.join(", ")}.`,
       );
     branch.status = "approved";
     branch.updatedAt = now;

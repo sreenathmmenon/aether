@@ -34,7 +34,11 @@ describe("what a future card reports as its evidence", () => {
   };
 
   it("shows recorded evidence even when another scenario is selected", () => {
-    let state = createInitialState(paymentPlatformBaseline);
+    let state = createInitialState(
+      paymentPlatformBaseline,
+      "payment-platform",
+      ["regional_outage"],
+    );
     const created = dispatch(
       state,
       {
