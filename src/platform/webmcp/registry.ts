@@ -680,7 +680,14 @@ export function createAetherToolRegistry(
           if (!parsed.success)
             return invalidInput(parsed.error, componentIds().join(", "));
           const state = snapshot();
-          const entity = activeGraph(state).entities[parsed.data.entityId];
+          // Read against the branch the caller names, so what the component
+          // is provisioned at is the figure on that future rather than on
+          // whichever branch happens to be active.
+          const named = parsed.data.branchId
+            ? state.branches[parsed.data.branchId]
+            : undefined;
+          const graph = named ? deriveGraph(state, named) : activeGraph(state);
+          const entity = graph.entities[parsed.data.entityId];
           if (!entity)
             return JSON.stringify({
               error: "INVALID_INPUT",

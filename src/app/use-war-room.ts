@@ -19,6 +19,37 @@ import { threadsForRole, type AgentRole } from "@core/room-presence";
  * does live is the same thing an external agent could do -- and the same
  * things stay refused.
  */
+/**
+ * "branch-highest_resilience" reads as "Highest resilience". A room holding
+ * three futures needs every finding to say which one it is about; two
+ * correct deficits from two different futures are indistinguishable
+ * otherwise.
+ */
+function futureAt(
+  branchId: string,
+  version: unknown,
+  scenario: string,
+): string {
+  const name = futureName(branchId);
+  // A finding has to carry both the future and the scenario it was taken
+  // under. One future showed a 113,771 RPS deficit beside an 8,771 RPS one
+  // and both were right -- the first under a traffic spike at 1.5x demand,
+  // the second under a regional outage at normal demand -- but the board
+  // named neither, so they read as the product contradicting itself. The
+  // version distinguishes readings taken as the future changes underneath
+  // them.
+  const under = scenario.replace(/_/g, " ");
+  return typeof version === "number"
+    ? `${name} v${version} under ${under}`
+    : `${name} under ${under}`;
+}
+
+function futureName(branchId: string): string {
+  const stem = branchId.replace(/^branch-/, "").replace(/_/g, " ");
+  if (!stem || stem === "baseline") return "the committed architecture";
+  return stem.charAt(0).toUpperCase() + stem.slice(1);
+}
+
 export function useWarRoom(
   registry: ToolRegistry | undefined,
   /** The branch the room is arguing about. Hardcoding a repair branch meant
@@ -102,6 +133,9 @@ export function useWarRoom(
         const result = usesTelemetry
           ? await registry.call("read_component_telemetry", {
               entityId: thread.entityId,
+              // Against the future being repaired, not the committed
+              // architecture: a repair may already have raised capacity.
+              branchId: branchRef.current,
             })
           : await registry.call("read_live_source", { source: "openai" });
         const parsed = safeParse(result);
@@ -187,8 +221,13 @@ export function useWarRoom(
         return;
       }
       if (intent.kind === "propose") {
+        // The future the room is actually looking at. This was pinned to
+        // the highest-resilience branch, so a room comparing three futures
+        // reported one future's deficit beside another's re-check and named
+        // neither: 113,771 RPS and 8,771 RPS on the same thread, both
+        // correct, both unattributable.
         const result = await registry.call("run_failure_scenario", {
-          branchId: "branch-highest_resilience",
+          branchId: branchRef.current,
           scenario: thread.scenario,
         });
         const parsed = safeParse(result);
@@ -198,10 +237,10 @@ export function useWarRoom(
         onFinding(thread.id, {
           id: `finding-${Date.now()}`,
           said: violations.length
-            ? `${violations.length} violation${violations.length === 1 ? "" : "s"}: ${String(violations[0])}`
+            ? `${futureAt(branchRef.current, parsed.branchVersion, thread.scenario)}: ${violations.length} violation${violations.length === 1 ? "" : "s"} — ${String(violations[0])}`
             : typeof parsed.availability === "number"
-              ? `Clean under ${thread.scenario.replace(/_/g, " ")} — ${parsed.availability}% available`
-              : `${thread.scenario.replace(/_/g, " ")} could not be modelled on this branch yet.`,
+              ? `${futureAt(branchRef.current, parsed.branchVersion, thread.scenario)} is clean — ${parsed.availability}% available`
+              : `${thread.scenario.replace(/_/g, " ")} could not be modelled on this future yet.`,
           source: `${actor ? actor.name + " · " : ""}Aether engine`,
           at: new Date().toISOString(),
           live: false,
@@ -222,10 +261,10 @@ export function useWarRoom(
       onFinding(thread.id, {
         id: `finding-${Date.now()}`,
         said: violations.length
-          ? `Still blocked: ${String(violations[0])}`
+          ? `${futureAt(branchRef.current, parsed.branchVersion, thread.scenario)} is still blocked: ${String(violations[0])}`
           : typeof parsed.availability === "number"
-            ? `Re-checked and still clean — ${parsed.availability}% available`
-            : "Re-check pending — the branch moved under this reading.",
+            ? `${futureAt(branchRef.current, parsed.branchVersion, thread.scenario)} re-checked and still clean — ${parsed.availability}% available`
+            : "Re-check pending — the future moved under this reading.",
         source: "Aether engine",
         at: new Date().toISOString(),
         live: false,

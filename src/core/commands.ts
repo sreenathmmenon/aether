@@ -17,6 +17,11 @@ export const joinRoomInput = z.object({
 export const telemetryInput = z.object({
   entityId: z.string().min(1),
   package: z.string().trim().min(1).max(128).optional(),
+  // Which future the reading is being held against. Capacity differs
+  // between branches -- a repair may already have raised it -- so a reading
+  // compared against the committed baseline would report a shortfall a
+  // repair has already closed, or a surplus it has not.
+  branchId: z.string().min(1).optional(),
 });
 
 export const createBranchInput = z.object({
