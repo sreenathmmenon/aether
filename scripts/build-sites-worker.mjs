@@ -21,7 +21,15 @@ writeFileSync(
         }
       });
     }
-    return env.ASSETS.fetch(request);
+    const assetResponse = await env.ASSETS.fetch(request);
+    if (assetResponse.status !== 404) return assetResponse;
+    if (!request.headers.get("accept")?.includes("text/html")) {
+      return assetResponse;
+    }
+    const fallback = new URL(request.url);
+    fallback.pathname = "/index.html";
+    fallback.search = "";
+    return env.ASSETS.fetch(new Request(fallback, request));
   }
 };
 `,
