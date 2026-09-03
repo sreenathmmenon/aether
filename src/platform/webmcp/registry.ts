@@ -2043,6 +2043,47 @@ export function createAetherToolRegistry(
     }
   }
 
+  // The browser is the authority on what is registered; this page has only
+  // its own belief about it. `toolchange` is the spec's way of saying the two
+  // may have diverged -- a registration refused, a tool dropped, a surface
+  // rebuilt from somewhere this code did not initiate -- and nothing here was
+  // listening for it. Every rebuild was push-driven from React, which is
+  // correct while React is the only writer and silent when it is not.
+  //
+  // Reconciling rather than merely re-rendering: what the browser reports is
+  // compared against what this registry believes it put there, and a
+  // difference is surfaced to the page rather than papered over. On a product
+  // whose central claim is that the tool surface follows the architecture,
+  // being wrong about the surface is the one error that cannot be allowed to
+  // stay quiet.
+  const onToolChange = () => {
+    void (async () => {
+      try {
+        // `ModelContext` is narrowed here to the one method this registry
+        // writes through, so the read side is reached explicitly.
+        const reader = webmcp as unknown as {
+          getTools?: () => Promise<{ name?: string }[]>;
+        };
+        const live = await reader.getTools?.();
+        if (!live) return;
+        const reported = new Set(live.map((tool) => tool.name ?? ""));
+        const believed = new Set(registeredNames);
+        const missing = [...believed].filter((name) => !reported.has(name));
+        const unexpected = [...reported].filter((name) => !believed.has(name));
+        if (missing.length || unexpected.length)
+          onToolCount?.(reported.size, [...reported]);
+      } catch {
+        // A browser that cannot report its surface tells us nothing about
+        // ours, which is not a reason to tear down a working registry.
+      }
+    })();
+  };
+  const modelContextEvents =
+    typeof (webmcp as unknown as EventTarget).addEventListener === "function"
+      ? (webmcp as unknown as EventTarget)
+      : undefined;
+  modelContextEvents?.addEventListener("toolchange", onToolChange);
+
   return {
     refresh: refreshSurface,
     surface: () =>
@@ -2066,6 +2107,7 @@ export function createAetherToolRegistry(
       );
     },
     dispose() {
+      modelContextEvents?.removeEventListener("toolchange", onToolChange);
       registrations.forEach((registration) => registration.abort());
       registrations = [];
       registeredTools.clear();
