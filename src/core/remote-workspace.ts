@@ -98,7 +98,7 @@ export async function loadRemoteWorkspace(): Promise<AetherState | undefined> {
 export async function saveRemoteWorkspace(
   state: AetherState,
   expectedVersion: number,
-): Promise<number | "conflict" | "offline" | "local"> {
+): Promise<number | "conflict" | "offline" | "local" | "too-large"> {
   try {
     const response = await fetch(endpointFor(), {
       method: "PUT",
@@ -112,6 +112,10 @@ export async function saveRemoteWorkspace(
       }),
     });
     if (response.status === 409) return "conflict";
+    // A refused-for-size write is permanent, not a blip: the state can only
+    // be resent as-is, so every retry fails identically. Reporting it as
+    // "offline" invited a reviewer to keep working and keep losing it.
+    if (response.status === 413) return "too-large";
     if (!response.ok) return "offline";
     const payload = (await response.json()) as {
       version: number;

@@ -58,6 +58,134 @@ const agent: Actor = {
  * The refusal names the ceiling, the total the change would reach, and what
  * would fit, so a model can correct itself in one step.
  */
+/**
+ * How many audit entries keep their full `input` and `result` payloads.
+ *
+ * The record is the product, so entries are never dropped: the count backs
+ * `revisionId`, every entry id, the replay numbering a reviewer reads, and
+ * the sync guard that refuses a remote state holding less history than this
+ * one. Losing entries would read as work disappearing.
+ *
+ * What they do not all need is the detail blob. `input` and `result` are
+ * about 40% of an entry's bytes and are read only for entries the interface
+ * actually shows -- the replay window is twelve -- so beyond a wide margin
+ * they are weight the workspace carries to the server on every save.
+ *
+ * That weight is not theoretical. A shared room on the deployed origin
+ * reached 2,340 entries and 1.04 MB of audit against the 1 MB workspace
+ * ceiling, which meant every further action by anyone holding that link was
+ * rejected and shown as "Offline draft". An unbounded log had made the
+ * durable record undurable.
+ */
+const auditDetailWindow = 200;
+
+/**
+ * The most entries the array itself holds. Stripping payloads alone was not
+ * enough: a compacted entry still costs about 300 bytes, so an unbounded
+ * array crossed the ceiling at roughly 3,400 dispatches instead of 2,300 --
+ * later, and just as fatal. Beyond this the oldest entries are retired and
+ * counted in `workspace.auditRetired`, so the record still reports how many
+ * decisions it holds even though it no longer carries each one.
+ */
+export const auditRetainWindow = 1500;
+
+/**
+ * Hold an audit array to the retain window, reporting how many entries were
+ * dropped. Exported because merging two workspaces unions their audits and
+ * can therefore exceed the window again -- a bound applied only on dispatch
+ * was undone by the next reconcile, and the array grew to 5,764 entries
+ * while the retired counter climbed into the hundreds of thousands.
+ */
+export function boundAudit(audit: AetherState["audit"]): {
+  audit: AetherState["audit"];
+  retired: number;
+} {
+  const kept =
+    audit.length <= auditRetainWindow
+      ? audit
+      : audit.slice(audit.length - auditRetainWindow);
+  // Derived from the oldest surviving entry rather than accumulated. Ids are
+  // positional -- `event-1`, `event-2` -- so the first id says how much
+  // history came before it. A running total was added to on every dispatch
+  // *and* every merge, and because a merge unions the two audits back above
+  // the window, the same entries were retired again and again: 1,000
+  // dispatches reported 13,540 entries retired.
+  const first = kept[0]?.id;
+  const position = first ? Number(String(first).replace(/^event-/, "")) : 1;
+  return {
+    audit: kept,
+    retired: Number.isFinite(position) && position > 1 ? position - 1 : 0,
+  };
+}
+
+function compactAudit(state: AetherState): void {
+  const bounded = boundAudit(state.audit);
+  state.audit = bounded.audit;
+  if (bounded.retired) state.workspace.auditRetired = bounded.retired;
+  const kept = state.audit;
+  if (kept.length <= auditDetailWindow) return;
+  const cut = kept.length - auditDetailWindow;
+  state.audit = kept.map((event, index) => {
+    if (index >= cut) return event;
+    // Already compacted on an earlier dispatch, so leave it alone rather
+    // than rebuilding an identical object on every write.
+    if (event.input === undefined && event.result === undefined) return event;
+    // Built explicitly rather than by destructuring the payload away, so the
+    // fields a compacted entry keeps are visible here.
+    return {
+      id: event.id,
+      workspaceId: event.workspaceId,
+      branchId: event.branchId,
+      actor: event.actor,
+      commandName: event.commandName,
+      timestamp: event.timestamp,
+    };
+  });
+}
+
+/**
+ * Replace the last write to the same target instead of appending another.
+ *
+ * `deriveGraph` replays operations in order, so for a property or a position
+ * only the final write to a given target affects the result -- every earlier
+ * one is dead weight that the workspace still carries to the server on every
+ * save. Dragging a card or nudging a capacity slider produced one operation
+ * per step, and a branch reached five thousand operations and 416 KB while
+ * describing a handful of actual changes.
+ *
+ * Only the *last* matching operation is replaced, and only for kinds that
+ * overwrite rather than accumulate, so the derived graph is identical. The
+ * audit log is where the sequence of decisions lives; the operation list is
+ * how the branch is rebuilt, and it only needs the outcome.
+ */
+function writeOperation(
+  operations: Branch["operations"],
+  operation: Branch["operations"][number],
+): void {
+  const supersedes = (candidate: Branch["operations"][number]) => {
+    if (candidate.kind !== operation.kind) return false;
+    if (operation.kind === "set_property")
+      return (
+        candidate.kind === "set_property" &&
+        candidate.entityId === operation.entityId &&
+        candidate.property === operation.property
+      );
+    if (operation.kind === "move_entity")
+      return (
+        candidate.kind === "move_entity" &&
+        candidate.entityId === operation.entityId
+      );
+    return false;
+  };
+  for (let index = operations.length - 1; index >= 0; index -= 1) {
+    if (supersedes(operations[index]!)) {
+      operations[index] = operation;
+      return;
+    }
+  }
+  operations.push(operation);
+}
+
 function wouldBreachCeiling(
   state: AetherState,
   branch: Branch,
@@ -616,7 +744,7 @@ export function dispatch(
       },
     ]);
     if (overBudget) return overBudget;
-    branch.operations.push({
+    writeOperation(branch.operations, {
       kind: "set_property",
       entityId: command.input.entityId,
       property: command.input.property,
@@ -636,7 +764,7 @@ export function dispatch(
     const graph = deriveGraph(next, branch);
     if (!graph.entities[command.input.entityId])
       return commandFailure("INVALID_INPUT", "Unknown architecture entity.");
-    branch.operations.push({
+    writeOperation(branch.operations, {
       kind: "move_entity",
       entityId: command.input.entityId,
       x: command.input.x,
@@ -1013,7 +1141,11 @@ export function dispatch(
   }
 
   next.audit.push({
-    id: `event-${next.audit.length + 1}`,
+    // Numbered across the whole record, not the retained slice. Once the
+    // array is bounded its length stops advancing, so this minted the same
+    // id for every subsequent entry -- 1,500 entries all called
+    // `event-1501`, which also broke the retired count derived from them.
+    id: `event-${(next.workspace.auditRetired ?? 0) + next.audit.length + 1}`,
     workspaceId: next.workspace.id,
     branchId:
       "branchId" in command.input
@@ -1025,10 +1157,12 @@ export function dispatch(
     result: { nextState, affectedEntityIds },
     timestamp: now,
   });
+  compactAudit(next);
   return {
     ok: true,
     value: next,
-    revisionId: `revision-${next.audit.length}`,
+    // Across the whole record, for the same reason the entry id is.
+    revisionId: `revision-${(next.workspace.auditRetired ?? 0) + next.audit.length}`,
     affectedEntityIds,
     nextState,
   };

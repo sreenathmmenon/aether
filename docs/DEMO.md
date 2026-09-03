@@ -52,8 +52,8 @@ agent works:
 > **Branched a highest resilience future** · next: run_failure_scenario
 > **Simulated database failure** · 98.23% available · clean
 
-The header chip moves from **10 state-aware tools** to **12** as the repair
-future appears — the surface growing because the state did.
+The header chip moves from **10 things it may do here** to **18** as the
+repair futures appear — the surface growing because the state did.
 
 Say it plainly: _that architecture did not exist twenty seconds ago, and
 those numbers are computed from its dependency graph, not generated._
@@ -88,7 +88,7 @@ column of the same number — **`Lowest cost · $5,920 / month`**, **`Fastest
 recovery · 12m recovery`**, **`Highest resilience · 97.11% availability`**.
 Point at that: the cheap future is not a worse version of the safe one, it
 is a different answer to the same failure. The header chip changes to
-**`WebMCP live · 13 state-aware tools`**.
+**`18 things it may do here`**.
 
 Say it plainly: _this is the second time the surface has grown on camera —
 fifteen to eighteen on the reviewer's own system, ten to eighteen here. The
@@ -171,7 +171,7 @@ after your edits" instead. Either is correct; do not be thrown by it.)
 
 and **`Human approve exact plan`** becomes enabled.
 
-Say: _no approve tool exists for the agent. Not gated — absent. Thirteen
+Say: _no approve tool exists for the agent. Not gated — absent. Eighteen
 tools are registered — one of them *recommends* a future — and not one can commit this._
 
 Click approve. The record entry is the whole thesis in one row:

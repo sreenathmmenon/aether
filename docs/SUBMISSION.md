@@ -61,7 +61,7 @@ restored into their previous workspace.
 
 1. **First load, before any click.** The onboarding dialog reading "Your
    agent can propose a system change. Aether proves what it does.", with
-   `WebMCP live · 5 state-aware tools` already in the header behind it.
+   `10 things it may do here` already in the header behind it.
 2. **The decision room, untouched.** The Mumbai headline, the baseline card
    at `93.96% availability · 1 violation`, the causal evidence naming
    `Primary Ledger has no standby replica`, and the human guardrail — all
@@ -69,8 +69,8 @@ restored into their previous workspace.
 3. **Immediately after "Create repair futures".** Three futures, each
    leading with the axis it optimises — `Lowest cost · $5,920 / month`,
    `Fastest recovery · 12m recovery`, `Highest resilience · 97.11%
-availability` — and the header chip now reading **13 state-aware tools**
-   with the `+8` badge beside it. This is the state-dependent registration
+availability` — and the header chip now reading **18 things it may do
+   here** with the `+8` badge beside it. This is the state-dependent registration
    claim and the trade-off in one image.
 4. **The gate refusing.** Highest resilience selected, approve disabled,
    the status strip reading `Waiting on — A fix for the violations`, and the

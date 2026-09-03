@@ -101,7 +101,16 @@ describe("Aether command pipeline", () => {
           .map((match) => ({ name: match[1]!, at: match.index }))
           .filter(({ at }, index, all) => {
             const end = all[index + 1]?.at ?? source.length;
-            return source.slice(at, end).includes("branch.operations.push");
+            // Both forms of recording an operation. `set_property` and
+            // `move_entity` go through `writeOperation`, which replaces the
+            // last write to the same target rather than appending another,
+            // so scanning only for a push missed them and this list quietly
+            // shrank from five commands to three.
+            const body = source.slice(at, end);
+            return (
+              body.includes("branch.operations.push") ||
+              body.includes("writeOperation(branch.operations")
+            );
           })
           .map(({ name }) => name),
       ),

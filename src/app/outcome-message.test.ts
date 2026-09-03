@@ -76,7 +76,9 @@ describe("what a reviewer is told a command did", () => {
     expect(replay).toMatch(/eventEvidence\(event\)/);
 
     // And the tool keeps the machine-readable outcome.
-    expect(registrySource).toMatch(/outcome: event\.result\.nextState/);
+    // Optional access: entries beyond the audit detail window carry the
+    // command without its payload, so this must not assume the shape.
+    expect(registrySource).toMatch(/outcome: event\.result\?\.nextState/);
   });
 
   it("falls back rather than throwing on a state it has not met", () => {

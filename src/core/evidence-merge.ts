@@ -1,3 +1,4 @@
+import { boundAudit } from "./branch-engine";
 import type { AetherState } from "./branch-engine";
 
 /**
@@ -47,7 +48,16 @@ export function mergeEvidence(
       entry.actor?.id,
       entry.commandName,
       entry.branchId,
-      JSON.stringify(entry.input),
+      // The payload where it survives, and nothing where it does not. Two
+      // notes written in the same millisecond on the same branch differ only
+      // in their input, so dropping it outright merged two real decisions
+      // into one. But entries beyond the detail window have that payload
+      // stripped, and keying a stripped entry on it made it a different
+      // entry from its own full twin -- the union kept both and the audit
+      // doubled on every reconcile. The id cannot stand in: it is positional,
+      // so two tabs mint `event-9` for different events, which is the reason
+      // this key exists at all.
+      entry.input === undefined ? "" : JSON.stringify(entry.input),
     ].join("|");
   const noteKey = (note: AetherState["decisionNotes"][number]) =>
     [
@@ -91,10 +101,19 @@ export function mergeEvidence(
     if (!existing || participant.lastSeen >= existing.lastSeen)
       presence.set(participant.id, participant);
   }
+  // Bounded after the union, or the merge undoes the trimming that keeps
+  // this workspace inside the size the server accepts.
+  const bounded = boundAudit(union(held.audit, incoming.audit, auditKey));
   return {
     ...incoming,
+    workspace: {
+      ...incoming.workspace,
+      // Whatever the bound derived from the surviving entries. It is a fact
+      // about the array, not a tally to add to.
+      auditRetired: bounded.retired || undefined,
+    },
     simulations: merged,
-    audit: union(held.audit, incoming.audit, auditKey),
+    audit: bounded.audit,
     decisionNotes: union(held.decisionNotes, incoming.decisionNotes, noteKey),
     participants: [...presence.values()],
   };

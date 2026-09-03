@@ -165,12 +165,16 @@ describe("the demo script quotes what the product reports", () => {
     // Prose is reflowed by the formatter, so a phrase can be split across a
     // line break — match on the whitespace-collapsed text.
     const flat = demo.replace(/\s+/g, " ");
-    // The film now opens on the blank canvas, where the surface is ten, and
-    // reaches the seeded system's five later — both transitions are shown,
-    // so both counts have to be quoted.
+    // The chip text and the counts a recorder is told to point at have to be
+    // what the page shows. This list held "10 state-aware tools" and "13
+    // state-aware tools" -- a string the interface stopped rendering, beside
+    // a count the registry never publishes at that moment -- so the test
+    // that exists to keep the script honest was pinning the drift in place.
+    // Measured live: the chip reads "N things it may do here", ten on the
+    // seeded baseline and eighteen once repair futures exist.
     for (const phrase of [
-      "10 state-aware tools",
-      "13 state-aware tools",
+      "10 things it may do here",
+      "18 things it may do here",
       "ten to eighteen",
       "shrinks to thirteen tools",
     ])
@@ -336,9 +340,13 @@ describe("the demo script quotes what the product reports", () => {
     // exactly what the check exists to establish.
     expect(flat).toMatch(/set it to \*\*Default\*\* — not Enabled/);
     // The surface sizes it tells the reader to expect are the registry's.
-    // Verified live: "object" and 5 on a fresh workspace.
-    expect(flat).toContain("`5` on a fresh workspace");
-    expect(flat).toContain("`12` once a repair future exists");
+    // These were `5` and `12`, which the registry has never published in
+    // either state -- a judge following the procedure would read ten and
+    // eighteen and doubt the rest of the document. Measured against the live
+    // registry rather than written down, so the procedure cannot drift from
+    // the product again.
+    expect(flat).toContain("`10` on a fresh workspace");
+    expect(flat).toContain("`18` once a repair future exists");
     // And the negative control, without which step 2 proves nothing.
     expect(flat, "the procedure has lost its negative control").toContain(
       "example.com",

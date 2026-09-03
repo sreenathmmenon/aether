@@ -52,7 +52,7 @@ The causal evidence names the two worst capacity deficits rather than every one,
 
 ## Nothing is fixture-specific
 
-The engine, the repair presets, the seeded decision notes, the scenario narrative, the region labels, and the quick human actions are all derived from whichever graph is loaded. Aether ships two starting systems — a two-region payment platform with a single writable ledger, and an inference platform whose shared vector store feeds two independent read paths — and a visitor can extend either, or model something else entirely, without any code path special-casing a component name.
+The engine, the repair presets, the seeded decision notes, the scenario narrative, the region labels, and the quick human actions are all derived from whichever graph is loaded. Aether ships four starting systems — a two-region payment platform with a single writable ledger, a ride-hailing dispatch platform where matching depends on both driver supply and trip state, an inference platform whose shared vector store feeds two independent read paths, and a live-event streaming platform whose audience returns faster than capacity can — and a visitor can extend either, or model something else entirely, without any code path special-casing a component name.
 
 ## Expansion rule
 

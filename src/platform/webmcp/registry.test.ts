@@ -21,6 +21,8 @@ import submissionDoc from "../../../docs/SUBMISSION.md?raw";
 import readmeDoc from "../../../README.md?raw";
 import planDoc from "../../../docs/V3_REVERSE_WINNER_PLAN.md?raw";
 import evalsDoc from "../../../docs/WEBMCP_EVALS.md?raw";
+import architectureDoc from "../../../docs/ARCHITECTURE.md?raw";
+import demoDoc from "../../../docs/DEMO.md?raw";
 import appSource from "../../app/App.tsx?raw";
 
 type RegisteredTool = {
@@ -999,6 +1001,15 @@ describe("Aether WebMCP registry", () => {
       eleven: 11,
       twelve: 12,
       thirteen: 13,
+      // The list stopped at thirteen while the surface grew to eighteen, so
+      // every wrong number above it was invisible to this test: "all
+      // fourteen are asserted" when there are eighteen schemas, and the
+      // eighteen-tool state itself could never be checked.
+      fourteen: 14,
+      fifteen: 15,
+      sixteen: 16,
+      seventeen: 17,
+      eighteen: 18,
     };
     for (const [name, text] of [
       ["docs/WEBMCP.md", webmcpDoc],
@@ -1007,6 +1018,11 @@ describe("Aether WebMCP registry", () => {
       ["docs/WEBMCP_EVALS.md", evalsDoc],
       ["docs/SUBMISSION.md", submissionDoc],
       ["README.md", readmeDoc],
+      // Both were outside this list, and both drifted: ARCHITECTURE.md still
+      // said the product ships two starting systems when it ships four, and
+      // DEMO.md is the shot list somebody records the required video from.
+      ["docs/ARCHITECTURE.md", architectureDoc],
+      ["docs/DEMO.md", demoDoc],
     ] as const) {
       for (const [word, value] of Object.entries(words)) {
         // Matching only "<word> tools" let five wrong numbers survive a

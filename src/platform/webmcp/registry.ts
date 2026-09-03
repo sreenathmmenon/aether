@@ -529,7 +529,10 @@ export function createAetherToolRegistry(
                 actor: event.actor.kind,
                 command: event.commandName,
                 branchId: event.branchId,
-                outcome: event.result.nextState,
+                // The last four are always inside the detail window, but the
+                // payload is optional on older entries and this must not
+                // assume a shape it is not guaranteed.
+                outcome: event.result?.nextState,
               })),
           });
         },

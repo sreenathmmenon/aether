@@ -176,6 +176,29 @@ const systemTemplates = [
 ] as const;
 
 /**
+ * Whether the address bar names a system at all, whatever it names.
+ *
+ * `requestedTemplate` returns undefined both for "no link" and for "a link
+ * naming something we do not ship", and those want opposite behaviour: no
+ * link is an ordinary return visit and the visitor keeps their work, while a
+ * link that cannot be honoured must not silently hand the visitor somebody
+ * else's stored workspace. A judge following a slightly wrong link -- a typo,
+ * a stale URL out of a document -- landed on a live-event workspace with four
+ * branches already open, which is the middle of a story rather than the
+ * start of one.
+ */
+function systemWasNamed() {
+  if (typeof window === "undefined") return false;
+  try {
+    return Boolean(
+      new URLSearchParams(window.location.search).get("system")?.trim(),
+    );
+  } catch {
+    return false;
+  }
+}
+
+/**
  * The system named by a `?system=` query parameter, when it names one we ship.
  * Links are how a reviewer shares a specific architecture.
  */
@@ -231,6 +254,10 @@ export function App() {
     // and silently landing on somebody's previous workspace makes the link
     // useless and the product look like it ignored the request.
     const requested = requestedTemplate();
+    // Named something we do not ship: open the default system fresh rather
+    // than restoring whatever this browser happens to hold.
+    if (!requested && systemWasNamed())
+      return createInitialState(paymentPlatformBaseline, "payment-platform");
     if (requested) {
       // A ?system= link must open that system, but `loadTemplate` writes that
       // parameter into the address bar itself, so a person who picks their own
@@ -1040,6 +1067,12 @@ export function App() {
           }
           if (result === "local") setSyncStatus("Local draft");
           if (result === "offline") setSyncStatus("Offline draft");
+          if (result === "too-large") {
+            setSyncStatus("Too large to save");
+            setMessage(
+              "This workspace is too large to save. Your work is safe in this tab — open a fresh room to keep a saved record.",
+            );
+          }
           if (result !== "conflict") {
             finishSave();
             return;
@@ -1126,6 +1159,11 @@ export function App() {
         !shouldRestore(requested.id, remote.workspace.templateId)
       )
         return;
+      // And a link naming a system we do not ship keeps the fresh state the
+      // initial load chose. Without this the guard above is skipped -- the
+      // requested template is undefined -- and the remote workspace lands
+      // anyway, which is how ?system=nope produced four branches.
+      if (!requested && systemWasNamed()) return;
       applyingRemoteRef.current = true;
       // Union the evidence rather than swapping wholesale. Remote and local
       // can each hold runs the other has not seen — the writer that produced

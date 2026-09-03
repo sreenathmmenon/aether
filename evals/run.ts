@@ -26,6 +26,7 @@ import {
 } from "../src/core/branch-engine";
 import { paymentPlatformBaseline } from "../src/fixtures/payment-platform/baseline";
 import { createAetherToolRegistry } from "../src/platform/webmcp/registry";
+import { maxWorkspaceBytes } from "../src/core/workspace-contract";
 
 type RegisteredTool = {
   name: string;
@@ -474,7 +475,66 @@ async function main() {
     );
   }
 
-  // 12. Telemetry read at the component's own scale. A reading that argues
+  // 12. The workspace has to stay inside the size the server accepts, for
+  //     as long as a room is used. This is the one that would have lost it:
+  //     a shared room on the deployed origin reached 2,340 audit entries and
+  //     1.04 MB against a 1 MB ceiling, so every further action by anyone
+  //     holding that link was rejected -- and reported as "Offline draft",
+  //     which reads as a network blip rather than a permanent dead end.
+  {
+    let state = createInitialState(paymentPlatformBaseline, "payment-platform");
+    const human = { id: "reviewer", kind: "human" as const, displayName: "R" };
+    const branched = dispatch(
+      state,
+      {
+        type: "CREATE_BRANCH",
+        input: { name: "Repair", intent: "highest_resilience" },
+      },
+      human,
+    );
+    if (!branched.ok) throw new Error("the repair future must be creatable");
+    state = branched.value;
+    for (let index = 1; index <= 4000; index += 1) {
+      const next = dispatch(
+        state,
+        {
+          type: "SET_PROPERTY",
+          input: {
+            branchId: "branch-highest_resilience",
+            entityId: "ledger",
+            property: "capacityRps",
+            value: 14000 + (index % 900),
+          },
+        },
+        human,
+      );
+      if (!next.ok) break;
+      state = next.value;
+    }
+    const size = JSON.stringify(state).length;
+    record(
+      "workspace/stays-savable",
+      "After four thousand changes, does the workspace still fit what the server accepts?",
+      size < maxWorkspaceBytes ? "pass" : "fail",
+      `${size.toLocaleString()} bytes against a ${maxWorkspaceBytes.toLocaleString()} byte ceiling`,
+    );
+
+    // Bounding it must not change what the branch derives to, or the saving
+    // is bought with silent corruption.
+    const derived = deriveGraph(
+      state,
+      state.branches["branch-highest_resilience"]!,
+    ).entities["ledger"]?.properties as { capacityRps?: number };
+    const lastWrite = 14000 + (4000 % 900);
+    record(
+      "workspace/last-write-survives",
+      "Does collapsing superseded writes leave the last one intact?",
+      derived?.capacityRps === lastWrite ? "pass" : "fail",
+      `ledger capacity is ${String(derived?.capacityRps)} (expected ${lastWrite}, the last value written)`,
+    );
+  }
+
+  // 13. Telemetry read at the component's own scale. A reading that argues
   //    for shrinking a correctly sized component is worse than no reading.
   if (liveServer) {
     const response = await fetch(
@@ -501,7 +561,7 @@ async function main() {
     );
   }
 
-  // 13. A live source, read through the allowlisted proxy. Real network, so
+  // 14. A live source, read through the allowlisted proxy. Real network, so
   //     this is the check that proves the room is not reading a fixture.
   if (liveServer) {
     try {
@@ -537,7 +597,7 @@ async function main() {
     );
   }
 
-  // 14. The proxy is an allowlist, not an open relay. Anybody can load this
+  // 15. The proxy is an allowlist, not an open relay. Anybody can load this
   //     site, so a proxy forwarding arbitrary URLs would be the whole
   //     internet's problem, not just this app's.
   if (liveServer) {

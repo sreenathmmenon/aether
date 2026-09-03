@@ -18,6 +18,13 @@ export type Workspace = {
   activeBranchId: BranchId;
   templateId?: string;
   costCeilingUsd?: number;
+  /**
+   * Audit entries retired from the array to keep the workspace inside its
+   * size ceiling. The count is kept so the record can still say how many
+   * decisions it holds -- a retired entry is summarised away, never
+   * pretended out of existence.
+   */
+  auditRetired?: number;
   persistenceVersion?: number;
   createdAt: IsoTimestamp;
   updatedAt: IsoTimestamp;
@@ -100,8 +107,14 @@ export type AuditEvent = {
   branchId: BranchId;
   actor: Actor;
   commandName: string;
-  input: Record<string, unknown>;
-  result: Record<string, unknown>;
+  /**
+   * Optional because entries beyond the detail window carry the fact of the
+   * command without its payload -- an unbounded log had grown past the
+   * workspace size ceiling and stopped the record saving at all. Anything
+   * reading these must handle their absence rather than assume the shape.
+   */
+  input?: Record<string, unknown>;
+  result?: Record<string, unknown>;
   timestamp: IsoTimestamp;
 };
 
