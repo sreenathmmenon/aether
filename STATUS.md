@@ -6,7 +6,7 @@ This is the source of truth for build progress. Status values: `TODO`, `IN_PROGR
 
 The deployable Aether product, its WebMCP integration, production persistence, browser validation, public repository, and submission copy are complete, and the full decision journey has been verified end to end on the deployed origin for all four seeded systems and for a self-built architecture. V3 is now the active direction: make the self-built, agent-modeled system path the first-prize demo rather than a secondary feature.
 
-Latest live release checked from Railway during the 2026-09-03 readiness audit: deployment `13debe8a-2868-4d10-8b08-72a431e9a9a7`, service online at `https://webmcp-production-38e5.up.railway.app`, PostgreSQL-backed `/health`, origin-isolation headers, WebMCP origin-trial header, `Permissions-Policy: tools=(self)`, and browser-visible WebMCP discovery showing ten tools on a committed seeded architecture, sixteen tools on the blank editable architecture, and eighteen tools once a repair future exists.
+Latest live release checked from Railway during the 2026-09-03 readiness audit: deployment `13debe8a-2868-4d10-8b08-72a431e9a9a7`, service online at `https://webmcp-production-38e5.up.railway.app`, PostgreSQL-backed `/health`, origin-isolation headers, WebMCP origin-trial header, `Permissions-Policy: tools=(self)`, and browser-visible WebMCP discovery showing ten tools on a committed seeded architecture, sixteen tools on the blank editable architecture, and eighteen tools once a repair future exists. ChatGPT Sites is being added as a second production UI surface at `https://aether-architecture-lab.dark-ash-7694.chatgpt.site`, with browser API calls intentionally pointed to the Railway backend.
 
 **The three items only the owner can finish, with exact commands, are in
 [`docs/OWNER_CHECKLIST.md`](docs/OWNER_CHECKLIST.md).**
@@ -35,6 +35,12 @@ All other previously open rows below have been reconciled against the deployed i
 - [x] **M246.3 — Make WebMCP rejections easier for agents to repair** `DONE`
   - Acceptance: malformed tool calls lead with missing required fields before harder discriminator failures, do not repeat already named fields in the overflow list, and remain inside the 1,500-character tool-result budget.
   - Evidence: `src/platform/webmcp/registry.ts` now orders required-field failures before malformed-field failures and filters already named fields from the overflow list. `src/platform/webmcp/registry.test.ts` asserts the behavior through `propose_architecture_change`; `npm run gate` passed formatting, lint with zero warnings, typecheck, 413 tests, production build, and authorship check; `npm run evals` passed 23/23, including `tools/rejection-names-only-what-failed` and `tools/rejection-leads-with-what-is-missing`.
+
+## Milestone 247 — ChatGPT Sites deployment
+
+- [ ] **M247.1 — Add ChatGPT Sites as a second production surface** `IN_PROGRESS`
+  - Acceptance: the repository has a tracked Sites project configuration, the built Sites artifact serves the Aether UI, the Sites-hosted UI calls the Railway API for persistence and live evidence instead of falling back to a broken static shell, and a saved Sites version is deployed and smoke-tested.
+  - Evidence: in progress.
 
 ## Milestone 1 — Repository and foundation
 

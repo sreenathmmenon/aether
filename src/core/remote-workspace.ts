@@ -1,6 +1,7 @@
 import type { AetherState } from "./branch-engine";
 import { parsePersistedState } from "./persistence";
 import { isValidWorkspaceId } from "./workspace-contract";
+import { apiUrl } from "../platform/api-base";
 
 const sessionKey = "aether.session.v1";
 
@@ -78,7 +79,7 @@ export function workspaceId(): string {
 }
 
 function endpointFor() {
-  return `/api/workspaces/${workspaceId()}`;
+  return apiUrl(`/api/workspaces/${workspaceId()}`);
 }
 
 export async function loadRemoteWorkspace(): Promise<AetherState | undefined> {

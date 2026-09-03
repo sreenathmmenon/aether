@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && node scripts/build-sites-worker.mjs",
     "start": "tsx server/index.ts",
     "typecheck": "tsc -b --pretty false && node scripts/check-tokens.mjs",
     "authorship:check": "node scripts/check-authorship.mjs",
@@ -31,6 +31,7 @@
   },
   "devDependencies": {
     "@eslint/js": "9.39.5",
+    "@openai/sites-vite-plugin": "^0.2.0",
     "@types/node": "26.4.0",
     "@types/pg": "^8.23.1",
     "@types/react": "19.2.18",

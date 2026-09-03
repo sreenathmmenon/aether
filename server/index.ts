@@ -42,6 +42,13 @@ async function ensureStorage() {
 const app = new Hono();
 
 app.use("*", async (context, next) => {
+  const requestOrigin = context.req.header("origin");
+  if (requestOrigin) {
+    context.header("Access-Control-Allow-Origin", requestOrigin);
+    context.header("Vary", "Origin");
+    context.header("Access-Control-Allow-Methods", "GET, PUT, OPTIONS");
+    context.header("Access-Control-Allow-Headers", "Accept, Content-Type");
+  }
   context.header("Cross-Origin-Opener-Policy", "same-origin");
   context.header("Cross-Origin-Embedder-Policy", "require-corp");
   context.header("Permissions-Policy", "tools=(self)");
@@ -54,6 +61,8 @@ app.use("*", async (context, next) => {
   context.header("X-Content-Type-Options", "nosniff");
   await next();
 });
+
+app.options("*", (context) => context.body(null, 204));
 
 app.get("/health", async (context) => {
   try {

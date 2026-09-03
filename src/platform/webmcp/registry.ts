@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { recommendFuture } from "@core/recommendation";
 import { parseCompose } from "@core/compose-parser";
+import { apiUrl } from "@platform/api-base";
 import { narrateCall } from "./call-summary";
 import {
   addComponentInput,
@@ -712,7 +713,7 @@ export function createAetherToolRegistry(
             });
           try {
             const response = await fetch(
-              `/api/repo?url=${encodeURIComponent(repository)}`,
+              apiUrl(`/api/repo?url=${encodeURIComponent(repository)}`),
               { headers: { accept: "application/json" } },
             );
             const payload = (await response.json()) as {
@@ -822,7 +823,9 @@ export function createAetherToolRegistry(
           if (parsed.data.package) query.set("package", parsed.data.package);
           try {
             const response = await fetch(
-              `/api/telemetry/${encodeURIComponent(entity.name)}?${query}`,
+              apiUrl(
+                `/api/telemetry/${encodeURIComponent(entity.name)}?${query}`,
+              ),
               { headers: { accept: "application/json" } },
             );
             const series = (await response.json()) as Record<string, unknown>;
@@ -899,7 +902,7 @@ export function createAetherToolRegistry(
             });
           try {
             const response = await fetch(
-              `/api/demand/${encodeURIComponent(pkg)}`,
+              apiUrl(`/api/demand/${encodeURIComponent(pkg)}`),
               { headers: { accept: "application/json" } },
             );
             const payload = (await response.json()) as Record<string, unknown>;
@@ -967,7 +970,7 @@ export function createAetherToolRegistry(
             });
           const source = requested;
           try {
-            const response = await fetch(`/api/live/${source}`, {
+            const response = await fetch(apiUrl(`/api/live/${source}`), {
               headers: { accept: "application/json" },
             });
             const payload = (await response.json()) as Record<string, unknown>;

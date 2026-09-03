@@ -1,5 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import { sites } from "@openai/sites-vite-plugin";
 import path from "node:path";
 
 const securityHeaders = {
@@ -9,7 +10,7 @@ const securityHeaders = {
 };
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), sites()],
   resolve: {
     alias: {
       "@app": path.resolve(import.meta.dirname, "./src/app"),

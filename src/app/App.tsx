@@ -95,6 +95,7 @@ import {
   saveRemoteWorkspace,
 } from "@core/remote-workspace";
 import { getWebMcpAvailability } from "@platform/webmcp/feature-detection";
+import { apiUrl } from "@platform/api-base";
 import {
   createAetherToolRegistry,
   type ToolCall,
@@ -1557,7 +1558,7 @@ export function App() {
     setMessage(`Reading ${repository}…`);
     try {
       const response = await fetch(
-        `/api/repo?url=${encodeURIComponent(repository)}`,
+        apiUrl(`/api/repo?url=${encodeURIComponent(repository)}`),
         { headers: { accept: "application/json" } },
       );
       const payload = (await response.json()) as {

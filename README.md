@@ -10,6 +10,8 @@ The agent finds the strongest repair for a regional outage and recommends it. Ae
 
 **Live app:** [webmcp-production-38e5.up.railway.app](https://webmcp-production-38e5.up.railway.app)
 
+**ChatGPT Sites mirror:** [aether-architecture-lab.dark-ash-7694.chatgpt.site](https://aether-architecture-lab.dark-ash-7694.chatgpt.site)
+
 People and agents work the same typed model through the same validated commands: branch a change in isolation, run a deterministic failure simulation, and see what it actually does before anyone commits. Describe your own architecture aloud and an agent builds it here — components, dependencies and all — then the same engine proves its failure paths. Four worked systems ship for anyone who wants the story immediately, and every metric, repair alternative and narrative re-derives from the graph in front of you.
 
 ## What Aether does that other tools do not
@@ -129,6 +131,19 @@ PORT=3147 npm run start
 ```
 
 With Chrome’s WebMCP testing flag enabled, open `http://localhost:3147`. The application degrades normally in browsers without WebMCP.
+
+## Build for ChatGPT Sites
+
+ChatGPT Sites hosts the Aether interface as an additional production surface.
+The live evidence APIs remain on Railway, so build the Sites artifact with:
+
+```bash
+VITE_AETHER_API_BASE_URL=https://webmcp-production-38e5.up.railway.app npm run build
+```
+
+That keeps shared workspaces, repository import, live-source reading,
+component telemetry, and demand measurement pointed at the PostgreSQL-backed
+Railway service rather than at a static shell.
 
 ## Quality gates
 
