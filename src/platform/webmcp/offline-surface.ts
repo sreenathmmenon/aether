@@ -9,6 +9,7 @@
  */
 export const offlineToolSurface = [
   "get_decision_record",
+  "read_repository_architecture",
   "read_live_source",
   "get_architecture_summary",
   "create_architecture_branch",

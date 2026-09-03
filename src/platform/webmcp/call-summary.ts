@@ -149,6 +149,17 @@ export function narrateCall(
         did: `Traced ${text(args.entityId) ?? "a dependency"}`,
         effect: text(data.entity),
       };
+    case "read_repository_architecture": {
+      // What it found, in the terms the canvas is about to show.
+      const repo = text(data.repository);
+      const components = data.components;
+      return {
+        did: repo ? `Read ${repo}` : "Read a repository",
+        effect: Array.isArray(components)
+          ? `${components.length} components · ${text(data.file) ?? "compose"}`
+          : undefined,
+      };
+    }
     case "read_live_source": {
       // The point of the reading is what it found, and when.
       const source = text(data.source) ?? "a live source";

@@ -284,6 +284,7 @@ export function App() {
   const setMessage = (text: string) => setNotice({ text, tone: "done" });
   const refuse = (text: string) => setNotice({ text, tone: "refused" });
   const [systemBrief, setSystemBrief] = useState("");
+  const [repoInput, setRepoInput] = useState("");
   // Empty until a graph is loaded; the selection then falls back to whichever
   // component the engine considers most consequential.
   const [selectedEntityId, setSelectedEntityId] = useState("");
@@ -1316,6 +1317,43 @@ export function App() {
    * plain browser must be able to reach a modelled graph from their own
    * description; otherwise the entry point depends on narration.
    */
+  /**
+   * Pull the reviewer's own architecture out of their repository.
+   *
+   * The strongest thing this product can do is put *their* system on the
+   * canvas, and the file that describes it is already in their repo. This
+   * asks for no credentials and reads only public repositories.
+   */
+  async function buildFromRepository(repository: string) {
+    setComposerNotice("");
+    setMessage(`Reading ${repository}…`);
+    try {
+      const response = await fetch(
+        `/api/repo?url=${encodeURIComponent(repository)}`,
+        { headers: { accept: "application/json" } },
+      );
+      const payload = (await response.json()) as {
+        compose?: string;
+        repo?: string;
+        path?: string;
+        problems?: string[];
+      };
+      if (!response.ok || !payload.compose) {
+        const reason = payload.problems?.[0] ?? `Could not read ${repository}.`;
+        setComposerNotice(reason);
+        refuse(reason);
+        return;
+      }
+      setSystemBrief(payload.compose);
+      setMessage(
+        `Read ${payload.repo}/${payload.path}. Build it to model this architecture.`,
+      );
+    } catch {
+      const reason = `${repository} could not be reached.`;
+      setComposerNotice(reason);
+      refuse(reason);
+    }
+  }
   function buildFromBrief() {
     // A reviewer's architecture already exists in a file. Asking them to
     // retype it as prose was asking them to describe what they could paste,
@@ -2378,12 +2416,33 @@ export function App() {
             {unbuilt && (
               <div className="canvas-empty">
                 <p className="eyebrow">Start here</p>
-                <strong>Describe your architecture in a sentence.</strong>
+                <strong>Model your own system.</strong>
                 <p>
-                  A sentence or an arrow chain —{" "}
-                  <code>nginx -&gt; api -&gt; Postgres</code> works. Aether
-                  models it, then proves what a failure costs.
+                  Point at a public repository and Aether reads the compose file
+                  already in it. Or describe the architecture —{" "}
+                  <code>nginx -&gt; api -&gt; Postgres</code> works.
                 </p>
+                {/* The fastest path from arriving to seeing your own system.
+                    No credentials: public repositories only, and nothing here
+                    asks anybody for a token. */}
+                <form
+                  className="repo-import"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    const value = repoInput.trim();
+                    if (value) void buildFromRepository(value);
+                  }}
+                >
+                  <input
+                    aria-label="Public GitHub repository"
+                    placeholder="mastodon/mastodon"
+                    value={repoInput}
+                    onChange={(event) => setRepoInput(event.target.value)}
+                  />
+                  <button type="submit" disabled={!repoInput.trim()}>
+                    Read repository
+                  </button>
+                </form>
                 {/* The field itself, where the reviewer is already looking.
                     This was a button that scrolled to a four-line box in a
                     narrow sidebar — a workaround for the input being in the

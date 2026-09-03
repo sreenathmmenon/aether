@@ -124,6 +124,80 @@ const liveSources: Record<string, { url: string; name: string }> = {
   },
 };
 
+/**
+ * Read a public GitHub repository's compose file.
+ *
+ * The strongest thing this product can do is put the reviewer's *own*
+ * architecture on the canvas, and the file that already describes it is
+ * sitting in their repo. A browser cannot fetch it -- raw.githubusercontent
+ * sends no CORS header for arbitrary origins -- so the server does, with no
+ * credentials of any kind: public repos only, and nothing here asks anybody
+ * for a token.
+ */
+const composeCandidates = [
+  "docker-compose.yml",
+  "docker-compose.yaml",
+  "compose.yml",
+  "compose.yaml",
+  "deploy/docker-compose.yml",
+  "docker/docker-compose.yml",
+];
+
+app.get("/api/repo", async (context) => {
+  const raw = context.req.query("url") ?? "";
+  // Accept what a person actually copies: the repo page, a clone URL, or
+  // just owner/name. Anything else is refused by shape rather than fetched.
+  const match =
+    /^(?:https?:\/\/)?(?:www\.)?github\.com\/([\w.-]+)\/([\w.-]+?)(?:\.git)?(?:\/.*)?$/.exec(
+      raw.trim(),
+    ) ?? /^([\w.-]+)\/([\w.-]+)$/.exec(raw.trim());
+  if (!match)
+    return context.json(
+      {
+        error: "INVALID_REPO",
+        problems: ["Expected a public GitHub repository, like owner/name."],
+      },
+      400,
+    );
+  const [, owner, repo] = match;
+  for (const branch of ["main", "master"]) {
+    for (const path of composeCandidates) {
+      try {
+        const url = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${path}`;
+        const response = await fetch(url, {
+          signal: AbortSignal.timeout(4000),
+        });
+        if (!response.ok) continue;
+        const body = await response.text();
+        // A repo can hold a file at that path that is not a compose file.
+        if (!/^\s*services:\s*$/m.test(body)) continue;
+        return context.json({
+          repo: `${owner}/${repo}`,
+          path,
+          branch,
+          url,
+          readAt: new Date().toISOString(),
+          // Bounded: this becomes a graph, and the engine caps components
+          // anyway. A 2MB file would be a denial of service on the parser.
+          compose: body.slice(0, 60000),
+        });
+      } catch {
+        // Try the next candidate rather than failing the whole read.
+      }
+    }
+  }
+  return context.json(
+    {
+      error: "NO_COMPOSE_FOUND",
+      repo: `${owner}/${repo}`,
+      problems: [
+        `No compose file found in ${owner}/${repo}. Looked for ${composeCandidates.join(", ")} on main and master.`,
+      ],
+    },
+    404,
+  );
+});
+
 app.get("/api/live/:source", async (context) => {
   const source = liveSources[context.req.param("source")];
   if (!source) return context.json({ error: "UNKNOWN_SOURCE" }, 404);

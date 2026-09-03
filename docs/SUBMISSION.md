@@ -22,7 +22,7 @@ It opens on a two-region payment platform losing its Mumbai region. People and a
 
 The model is yours in the strongest sense: describe your own architecture and the agent builds it. Choosing "Your own system" opens an empty canvas whose tool surface expands so an agent can turn a spoken description into a real graph — `add_architecture_component` for each service, database, queue, or gateway, `connect_components` for the dependencies between them, or `model_architecture` to submit a whole brief in one call with per-item failures reported by field — and the same deterministic engine then proves consequences on it exactly as on a seeded example. Three worked systems ship for reviewers who want the story immediately: a two-region payment platform, a ride-hailing dispatch platform where matching depends on both driver supply and trip state, and an inference platform whose shared vector store feeds two independent read paths. Every repair alternative, metric, narrative, and guardrail re-derives from whichever graph is loaded; nothing is special-cased to one fixture.
 
-WebMCP is not a bolt-on chat box; it is how a reviewer's own system gets into the product at all. The page exposes narrow, state-aware imperative tools that grow from six to fourteen once a repair future exists, and component identifiers in those schemas are enumerated from the live graph, so an agent can operate on something a person added moments earlier. Every agent mutation runs the same validated command path as a human click and lands in the replayable record. Rejected calls name the fields that failed and the values that would succeed, so a model can correct itself.
+WebMCP is not a bolt-on chat box; it is how a reviewer's own system gets into the product at all. The page exposes narrow, state-aware imperative tools that grow from seven to fifteen once a repair future exists, and component identifiers in those schemas are enumerated from the live graph, so an agent can operate on something a person added moments earlier. Every agent mutation runs the same validated command path as a human click and lands in the replayable record. Rejected calls name the fields that failed and the values that would succeed, so a model can correct itself.
 
 What that buys is visible in about ninety seconds. The strongest repair —
 highest resilience — resolves the regional outage the product opens on, and
@@ -83,7 +83,7 @@ Reconciliation capacity deficit: 2,000 RPS` directly beneath it — the
 6. **The approval record.** `Reviewer approved the exact plan — 4 clean
 scenarios · worst 97.11%`: who decided, the evidence they had, and the
    worst case they accepted.
-7. **After the commit.** Nine tools registered, `Rollback this merge`
+7. **After the commit.** Ten tools registered, `Rollback this merge`
    present as a human control, and no agent tool that could undo it.
 8. **A different system.** The same journey on ride-hailing dispatch or AI
    inference — three seeded systems ship, and nothing is fixture-specific.
@@ -141,7 +141,7 @@ decides on the evidence.
 - COOP, COEP, and `Permissions-Policy: tools=(self)` on the live app.
 - PostgreSQL-backed persistence with a private workspace per visitor, optimistic expected-version writes, `409` stale-write rejection, and live synchronisation across tabs. An optional `?room=` link puts several people in one workspace for a shared review, with every change still attributable to the human or agent that made it.
 - ChatGPT Site Tools live discovery/calls recorded in `docs/WEBMCP_EVALS.md`; the Chrome origin-trial token is configured on the deployed origin, which serves the `Origin-Trial` header alongside the isolation headers.
-- State-dependent registration: six read and branch tools on a committed architecture, eleven once the model is editable — a repair future is open or the reviewer is building their own system — and fourteen when both hold. Component and region enums are enumerated from the live graph rather than a fixed list.
+- State-dependent registration: seven read and branch tools on a committed architecture, twelve once the model is editable — a repair future is open or the reviewer is building their own system — and fifteen when both hold. Component and region enums are enumerated from the live graph rather than a fixed list.
 - Bounded agent authority: no approve, merge, or removal tool is registered, the engine refuses destructive removal by an agent actor regardless, and every rejection names the failed fields and the values that would succeed.
 - The interface names its own capability surface, so a reviewer can verify what is published and that no approval tool exists without connecting an agent.
 - A unit suite over the command pipeline, the dependency-graph engine, tool registration and annotations, bounded output, persistence and its concurrency guard, the brief parser, canvas layout invariants, and scenario copy. `npm run test` reports the current count; it is deliberately not quoted here, because a number in prose drifts from the suite and a stale one is worse than none.

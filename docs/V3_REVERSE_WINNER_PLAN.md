@@ -42,7 +42,7 @@ The demo should begin with the product doing something the current version does 
 6. The human sets a hard constraint: "Do not exceed $9,000 monthly and do not add a new vendor."
 7. One future fails cost, one fails recovery, one passes after a capacity change.
 8. The decision replay shows: agent built, Aether proved, human constrained, Aether rejected unsafe approval, human approved only after evidence cleared.
-9. Close on the WebMCP surface: six tools on committed systems, eleven tools while modeling, fourteen tools once a future exists, and no approve or merge tool.
+9. Close on the WebMCP surface: seven tools on committed systems, twelve tools while modeling, fifteen tools once a future exists, and no approve or merge tool.
 
 The social clip should be the agent building a system from a sentence while the browser draws the graph and the evidence changes live.
 

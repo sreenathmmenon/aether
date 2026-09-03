@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { recommendFuture } from "@core/recommendation";
+import { parseCompose } from "@core/compose-parser";
 import { narrateCall } from "./call-summary";
 import {
   addComponentInput,
@@ -515,6 +516,83 @@ export function createAetherToolRegistry(
                 outcome: event.result.nextState,
               })),
           });
+        },
+      });
+      await register({
+        name: "read_repository_architecture",
+        description:
+          "Read a public GitHub repository's docker-compose file and return its services and dependency edges. Use this to model the user's own system from the file that already describes it, instead of asking them to retype it.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            repository: {
+              type: "string",
+              description:
+                "A public GitHub repository as owner/name, or its URL. No credentials are used or accepted.",
+            },
+          },
+          required: ["repository"],
+          additionalProperties: false,
+        },
+        // It reaches the network and changes nothing here. The file is
+        // written by somebody else, so its content is untrusted.
+        annotations: { readOnlyHint: true, untrustedContentHint: true },
+        execute: async (input) => {
+          const repository = String(
+            (input as { repository?: unknown }).repository ?? "",
+          ).trim();
+          if (!repository)
+            return JSON.stringify({
+              error: "INVALID_INPUT",
+              problems: ["repository: expected owner/name or a GitHub URL."],
+              nextAction:
+                "Supply a public repository, such as mastodon/mastodon.",
+            });
+          try {
+            const response = await fetch(
+              `/api/repo?url=${encodeURIComponent(repository)}`,
+              { headers: { accept: "application/json" } },
+            );
+            const payload = (await response.json()) as {
+              compose?: string;
+              repo?: string;
+              path?: string;
+              problems?: string[];
+            };
+            if (!response.ok)
+              return JSON.stringify({
+                error: "NO_COMPOSE_FOUND",
+                problems: payload.problems ?? [`Could not read ${repository}.`],
+                nextAction:
+                  "Try another repository, or describe the architecture instead.",
+              });
+            const parsed = parseCompose(payload.compose ?? "");
+            const names = [
+              ...new Set(parsed.components.map((component) => component.name)),
+            ];
+            return JSON.stringify({
+              repository: payload.repo,
+              file: payload.path,
+              components: names,
+              dependencies: parsed.components
+                .filter((component) => component.sourceName)
+                .map(
+                  (component) => `${component.sourceName} -> ${component.name}`,
+                ),
+              // A compose file states no traffic figures, and saying so is
+              // what keeps the evidence honest once this becomes a graph.
+              unmeasured: names.length,
+              overflow: parsed.overflow,
+              nextAction:
+                "model_architecture with these components, then set peak and capacity before trusting the evidence.",
+            });
+          } catch {
+            return JSON.stringify({
+              error: "SOURCE_UNREACHABLE",
+              problems: [`${repository} could not be read from this page.`],
+              nextAction: "Describe the architecture instead.",
+            });
+          }
         },
       });
       await register({
