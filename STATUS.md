@@ -24,6 +24,12 @@ All other previously open rows below have been reconciled against the deployed i
   - Acceptance: the WebMCP output budget obeys the strict repository contract, simulation-version documentation matches code, release-status evidence matches the currently checked live deployment, and the full local gate plus WebMCP evals pass after the changes.
   - Evidence: on 2026-09-03, `src/platform/webmcp/registry.ts` moved `maxToolResultLength` to the strict 1,500-character contract, `get_decision_record` was narrowed so its worst-case answer remains parseable instead of becoming `RESULT_TOO_LARGE`, and `compare_architecture_futures` keeps narrowing rather than relying on a larger output budget. `docs/WEBMCP.md`, `docs/WEBMCP_COMPLIANCE.md`, `docs/WEBMCP_EVALS.md`, `docs/ARCHITECTURE.md`, and the release-status header were updated to match the implementation checked in this pass. Verification: `npm run test -- src/platform/webmcp/registry.test.ts src/simulation/engine.test.ts src/core/branch-engine.test.ts -- --run` passed 118 tests; `npm run gate` passed formatting, lint with zero warnings and zero errors, typecheck, 412 tests, production build, and authorship check; `npm run evals` passed 19/19 and now reports every read tool inside 1,500 characters of parseable JSON. Commits `03dad598229d66a2f4ee8ad2fa249ab5b52e12c1`, `6e0ecc7f297f11e71d81b5aa912065d3b88b6c41`, and `f60eec188534e16f38d57a10a9712b062640521c` were authored and committed as `Sreenath <sreenathmmmenon@gmail.com>`, pushed to `origin/main`, then deployed to Railway as `5b776071-0312-4041-83f7-c5b061f582cc`. Live `/health` returned PostgreSQL persistence plus COOP, COEP, `Origin-Agent-Cluster: ?1`, `Origin-Trial`, `Permissions-Policy: tools=(self)`, and `X-Content-Type-Options: nosniff`; connected Chrome read `document.modelContext` and saw 16 tools on `?system=blank`, then 10 tools on a committed payment system and 18 after creating repair futures, with no approve, merge, rollback, or commit tool.
 
+## Milestone 246 — Product council hardening
+
+- [ ] **M246.1 — Make the agent-native proof path work without an external WebMCP client** `IN_PROGRESS`
+  - Acceptance: the in-page “Watch an agent work” control drives the same registered tool objects and guardrails even when `document.modelContext` is unavailable, while the interface still truthfully reports that no external agent is connected.
+  - Evidence: in progress on 2026-09-03 after the judge-council product pass.
+
 ## Milestone 1 — Repository and foundation
 
 - [x] **M1.1 — Configure repository-local Git identity** `DONE`

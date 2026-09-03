@@ -560,7 +560,64 @@ async function main() {
     );
   }
 
-  // 14. The workspace has to stay inside the size the server accepts, for
+  // 14. A ceiling the reviewer locks has to bind whichever order they do
+  //     things in, and must not strand them. Evidence gathered before the
+  //     ceiling was set did not answer for it, so it cannot stay current --
+  //     four clean runs at $27,814 approved and merged under a $16,688
+  //     ceiling locked afterwards. And a ceiling already breached has to
+  //     leave a legal move, or an agent is locked out of the compliance it
+  //     is being asked for.
+  {
+    const page = surface();
+    const branchId = await withRepair(page);
+    for (const scenario of [
+      "regional_outage",
+      "traffic_spike",
+      "database_failure",
+      "dependency_failure",
+    ])
+      await page.call("run_failure_scenario", { branchId, scenario });
+    const before = page.state.branches[branchId]!.version;
+    const locked = dispatch(
+      page.state,
+      { type: "SET_COST_CEILING", input: { amountUsd: 9000 } },
+      { id: "reviewer", kind: "human", displayName: "Reviewer" },
+    );
+    if (!locked.ok) throw new Error("a human must be able to lock a ceiling");
+    page.state = locked.value;
+    const after = page.state.branches[branchId]!.version;
+    const approval = dispatch(
+      page.state,
+      { type: "APPROVE_BRANCH", input: { branchId, branchVersion: after } },
+      { id: "reviewer", kind: "human", displayName: "Reviewer" },
+    );
+    record(
+      "gate/ceiling-binds-whatever-the-order",
+      "Does locking a ceiling invalidate evidence gathered before it?",
+      after > before && !approval.ok ? "pass" : "fail",
+      after > before
+        ? `branch moved ${before} to ${after} and approval was refused`
+        : `branch stayed at version ${after}, so pre-ceiling evidence still counted`,
+    );
+
+    // And the refusal has to leave something an agent can do about it.
+    const reducing = await page.call("propose_architecture_change", {
+      branchId,
+      entityId: "ledger",
+      property: "monthlyCostUsd",
+      value: 100,
+    });
+    record(
+      "gate/breached-ceiling-leaves-a-move",
+      "Under a breached ceiling, is a cost-reducing change still allowed?",
+      !reducing.error ? "pass" : "fail",
+      reducing.error
+        ? `even lowering cost was refused: ${JSON.stringify(reducing).slice(0, 130)}`
+        : "a change that reduces cost is accepted while over the ceiling",
+    );
+  }
+
+  // 15. The workspace has to stay inside the size the server accepts, for
   //     as long as a room is used. This is the one that would have lost it:
   //     a shared room on the deployed origin reached 2,340 audit entries and
   //     1.04 MB against a 1 MB ceiling, so every further action by anyone
@@ -637,7 +694,7 @@ async function main() {
     );
   }
 
-  // 15. Telemetry read at the component's own scale. A reading that argues
+  // 16. Telemetry read at the component's own scale. A reading that argues
   //    for shrinking a correctly sized component is worse than no reading.
   if (liveServer) {
     const response = await fetch(
@@ -664,7 +721,7 @@ async function main() {
     );
   }
 
-  // 16. A live source, read through the allowlisted proxy. Real network, so
+  // 17. A live source, read through the allowlisted proxy. Real network, so
   //     this is the check that proves the room is not reading a fixture.
   if (liveServer) {
     try {
@@ -700,7 +757,7 @@ async function main() {
     );
   }
 
-  // 17. The proxy is an allowlist, not an open relay. Anybody can load this
+  // 18. The proxy is an allowlist, not an open relay. Anybody can load this
   //     site, so a proxy forwarding arbitrary URLs would be the whole
   //     internet's problem, not just this app's.
   if (liveServer) {
