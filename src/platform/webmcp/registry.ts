@@ -727,14 +727,27 @@ export function createAetherToolRegistry(
               peakRps: series.peakRps,
               meanRps: series.meanRps,
               suggestedCapacityRps: series.suggestedCapacityRps,
+              provisionedCapacityRps: series.provisionedCapacityRps,
+              // `peakRps` is not a property this tool accepts, and naming it
+              // here sent every reader into a refusal: peak is what
+              // telemetry observed, and an observation is not something an
+              // agent gets to rewrite. Capacity is the property a reading
+              // actually moves.
               nextAction:
-                "propose_architecture_change with peakRps, then capacityRps, to hold this reading against the architecture.",
+                "propose_architecture_change with capacityRps to hold this reading against the architecture, but only where the suggested figure is above what is already provisioned.",
             });
           } catch {
             return JSON.stringify({
               error: "TELEMETRY_UNREACHABLE",
               problems: [`Telemetry for ${entity.name} could not be read.`],
-              nextAction: "Set peakRps and capacityRps directly.",
+              // What the component is provisioned at is local state, not a
+              // reading, so it survives an unreachable telemetry source. A
+              // room that cannot see its traffic still knows what it built.
+              provisionedCapacityRps: (
+                entity.properties as { capacityRps?: number }
+              ).capacityRps,
+              nextAction:
+                "Set capacityRps directly with propose_architecture_change.",
             });
           }
         },

@@ -324,7 +324,81 @@ async function main() {
     );
   }
 
-  // 9. Telemetry read at the component's own scale. A reading that argues
+  // 9. A reading is held against the future it was asked about. This was
+  //    wrong in a way no unit test caught: the tool read whichever branch
+  //    was active, so the capacity it reported was the committed figure
+  //    while the write targeted a repair that had already raised it, and
+  //    the guard against shrinking a component compared the wrong numbers.
+  {
+    const page = surface();
+    const branchId = await withRepair(page);
+    const raised = await page.call("propose_architecture_change", {
+      branchId,
+      entityId: "ledger",
+      property: "capacityRps",
+      value: 44000,
+    });
+    if (raised.error) throw new Error("the repair write must land first");
+    const onRepair = await page.call("read_component_telemetry", {
+      entityId: "ledger",
+      branchId,
+    });
+    const onBaseline = await page.call("read_component_telemetry", {
+      entityId: "ledger",
+      branchId: "branch-baseline",
+    });
+    record(
+      "telemetry/reads-the-named-future",
+      "Does a reading report the capacity of the future it was asked about?",
+      onRepair.provisionedCapacityRps === 44000 &&
+        onBaseline.provisionedCapacityRps === 13500
+        ? "pass"
+        : "fail",
+      `repair future reports ${String(onRepair.provisionedCapacityRps)}, committed reports ${String(onBaseline.provisionedCapacityRps)} (expected 44000 and 13500)`,
+    );
+
+    // And the advice the reading gives has to be advice the tool accepts.
+    // It said "propose_architecture_change with peakRps", which is refused
+    // every time -- the instruction that produced the original bug.
+    const advice = String(onRepair.nextAction ?? "");
+    record(
+      "telemetry/advice-is-callable",
+      "Does a reading advise a property the write tool actually accepts?",
+      advice.includes("capacityRps") && !/\bpeakRps\b/.test(advice)
+        ? "pass"
+        : "fail",
+      advice || "the reading gave no next action",
+    );
+  }
+
+  // 10. Two scenarios on one future give different answers, and each says
+  //     which scenario it came from. A board that shows both without
+  //     naming them reads as the product contradicting itself.
+  {
+    const page = surface();
+    const branchId = await withRepair(page);
+    const spike = await page.call("run_failure_scenario", {
+      branchId,
+      scenario: "traffic_spike",
+    });
+    const outage = await page.call("run_failure_scenario", {
+      branchId,
+      scenario: "regional_outage",
+    });
+    record(
+      "simulation/scenario-is-identified",
+      "Does every run say which scenario and which future it describes?",
+      spike.scenario === "traffic_spike" &&
+        outage.scenario === "regional_outage" &&
+        spike.branchId === branchId &&
+        outage.branchId === branchId
+        ? "pass"
+        : "fail",
+      `${String(spike.scenario)} and ${String(outage.scenario)}, both on ${String(spike.branchId)}`,
+    );
+  }
+
+  // 11. Telemetry read at the component's own scale. A reading that argues
   //    for shrinking a correctly sized component is worse than no reading.
   if (liveServer) {
     const response = await fetch(
@@ -351,7 +425,7 @@ async function main() {
     );
   }
 
-  // 10. A live source, read through the allowlisted proxy. Real network, so
+  // 12. A live source, read through the allowlisted proxy. Real network, so
   //     this is the check that proves the room is not reading a fixture.
   if (liveServer) {
     try {
@@ -387,7 +461,7 @@ async function main() {
     );
   }
 
-  // 11. The proxy is an allowlist, not an open relay. Anybody can load this
+  // 13. The proxy is an allowlist, not an open relay. Anybody can load this
   //     site, so a proxy forwarding arbitrary URLs would be the whole
   //     internet's problem, not just this app's.
   if (liveServer) {
