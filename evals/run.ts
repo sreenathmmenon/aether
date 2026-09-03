@@ -75,8 +75,20 @@ function surface() {
     },
     undefined,
     {
+      // The browser refuses a name that is already registered, and that
+      // refusal is the whole failure mode being guarded here -- a stub that
+      // quietly accepts duplicates cannot see it.
       registerTool: async (tool, options) => {
         const entry = tool as unknown as RegisteredTool;
+        // A real registration crosses into the browser and back, so it
+        // yields. Without that yield two overlapping rebuilds interleave
+        // perfectly and never collide, and the check passes whether or not
+        // the product serialises them.
+        await Promise.resolve();
+        for (const existing of live) {
+          if (existing.name === entry.name)
+            throw new Error("Duplicate tool name");
+        }
         live.add(entry);
         options?.signal?.addEventListener("abort", () => live.delete(entry));
       },
@@ -106,6 +118,14 @@ function surface() {
       }
     },
   };
+}
+
+/** Refresh the surface against a state the caller names. */
+function registryRefresh(
+  page: ReturnType<typeof surface>,
+  state: AetherState,
+): Promise<void> {
+  return Promise.resolve(page.registry?.refresh(state)).then(() => undefined);
 }
 
 const origin = process.env.AETHER_ORIGIN ?? "http://localhost:8091";
@@ -398,7 +418,63 @@ async function main() {
     );
   }
 
-  // 11. Telemetry read at the component's own scale. A reading that argues
+  // 11. Concurrent refreshes must not collide. Rebuilding the surface is a
+  //     sequence of awaits, and two overlapping calls both tore it down and
+  //     the second re-registered a name the first had already put back --
+  //     the browser throws `InvalidStateError: Duplicate tool name`, which
+  //     aborted whatever the page was doing. Joining a room while a branch
+  //     was being created was enough to hit it in production.
+  {
+    const page = surface();
+    await page.refresh();
+    const branched = dispatch(
+      page.state,
+      {
+        type: "CREATE_BRANCH",
+        input: { name: "Repair", intent: "highest_resilience" },
+      },
+      { id: "reviewer", kind: "human", displayName: "Reviewer" },
+    );
+    if (!branched.ok) throw new Error("the repair future must be creatable");
+    page.state = branched.value;
+    // The refreshes have to disagree about the state, or the surface key
+    // matches on all but the first and the rest return without touching
+    // anything. A room produces exactly that disagreement: a person creates
+    // a branch while an agent's write is still in flight, and two different
+    // states are handed to the registry within the same tick.
+    const withBranch = page.state;
+    const withoutBranch = createInitialState(paymentPlatformBaseline);
+    let collided = "";
+    try {
+      await Promise.all([
+        registryRefresh(page, withBranch),
+        registryRefresh(page, withoutBranch),
+        registryRefresh(page, withBranch),
+        registryRefresh(page, withoutBranch),
+        registryRefresh(page, withBranch),
+      ]);
+    } catch (error) {
+      collided = (error as Error).message;
+    }
+    // Settle on the branched state so the count below is the open surface.
+    await registryRefresh(page, withBranch);
+    const names = page.tools().map((tool) => tool.name);
+    const duplicated = names.filter(
+      (name, index) => names.indexOf(name) !== index,
+    );
+    record(
+      "surface/concurrent-refresh",
+      "Do overlapping surface rebuilds leave exactly one of each tool?",
+      !collided && duplicated.length === 0 && names.length === 18
+        ? "pass"
+        : "fail",
+      collided
+        ? `a refresh threw: ${collided}`
+        : `${names.length} tools registered, ${duplicated.length} duplicated`,
+    );
+  }
+
+  // 12. Telemetry read at the component's own scale. A reading that argues
   //    for shrinking a correctly sized component is worse than no reading.
   if (liveServer) {
     const response = await fetch(
@@ -425,7 +501,7 @@ async function main() {
     );
   }
 
-  // 12. A live source, read through the allowlisted proxy. Real network, so
+  // 13. A live source, read through the allowlisted proxy. Real network, so
   //     this is the check that proves the room is not reading a fixture.
   if (liveServer) {
     try {
@@ -461,7 +537,7 @@ async function main() {
     );
   }
 
-  // 13. The proxy is an allowlist, not an open relay. Anybody can load this
+  // 14. The proxy is an allowlist, not an open relay. Anybody can load this
   //     site, so a proxy forwarding arbitrary URLs would be the whole
   //     internet's problem, not just this app's.
   if (liveServer) {

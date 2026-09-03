@@ -414,7 +414,21 @@ export function createAetherToolRegistry(
     registeredTools.set(tool.name, observed);
   }
 
-  async function refreshSurface(state: AetherState) {
+  // One refresh at a time. Tearing the surface down and building it back is
+  // a sequence of awaits, and two overlapping calls both passed the key
+  // check, both tore down, and the second then registered a name the first
+  // had already put back -- the browser throws `InvalidStateError: Duplicate
+  // tool name`, which aborted whatever the page was doing. Joining the room
+  // while a branch was being created was enough to hit it.
+  let refreshInFlight: Promise<void> = Promise.resolve();
+  function refreshSurface(state: AetherState): Promise<void> {
+    refreshInFlight = refreshInFlight
+      .catch(() => undefined)
+      .then(() => rebuildSurface(state));
+    return refreshInFlight;
+  }
+
+  async function rebuildSurface(state: AetherState) {
     {
       currentState = state;
       // The key must change whenever the registered surface would change, or
