@@ -47,6 +47,14 @@ output fingerprints on every run prove reproducibility. That is not the
 same thing as measured production telemetry, and it is not presented as a
 prediction about any real system.
 
+Every coefficient the engine uses is a declared assumption, named and
+commented in `availabilityModel` and `costModel` in
+`src/simulation/engine.ts`, chosen to rank architectures consistently
+against one another. They are **not calibrated against measured production
+incidents**, and this product does not claim they are. Read the output as a
+resilience ranking rather than an SLO: the number that matters is which
+future scores better and why, not the absolute figure.
+
 Incident threads are opened from the architecture itself — a database with
 no standby, a component that cannot absorb a 1.5x spike, the region
 holding the write path. They are not driven by a live alerting feed.
