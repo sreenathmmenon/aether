@@ -15,13 +15,14 @@ step needs a pause to look right on camera, the pause is written in.
    important frame in the film, cannot happen if the surface is already at
    eighteen when you start.
 
-   `localStorage.clear()` and reload is **not** reliable for this: the page
-   saves its live state again before the reload lands, so the futures come
-   straight back. Measured while preparing this script. Incognito avoids the
-   race entirely — a first-time visitor id has no stored workspace, the
-   server returns `{"state":null}`, and the page builds the ten-tool
-   baseline. Confirm before you hit record: the header must read **10 things
-   it may do here** and the futures panel **0/3**.
+   Neither `localStorage.clear()` nor a new `?room=` name is enough: the
+   page re-saves before a reload lands, and the workspace lives under one
+   key shared by every room. Measured — a brand-new room whose server state
+   was `{"state":null}` still opened at eighteen tools because the browser
+   restored a previous take. **Pre-flight every take: on the seeded
+   payment platform the header must read 10 things it may do here and the
+   futures panel 0/3.** If not, close the window and open a fresh incognito
+   one; do not clear storage in place.
 
 2. Window at **1440×900** or wider. Narrower is handled, but the three
    decision columns stack and the opening frame reads less well.
