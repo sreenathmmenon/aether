@@ -167,6 +167,17 @@ export function narrateCall(
           : undefined,
       };
     }
+    case "read_component_telemetry": {
+      const component = text(data.component);
+      const peak = data.peakRps;
+      return {
+        did: component ? `Read ${component} traffic` : "Read traffic",
+        effect:
+          typeof peak === "number"
+            ? `${peak.toLocaleString()} rps peak · ${text(data.source) ?? "telemetry"}`
+            : text(data.source),
+      };
+    }
     case "measure_component_demand": {
       const pkg = text(data.package);
       const rps = data.meanRps;

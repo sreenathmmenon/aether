@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { publicSeries, syntheticSeries } from "./telemetry.js";
 import { serve } from "@hono/node-server";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { Hono } from "hono";
@@ -218,6 +219,56 @@ app.get("/api/repo", async (context) => {
  * source and a timestamp attached, and be marked `measured` rather than
  * `implied`.
  */
+/**
+ * Telemetry for one component.
+ *
+ * Public data where a component maps to something published, generated
+ * otherwise -- and the reply says which. A reviewer cannot point this at
+ * their production observability stack, and should not be asked to; what
+ * this can do is serve what a metrics backend serves, at the shape real
+ * traffic has, reproducibly.
+ */
+app.get("/api/telemetry/:component", async (context) => {
+  const component = context.req.param("component");
+  if (!/^[\w .-]{1,64}$/.test(component))
+    return context.json({ error: "INVALID_COMPONENT" }, 400);
+  const kind = context.req.query("kind") ?? "service";
+  const pkg = context.req.query("package");
+
+  // A component the reviewer has mapped to a published package gets that
+  // package's real volume rather than a generated one.
+  if (pkg && /^(?:@[\w.-]+\/)?[\w.-]+$/.test(pkg)) {
+    try {
+      const response = await fetch(
+        `https://api.npmjs.org/downloads/point/last-week/${pkg}`,
+        {
+          signal: AbortSignal.timeout(4000),
+          headers: { accept: "application/json" },
+        },
+      );
+      if (response.ok) {
+        const payload = (await response.json()) as {
+          downloads?: number;
+          start?: string;
+          end?: string;
+        };
+        if (typeof payload.downloads === "number")
+          return context.json(
+            publicSeries(
+              component,
+              pkg,
+              payload.downloads,
+              `${payload.start} to ${payload.end}`,
+            ),
+          );
+      }
+    } catch {
+      // Fall through to the generated series rather than failing the read.
+    }
+  }
+  return context.json(syntheticSeries(component, kind));
+});
+
 app.get("/api/demand/:pkg", async (context) => {
   const pkg = context.req.param("pkg");
   // npm package names: scoped or plain, and nothing that escapes the path.

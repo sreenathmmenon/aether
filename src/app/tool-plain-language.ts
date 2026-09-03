@@ -16,6 +16,7 @@ const phrases: Record<string, string> = {
   get_decision_record: "Read the decision record",
   join_incident_room: "Join the incident room",
   read_repository_architecture: "Read a repository's architecture",
+  read_component_telemetry: "Read a component's traffic",
   measure_component_demand: "Measure a dependency's real demand",
   read_live_source: "Read a live status source",
   get_architecture_summary: "Read the architecture",

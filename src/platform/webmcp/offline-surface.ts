@@ -11,6 +11,7 @@ export const offlineToolSurface = [
   "get_decision_record",
   "join_incident_room",
   "read_repository_architecture",
+  "read_component_telemetry",
   "measure_component_demand",
   "read_live_source",
   "get_architecture_summary",

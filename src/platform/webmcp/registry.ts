@@ -8,6 +8,7 @@ import {
   addDecisionNoteInput,
   createBranchInput,
   joinRoomInput,
+  telemetryInput,
   runScenarioInput,
   setPropertyInput,
 } from "@core/commands";
@@ -648,6 +649,74 @@ export function createAetherToolRegistry(
               error: "SOURCE_UNREACHABLE",
               problems: [`${repository} could not be read from this page.`],
               nextAction: "Describe the architecture instead.",
+            });
+          }
+        },
+      });
+      await register({
+        name: "read_component_telemetry",
+        description:
+          "Read a component's traffic over the last 24 hours: peak, mean, and the capacity that shape would be provisioned with. Optionally map the component to a published npm package to use that package's real volume instead. Use this to set peakRps and capacityRps from a reading rather than a guess.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            entityId: {
+              type: "string",
+              enum: componentIds(),
+              description: "The component to read.",
+            },
+            package: {
+              type: "string",
+              description:
+                "Optional. A published npm package whose real download volume stands in for this component's demand.",
+            },
+          },
+          required: ["entityId"],
+          additionalProperties: false,
+        },
+        annotations: { readOnlyHint: true, untrustedContentHint: true },
+        execute: async (input) => {
+          const parsed = telemetryInput.safeParse(input);
+          if (!parsed.success)
+            return invalidInput(parsed.error, componentIds().join(", "));
+          const state = snapshot();
+          const entity = activeGraph(state).entities[parsed.data.entityId];
+          if (!entity)
+            return JSON.stringify({
+              error: "INVALID_INPUT",
+              problems: [`entityId: unknown component.`],
+              nextAction: `Choose one of: ${componentIds().join(", ")}.`,
+            });
+          const query = new URLSearchParams({ kind: entity.kind });
+          if (parsed.data.package) query.set("package", parsed.data.package);
+          try {
+            const response = await fetch(
+              `/api/telemetry/${encodeURIComponent(entity.name)}?${query}`,
+              { headers: { accept: "application/json" } },
+            );
+            const series = (await response.json()) as Record<string, unknown>;
+            if (!response.ok)
+              return JSON.stringify({
+                error: "TELEMETRY_UNAVAILABLE",
+                problems: [`No telemetry for ${entity.name}.`],
+                nextAction: "Set peakRps and capacityRps directly.",
+              });
+            return JSON.stringify({
+              component: entity.name,
+              origin: series.origin,
+              source: series.source,
+              window: series.window,
+              peakRps: series.peakRps,
+              meanRps: series.meanRps,
+              suggestedCapacityRps: series.suggestedCapacityRps,
+              nextAction:
+                "propose_architecture_change with peakRps, then capacityRps, to hold this reading against the architecture.",
+            });
+          } catch {
+            return JSON.stringify({
+              error: "TELEMETRY_UNREACHABLE",
+              problems: [`Telemetry for ${entity.name} could not be read.`],
+              nextAction: "Set peakRps and capacityRps directly.",
             });
           }
         },

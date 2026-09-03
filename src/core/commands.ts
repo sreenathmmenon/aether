@@ -13,6 +13,12 @@ export const joinRoomInput = z.object({
   role: z.enum(["observer", "engineer", "auditor", "external"]).optional(),
 });
 
+/** Reading one component's traffic. */
+export const telemetryInput = z.object({
+  entityId: z.string().min(1),
+  package: z.string().trim().min(1).max(128).optional(),
+});
+
 export const createBranchInput = z.object({
   name: z
     .string()

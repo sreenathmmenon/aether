@@ -77,17 +77,22 @@ export function useWarRoom(
       if (intent.kind === "gather") {
         // Different threads want different sources. A capacity question is
         // answered by demand; a dependency question by what is up right now.
-        const usesDemand = /traffic|capacity|spike/i.test(thread.scenario);
-        const result = usesDemand
-          ? await registry.call("measure_component_demand", {
-              package: "express",
+        // A capacity question is answered by that component's own traffic,
+        // not by a status page. Reading the thread's component is what makes
+        // the finding about this system rather than about the internet.
+        const usesTelemetry =
+          /traffic|capacity|spike|database/i.test(thread.scenario) &&
+          Boolean(thread.entityId);
+        const result = usesTelemetry
+          ? await registry.call("read_component_telemetry", {
+              entityId: thread.entityId,
             })
           : await registry.call("read_live_source", { source: "openai" });
         const parsed = safeParse(result);
         onFinding(thread.id, {
           id: `finding-${Date.now()}`,
-          said: usesDemand
-            ? `Demand: ${parsed.meanRps ?? "—"} rps · ${parsed.window ?? "last 7 days"}`
+          said: usesTelemetry
+            ? `${parsed.component ?? "Component"}: ${Number(parsed.peakRps ?? 0).toLocaleString()} rps peak, ${Number(parsed.meanRps ?? 0).toLocaleString()} mean`
             : `${parsed.source ?? "Live source"}: ${parsed.status ?? "read"}${
                 typeof parsed.operational === "number"
                   ? ` · ${parsed.operational}/${parsed.total} operational`
