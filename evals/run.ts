@@ -494,6 +494,11 @@ async function main() {
     );
     if (!branched.ok) throw new Error("the repair future must be creatable");
     state = branched.value;
+    // Every growing list, interleaved. The first version of this check only
+    // issued property writes, so it passed while `decisionNotes` grew without
+    // a bound one field over -- 4,003 notes reached 1.8 MB against the same
+    // ceiling. A guard that tests one shape of growth proves nothing about
+    // the others, which is the same lesson the tool-count drift guard taught.
     for (let index = 1; index <= 4000; index += 1) {
       const next = dispatch(
         state,
@@ -510,13 +515,26 @@ async function main() {
       );
       if (!next.ok) break;
       state = next.value;
+      const noted = dispatch(
+        state,
+        {
+          type: "ADD_DECISION_NOTE",
+          input: {
+            branchId: "branch-baseline",
+            entityId: "ledger",
+            body: `Note ${index}: the ledger needs a standby replica before this future can be approved.`,
+          },
+        },
+        { id: "agent", kind: "agent", displayName: "Agent" },
+      );
+      if (noted.ok) state = noted.value;
     }
     const size = JSON.stringify(state).length;
     record(
       "workspace/stays-savable",
       "After four thousand changes, does the workspace still fit what the server accepts?",
       size < maxWorkspaceBytes ? "pass" : "fail",
-      `${size.toLocaleString()} bytes against a ${maxWorkspaceBytes.toLocaleString()} byte ceiling`,
+      `${size.toLocaleString()} bytes against a ${maxWorkspaceBytes.toLocaleString()} byte ceiling, holding ${state.audit.length} audit entries and ${state.decisionNotes.length} notes`,
     );
 
     // Bounding it must not change what the branch derives to, or the saving

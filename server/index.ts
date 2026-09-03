@@ -449,6 +449,13 @@ app.all("/assets/*", (context) => context.text("Not found", 404));
 app.all("/api/*", (context) =>
   context.json({ error: "NOT_FOUND", problems: ["No such endpoint."] }, 404),
 );
+// `/api/workspaces/../../etc/passwd` answers 200 with the SPA shell, and that
+// is as far as it can be fixed here: Node resolves the `..` segments before
+// any application code runs, so what arrives is `/etc/passwd` -- a path that
+// no longer names the API namespace and cannot be matched as one. Measured by
+// tracing the received path on a raw socket. Nothing is disclosed, because the
+// static root serves only the built client, and the percent-encoded form
+// (`..%2f..%2f`) does reach the route and is refused with INVALID_WORKSPACE.
 app.use("*", serveStatic({ root: "./dist", path: "index.html" }));
 
 const port = Number(process.env.PORT ?? 3000);

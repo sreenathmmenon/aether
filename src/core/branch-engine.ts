@@ -96,29 +96,66 @@ export const auditRetainWindow = 1500;
  * was undone by the next reconcile, and the array grew to 5,764 entries
  * while the retired counter climbed into the hundreds of thousands.
  */
-export function boundAudit(audit: AetherState["audit"]): {
-  audit: AetherState["audit"];
-  retired: number;
-} {
+/**
+ * Notes are bounded for the same reason, and it took a judge to find it:
+ * `add_decision_note` is agent-callable, so a loop that leaves a note per
+ * turn grows the workspace exactly as an unbounded audit did. Measured
+ * before this bound: 4,003 notes reached 1.8 MB against a 1 MB ceiling while
+ * the audit sat flat at 1,500. Bounding one growing list and leaving its
+ * neighbour is not a fix, it is a delay.
+ */
+export const noteRetainWindow = 400;
+
+/**
+ * Hold a positionally-numbered record to a retain window, reporting how many
+ * entries were dropped. Exported because merging two workspaces unions these
+ * lists and can therefore exceed the window again -- a bound applied only on
+ * dispatch was undone by the next reconcile, and the audit grew to 5,764
+ * entries while the retired counter climbed into the hundreds of thousands.
+ */
+function boundRecord<Entry extends { id: string }>(
+  entries: Entry[],
+  window: number,
+  prefix: string,
+): { kept: Entry[]; retired: number } {
   const kept =
-    audit.length <= auditRetainWindow
-      ? audit
-      : audit.slice(audit.length - auditRetainWindow);
+    entries.length <= window ? entries : entries.slice(entries.length - window);
   // Derived from the oldest surviving entry rather than accumulated. Ids are
-  // positional -- `event-1`, `event-2` -- so the first id says how much
+  // positional -- `event-1`, `note-1` -- so the first id says how much
   // history came before it. A running total was added to on every dispatch
-  // *and* every merge, and because a merge unions the two audits back above
+  // *and* every merge, and because a merge unions the two lists back above
   // the window, the same entries were retired again and again: 1,000
   // dispatches reported 13,540 entries retired.
   const first = kept[0]?.id;
-  const position = first ? Number(String(first).replace(/^event-/, "")) : 1;
+  const position = first
+    ? Number(String(first).replace(new RegExp(`^${prefix}-`), ""))
+    : 1;
   return {
-    audit: kept,
+    kept,
     retired: Number.isFinite(position) && position > 1 ? position - 1 : 0,
   };
 }
 
+export function boundAudit(audit: AetherState["audit"]): {
+  audit: AetherState["audit"];
+  retired: number;
+} {
+  const bounded = boundRecord(audit, auditRetainWindow, "event");
+  return { audit: bounded.kept, retired: bounded.retired };
+}
+
+export function boundNotes(notes: AetherState["decisionNotes"]): {
+  notes: AetherState["decisionNotes"];
+  retired: number;
+} {
+  const bounded = boundRecord(notes, noteRetainWindow, "note");
+  return { notes: bounded.kept, retired: bounded.retired };
+}
+
 function compactAudit(state: AetherState): void {
+  const notes = boundNotes(state.decisionNotes);
+  state.decisionNotes = notes.notes;
+  if (notes.retired) state.workspace.notesRetired = notes.retired;
   const bounded = boundAudit(state.audit);
   state.audit = bounded.audit;
   if (bounded.retired) state.workspace.auditRetired = bounded.retired;
@@ -464,6 +501,13 @@ export function dispatch(
   state: AetherState,
   command: AetherCommand,
   actor: Actor = agent,
+  /**
+   * A caller's cancellation, honoured by the simulation between propagation
+   * hops. WebMCP hands every tool an `AbortSignal`; passing it only as far as
+   * an entry check meant a running simulation could not actually be stopped,
+   * while the compliance document claimed it was threaded through.
+   */
+  signal?: AbortSignal,
 ): CommandResult<AetherState> {
   const next = structuredClone(state) as AetherState;
   const now = new Date().toISOString();
@@ -1032,6 +1076,7 @@ export function dispatch(
       branch.id,
       branch.version,
       next.workspace.costCeilingUsd,
+      signal,
     );
     next.simulations[branch.id] = [
       ...(next.simulations[branch.id] ?? []).filter(

@@ -187,6 +187,7 @@ function dependentsOf(graph: ArchitectureGraph, id: string) {
 function propagate(
   graph: ArchitectureGraph,
   seeds: { id: string; cause: string }[],
+  signal?: AbortSignal,
 ): CausalStep[] {
   const chain: CausalStep[] = [];
   const seen = new Set<string>();
@@ -197,6 +198,12 @@ function propagate(
   let depth = 0;
 
   while (frontier.length > 0 && depth < 16) {
+    // Checked between hops, which is the only place a caller's cancellation
+    // can be honoured without leaving a half-built chain: each pass appends a
+    // whole depth level, so stopping here returns a chain that is short but
+    // internally consistent. A check only at entry -- which is what this had
+    // -- can catch a signal that was already aborted and nothing else.
+    if (signal?.aborted) break;
     const next: { id: string; cause: string }[] = [];
     // Within a wave, the component the most others rely on leads: it is the
     // one a reader should understand first.
@@ -335,6 +342,7 @@ export function runScenario(
   branchId: string,
   branchVersion: number,
   costCeilingUsd?: number,
+  signal?: AbortSignal,
 ): ScenarioResult {
   const inputHash = fingerprint({
     engineVersion: simulationEngineVersion,
@@ -455,7 +463,7 @@ export function runScenario(
       : [];
   }
 
-  const causalChain = propagate(graph, seeds);
+  const causalChain = propagate(graph, seeds, signal);
   const impacted = new Set(causalChain.map((step) => step.entityId));
 
   // Availability degrades with the share of the system that is impacted, and

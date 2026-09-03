@@ -85,6 +85,7 @@ export function useWarRoom(
     threadsRef.current = threads;
     crewRef.current = crew;
     branchRef.current = branchId;
+    onAppliedRef.current = onApplied;
   });
   // Keyed on the component, not the thread. Two threads can name the same
   // component -- an unreplicated ledger is both the standby thread and the
@@ -94,6 +95,11 @@ export function useWarRoom(
   // only true once React has re-rendered, while this is written the instant
   // the call returns.
   const appliedRef = useRef(new Set<string>());
+  // Read through a ref rather than listed as a dependency. Naming it in the
+  // dependency array rebuilds the turn on every render of the parent, and
+  // omitting it captured the first one forever -- the staleness this file has
+  // already been bitten by twice.
+  const onAppliedRef = useRef(onApplied);
   // Round-robin, so attention rotates between the agents in the room
   // rather than the first one taking every turn.
   const turn = useRef(0);
@@ -184,7 +190,7 @@ export function useWarRoom(
                 value: suggested,
               });
             }
-            onApplied?.(thread.id);
+            onAppliedRef.current?.(thread.id);
           }
         }
         onFinding(thread.id, {

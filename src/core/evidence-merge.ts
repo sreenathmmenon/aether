@@ -1,4 +1,4 @@
-import { boundAudit } from "./branch-engine";
+import { boundAudit, boundNotes } from "./branch-engine";
 import type { AetherState } from "./branch-engine";
 
 /**
@@ -104,6 +104,12 @@ export function mergeEvidence(
   // Bounded after the union, or the merge undoes the trimming that keeps
   // this workspace inside the size the server accepts.
   const bounded = boundAudit(union(held.audit, incoming.audit, auditKey));
+  // Notes are unioned too, so they need the same bound after the union for
+  // the same reason: a limit applied only on dispatch is undone by the next
+  // reconcile.
+  const notes = boundNotes(
+    union(held.decisionNotes, incoming.decisionNotes, noteKey),
+  );
   return {
     ...incoming,
     workspace: {
@@ -111,10 +117,11 @@ export function mergeEvidence(
       // Whatever the bound derived from the surviving entries. It is a fact
       // about the array, not a tally to add to.
       auditRetired: bounded.retired || undefined,
+      notesRetired: notes.retired || undefined,
     },
     simulations: merged,
     audit: bounded.audit,
-    decisionNotes: union(held.decisionNotes, incoming.decisionNotes, noteKey),
+    decisionNotes: notes.notes,
     participants: [...presence.values()],
   };
 }

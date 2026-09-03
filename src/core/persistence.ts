@@ -1,4 +1,4 @@
-import { boundAudit } from "./branch-engine";
+import { boundAudit, boundNotes } from "./branch-engine";
 import type { AetherState } from "./branch-engine";
 import { simulationEngineVersion } from "@simulation/engine";
 
@@ -71,10 +71,10 @@ export function parsePersistedState(
       ),
       // Notes are seeded from the loaded graph at creation, so a workspace
       // without them predates that and is better off with none than with a
-      // hardcoded copy naming components it may not contain.
-      decisionNotes: Array.isArray(value.decisionNotes)
-        ? value.decisionNotes
-        : [],
+      // hardcoded copy naming components it may not contain. The array shape
+      // is normalised inside the bound below, which also holds it to its
+      // retain window.
+      //
       // State arriving from outside is bounded on the way in. A workspace
       // written before the bound existed -- or by a client that does not
       // apply it -- carries an audit of any size, and dispatch alone would
@@ -84,11 +84,17 @@ export function parsePersistedState(
       // every remote load passes through.
       ...(() => {
         const bounded = boundAudit(value.audit);
+        const notes = boundNotes(
+          Array.isArray(value.decisionNotes) ? value.decisionNotes : [],
+        );
         return {
           audit: bounded.audit,
-          workspace: bounded.retired
-            ? { ...value.workspace, auditRetired: bounded.retired }
-            : value.workspace,
+          decisionNotes: notes.notes,
+          workspace: {
+            ...value.workspace,
+            ...(bounded.retired ? { auditRetired: bounded.retired } : {}),
+            ...(notes.retired ? { notesRetired: notes.retired } : {}),
+          },
         };
       })(),
     };
@@ -104,13 +110,20 @@ export function persistState(state: AetherState) {
   // state assembled any other way was stored at whatever size it had reached
   // -- measured at 3,320 entries against a 1,500 bound.
   const bounded = boundAudit(state.audit);
-  const held: AetherState = bounded.retired
-    ? {
-        ...state,
-        audit: bounded.audit,
-        workspace: { ...state.workspace, auditRetired: bounded.retired },
-      }
-    : state;
+  const notes = boundNotes(state.decisionNotes);
+  const held: AetherState =
+    bounded.retired || notes.retired
+      ? {
+          ...state,
+          audit: bounded.audit,
+          decisionNotes: notes.notes,
+          workspace: {
+            ...state.workspace,
+            ...(bounded.retired ? { auditRetired: bounded.retired } : {}),
+            ...(notes.retired ? { notesRetired: notes.retired } : {}),
+          },
+        }
+      : state;
   window.localStorage.setItem(storageKey, JSON.stringify(held));
 }
 

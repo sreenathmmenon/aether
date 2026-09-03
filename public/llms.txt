@@ -7,8 +7,9 @@ deterministically, and keep the commit decision with a human.
 ## What an agent can do on this page
 
 This page publishes WebMCP tools through `document.modelContext`. The surface is
-state-aware: a committed architecture registers five read and branch tools, an
-editable canvas registers ten, and twelve once a repair future exists. Component
+state-aware: a committed architecture registers ten read and branch tools, an
+editable canvas registers fifteen, and eighteen once a repair future exists. A
+merge closes the write tools again, leaving thirteen. Component
 and region identifiers in those schemas are enumerated from the live graph, so a
 component added moments ago can be addressed immediately.
 

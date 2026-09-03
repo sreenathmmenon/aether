@@ -1095,6 +1095,10 @@ export function createAetherToolRegistry(
               snapshot(),
               { type: "RUN_SCENARIO", input: parsed.data },
               agent,
+              // The caller's cancellation reaches the engine, which checks it
+              // between propagation hops. An entry check alone could only
+              // catch a signal aborted before the tool was even called.
+              context?.signal,
             );
             if (!result.ok)
               return rejected(result, writableBranchIds(), componentIds());

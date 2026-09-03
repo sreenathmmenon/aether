@@ -23,6 +23,7 @@ import planDoc from "../../../docs/V3_REVERSE_WINNER_PLAN.md?raw";
 import evalsDoc from "../../../docs/WEBMCP_EVALS.md?raw";
 import architectureDoc from "../../../docs/ARCHITECTURE.md?raw";
 import demoDoc from "../../../docs/DEMO.md?raw";
+import llmsDoc from "../../../public/llms.txt?raw";
 import appSource from "../../app/App.tsx?raw";
 
 type RegisteredTool = {
@@ -1023,6 +1024,11 @@ describe("Aether WebMCP registry", () => {
       // DEMO.md is the shot list somebody records the required video from.
       ["docs/ARCHITECTURE.md", architectureDoc],
       ["docs/DEMO.md", demoDoc],
+      // The file written for machine readers, and the one most likely to be
+      // checked with a single curl. It said five, ten and twelve while the
+      // registry published ten, fifteen and eighteen -- a verifiable
+      // contradiction in the document whose whole purpose is to be verified.
+      ["public/llms.txt", llmsDoc],
     ] as const) {
       for (const [word, value] of Object.entries(words)) {
         // Matching only "<word> tools" let five wrong numbers survive a

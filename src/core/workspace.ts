@@ -25,6 +25,8 @@ export type Workspace = {
    * pretended out of existence.
    */
   auditRetired?: number;
+  /** The same, for decision notes, which grow on their own agent-callable tool. */
+  notesRetired?: number;
   persistenceVersion?: number;
   createdAt: IsoTimestamp;
   updatedAt: IsoTimestamp;
