@@ -3045,3 +3045,20 @@ The product modelled a single decision and moved only when a human clicked. An i
   - Accepting a thread produces what that decision implies for the rest of the board: _"Primary Ledger has no standby accepted. Mumbai holds the write path is still critical and still open — that one changes the answer here."_
   - And silence in an incident room is not agreement. After twenty quiet seconds: _"Nobody has answered Mumbai holds the write path."_ An agent that waits politely through silence is a chat box.
 - **Verified in production:** four live threads, evidence from two different external services, 16 tools registered, each thread accepted separately by a human at their own pace.
+
+## Milestone 240 — Many people, many agents, one room
+
+An incident room is not one person and one assistant. Several people join from wherever they are, each brings whatever agent they use, and the board says who is here and what each may do.
+
+- [x] **M240.1 — Presence, unbounded** `DONE`
+  - Rides on the reconcile that already carries the workspace between participants, so a second person opening the link appears on everybody's board within seconds. **No accounts** — a room is a link, and the people in it are whoever has it, which is how incident rooms work at three in the morning. Verified at scale: 40 announced participants describe as "14 people and 26 agents"; the roster caps its height and scrolls so the threads stay on screen.
+- [x] **M240.2 — `join_incident_room`** `DONE`
+  - Any external agent announces itself and is told the thing worth saying out loud: _"Same surface as every other agent here. No approve, merge or commit tool exists in any state."_ The role — observer, engineer, auditor, external — is a **label, not a permission**. It only decides which threads an agent picks up, so two agents do not chase the same one.
+- [x] **M240.3 — Every agent in the room works** `DONE`
+  - The loop rotates across all agents present, not only the ones this tab brought, and each finding carries the name of the agent that produced it: _"Metrics agent · OpenAI status"_, _"Budget agent · npm registry downloads"_. Verified in production: four agents, four threads, all with evidence.
+
+**Three bugs found by watching it, all the same class.**
+
+- **Presence vanished on every reconcile** — `mergeEvidence` took `...incoming` for participants, so agents that joined from another client disappeared. Measured on the deployed origin: four agents joined, the server held one. Participants union now, newest heartbeat winning. **Third time this class has bitten** — runs, the human's approval, now presence. Anything written by more than one participant must be unioned, never replaced.
+- **A working agent aged off the roster** — the board said "2 people" while two agents were visibly producing findings. Taking a turn is presence.
+- **`?% available`** — the room called a hardcoded repair branch, and `run_failure_scenario` is state-dependent: not registered at all on a committed architecture. It reads the active branch and checks the surface first; if the tool is absent the thread says _"No repair future open yet — nothing to simulate against"_, which is the truth and the next action at once.
