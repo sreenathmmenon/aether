@@ -1073,6 +1073,8 @@ export function createAetherToolRegistry(
                   "database_failure",
                   "dependency_failure",
                 ],
+                description:
+                  "The failure to model: a whole region lost, demand at 1.5x, the write store gone, or a shared component several paths rely on.",
               },
             },
             required: ["branchId", "scenario"],
@@ -1372,10 +1374,17 @@ export function createAetherToolRegistry(
           inputSchema: {
             type: "object",
             properties: {
-              branchId: { type: "string", enum: writableBranchIds() },
+              branchId: {
+                type: "string",
+                enum: writableBranchIds(),
+                description:
+                  "The branch to build on. An empty canvas stays writable on its baseline; a seeded architecture needs a repair future.",
+              },
               components: {
                 type: "array",
                 minItems: 1,
+                description:
+                  "Every service, database, queue, gateway and region in the brief. Failures are reported per item rather than refusing the batch.",
                 // The agent must never be the weaker route: this matches the
                 // component budget the unassisted brief path allows.
                 maxItems: briefComponentLimit,
@@ -1453,6 +1462,8 @@ export function createAetherToolRegistry(
               },
               dependencies: {
                 type: "array",
+                description:
+                  "How the components connect, by the keys above. Failure propagates along these edges, so a system with none has no blast radius.",
                 // A connected architecture needs more edges than nodes.
                 maxItems: briefComponentLimit * 2,
                 items: {
@@ -1607,13 +1618,28 @@ export function createAetherToolRegistry(
           inputSchema: {
             type: "object",
             properties: {
-              branchId: { type: "string", enum: writableBranchIds() },
+              branchId: {
+                type: "string",
+                enum: writableBranchIds(),
+                description:
+                  "The repair future to add this dependency to. The committed architecture is never writable.",
+              },
               // Enumerated from the live graph, as every other entity
               // reference on this surface is. A bare string let an agent
               // wire a component to a region, which the engine ignores and
               // the canvas refuses to draw.
-              sourceId: { type: "string", enum: componentIds() },
-              targetId: { type: "string", enum: componentIds() },
+              sourceId: {
+                type: "string",
+                enum: componentIds(),
+                description:
+                  "The component that depends on the other: it breaks when the target does.",
+              },
+              targetId: {
+                type: "string",
+                enum: componentIds(),
+                description:
+                  "The component being depended on. Losing this is what takes the source with it.",
+              },
               kind: {
                 type: "string",
                 enum: [
@@ -1668,7 +1694,12 @@ export function createAetherToolRegistry(
                 enum: writableBranchIds(),
                 description: "Existing non-merged branch ID.",
               },
-              entityId: { type: "string", enum: componentIds() },
+              entityId: {
+                type: "string",
+                enum: componentIds(),
+                description:
+                  "The component to change. Regions are not listed; move a component between them with the regionId property.",
+              },
               property: {
                 type: "string",
                 enum: [

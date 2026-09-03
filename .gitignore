@@ -5,3 +5,8 @@ coverage/
 .env
 .env.local
 *.tsbuildinfo
+
+# Reviewer scratch scripts, not part of the product.
+evals/tmp/
+evals/sre/
+evals/_*.ts

@@ -28,6 +28,7 @@ import appSource from "../../app/App.tsx?raw";
 
 type RegisteredTool = {
   name: string;
+  inputSchema?: unknown;
   execute: (
     input: Record<string, unknown>,
     options?: { signal: AbortSignal },
@@ -430,6 +431,43 @@ describe("Aether WebMCP registry", () => {
     // Several tools declare required fields, or this proves nothing.
     expect(checked).toBeGreaterThan(4);
     registry?.dispose();
+  });
+
+  it("describes every field it advertises", async () => {
+    // A schema is the only documentation an agent gets. Eight properties
+    // shipped without one, including all three on `connect_components` --
+    // the fields that decide which way failure propagates, so a model had to
+    // guess whether source depends on target or the reverse. The enums and
+    // the length limits were already stated; the sentence saying what the
+    // field means was not.
+    const registered: RegisteredTool[] = [];
+    const registry = createAetherToolRegistry(() => {}, undefined, {
+      registerTool: async (tool) => {
+        registered.push(tool as unknown as RegisteredTool);
+      },
+    });
+    const branched = dispatch(createInitialState(paymentPlatformBaseline), {
+      type: "CREATE_BRANCH",
+      input: { name: "Describe probe", intent: "highest_resilience" },
+    });
+    if (!branched.ok) throw new Error("fixture branch must be created");
+    await registry?.refresh(branched.value);
+    registry?.dispose();
+
+    const undescribed: string[] = [];
+    for (const tool of registered) {
+      const schema = tool.inputSchema as {
+        properties?: Record<string, { description?: string }>;
+      };
+      for (const [name, definition] of Object.entries(schema.properties ?? {}))
+        if (!definition?.description) undescribed.push(`${tool.name}.${name}`);
+    }
+    expect(
+      undescribed,
+      "a field an agent must fill says nothing about what it is for",
+    ).toEqual([]);
+    // And the surface actually has fields, or this passes on an empty set.
+    expect(registered.length).toBeGreaterThan(5);
   });
 
   it("refuses fields it does not advertise, in every schema", async () => {
