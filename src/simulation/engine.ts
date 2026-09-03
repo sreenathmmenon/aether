@@ -35,9 +35,30 @@ export const availabilityModel = {
   /** The model does not express total loss or perfect uptime. */
   floor: 80,
   ceiling: 99.99,
+  /**
+   * What an architecture scores when the scenario takes every component it
+   * has. The share term is a ratio, so a total outage produced the same
+   * number whatever the size -- an SRE driving this measured a completely
+   * offline system reporting 93.4% available, and with sync replication
+   * 97.67%. Nobody reading that would understand the system was down.
+   *
+   * A total loss is not a degraded score, it is a different statement, so it
+   * is stated separately rather than left to the coefficients.
+   */
+  totalLoss: 0,
+  /**
+   * The most an architecture can score with no datastore on it. A single
+   * gateway and nothing else scored the ceiling on three scenarios out of
+   * four, because no scenario could seed anything: no database to fail, no
+   * second region to lose, no shared dependency. That made deleting
+   * components the highest-scoring move available, which is the same failure
+   * the empty-graph guard below already exists to prevent -- it just stopped
+   * one component short.
+   */
+  statelessCeiling: 92,
 } as const;
 
-export const simulationEngineVersion = "aether-sim-5";
+export const simulationEngineVersion = "aether-sim-6";
 
 /**
  * The part of a graph a simulation actually depends on.
@@ -240,11 +261,49 @@ function propagate(
   return chain;
 }
 
+/**
+ * What the architecture costs a month, with resilience priced in.
+ *
+ * This was a flat sum of the declared `monthlyCostUsd`, which made every
+ * resilience decision free: setting a store from `none` to `sync` bought a
+ * whole standby cluster and 3.15 points of availability at no cost, and
+ * taking a service from 1 replica to 50 changed nothing. An SRE driving the
+ * engine found the obvious consequence -- the optimal move was always to max
+ * out replication and replicas, so no repair the product proposed could ever
+ * breach the ceiling a human had locked, and `lowest_cost` had nothing real
+ * to trade against.
+ *
+ * The declared figure is the cost of one copy. Redundancy multiplies it,
+ * because that is what redundancy is.
+ */
+export const costModel = {
+  /** A synchronous standby is a second live cluster, kept in step. */
+  synchronousReplicaMultiplier: 1.9,
+  /** An asynchronous standby costs less: it lags, so it can be smaller. */
+  asynchronousReplicaMultiplier: 1.45,
+} as const;
+
+function monthlyCostOf(entity: ArchitectureEntity) {
+  const properties = propertiesOf(entity);
+  const declared = properties.monthlyCostUsd;
+  if (typeof declared !== "number") return 0;
+  // Compute scales with the copies actually running.
+  const replicas = properties.replicas;
+  const copies = typeof replicas === "number" && replicas > 0 ? replicas : 1;
+  let cost = declared * copies;
+  const replication = replicationOf(entity);
+  if (replication === "sync") cost *= costModel.synchronousReplicaMultiplier;
+  if (replication === "async") cost *= costModel.asynchronousReplicaMultiplier;
+  return cost;
+}
+
 function totalMonthlyCost(graph: ArchitectureGraph) {
-  return operationalEntities(graph).reduce((sum, entity) => {
-    const cost = propertiesOf(entity).monthlyCostUsd;
-    return sum + (typeof cost === "number" ? cost : 0);
-  }, 0);
+  return Math.round(
+    operationalEntities(graph).reduce(
+      (sum, entity) => sum + monthlyCostOf(entity),
+      0,
+    ),
+  );
 }
 
 /** Entities whose demand exceeds provisioned capacity, worst deficit first. */
@@ -521,6 +580,63 @@ export function runScenario(
   availability = round(
     Math.max(model.floor, Math.min(model.ceiling, availability)),
   );
+
+  // A scenario that takes every component is a total loss, and the share term
+  // cannot say so: it is a ratio, so it reads the same whether one component
+  // of one is down or nine of nine. Measured before this: a completely
+  // offline system reported 93.4% available, and 96.55% once the store
+  // replicated synchronously -- a credit for a standby that had also been
+  // taken out. Stated plainly instead, and named as a violation, because a
+  // number alone invites the reader to treat it as a degradation.
+  // A total loss is when the fault itself takes everything, not when the
+  // consequences reach everything. `impacted` spans hard-down and
+  // degraded-downstream, and on a connected architecture a single store
+  // failure legitimately touches every node -- keying on it scored all four
+  // shipped fixtures 0 on all four scenarios. The seeds are what the
+  // scenario actually removes, so that is what a total loss is measured
+  // against: everything the architecture has, gone at once.
+  const seededIds = new Set(seeds.map((seed) => seed.id));
+  // A regional outage that takes everything is only a verdict on the
+  // architecture when the architecture had somewhere else to be. Every
+  // component sitting in one region is the expected shape of a single-region
+  // system -- and of a half-built one, where a reviewer has added two
+  // components and not yet placed anything elsewhere. Scoring those 0 marks
+  // them unimprovable and makes the blank canvas unusable. What is measured
+  // instead is whether the architecture spreads at all: components in more
+  // than one region losing all of them is a real total loss.
+  const placedRegions = new Set(
+    operational
+      .map((entity) => propertiesOf(entity).regionId)
+      .filter((region): region is string => typeof region === "string"),
+  );
+  const everythingSeeded =
+    operational.length > 0 &&
+    operational.every((entity) => seededIds.has(entity.id)) &&
+    !(scenario === "regional_outage" && placedRegions.size < 2);
+  if (everythingSeeded) {
+    availability = model.totalLoss;
+    violations.push("Every component is lost; the system serves nothing");
+  } else if (databasesIn(graph).length === 0) {
+    // An architecture with nothing to lose cannot be scored as though it
+    // survived something. A lone gateway scored the ceiling on three
+    // scenarios out of four because no scenario could seed anything against
+    // it, which made deleting the datastore the highest-scoring repair
+    // available. The empty-graph guard above already refuses the degenerate
+    // case; this refuses the nearly-degenerate one.
+    // Scaled rather than clamped. A hard ceiling pinned every stateless
+    // architecture to the same number, so a repair that genuinely improved
+    // one -- adding redundancy, relieving a deficit -- showed no change at
+    // all, and the reviewer could not tell a good stateless design from a
+    // bad one. Compressing the range keeps the bound and keeps the ordering.
+    availability = round(
+      model.floor +
+        ((availability - model.floor) / (model.ceiling - model.floor)) *
+          (model.statelessCeiling - model.floor),
+    );
+    violations.push(
+      "No datastore on this architecture; nothing here holds state to lose",
+    );
+  }
 
   const rtoMinutes = recoveryMinutes(graph, impacted, scenario);
 

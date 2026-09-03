@@ -160,9 +160,9 @@ describe("dependency-graph simulation", () => {
       2,
       5000,
     );
-    expect(result.monthlyCostUsd).toBe(6100);
+    expect(result.monthlyCostUsd).toBe(9400);
     expect(result.sloViolations).toContain(
-      "Human cost ceiling exceeded: $6,100 > $5,000",
+      "Human cost ceiling exceeded: $9,400 > $5,000",
     );
     expect(result.rerunScope).toBe("affected");
   });
@@ -366,11 +366,17 @@ describe("dependency-graph simulation", () => {
     // past the second one in silence. Only traffic_spike moved: it was the
     // only scenario reaching more components than the cap reports, which is
     // the check that the change touched what it should and nothing else.
+    // They changed again at aether-sim-6, when resilience stopped being
+    // free: cost is now derived from replicas and replication rather than
+    // summed from a declared figure, so every scenario's cost moved from
+    // $6,100 to $9,400 on this fixture. Availability did not move on any of
+    // the four, which is the check that pricing resilience changed the price
+    // and nothing else.
     const expected: [Scenario, string][] = [
-      ["regional_outage", "fnv1a-19f3a4ff"],
-      ["traffic_spike", "fnv1a-385a1298"],
-      ["database_failure", "fnv1a-1f2e5f47"],
-      ["dependency_failure", "fnv1a-20cb21dd"],
+      ["regional_outage", "fnv1a-236f2715"],
+      ["traffic_spike", "fnv1a-696fbc08"],
+      ["database_failure", "fnv1a-05954ff8"],
+      ["dependency_failure", "fnv1a-b110ecd9"],
     ];
     for (const [scenario, hash] of expected) {
       const run = runScenario(

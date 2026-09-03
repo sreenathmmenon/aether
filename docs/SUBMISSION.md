@@ -67,7 +67,7 @@ restored into their previous workspace.
    `Primary Ledger has no standby replica`, and the human guardrail — all
    in one frame.
 3. **Immediately after "Create repair futures".** Three futures, each
-   leading with the axis it optimises — `Lowest cost · $5,920 / month`,
+   leading with the axis it optimises — `Lowest cost · $9,220 / month`,
    `Fastest recovery · 12m recovery`, `Highest resilience · 97.11%
 availability` — and the header chip now reading **18 things it may do
    here** with the `+8` badge beside it. This is the state-dependent registration

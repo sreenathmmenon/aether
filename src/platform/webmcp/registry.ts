@@ -184,22 +184,44 @@ function toolResult(value: unknown) {
 // the rest. Exported so a test reads the shipped number, not a copy of it.
 export const problemLimit = 3;
 
-function invalidInput(error: z.ZodError, retryHint: string) {
+function invalidInput(
+  error: z.ZodError,
+  retryHint: string,
+  /**
+   * Fields the schema advertises as required. A discriminated union reports
+   * only the discriminator when the call is empty -- correct, but it tells an
+   * agent one field at a time and it has to fail its way through the rest.
+   * `propose_architecture_change` became a union to stop a string being
+   * stored in a numeric property, and lost the rejection that named every
+   * missing field at once. Naming them here keeps both.
+   */
+  alsoRequired: string[] = [],
+) {
   // Zod reports every failure, and a call with seven bad fields produced a
   // reply naming three. An agent correcting from that list fixes three,
   // retries, and fails again on the fourth — the loop this text exists to
   // prevent. The cap stays, because a wall of issues costs the budget the
   // whole result is bounded by, but the count no longer disappears.
-  const named = error.issues.slice(0, problemLimit).map((issue) => {
+  const reported = new Set(
+    error.issues.map((issue) => issue.path.join(".") || "input"),
+  );
+  const missing = alsoRequired
+    .filter((field) => !reported.has(field))
+    .map((field) => ({
+      path: [field],
+      message: "Required",
+    })) as unknown as z.ZodError["issues"];
+  const issues = [...error.issues, ...missing];
+  const named = issues.slice(0, problemLimit).map((issue) => {
     const field = issue.path.join(".") || "input";
     return `${field}: ${issue.message}`;
   });
-  const unlisted = error.issues.length - named.length;
+  const unlisted = issues.length - named.length;
   // Naming the fields costs little and is what makes the count actionable:
   // "2 more" sends an agent guessing, "2 more: regionId, peakRps" does not.
   const remaining = [
     ...new Set(
-      error.issues
+      issues
         .slice(problemLimit)
         .map((issue) => issue.path.join(".") || "input"),
     ),
@@ -1726,7 +1748,8 @@ export function createAetherToolRegistry(
             if (!parsed.success)
               return invalidInput(
                 parsed.error,
-                `replicationMode takes none, async, or sync; regionId takes one of ${regionIds().join(", ")}; every other property takes a non-negative number.`,
+                `replicationMode takes none, async, or sync; regionId takes one of ${regionIds().join(", ")}; capacityRps and monthlyCostUsd take a non-negative number; replicas takes a whole number of at least 1.`,
+                ["branchId", "entityId", "property", "value"],
               );
             const result = dispatch(
               snapshot(),

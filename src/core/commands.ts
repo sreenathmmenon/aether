@@ -36,27 +36,59 @@ export const createBranchInput = z.object({
   intent: z.enum(["lowest_cost", "fastest_recovery", "highest_resilience"]),
 });
 
-export const setPropertyInput = z.object({
-  branchId: z.string().min(1),
-  entityId: z.string().min(1),
-  property: z.enum([
-    "replicas",
-    "capacityRps",
-    "monthlyCostUsd",
-    "replicationMode",
+/**
+ * A property change, with the value checked against the property it is for.
+ *
+ * This was a property-agnostic union whose last arm accepted any short
+ * string, so every numeric property accepted text: `capacityRps: "20000"`
+ * and `capacityRps: "banana"` both stored successfully, bumped the branch
+ * version, and produced an availability figure computed as though the
+ * capacity were zero. A reviewer approved evidence that was quietly wrong,
+ * with no error anywhere. A model emitting a stringified number is common
+ * enough that this was going to happen in front of somebody.
+ *
+ * The value is now discriminated on the property, so a wrong type is a named
+ * rejection rather than a silent corruption.
+ */
+export const setPropertyInput = z.discriminatedUnion("property", [
+  z.object({
+    branchId: z.string().min(1),
+    entityId: z.string().min(1),
+    property: z.literal("replicas"),
+    // Whole copies, and at least one: a component with zero replicas is not
+    // a resilience choice, it is a deleted component.
+    value: z.number().int().min(1).max(64),
+  }),
+  z.object({
+    branchId: z.string().min(1),
+    entityId: z.string().min(1),
+    property: z.literal("capacityRps"),
+    value: z.number().finite().nonnegative().max(100_000_000),
+  }),
+  z.object({
+    branchId: z.string().min(1),
+    entityId: z.string().min(1),
+    property: z.literal("monthlyCostUsd"),
+    value: z.number().finite().nonnegative().max(100_000_000),
+  }),
+  z.object({
+    branchId: z.string().min(1),
+    entityId: z.string().min(1),
+    property: z.literal("replicationMode"),
+    value: z.enum(["none", "async", "sync"]),
+  }),
+  z.object({
+    branchId: z.string().min(1),
+    entityId: z.string().min(1),
     // Relocating a component out of a failing region is the most basic
     // architectural repair there is, and the one the documentation uses as
     // its worked example. It was the only engine-read property an agent
     // could not propose.
-    "regionId",
-  ]),
-  value: z.union([
-    z.number().finite().nonnegative(),
-    z.enum(["none", "async", "sync"]),
+    property: z.literal("regionId"),
     // A region id, checked against the graph by the reducer.
-    z.string().min(1).max(64),
-  ]),
-});
+    value: z.string().min(1).max(64),
+  }),
+]);
 
 export const moveEntityInput = z.object({
   branchId: z.string().min(1),

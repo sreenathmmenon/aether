@@ -84,7 +84,7 @@ violation are computed from the dependency graph._
 Click **`✦ Create repair futures`**. Wait about two seconds.
 
 Three futures appear, and each states the axis it optimises rather than a
-column of the same number — **`Lowest cost · $5,920 / month`**, **`Fastest
+column of the same number — **`Lowest cost · $9,220 / month`**, **`Fastest
 recovery · 12m recovery`**, **`Highest resilience · 97.11% availability`**.
 Point at that: the cheap future is not a worse version of the safe one, it
 is a different answer to the same failure. The header chip changes to
