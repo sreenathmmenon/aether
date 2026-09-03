@@ -44,6 +44,9 @@ import { recentActivity } from "./recent-activity";
 import { looksLikeCompose, parseCompose } from "@core/compose-parser";
 import { describeProvenance, type Provenance } from "@core/evidence-source";
 import { reviewPlan, wasRefused, type StepResult } from "./resident-agent";
+import { incidentThreads } from "./incident-threads";
+import { useWarRoom } from "./use-war-room";
+import { undecided, type IncidentThread } from "@core/war-room";
 import { scenarioNarrative } from "./scenario-copy";
 import { useModalDialog } from "./use-modal-dialog";
 import { syncExplanation, syncTone } from "./sync-status";
@@ -822,6 +825,49 @@ export function App() {
           };
     return describeProvenance(provenance);
   }, [entities]);
+  // The room's agenda, derived from the architecture in front of it rather
+  // than a fixed list: a database with no standby is a different
+  // conversation from a component running near its capacity.
+  const [threads, setThreads] = useState<IncidentThread[]>([]);
+  const threadsSeeded = useRef("");
+  useEffect(() => {
+    const key = `${state.workspace.templateId}:${entities.length}`;
+    if (!entities.length || threadsSeeded.current === key) return;
+    threadsSeeded.current = key;
+    setThreads(incidentThreads(graph, new Date().toISOString()));
+  }, [graph, entities.length, state.workspace.templateId]);
+  const addFinding = useCallback(
+    (threadId: string, finding: Parameters<typeof Object>[0]) =>
+      setThreads((current) =>
+        current.map((thread) =>
+          thread.id === threadId
+            ? {
+                ...thread,
+                findings: [
+                  finding as IncidentThread["findings"][number],
+                  ...thread.findings,
+                ].slice(0, 4),
+              }
+            : thread,
+        ),
+      ),
+    [],
+  );
+  const setThreadStatus = useCallback(
+    (threadId: string, status: IncidentThread["status"]) =>
+      setThreads((current) =>
+        current.map((thread) =>
+          thread.id === threadId ? { ...thread, status } : thread,
+        ),
+      ),
+    [],
+  );
+  const warRoom = useWarRoom(
+    registryRef.current,
+    threads,
+    addFinding,
+    setThreadStatus,
+  );
   const compareRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!latestCall) return;
@@ -3241,6 +3287,72 @@ export function App() {
           </div>
         </aside>
       </section>
+      {/* The room, rather than one question asked once. Several things are
+          wrong at the same time, each with its own evidence and its own
+          standing question, and the agent keeps gathering while the humans
+          argue -- which is what an incident room actually is. */}
+      {threads.length > 0 && (
+        <section className="war-room" aria-label="Incident war room">
+          <div className="war-room-head">
+            <h2 className="eyebrow">War room</h2>
+            <span className="war-room-count">
+              {undecided(threads).length} of {threads.length} undecided
+            </span>
+            <button
+              className="run-agent"
+              onClick={() => warRoom.setRunning(!warRoom.running)}
+            >
+              {warRoom.running ? "Pause the agent" : "Let the agent work"}
+            </button>
+          </div>
+          {warRoom.running && warRoom.saying && (
+            <p className="war-room-saying" aria-live="polite">
+              {warRoom.saying}
+            </p>
+          )}
+          <ol className="thread-board">
+            {threads.map((thread) => (
+              <li
+                key={thread.id}
+                className={`thread thread-${thread.severity} thread-${thread.status}`}
+              >
+                <div className="thread-head">
+                  <strong>{thread.title}</strong>
+                  <span className="thread-severity">{thread.severity}</span>
+                </div>
+                <p className="thread-summary">{thread.summary}</p>
+                {thread.findings.length > 0 && (
+                  <ol className="thread-findings">
+                    {thread.findings.map((finding) => (
+                      <li key={finding.id}>
+                        <span>{finding.said}</span>
+                        <em className={finding.live ? "finding-live" : ""}>
+                          {finding.source}
+                        </em>
+                      </li>
+                    ))}
+                  </ol>
+                )}
+                <div className="thread-foot">
+                  <span className="thread-awaiting">
+                    {thread.status === "decided"
+                      ? "Decided"
+                      : `Awaiting: ${thread.awaiting}`}
+                  </span>
+                  {thread.status !== "decided" && (
+                    <button
+                      className="thread-decide"
+                      onClick={() => setThreadStatus(thread.id, "decided")}
+                    >
+                      Accept this thread
+                    </button>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ol>
+        </section>
+      )}
       <section
         className="decision-room"
         aria-label="Live decision history and discussion"

@@ -167,6 +167,133 @@ button {
   background: transparent;
   cursor: default;
 }
+/* The room. Several threads open at once, each with its own evidence and
+   its own standing question -- the shape an incident actually has, rather
+   than one decision at a time. */
+.war-room {
+  padding: var(--space-8) var(--space-12) var(--space-12);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-sunken);
+}
+.war-room-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+.war-room-head h2 {
+  margin: 0;
+}
+.war-room-count {
+  flex: 1;
+  color: var(--ink-muted);
+  font-size: var(--text-sm);
+}
+.war-room-saying {
+  margin: 0 0 var(--space-4);
+  color: var(--agent-text);
+  font-size: var(--text-sm);
+}
+.thread-board {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.thread {
+  display: grid;
+  gap: var(--space-2);
+  align-content: start;
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+/* Severity is the first thing a room reads, so it is the edge. */
+.thread-critical {
+  border-left-color: var(--failure);
+}
+.thread-elevated {
+  border-left-color: var(--branch);
+}
+.thread-watch {
+  border-left-color: var(--border);
+}
+.thread-decided {
+  opacity: 0.62;
+}
+.thread-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+.thread-head strong {
+  font-size: var(--text-base);
+  font-weight: var(--weight-bold);
+}
+.thread-severity {
+  flex: none;
+  color: var(--ink-subtle);
+  font-size: var(--text-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.thread-summary {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: var(--text-sm);
+}
+.thread-findings {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.thread-findings li {
+  display: grid;
+  gap: 2px;
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--surface-sunken);
+  font-size: var(--text-xs);
+}
+.thread-findings em {
+  color: var(--ink-subtle);
+  font-style: normal;
+}
+/* A reading from outside the page carries the agent's colour, so a person
+   can see at a glance which evidence was gathered and which was computed. */
+.finding-live {
+  color: var(--agent-text);
+  font-weight: var(--weight-bold);
+}
+.thread-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
+}
+.thread-awaiting {
+  color: var(--ink-subtle);
+  font-size: var(--text-xs);
+}
+.thread-decide {
+  flex: none;
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--human);
+  border-radius: var(--radius-full);
+  color: var(--human-text);
+  background: transparent;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  cursor: pointer;
+}
 .run-agent {
   padding: var(--space-2) var(--space-4);
   border: 1px solid var(--agent);
