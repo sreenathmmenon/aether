@@ -86,6 +86,7 @@ import { gateHolds } from "./human-gate";
 import { plainLanguage } from "./tool-plain-language";
 import { paymentPlatformBaseline } from "../fixtures/payment-platform/baseline";
 import { aiPlatformBaseline } from "../fixtures/ai-platform/baseline";
+import { liveEventBaseline } from "../fixtures/live-event/baseline";
 import { blankBaseline } from "../fixtures/blank/baseline";
 import { rideHailingBaseline } from "../fixtures/ride-hailing/baseline";
 import {
@@ -165,6 +166,12 @@ const systemTemplates = [
     name: "AI inference platform",
     summary: "A shared vector store feeding two independent read paths.",
     graph: aiPlatformBaseline,
+  },
+  {
+    id: "live-event",
+    name: "Live event streaming",
+    summary: "A cricket final's audience returns in a minute; capacity cannot.",
+    graph: liveEventBaseline,
   },
 ] as const;
 

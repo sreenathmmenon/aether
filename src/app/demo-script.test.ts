@@ -347,28 +347,30 @@ describe("the demo script quotes what the product reports", () => {
 
   it("counts the seeded systems in the compliance evidence too", () => {
     // A compliance row said the canonical journey passes for "both seeded
-    // systems" when three ship — the same undercount M171 found in the
-    // README, in the document that exists to be audited. All three were
-    // walked live before the claim was widened.
+    // systems" when three shipped — the same undercount M171 found in the
+    // README, in the document that exists to be audited. The count is read
+    // from the templates rather than written down here, so adding a system
+    // fails the documents that describe it rather than this assertion.
     const templates = [
       ...appSource.matchAll(/id: "(blank|[a-z-]+)",\s*\n\s*name: "/g),
     ].map((match) => match[1]!);
     const seeded = templates.filter((id) => id !== "blank");
-    expect(seeded.length).toBe(3);
+    const spelled = ["no", "one", "two", "three", "four", "five", "six"];
+    const count = spelled[seeded.length]!;
     const flat = compliance.replace(/\s+/g, " ");
     expect(
       flat,
       "the compliance evidence undercounts the seeded systems",
     ).not.toContain("both seeded systems");
-    expect(flat).toContain("all three seeded systems");
+    expect(flat).toContain(`all ${count} seeded systems`);
     // The screenshot list had the same undercount: "the second seeded
-    // system" when three ship.
+    // system" when more than two ship.
     const sub = submission.replace(/\s+/g, " ");
     expect(
       sub,
       "the screenshot checklist undercounts the seeded systems",
     ).not.toContain("the second seeded system");
-    expect(sub).toContain("three seeded systems ship");
+    expect(sub).toContain(`${count} seeded systems ship`);
     // And no vague status text where a measured one belongs.
     expect(
       flat,

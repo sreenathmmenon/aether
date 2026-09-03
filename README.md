@@ -8,7 +8,7 @@ Architecture resilience is the domain it demonstrates. The mechanism — typed m
 
 **Live app:** [webmcp-production-38e5.up.railway.app](https://webmcp-production-38e5.up.railway.app)
 
-It is not a generic whiteboard or an AI diagram generator. Describe your own architecture to an agent and it builds the model here — components, dependencies, and all — then the deterministic engine proves what a failure would do to it. Three worked systems ship for anyone who wants the story immediately, and every metric, repair alternative, and narrative re-derives from the graph you are actually looking at. Architecture Lab is Aether's first domain package; the core is designed so other structured decision domains can follow without changing its command, branch, approval, or audit foundations.
+It is not a generic whiteboard or an AI diagram generator. Describe your own architecture to an agent and it builds the model here — components, dependencies, and all — then the deterministic engine proves what a failure would do to it. Four worked systems ship for anyone who wants the story immediately, and every metric, repair alternative, and narrative re-derives from the graph you are actually looking at. Architecture Lab is Aether's first domain package; the core is designed so other structured decision domains can follow without changing its command, branch, approval, or audit foundations.
 
 ## What Aether does that other tools do not
 
@@ -24,7 +24,7 @@ An architect enters a Mumbai payment-path outage with the decision already visib
 
 The live URL takes two optional parameters.
 
-- `?system=blank` opens an empty canvas for your own architecture. `payment-platform`, `ride-hailing`, and `ai-platform` open the shipped examples. Switching systems in the interface rewrites the address bar, so the current architecture is always shareable.
+- `?system=blank` opens an empty canvas for your own architecture. `payment-platform`, `ride-hailing`, `ai-platform`, and `live-event` open the shipped examples. Switching systems in the interface rewrites the address bar, so the current architecture is always shareable.
 - `?room=<name>` puts everyone holding that link into one shared workspace, reconciled every three seconds with optimistic versioning and stale-write rejection. Every change stays attributable to the human or the agent that made it. Without the parameter each visitor keeps their own private workspace.
 
 Both compose: `?system=ride-hailing&room=incident-42`.
@@ -70,7 +70,9 @@ path. They are not yet driven by a live alerting feed.
 The interface reads as live telemetry because that is what an incident room
 looking at its own system should feel like. This section is where the
 distinction is recorded, rather than as a footnote on every number a room is
-trying to act on.
+trying to act on. [docs/DATA_SOURCES.md](docs/DATA_SOURCES.md) carries the full
+record, including the published engineering material the shipped example
+systems are shaped from.
 
 ## Product principles
 
