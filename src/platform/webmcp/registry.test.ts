@@ -2882,23 +2882,31 @@ describe("Aether WebMCP registry", () => {
 
   it("returns actionable errors an agent can correct itself from", async () => {
     const tools: RegisteredTool[] = [];
-    const registry = createAetherToolRegistry(() => undefined, undefined, {
-      registerTool: async (tool) => {
-        tools.push(tool as RegisteredTool);
-      },
-    });
-    await registry?.refresh(
-      createInitialState(paymentPlatformBaseline, "payment-platform", [
-        "regional_outage",
-      ]),
+    let state = createInitialState(
+      paymentPlatformBaseline,
+      "payment-platform",
+      ["regional_outage"],
     );
+    const registry = createAetherToolRegistry(
+      (next) => {
+        state = next;
+      },
+      undefined,
+      {
+        registerTool: async (tool) => {
+          tools.push(tool as RegisteredTool);
+        },
+      },
+    );
+    const call = async (name: string, input: Record<string, unknown>) => {
+      await registry?.refresh(state);
+      const tool = tools.filter((candidate) => candidate.name === name).at(-1);
+      if (!tool) throw new Error(`${name} was not registered`);
+      return String(await tool.execute(input));
+    };
 
     const branch = JSON.parse(
-      String(
-        await tools
-          .find((tool) => tool.name === "create_architecture_branch")
-          ?.execute({ name: "x", intent: "cheap" }),
-      ),
+      await call("create_architecture_branch", { name: "x", intent: "cheap" }),
     ) as { error: string; problems: string[]; nextAction: string };
     expect(branch.error).toBe("INVALID_INPUT");
     // The agent is told which fields failed and what the valid options are.
@@ -2906,12 +2914,34 @@ describe("Aether WebMCP registry", () => {
     expect(branch.problems.join(" ")).toContain("intent");
     expect(branch.nextAction).toContain("highest_resilience");
 
+    const made = JSON.parse(
+      await call("create_architecture_branch", {
+        name: "Actionable probe",
+        intent: "highest_resilience",
+      }),
+    ) as { branchId: string };
+    expect(made.branchId).toBe("branch-highest_resilience");
+
+    const missing = JSON.parse(
+      await call("propose_architecture_change", {}),
+    ) as { error: string; problems: string[] };
+    expect(missing.error).toBe("INVALID_INPUT");
+    const namedMissing = missing.problems.filter(
+      (problem) => !problem.includes("not listed"),
+    );
+    expect(namedMissing).toHaveLength(problemLimit);
+    for (const problem of namedMissing) expect(problem).toMatch(/Required/i);
+    const overflow = missing.problems.find((problem) =>
+      problem.includes("not listed"),
+    );
+    if (overflow)
+      for (const problem of namedMissing) {
+        const field = problem.split(":")[0];
+        expect(overflow).not.toContain(`${field},`);
+      }
+
     const trace = JSON.parse(
-      String(
-        await tools
-          .find((tool) => tool.name === "trace_architecture_dependency")
-          ?.execute({ entityId: "nope" }),
-      ),
+      await call("trace_architecture_dependency", { entityId: "nope" }),
     ) as { nextAction: string };
     expect(trace.nextAction).toContain("ledger");
     registry?.dispose();

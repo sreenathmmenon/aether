@@ -560,7 +560,43 @@ async function main() {
     );
   }
 
-  // 14. A ceiling the reviewer locks has to bind whichever order they do
+  // 14. A rejection has to name what is actually wrong, and nothing else.
+  //     One bad field used to report three fields as missing that had been
+  //     supplied, with the real problem pushed past the cap -- the most
+  //     common failure path an agent hits. An empty call led with a
+  //     discriminator dump instead of the three plain "Required" lines
+  //     behind it.
+  {
+    const page = surface();
+    const branchId = await withRepair(page);
+    const oneBad = await page.call("propose_architecture_change", {
+      branchId,
+      entityId: "ledger",
+      property: "capacityRps",
+      value: "banana",
+    });
+    const problems = (oneBad.problems ?? []) as string[];
+    const lies = problems.filter((problem) =>
+      /^(branchId|entityId|property):/.test(problem),
+    );
+    record(
+      "tools/rejection-names-only-what-failed",
+      "Does a single bad field produce a single problem?",
+      problems.length === 1 && lies.length === 0 ? "pass" : "fail",
+      `${problems.length} problem${problems.length === 1 ? "" : "s"}: ${JSON.stringify(problems).slice(0, 150)}`,
+    );
+
+    const empty = await page.call("propose_architecture_change", {});
+    const emptyProblems = (empty.problems ?? []) as string[];
+    record(
+      "tools/rejection-leads-with-what-is-missing",
+      "Does an empty call say which fields are required, first?",
+      emptyProblems[0]?.includes("Required") ? "pass" : "fail",
+      JSON.stringify(emptyProblems).slice(0, 170),
+    );
+  }
+
+  // 15. A ceiling the reviewer locks has to bind whichever order they do
   //     things in, and must not strand them. Evidence gathered before the
   //     ceiling was set did not answer for it, so it cannot stay current --
   //     four clean runs at $27,814 approved and merged under a $16,688
@@ -617,7 +653,7 @@ async function main() {
     );
   }
 
-  // 15. The workspace has to stay inside the size the server accepts, for
+  // 16. The workspace has to stay inside the size the server accepts, for
   //     as long as a room is used. This is the one that would have lost it:
   //     a shared room on the deployed origin reached 2,340 audit entries and
   //     1.04 MB against a 1 MB ceiling, so every further action by anyone
@@ -694,7 +730,7 @@ async function main() {
     );
   }
 
-  // 16. Telemetry read at the component's own scale. A reading that argues
+  // 17. Telemetry read at the component's own scale. A reading that argues
   //    for shrinking a correctly sized component is worse than no reading.
   if (liveServer) {
     const response = await fetch(
@@ -721,7 +757,7 @@ async function main() {
     );
   }
 
-  // 17. A live source, read through the allowlisted proxy. Real network, so
+  // 18. A live source, read through the allowlisted proxy. Real network, so
   //     this is the check that proves the room is not reading a fixture.
   if (liveServer) {
     try {
@@ -757,7 +793,7 @@ async function main() {
     );
   }
 
-  // 18. The proxy is an allowlist, not an open relay. Anybody can load this
+  // 19. The proxy is an allowlist, not an open relay. Anybody can load this
   //     site, so a proxy forwarding arbitrary URLs would be the whole
   //     internet's problem, not just this app's.
   if (liveServer) {

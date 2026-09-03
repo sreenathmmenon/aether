@@ -32,6 +32,9 @@ All other previously open rows below have been reconciled against the deployed i
 - [x] **M246.2 — Record the judge-council product ratings and final known gap** `DONE`
   - Acceptance: the repository contains a compact council review mapped to the official judging criteria and every sub-10 implementation gap identified by that review is either fixed or explicitly owner/submission-only.
   - Evidence: `docs/JUDGE_COUNCIL.md` records two product-council rounds across the official criteria and judge-role lenses. After the M246.1 fix, the council score is 9.9/10 overall product readiness before demo packaging; the remaining 0.1 is judgement uncertainty rather than a known implementation defect. Verification after the council fixes: `npm run gate` passed formatting, lint with zero warnings, typecheck, 413 tests, production build, and authorship check; `npm run evals` passed 21/21.
+- [x] **M246.3 — Make WebMCP rejections easier for agents to repair** `DONE`
+  - Acceptance: malformed tool calls lead with missing required fields before harder discriminator failures, do not repeat already named fields in the overflow list, and remain inside the 1,500-character tool-result budget.
+  - Evidence: `src/platform/webmcp/registry.ts` now orders required-field failures before malformed-field failures and filters already named fields from the overflow list. `src/platform/webmcp/registry.test.ts` asserts the behavior through `propose_architecture_change`; `npm run gate` passed formatting, lint with zero warnings, typecheck, 413 tests, production build, and authorship check; `npm run evals` passed 23/23, including `tools/rejection-names-only-what-failed` and `tools/rejection-leads-with-what-is-missing`.
 
 ## Milestone 1 — Repository and foundation
 

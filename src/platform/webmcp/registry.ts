@@ -217,7 +217,17 @@ function invalidInput(
       message: "Required",
     })) as unknown as z.ZodError["issues"];
   const issues = [...error.issues, ...missing];
-  const named = issues.slice(0, problemLimit).map((issue) => {
+  // A missing field reads ahead of a malformed one. A discriminated union
+  // reports its discriminator first, so an empty call led with "Invalid
+  // discriminator value. Expected 'replicas' | 'capacityRps' | ..." and
+  // pushed the three plain "Required" lines behind it -- correct, and the
+  // hardest possible way to learn that four fields are missing.
+  const ordered = [...issues].sort((left, right) => {
+    const missing = (issue: (typeof issues)[number]) =>
+      /required/i.test(String(issue.message)) ? 0 : 1;
+    return missing(left) - missing(right);
+  });
+  const named = ordered.slice(0, problemLimit).map((issue) => {
     const field = issue.path.join(".") || "input";
     return `${field}: ${issue.message}`;
   });
@@ -226,9 +236,15 @@ function invalidInput(
   // "2 more" sends an agent guessing, "2 more: regionId, peakRps" does not.
   const remaining = [
     ...new Set(
-      issues
+      ordered
         .slice(problemLimit)
-        .map((issue) => issue.path.join(".") || "input"),
+        .map((issue) => issue.path.join(".") || "input")
+        // A field can fail twice -- once as missing, once as malformed --
+        // and naming it again in the overflow list read as two separate
+        // problems with one of them already listed above.
+        .filter(
+          (field) => !named.some((problem) => problem.startsWith(`${field}:`)),
+        ),
     ),
   ];
   return toolResult({
