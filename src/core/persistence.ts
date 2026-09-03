@@ -99,7 +99,19 @@ export function parsePersistedState(
 
 export function persistState(state: AetherState) {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem(storageKey, JSON.stringify(state));
+  // Bounded on the way out as well as the way in. This writes the page's
+  // live state, which is only trimmed when a dispatch or a merge runs, so a
+  // state assembled any other way was stored at whatever size it had reached
+  // -- measured at 3,320 entries against a 1,500 bound.
+  const bounded = boundAudit(state.audit);
+  const held: AetherState = bounded.retired
+    ? {
+        ...state,
+        audit: bounded.audit,
+        workspace: { ...state.workspace, auditRetired: bounded.retired },
+      }
+    : state;
+  window.localStorage.setItem(storageKey, JSON.stringify(held));
 }
 
 export function clearPersistedState() {
