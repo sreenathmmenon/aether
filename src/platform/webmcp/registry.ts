@@ -596,6 +596,65 @@ export function createAetherToolRegistry(
         },
       });
       await register({
+        name: "measure_component_demand",
+        description:
+          "Read a real dependency's published demand and report it as requests per second, with the source and the window it was measured over. Use this to replace an assumed peak with a measured one, then set it with propose_architecture_change.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            package: {
+              type: "string",
+              description:
+                "An npm package whose published download volume stands in for this component's demand, such as express or @scope/name.",
+            },
+          },
+          required: ["package"],
+          additionalProperties: false,
+        },
+        annotations: { readOnlyHint: true, untrustedContentHint: true },
+        execute: async (input) => {
+          const pkg = String(
+            (input as { package?: unknown }).package ?? "",
+          ).trim();
+          if (!pkg)
+            return JSON.stringify({
+              error: "INVALID_INPUT",
+              problems: ["package: expected an npm package name."],
+              nextAction: "Supply a package, such as express.",
+            });
+          try {
+            const response = await fetch(
+              `/api/demand/${encodeURIComponent(pkg)}`,
+              { headers: { accept: "application/json" } },
+            );
+            const payload = (await response.json()) as Record<string, unknown>;
+            if (!response.ok)
+              return JSON.stringify({
+                error: "PACKAGE_NOT_FOUND",
+                problems: [`No published downloads for ${pkg}.`],
+                nextAction:
+                  "Try another package, or state the figure yourself.",
+              });
+            return JSON.stringify({
+              ...payload,
+              // The honest caveat travels with the number: a weekly mean is
+              // not a peak, and this is demand for a package rather than for
+              // the reviewer's own service.
+              caveat:
+                "Mean over the window, not a peak. Published package demand, not this system's traffic.",
+              nextAction:
+                "propose_architecture_change with property peakRps to set this on a component.",
+            });
+          } catch {
+            return JSON.stringify({
+              error: "SOURCE_UNREACHABLE",
+              problems: [`${pkg} could not be read from this page.`],
+              nextAction: "State the figure yourself.",
+            });
+          }
+        },
+      });
+      await register({
         name: "read_live_source",
         description:
           "Read a live status source and report what is operational right now. Use this to ground the architecture in observed conditions rather than assumed ones. Returns the source, the moment it was read, and each component's current status.",
@@ -604,7 +663,7 @@ export function createAetherToolRegistry(
           properties: {
             source: {
               type: "string",
-              enum: ["github", "npm", "cloudflare"],
+              enum: ["openai", "github", "npm", "cloudflare"],
               description:
                 "Which public status source to read. Each is a real Statuspage endpoint.",
             },
@@ -618,7 +677,7 @@ export function createAetherToolRegistry(
         annotations: { readOnlyHint: true, untrustedContentHint: true },
         execute: async (input) => {
           const requested = (input as { source?: unknown }).source;
-          const sources = ["github", "npm", "cloudflare"];
+          const sources = ["openai", "github", "npm", "cloudflare"];
           // The schema says `source` is required, so the tool has to refuse
           // without it rather than quietly picking one -- an agent correcting
           // itself needs to be told which field failed and what would work.

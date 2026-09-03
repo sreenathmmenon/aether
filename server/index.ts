@@ -108,6 +108,12 @@ app.get("/api/workspaces/:id", async (context) => {
  * is an open relay, and this one is reachable by anybody who loads the site.
  */
 const liveSources: Record<string, { url: string; name: string }> = {
+  // The most relevant live source for this audience, and the one whose
+  // components a reviewer will recognise: Responses, Images, Login, Audio.
+  openai: {
+    url: "https://status.openai.com/api/v2/summary.json",
+    name: "OpenAI status",
+  },
   // Atlassian Statuspage publishes this shape at a stable path, and a great
   // many real services run on it -- so the reading is a real reading.
   github: {
@@ -196,6 +202,59 @@ app.get("/api/repo", async (context) => {
     },
     404,
   );
+});
+
+/**
+ * Measured demand for a real dependency.
+ *
+ * Every figure the engine works from was typed by the reviewer, which is
+ * the fair objection to any simulation: the arithmetic is reproducible, the
+ * inputs are assumed. npm publishes actual download counts for actual
+ * packages, and a weekly count divides into a requests-per-second figure
+ * that nobody invented.
+ *
+ * It is demand for a package rather than for the reviewer's service, and
+ * the interface says so -- the point is that a number can arrive with a
+ * source and a timestamp attached, and be marked `measured` rather than
+ * `implied`.
+ */
+app.get("/api/demand/:pkg", async (context) => {
+  const pkg = context.req.param("pkg");
+  // npm package names: scoped or plain, and nothing that escapes the path.
+  if (!/^(?:@[\w.-]+\/)?[\w.-]+$/.test(pkg) || pkg.length > 128)
+    return context.json({ error: "INVALID_PACKAGE" }, 400);
+  try {
+    const response = await fetch(
+      `https://api.npmjs.org/downloads/point/last-week/${pkg}`,
+      {
+        signal: AbortSignal.timeout(5000),
+        headers: { accept: "application/json" },
+      },
+    );
+    if (!response.ok)
+      return context.json({ error: "PACKAGE_NOT_FOUND", package: pkg }, 404);
+    const payload = (await response.json()) as {
+      downloads?: number;
+      start?: string;
+      end?: string;
+    };
+    const downloads = payload.downloads ?? 0;
+    const seconds = 7 * 24 * 60 * 60;
+    return context.json({
+      package: pkg,
+      source: "npm registry downloads",
+      endpoint: `https://api.npmjs.org/downloads/point/last-week/${pkg}`,
+      window: `${payload.start} to ${payload.end}`,
+      downloads,
+      // Mean, and named as such: a weekly total says nothing about peaks,
+      // and presenting it as a peak would be the invention this exists to
+      // avoid.
+      meanRps: Math.round(downloads / seconds),
+      readAt: new Date().toISOString(),
+    });
+  } catch {
+    return context.json({ error: "SOURCE_UNREACHABLE", package: pkg }, 504);
+  }
 });
 
 app.get("/api/live/:source", async (context) => {

@@ -160,6 +160,17 @@ export function narrateCall(
           : undefined,
       };
     }
+    case "measure_component_demand": {
+      const pkg = text(data.package);
+      const rps = data.meanRps;
+      return {
+        did: pkg ? `Measured demand for ${pkg}` : "Measured demand",
+        effect:
+          typeof rps === "number"
+            ? `${rps.toLocaleString()} rps mean · ${text(data.window) ?? "published"}`
+            : undefined,
+      };
+    }
     case "read_live_source": {
       // The point of the reading is what it found, and when.
       const source = text(data.source) ?? "a live source";
