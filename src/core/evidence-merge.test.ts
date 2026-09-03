@@ -38,6 +38,85 @@ const runsOf = (state: ReturnType<typeof withRuns>) =>
     .map((run) => run.scenario)
     .sort();
 
+describe("a room keeps everyone in it", () => {
+  it("unions participants rather than taking one side's roster", () => {
+    // Presence is the same shape of problem as notes: two participants each
+    // know about people the other has not seen. `...incoming` took one
+    // side's roster wholesale, so agents that joined from another client
+    // vanished on the next reconcile -- measured on the deployed origin,
+    // four agents joined and the server held one participant.
+    const base = createInitialState(paymentPlatformBaseline);
+    const now = Date.now();
+    const here = {
+      ...base,
+      participants: [
+        {
+          id: "seat-a",
+          kind: "human" as const,
+          name: "Reviewer a",
+          lastSeen: now,
+        },
+        {
+          id: "agent-metrics",
+          kind: "agent" as const,
+          name: "Metrics agent",
+          lastSeen: now,
+        },
+      ],
+    };
+    const there = {
+      ...base,
+      participants: [
+        {
+          id: "seat-b",
+          kind: "human" as const,
+          name: "Reviewer b",
+          lastSeen: now,
+        },
+        {
+          id: "agent-budget",
+          kind: "agent" as const,
+          name: "Budget agent",
+          lastSeen: now,
+        },
+      ],
+    };
+    const merged = mergeEvidence(here, there);
+    expect(
+      (merged.participants ?? []).map((participant) => participant.id).sort(),
+    ).toEqual(["agent-budget", "agent-metrics", "seat-a", "seat-b"]);
+  });
+
+  it("refreshes a heartbeat rather than duplicating the row", () => {
+    const base = createInitialState(paymentPlatformBaseline);
+    const older = {
+      ...base,
+      participants: [
+        {
+          id: "seat-a",
+          kind: "human" as const,
+          name: "Reviewer a",
+          lastSeen: 1000,
+        },
+      ],
+    };
+    const newer = {
+      ...base,
+      participants: [
+        {
+          id: "seat-a",
+          kind: "human" as const,
+          name: "Reviewer a",
+          lastSeen: 9000,
+        },
+      ],
+    };
+    const merged = mergeEvidence(older, newer);
+    expect(merged.participants).toHaveLength(1);
+    expect(merged.participants?.[0]!.lastSeen).toBe(9000);
+  });
+});
+
 describe("a write never erases evidence it has not seen", () => {
   it("keeps runs the incoming state does not carry", () => {
     // The registry dispatches from a copy taken before the reconcile, so a

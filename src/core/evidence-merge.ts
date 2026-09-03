@@ -71,10 +71,31 @@ export function mergeEvidence(
     );
   };
 
+  // Presence is the same shape of problem as notes: two participants each
+  // know about people the other has not seen, and `...incoming` took one
+  // side's roster wholesale. Agents that joined from another client vanished
+  // on the next reconcile, so a room could never hold more than the
+  // participants of whichever tab wrote last. Keyed on id, newest wins, so a
+  // heartbeat refreshes a row rather than duplicating it.
+  const presence = new Map<
+    string,
+    AetherState["participants"] extends (infer Entry)[] | undefined
+      ? Entry
+      : never
+  >();
+  for (const participant of [
+    ...(held.participants ?? []),
+    ...(incoming.participants ?? []),
+  ]) {
+    const existing = presence.get(participant.id);
+    if (!existing || participant.lastSeen >= existing.lastSeen)
+      presence.set(participant.id, participant);
+  }
   return {
     ...incoming,
     simulations: merged,
     audit: union(held.audit, incoming.audit, auditKey),
     decisionNotes: union(held.decisionNotes, incoming.decisionNotes, noteKey),
+    participants: [...presence.values()],
   };
 }
