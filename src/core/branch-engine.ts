@@ -274,6 +274,14 @@ function wouldBreachCeiling(
   }
   const total = totalMonthlyCost(projected);
   if (total <= ceiling) return undefined;
+  // A change that reduces cost is allowed even while over the ceiling.
+  // Testing against the ceiling alone left an architecture already past it
+  // with no legal move at all: lowering a component's cost, or dropping a
+  // standby, were both refused, and the refusal advised keeping the
+  // component "at or below $0". A reviewer who locks a tight ceiling should
+  // get an agent that can work toward it, not one that is locked out of it.
+  const current = totalMonthlyCost(graph);
+  if (total < current) return undefined;
   // What this component would have to cost for the architecture to fit. Its
   // own projected cost is taken back out, so the figure is a budget for the
   // component rather than for everything else around it.
@@ -282,6 +290,15 @@ function wouldBreachCeiling(
     .filter((entity) => entity.kind !== "region" && !changed.has(entity.id))
     .reduce((sum, entity) => sum + monthlyCostOf(entity), 0);
   const headroom = Math.max(0, Math.round(ceiling - others));
+  // Advice that can be acted on. When everything else already costs more
+  // than the ceiling there is no figure for this component that fits, so
+  // naming "$0" sends an agent at an impossible target; what it can do is
+  // bring the total down.
+  if (headroom <= 0)
+    return commandFailure(
+      "NOT_AVAILABLE",
+      `This architecture already costs $${current.toLocaleString()} a month against the $${ceiling.toLocaleString()} ceiling the reviewer locked. A change has to reduce that total, or the reviewer has to raise the ceiling — only they can.`,
+    );
   return commandFailure(
     "NOT_AVAILABLE",
     `This change would put monthly cost at $${total.toLocaleString()}, past the $${ceiling.toLocaleString()} ceiling the reviewer locked. Keep this component at or below $${headroom.toLocaleString()}, or ask the reviewer to raise the ceiling — only they can.`,
@@ -1145,6 +1162,19 @@ export function dispatch(
       );
     next.workspace.costCeilingUsd = command.input.amountUsd;
     next.workspace.updatedAt = now;
+    // Evidence gathered before the ceiling was set did not answer for it.
+    // A branch keeps its version through this, so runs recorded at $27,814
+    // stayed "current" when a reviewer then locked $16,688, and the branch
+    // approved and merged over a budget the reviewer had just set. Ordering
+    // decided whether their own constraint bound, which is the one thing a
+    // human-only control must not depend on. Bumping the version invalidates
+    // those runs by the rule the gate already enforces: evidence has to be
+    // current at the version being approved.
+    for (const branch of Object.values(next.branches)) {
+      if (branch.status === "merged" || branch.status === "discarded") continue;
+      branch.version += 1;
+      branch.updatedAt = now;
+    }
     nextState = "human_cost_guardrail";
   }
 

@@ -376,10 +376,10 @@ describe("dependency-graph simulation", () => {
     // only that scenario moved, which is the check that the charge landed
     // where sharing is actually being asked about.
     const expected: [Scenario, string][] = [
-      ["regional_outage", "fnv1a-9c3c589b"],
-      ["traffic_spike", "fnv1a-53230804"],
-      ["database_failure", "fnv1a-3dd58c72"],
-      ["dependency_failure", "fnv1a-ea49058d"],
+      ["regional_outage", "fnv1a-f1df7811"],
+      ["traffic_spike", "fnv1a-8196c31e"],
+      ["database_failure", "fnv1a-20133e4c"],
+      ["dependency_failure", "fnv1a-7ffee86b"],
     ];
     for (const [scenario, hash] of expected) {
       const run = runScenario(

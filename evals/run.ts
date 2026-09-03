@@ -333,14 +333,14 @@ async function main() {
       if (!/^(get_|compare_|recommend_)/.test(tool.name)) continue;
       const reply = await page.call(tool.name, { branchId });
       const text = JSON.stringify(reply);
-      if (text.length > 2000) oversized.push(`${tool.name} ${text.length}`);
+      if (text.length > 1500) oversized.push(`${tool.name} ${text.length}`);
     }
     record(
       "tools/bounded-output",
       "Does every read tool answer within the size budget an agent can use?",
       oversized.length === 0 ? "pass" : "fail",
       oversized.length === 0
-        ? "every read tool replied inside 2,000 characters of parseable JSON"
+        ? "every read tool replied inside 1,500 characters of parseable JSON"
         : `over budget: ${oversized.join(", ")}`,
     );
   }
@@ -524,7 +524,43 @@ async function main() {
     );
   }
 
-  // 13. The workspace has to stay inside the size the server accepts, for
+  // 13. Advice an agent follows literally has to be callable in the state
+  //     that gives it. This has been wrong twice -- a reading advising a
+  //     property the write tool refuses, and a summary advising a scenario
+  //     run on a committed architecture, where that tool is not registered.
+  {
+    const page = surface();
+    const unreachable: string[] = [];
+    const check = async (label: string) => {
+      const names = page.tools().map((tool) => tool.name);
+      for (const tool of page.tools()) {
+        if (!/^(get_|compare_|recommend_)/.test(tool.name)) continue;
+        const reply = await page.call(tool.name, {});
+        const advice = reply.nextAction;
+        if (typeof advice !== "string") continue;
+        // A nextAction is either a bare tool name or a sentence naming one.
+        // Either way every tool it mentions has to be on the surface now.
+        const mentioned = names.filter((name) => advice.includes(name));
+        const bare = /^[a-z_]+$/.test(advice.trim());
+        if (bare ? !names.includes(advice.trim()) : mentioned.length === 0)
+          unreachable.push(`${label}: ${tool.name} -> ${advice}`);
+      }
+    };
+    await page.refresh();
+    await check("committed");
+    await withRepair(page);
+    await check("repair future open");
+    record(
+      "tools/advice-is-registered",
+      "Does every nextAction name a tool that exists in that state?",
+      unreachable.length === 0 ? "pass" : "fail",
+      unreachable.length === 0
+        ? "every nextAction named a registered tool"
+        : unreachable.join("; "),
+    );
+  }
+
+  // 14. The workspace has to stay inside the size the server accepts, for
   //     as long as a room is used. This is the one that would have lost it:
   //     a shared room on the deployed origin reached 2,340 audit entries and
   //     1.04 MB against a 1 MB ceiling, so every further action by anyone
@@ -601,7 +637,7 @@ async function main() {
     );
   }
 
-  // 14. Telemetry read at the component's own scale. A reading that argues
+  // 15. Telemetry read at the component's own scale. A reading that argues
   //    for shrinking a correctly sized component is worse than no reading.
   if (liveServer) {
     const response = await fetch(
@@ -628,7 +664,7 @@ async function main() {
     );
   }
 
-  // 15. A live source, read through the allowlisted proxy. Real network, so
+  // 16. A live source, read through the allowlisted proxy. Real network, so
   //     this is the check that proves the room is not reading a fixture.
   if (liveServer) {
     try {
@@ -664,7 +700,7 @@ async function main() {
     );
   }
 
-  // 16. The proxy is an allowlist, not an open relay. Anybody can load this
+  // 17. The proxy is an allowlist, not an open relay. Anybody can load this
   //     site, so a proxy forwarding arbitrary URLs would be the whole
   //     internet's problem, not just this app's.
   if (liveServer) {

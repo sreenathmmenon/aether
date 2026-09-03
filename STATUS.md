@@ -2,11 +2,11 @@
 
 This is the source of truth for build progress. Status values: `TODO`, `IN_PROGRESS`, `BLOCKED`, `DONE`. Every completed task needs reproducible evidence below it. Do not change a task to `DONE` based on intention or a build that does not cover its acceptance criteria.
 
-## Release status — V3 loop active 2026-09-01
+## Release status — V3 loop active 2026-09-03
 
-The deployable Aether product, its WebMCP integration, production persistence, browser validation, public repository, and submission copy are complete, and the full decision journey has been verified end to end on the deployed origin for both seeded systems and for a self-built architecture. V3 is now the active direction: make the self-built, agent-modeled system path the first-prize demo rather than a secondary feature.
+The deployable Aether product, its WebMCP integration, production persistence, browser validation, public repository, and submission copy are complete, and the full decision journey has been verified end to end on the deployed origin for all four seeded systems and for a self-built architecture. V3 is now the active direction: make the self-built, agent-modeled system path the first-prize demo rather than a secondary feature.
 
-Latest live release: Railway deployment `58abce1a-31f4-43df-9f49-102654dc1e66`, commit `dd6ba87`, verified on 2026-09-01 with PostgreSQL `/health`, origin-isolation headers, WebMCP origin-trial header, and a first-time browser smoke test showing "Your own system", "Build the model first", the guided system-brief panel, WebMCP live, durable sync, and the nine-tool editable WebMCP surface.
+Latest live release checked from Railway during the 2026-09-03 readiness audit: deployment `59080693-5488-4f9e-bf6b-0c1b49d8e57e`, service online at `https://webmcp-production-38e5.up.railway.app`, PostgreSQL-backed `/health`, origin-isolation headers, WebMCP origin-trial header, `Permissions-Policy: tools=(self)`, and browser-visible WebMCP discovery showing ten tools on a committed seeded architecture, sixteen tools on the blank editable architecture, and eighteen tools once a repair future exists. This line records the last verified live deployment before the final standards hardening deploy.
 
 **The three items only the owner can finish, with exact commands, are in
 [`docs/OWNER_CHECKLIST.md`](docs/OWNER_CHECKLIST.md).**
@@ -17,6 +17,12 @@ Two external/submission items remain deliberately open:
 - `M11.1` and `M11.6` are external submission artifacts: recording the required public three-minute demo video, then publishing the completed Devpost entry before the 2026-09-03 deadline.
 
 All other previously open rows below have been reconciled against the deployed implementation. They are not hidden blockers.
+
+## Milestone 245 — Final engineering truth pass before demo
+
+- [x] **M245.1 — Align standards, ledger, and implementation before recording** `DONE`
+  - Acceptance: the WebMCP output budget obeys the strict repository contract, simulation-version documentation matches code, release-status evidence matches the currently checked live deployment, and the full local gate plus WebMCP evals pass after the changes.
+  - Evidence: on 2026-09-03, `src/platform/webmcp/registry.ts` moved `maxToolResultLength` to the strict 1,500-character contract, `get_decision_record` was narrowed so its worst-case answer remains parseable instead of becoming `RESULT_TOO_LARGE`, and `compare_architecture_futures` keeps narrowing rather than relying on a larger output budget. `docs/WEBMCP.md`, `docs/WEBMCP_COMPLIANCE.md`, `docs/WEBMCP_EVALS.md`, `docs/ARCHITECTURE.md`, and the release-status header were updated to match the implementation checked in this pass. Verification: `npm run test -- src/platform/webmcp/registry.test.ts src/simulation/engine.test.ts src/core/branch-engine.test.ts -- --run` passed 118 tests; `npm run gate` passed formatting, lint with one pre-existing warning and zero errors, typecheck, 412 tests, production build, and authorship check; `npm run evals` passed 19/19 and now reports every read tool inside 1,500 characters of parseable JSON.
 
 ## Milestone 1 — Repository and foundation
 

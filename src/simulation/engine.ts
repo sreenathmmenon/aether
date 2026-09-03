@@ -711,7 +711,13 @@ export function runScenario(
     // that it already had to be scoped away from once.
     const correlated = operational
       .filter((entity) => impacted.has(entity.id))
-      .map((entity) => dependentsOf(graph, entity.id).length - 1)
+      // Each contributor's own count is clamped as well as the number of
+      // contributors. Unbounded, a sixteen-consumer event bus -- an ordinary
+      // microservices topology, not a pathology -- charged 24 points and
+      // pinned availability to the floor, so every architecture with a real
+      // event bus scored the same 80 and the tool stopped ranking them at
+      // exactly the fan-out it exists to analyse.
+      .map((entity) => Math.min(3, dependentsOf(graph, entity.id).length - 1))
       .filter((paths) => paths > 0)
       .sort((left, right) => right - left)
       .slice(0, 2)
@@ -786,6 +792,30 @@ export function runScenario(
   )
     observations.push(
       "Every component is in one region; a regional outage takes the whole system",
+    );
+  // Findings a reviewer should see on the systems this product ships with.
+  // The concentration rule above is real but never fires on a multi-region
+  // fixture, so the mechanism was invisible on the path anyone actually
+  // walks -- and a reviewer who never sees an observation cannot tell one
+  // from a blocker.
+  const concentrated = [...placedRegions]
+    .map((region) => ({
+      region,
+      share:
+        operational.filter((entity) => propertiesOf(entity).regionId === region)
+          .length / operational.length,
+    }))
+    .find((row) => row.share >= 0.6 && placedRegions.size > 1);
+  if (concentrated)
+    observations.push(
+      `${Math.round(concentrated.share * 100)}% of this architecture sits in one region`,
+    );
+  const busiest = operational
+    .map((entity) => ({ entity, paths: dependentsOf(graph, entity.id).length }))
+    .sort((left, right) => right.paths - left.paths)[0];
+  if (busiest && busiest.paths > 1)
+    observations.push(
+      `${busiest.entity.name} is on ${busiest.paths} dependency paths; losing it correlates them`,
     );
   if (everythingSeeded) {
     availability = model.totalLoss;

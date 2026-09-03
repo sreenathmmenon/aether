@@ -1253,11 +1253,10 @@ describe("Aether WebMCP registry", () => {
   });
 
   it("quotes the output budget the registry actually enforces", async () => {
-    // Two documents claimed every result stays within 1,500 characters while
-    // the registry enforced 2,000 — and the largest result, the three-future
-    // comparison, measures 1,528. The claim was false and checkable, and
-    // nothing checked it, because the existing drift test covered tool counts
-    // and not this number.
+    // This catches both kinds of drift: a document claiming a different
+    // budget than the registry, and the registry silently relaxing the
+    // repository contract. The fix is to narrow large outputs, not to make the
+    // standard-facing budget larger.
     const claimed = [
       ["docs/WEBMCP_COMPLIANCE.md", complianceDoc],
       ["docs/WEBMCP_EVALS.md", evalsDoc],
@@ -1965,11 +1964,10 @@ describe("Aether WebMCP registry", () => {
   });
 
   it("narrows the comparison rather than losing it", async () => {
-    // Three fully simulated futures reach 1,898 characters of a 2,000
-    // budget — five per cent of headroom. One more scenario, or a longer
-    // violation string, and the whole comparison became RESULT_TOO_LARGE at
-    // exactly the moment there is most to compare. Measured against the
-    // deployed origin rather than inferred.
+    // Three fully simulated futures can exceed the strict 1,500-character
+    // budget. The useful behaviour is not "always full"; it is "never lose
+    // the comparison" — if the full form does not fit, keep the worst
+    // scenario per future.
     let state = createInitialState(
       paymentPlatformBaseline,
       "payment-platform",
@@ -2013,15 +2011,23 @@ describe("Aether WebMCP registry", () => {
     );
     registry?.dispose();
 
-    // The full shape still fits today, carrying latency alongside the rest.
+    // The answer still fits the strict budget and stays useful. If the full
+    // shape no longer fits, the tool must narrow to the worst scenario per
+    // future rather than returning RESULT_TOO_LARGE.
     const parsed = JSON.parse(output) as {
       error?: string;
-      futures: { evidence?: { latencyMs?: number }[] }[];
+      futures: {
+        evidence?: { latencyMs?: number }[];
+        worstScenario?: { scenario: string; availability: number } | null;
+      }[];
     };
     expect(parsed.error).toBeUndefined();
     expect(output.length).toBeLessThanOrEqual(maxToolResultLength);
     expect(parsed.futures).toHaveLength(3);
-    expect(parsed.futures[0]?.evidence?.[0]).toHaveProperty("latencyMs");
+    expect(
+      parsed.futures[0]?.evidence?.[0]?.latencyMs ??
+        parsed.futures[0]?.worstScenario?.availability,
+    ).toBeDefined();
 
     // And it degrades in steps rather than to an error. Dropping latency was
     // not enough on its own — the narrow form still exceeded a tightened
@@ -2031,7 +2037,7 @@ describe("Aether WebMCP registry", () => {
   });
 
   it("keeps the decision record inside its budget at full length", async () => {
-    // The record bounds itself to three notes and four commands, so its size
+    // The record bounds itself to three notes and three commands, so its size
     // has a ceiling rather than a growth curve — but the ceiling was 88 per
     // cent of the budget, because nothing capped the evidence reference each
     // note carries. One long discussion and the whole record would have
@@ -2084,7 +2090,7 @@ describe("Aether WebMCP registry", () => {
     // next field anyone adds.
     expect(output.length).toBeLessThan(maxToolResultLength * 0.85);
     for (const note of record.recentNotes)
-      expect((note.evidenceRef ?? "").length).toBeLessThanOrEqual(60);
+      expect((note.evidenceRef ?? "").length).toBeLessThanOrEqual(40);
   });
 
   it("names what to fix when a whole batch is rejected", async () => {

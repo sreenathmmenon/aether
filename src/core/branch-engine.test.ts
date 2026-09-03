@@ -455,11 +455,20 @@ describe("Aether command pipeline", () => {
       simulated.value.simulations["branch-highest_resilience"]?.[0]
         ?.sloViolations,
     ).toContain("Human cost ceiling exceeded: $22,669 > $7,000");
+    // Version 2, not 1: locking a ceiling invalidates the evidence taken
+    // before it, so the branch moves. Approving at the stale version is
+    // refused for that reason rather than for the cost, which is the
+    // guarantee this test is really about -- the reviewer's constraint binds
+    // however the two acts are ordered.
     const approval = dispatch(
       simulated.value,
       {
         type: "APPROVE_BRANCH",
-        input: { branchId: "branch-highest_resilience", branchVersion: 1 },
+        input: {
+          branchId: "branch-highest_resilience",
+          branchVersion:
+            simulated.value.branches["branch-highest_resilience"]!.version,
+        },
       },
       human,
     );

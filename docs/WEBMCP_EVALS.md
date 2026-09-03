@@ -16,7 +16,7 @@ This evaluation set separates deterministic application correctness from probabi
 | Record agent context    | `add_decision_note`                                    | Adds a bounded, component-anchored note; cannot approve or merge.                                                              |
 | Human gate              | No agent approval or merge tool                        | Only the visible human control can approve and merge.                                                                          |
 | Invalid input           | Any tool with malformed data                           | Returns `INVALID_INPUT` naming the failed fields and their valid values; no state mutation.                                    |
-| Bounded output          | Any tool in the full three-future state                | Every result stays within the 2,000-character budget the registry enforces and remains parseable JSON.                         |
+| Bounded output          | Any tool in the full three-future state                | Every result stays within the 1,500-character budget the registry enforces and remains parseable JSON.                         |
 
 ## Tool-selection prompts
 

@@ -65,10 +65,10 @@ function modelContext(): ModelContext | undefined {
  * Output budget for one tool result.
  *
  * Exported so the test that enforces it cannot hold a copy that drifts. The
- * three-future comparison sits close to this line, and exceeding it returns
- * an error instead of a shorter answer, so the headroom is deliberate.
+ * Kept at the stricter WebMCP guidance and repository contract. Large
+ * comparisons must narrow themselves rather than relying on a larger budget.
  */
-export const maxToolResultLength = 2000;
+export const maxToolResultLength = 1500;
 /** Components named in one summary before it degrades to a count. */
 const summaryComponentLimit = 24;
 /**
@@ -196,17 +196,22 @@ function invalidInput(
    * missing field at once. Naming them here keeps both.
    */
   alsoRequired: string[] = [],
+  /** The call as sent, so a field can be checked for actual absence. */
+  input?: unknown,
 ) {
   // Zod reports every failure, and a call with seven bad fields produced a
   // reply naming three. An agent correcting from that list fixes three,
   // retries, and fails again on the fourth — the loop this text exists to
   // prevent. The cap stays, because a wall of issues costs the budget the
   // whole result is bounded by, but the count no longer disappears.
-  const reported = new Set(
-    error.issues.map((issue) => issue.path.join(".") || "input"),
-  );
+  // Absent, not merely unreported. Zod says nothing about a field that was
+  // fine, so treating silence as absence told an agent that `branchId` and
+  // `entityId` were Required on a call that supplied both -- three false
+  // problems, with the one true fix pushed past the cap. That is the most
+  // common failure path there is: one field wrong, the rest correct.
+  const supplied = (input ?? {}) as Record<string, unknown>;
   const missing = alsoRequired
-    .filter((field) => !reported.has(field))
+    .filter((field) => supplied[field] === undefined)
     .map((field) => ({
       path: [field],
       message: "Required",
@@ -389,6 +394,23 @@ export function createAetherToolRegistry(
       .map((branch) => branch.id);
   }
 
+  /**
+   * The first of these tools that is actually registered right now.
+   *
+   * Every `nextAction` is advice an agent follows literally, so naming a
+   * tool that is not on the surface in this state sends it to a call that
+   * cannot succeed. This has now been wrong twice -- a reading advising a
+   * property the write tool refuses, and a summary advising a scenario run
+   * on a committed architecture -- so the advice is derived rather than
+   * written down.
+   */
+  function firstRegistered(candidates: string[]) {
+    return (
+      candidates.find((name) => registeredNames.includes(name)) ??
+      candidates[candidates.length - 1]
+    );
+  }
+
   function writableBranchIds(state: AetherState = snapshot()) {
     return Object.values(state.branches)
       .filter((branch) => {
@@ -421,7 +443,24 @@ export function createAetherToolRegistry(
         input: Record<string, unknown>,
         options: WebMCP.ToolExecuteCallbackOptions,
       ) => {
-        const result = await inner(input, options);
+        // Every tool answers in the shape it advertises, including when it
+        // throws. Nothing wrapped `execute`, so a bug inside any tool reached
+        // the agent as a raw exception rather than as a result it could read
+        // and correct from -- the one failure mode this surface cannot
+        // narrate, on a surface whose rejections are otherwise its strongest
+        // quality.
+        let result: unknown;
+        try {
+          result = await inner(input, options);
+        } catch (error) {
+          result = JSON.stringify({
+            error: "TOOL_FAILED",
+            problems: [
+              error instanceof Error ? error.message : "The tool threw.",
+            ],
+            nextAction: "get_architecture_summary",
+          });
+        }
         callSequence += 1;
         // Described by what it did rather than what was asked. The feed
         // echoed the arguments, so watching an agent work read as a
@@ -542,21 +581,21 @@ export function createAetherToolRegistry(
             humanGuardrail: state.workspace.costCeilingUsd
               ? `$${state.workspace.costCeilingUsd.toLocaleString()} monthly cost ceiling`
               : "No cost ceiling set",
-            // Three notes at their full length, each with an evidence
-            // reference, reach 88 per cent of the budget. Trim the bodies
-            // rather than let one long discussion replace the whole record
-            // with an error.
+            // Three notes still give the room's shape, but the result has to
+            // fit the stricter 1,500-character WebMCP budget. Trim the body
+            // and evidence reference rather than let one long discussion
+            // replace the whole record with an error.
             recentNotes: (snapshot().decisionNotes ?? [])
               .slice(-3)
               .map((note) => ({
                 actor: note.actor.kind,
                 branchId: note.branchId,
                 entityId: note.entityId,
-                body: note.body.slice(0, 160),
-                evidenceRef: note.evidenceRef?.slice(0, 60),
+                body: note.body.slice(0, 96),
+                evidenceRef: note.evidenceRef?.slice(0, 40),
               })),
             recentCommands: snapshot()
-              .audit.slice(-4)
+              .audit.slice(-3)
               .map((event) => ({
                 actor: event.actor.kind,
                 command: event.commandName,
@@ -980,12 +1019,19 @@ export function createAetherToolRegistry(
                 }
               : null,
             ...(omitted > 0 ? { componentsNotListed: omitted } : {}),
-            nextAction:
+            // Named from the registered surface rather than from branch
+            // count. Keying on futures meant that after a merge this
+            // recommended `run_failure_scenario`, which a committed
+            // architecture does not register -- an agent following the
+            // advice called a tool that was not there. Advice has to be
+            // callable in the state that gives it.
+            nextAction: firstRegistered([
               allComponents.length === 0
                 ? "add_architecture_component"
-                : futures > 0
-                  ? "run_failure_scenario"
-                  : "create_architecture_branch",
+                : "run_failure_scenario",
+              "create_architecture_branch",
+              "get_decision_record",
+            ]),
           });
         },
       });
@@ -1456,17 +1502,27 @@ export function createAetherToolRegistry(
                     kind: {
                       type: "string",
                       enum: ["service", "database", "queue", "gateway"],
+                      description:
+                        "What the component is; databases and queues carry state.",
                     },
                     regionId: {
                       type: "string",
                       enum: regionIds(),
                       description: "Region this component runs in.",
                     },
-                    peakRps: { type: "number", minimum: 0, maximum: 1000000 },
+                    peakRps: {
+                      type: "number",
+                      minimum: 0,
+                      maximum: 1000000,
+                      description:
+                        "Requests a second this component sees at its busiest. A spike models 1.5x this.",
+                    },
                     capacityRps: {
                       type: "number",
                       minimum: 0,
                       maximum: 1000000,
+                      description:
+                        "Requests a second it can serve. Below peak is a deficit; headroom above peak is paid for.",
                     },
                     monthlyCostUsd: {
                       type: "number",
@@ -1534,6 +1590,8 @@ export function createAetherToolRegistry(
                         "routes_to",
                         "depends_on",
                       ],
+                      description:
+                        "How they depend. This decides which way failure travels along the edge.",
                     },
                   },
                   required: ["sourceKey", "targetKey", "kind"],
@@ -1779,6 +1837,7 @@ export function createAetherToolRegistry(
                 parsed.error,
                 `replicationMode takes none, async, or sync; regionId takes one of ${regionIds().join(", ")}; capacityRps and monthlyCostUsd take a non-negative number; replicas takes a whole number of at least 1.`,
                 ["branchId", "entityId", "property", "value"],
+                input,
               );
             const result = dispatch(
               snapshot(),
@@ -1914,10 +1973,9 @@ export function createAetherToolRegistry(
               humanGate:
                 "Only the human reviewer can approve and merge a branch, in the visible Aether UI.",
             });
-            // Three fully simulated futures reached 1,898 characters of a
-            // 2,000 budget, so one more scenario or a longer violation string
-            // would have replaced the entire comparison with an error. Try
-            // the full shape, and narrow it rather than lose it.
+            // Three fully simulated futures can exceed the strict
+            // 1,500-character budget, so a dense comparison narrows itself
+            // rather than replacing the answer with an error.
             const full = JSON.stringify(build(true));
             if (full.length <= maxToolResultLength) return full;
             // Dropping one field per run was not enough on its own: the
