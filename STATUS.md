@@ -3031,3 +3031,17 @@ The judge's sharpest remaining objection was that the product _models_ a decisio
 **What was surveyed and rejected, and why.** Prometheus was the first choice for `peakRps`; both public demo instances are unreachable, and an integration that fails in front of a judge is worse than none. Datadog and UptimeRobot need API keys. Grafana Play exposes only `/api/health`. Cloud provider APIs need credentials no reviewer should paste into a hackathon site. **No mocks anywhere — every source is a real endpoint.**
 
 **Surface:** eight tools on a committed architecture, thirteen while editable, sixteen with a repair future open, eleven after a commit.
+
+## Milestone 239 — A war room, not one question asked once
+
+The product modelled a single decision and moved only when a human clicked. An incident room is not that: several things are wrong at the same time, somebody pulls metrics while somebody else argues about the fix, and evidence keeps arriving whether or not anybody is typing.
+
+- [x] **M239.1 — Concurrent threads, derived from the architecture** `DONE`
+  - A thread per real weakness, read off the system in front of it rather than a fixed list: a database with no standby, a component that cannot absorb a 1.5x spike, the region holding the write path, a shared dependency. Severity on the edge, because that is what a room reads first.
+- [x] **M239.2 — The agent works the room on its own** `DONE`
+  - It gathers from whichever service answers the thread — **OpenAI's live status** for what is up, **npm's published demand** for what a component carries — then puts a recommendation on the table, then re-checks standing recommendations against the architecture as it is now. Live readings carry the agent colour, so a person sees at a glance which evidence was gathered and which computed. Every call goes through the registered tool surface, so what the room does live is exactly what an external agent could do, and the same things stay refused.
+  - **Watched live and fixed:** attention pooled on the loudest thread, re-running the same check while three others sat untouched. A thread with no evidence now comes first whatever its severity, then the least-attended one.
+- [x] **M239.3 — The agent answers the human, and answers the silence** `DONE`
+  - Accepting a thread produces what that decision implies for the rest of the board: _"Primary Ledger has no standby accepted. Mumbai holds the write path is still critical and still open — that one changes the answer here."_
+  - And silence in an incident room is not agreement. After twenty quiet seconds: _"Nobody has answered Mumbai holds the write path."_ An agent that waits politely through silence is a chat box.
+- **Verified in production:** four live threads, evidence from two different external services, 16 tools registered, each thread accepted separately by a human at their own pace.
