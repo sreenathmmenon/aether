@@ -6,7 +6,7 @@
 // It runs in the quality gate rather than the test suite because reading a
 // file needs Node types, and pulling those into the app tsconfig would let
 // Node APIs into the browser bundle unnoticed.
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 
 const declared = readFileSync("src/styles/text-tokens.ts", "utf8");
 const shipped = readFileSync("src/styles/tokens.css", "utf8");
@@ -418,6 +418,32 @@ for (const selector of [
   ) {
     console.error(
       `index.html points og:image at ${declared} and public/${declared} does not exist`,
+    );
+    process.exit(1);
+  }
+}
+
+// Vite copies public/ verbatim to the site root, and the server only serves
+// paths it names -- everything else falls through to the single-page
+// fallback and answers a file request with index.html and a 200. That has
+// now happened four times here: /assets, /fonts, /api, and the share image,
+// where a link preview asked for a PNG and was handed HTML. Any root-level
+// file public/ ships needs a route, so this checks rather than trusting the
+// next person to remember.
+{
+  const server = readFileSync(
+    new URL("../server/index.ts", import.meta.url),
+    "utf8",
+  );
+  const unrouted = readdirSync(new URL("../public", import.meta.url), {
+    withFileTypes: true,
+  })
+    .filter((entry) => entry.isFile())
+    .map((entry) => entry.name)
+    .filter((name) => !server.includes(`/${name}`));
+  if (unrouted.length) {
+    console.error(
+      `public/ ships ${unrouted.join(", ")} at the site root and server/index.ts has no route; the request answers index.html with a 200`,
     );
     process.exit(1);
   }

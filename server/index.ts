@@ -427,6 +427,14 @@ app.get("/llms.txt", (context) =>
 );
 
 app.use("/assets/*", serveStatic({ root: "./dist" }));
+// Fourth instance of the shape the /fonts/* comment below names. Vite copies
+// public/ verbatim, so the share image sits at the root rather than under
+// /assets, fell through to the single-page fallback, and every request for it
+// returned index.html with a 200 -- which a link preview cannot decode, so
+// Devpost, Slack and every bookmark showed no image while the tag insisted
+// there was one. Worse than having no tag at all, which is what the tag
+// replaced.
+app.use("/share-card.png", serveStatic({ root: "./dist" }));
 // The fonts live outside /assets because Vite copies public/ verbatim, so
 // they fell through to the single-page fallback and every request for a
 // woff2 returned index.html with a 200. The browser cannot parse that as a
