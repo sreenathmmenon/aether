@@ -10,7 +10,7 @@ The agent finds the strongest repair for a regional outage and recommends it. Ae
 
 **Live app:** [webmcp-production-38e5.up.railway.app](https://webmcp-production-38e5.up.railway.app)
 
-**ChatGPT Sites mirror:** [aether-architecture-lab.dark-ash-7694.chatgpt.site](https://aether-architecture-lab.dark-ash-7694.chatgpt.site)
+**ChatGPT Sites mirror:** [aether-architecture-lab.sreenath-mm89.chatgpt.site](https://aether-architecture-lab.sreenath-mm89.chatgpt.site)
 
 People and agents work the same typed model through the same validated commands: branch a change in isolation, run a deterministic failure simulation, and see what it actually does before anyone commits. Describe your own architecture aloud and an agent builds it here — components, dependencies and all — then the same engine proves its failure paths. Four worked systems ship for anyone who wants the story immediately, and every metric, repair alternative and narrative re-derives from the graph in front of you.
 
