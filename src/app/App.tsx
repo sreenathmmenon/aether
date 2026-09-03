@@ -861,9 +861,21 @@ export function App() {
           thread.id === threadId
             ? {
                 ...thread,
+                // A thread keeps its recent readings, but not ones the new
+                // one has answered: "No repair future open yet" is obsolete
+                // the moment a simulation succeeds, and leaving it above a
+                // fresh result reads as two contradictory facts.
                 findings: [
                   finding as IncidentThread["findings"][number],
-                  ...thread.findings,
+                  ...thread.findings.filter(
+                    (existing) =>
+                      !(
+                        /nothing to simulate/i.test(existing.said) &&
+                        /available|violation/i.test(
+                          (finding as IncidentThread["findings"][number]).said,
+                        )
+                      ),
+                  ),
                 ].slice(0, 4),
               }
             : thread,
