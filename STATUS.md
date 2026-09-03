@@ -311,7 +311,7 @@ The detailed plan is in `docs/V3_REVERSE_WINNER_PLAN.md`. V3 keeps the challenge
 - [x] **M12.6 — Add high-fidelity failure/recovery motion and timeline playback** `DONE`
   - Evidence: enabled Chrome exercised the live causal-trace control and all four scenario-linked timeline stages on release `e9ee9c13-f9ec-4f75-aa20-764a54ad9d64`.
 - [x] **M12.7 — Run first-prize visual, interaction, and browser-validation loops** `DONE`
-  - Evidence: enabled Chrome exercised the deployed causal trace; ChatGPT Site Tools rediscovered the settled dynamic registry and invoked `inspect_failure_domain` on the production URL; Lighthouse reported 100/100 for accessibility, best practices, SEO, and agentic browsing; release `2b354995-6a13-45dd-8dc2-16c90287ceb7` is `SUCCESS`.
+  - Evidence: enabled Chrome exercised the deployed causal trace; ChatGPT Site Tools rediscovered the settled dynamic registry and invoked `inspect_failure_domain` on the production URL; Lighthouse reported 100/100 for accessibility, best practices, and SEO; release `2b354995-6a13-45dd-8dc2-16c90287ceb7` is `SUCCESS`.
 
 ## Milestone 14 — Product depth for judging
 

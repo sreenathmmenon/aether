@@ -1,3 +1,4 @@
+import { boundAudit } from "./branch-engine";
 import type { AetherState } from "./branch-engine";
 import { simulationEngineVersion } from "@simulation/engine";
 
@@ -74,6 +75,22 @@ export function parsePersistedState(
       decisionNotes: Array.isArray(value.decisionNotes)
         ? value.decisionNotes
         : [],
+      // State arriving from outside is bounded on the way in. A workspace
+      // written before the bound existed -- or by a client that does not
+      // apply it -- carries an audit of any size, and dispatch alone would
+      // not trim it until the next write. A shared room already on the
+      // server at 2,961 entries loaded at 1.15 MB and would have been sent
+      // straight back that size. This is the one funnel every restore and
+      // every remote load passes through.
+      ...(() => {
+        const bounded = boundAudit(value.audit);
+        return {
+          audit: bounded.audit,
+          workspace: bounded.retired
+            ? { ...value.workspace, auditRetired: bounded.retired }
+            : value.workspace,
+        };
+      })(),
     };
   } catch {
     return undefined;
