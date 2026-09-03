@@ -21,6 +21,10 @@ import { threadsForRole, type AgentRole } from "@core/room-presence";
  */
 export function useWarRoom(
   registry: ToolRegistry | undefined,
+  /** The branch the room is arguing about. Hardcoding a repair branch meant
+   * every engine call failed silently until somebody created one, and the
+   * findings read "Clean under database failure — ?% available". */
+  branchId: string,
   threads: IncidentThread[],
   onFinding: (threadId: string, finding: ThreadFinding) => void,
   onStatus: (threadId: string, status: IncidentThread["status"]) => void,
@@ -41,6 +45,8 @@ export function useWarRoom(
   threadsRef.current = threads;
   const crewRef = useRef(crew);
   crewRef.current = crew;
+  const branchRef = useRef(branchId);
+  branchRef.current = branchId;
   // Round-robin, so attention rotates between the agents in the room
   // rather than the first one taking every turn.
   const turn = useRef(0);
@@ -93,6 +99,24 @@ export function useWarRoom(
         });
         return;
       }
+      // The engine tools are state-dependent: `run_failure_scenario` is not
+      // registered on a committed architecture, because there is nothing to
+      // simulate against until a repair future exists. Calling it anyway
+      // produced findings that read "Clean under database failure — ?%
+      // available". The room says what it is actually waiting for.
+      const canSimulate = registry
+        .surface()
+        .some((tool) => tool.name === "run_failure_scenario");
+      if (!canSimulate) {
+        onFinding(intent.thread.id, {
+          id: `finding-${Date.now()}`,
+          said: "No repair future open yet — nothing to simulate against.",
+          source: `${actor ? actor.name + " · " : ""}Aether`,
+          at: new Date().toISOString(),
+          live: false,
+        });
+        return;
+      }
       if (intent.kind === "propose") {
         const result = await registry.call("run_failure_scenario", {
           branchId: "branch-highest_resilience",
@@ -117,7 +141,7 @@ export function useWarRoom(
       // Validate: re-run what the recommendation rested on, so a standing
       // position is checked against the architecture as it is now.
       const result = await registry.call("run_failure_scenario", {
-        branchId: "branch-highest_resilience",
+        branchId: branchRef.current,
         scenario: thread.scenario,
       });
       const parsed = safeParse(result);

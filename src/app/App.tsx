@@ -934,6 +934,7 @@ export function App() {
   );
   const warRoom = useWarRoom(
     registryRef.current,
+    activeBranch.id,
     threads,
     addFinding,
     setThreadStatus,
