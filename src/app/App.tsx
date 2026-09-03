@@ -923,11 +923,17 @@ export function App() {
     threads,
     addFinding,
     setThreadStatus,
-    presence.agents.map((agent) => ({
-      id: agent.id,
-      name: agent.name,
-      role: (agent.role ?? "external") as AgentRole,
-    })),
+    // Every agent in the room, not only the ones this tab brought. An agent
+    // that joined through `join_incident_room` from somebody else's client
+    // is in the room, and the room works its threads with all of them --
+    // otherwise the roster shows colleagues who never do anything.
+    presence.room
+      .filter((participant) => participant.kind === "agent")
+      .map((agent) => ({
+        id: agent.id,
+        name: agent.name,
+        role: (agent.role ?? "external") as AgentRole,
+      })),
   );
   const compareRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
