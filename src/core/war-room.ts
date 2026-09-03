@@ -39,6 +39,8 @@ export type IncidentThread = {
   findings: ThreadFinding[];
   /** What the room is waiting on. */
   awaiting: string;
+  /** True once a reading has been held against the architecture. */
+  applied?: boolean;
   openedAt: string;
 };
 

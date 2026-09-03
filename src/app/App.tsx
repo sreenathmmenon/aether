@@ -350,6 +350,10 @@ export function App() {
     | undefined
   >(undefined);
   const registryRef = useRef<ToolRegistry | undefined>(undefined);
+  // The registry is built in an effect, so anything rendering off it needs a
+  // value that changes when it appears -- a ref read during render would
+  // stay undefined on the render that first has one.
+  const [registry, setRegistry] = useState<ToolRegistry | undefined>(undefined);
   const remoteReadyRef = useRef(false);
   const applyingRemoteRef = useRef(false);
   // One PUT at a time. Each state change fires a save with the version the
@@ -396,10 +400,6 @@ export function App() {
   // A seeded architecture is committed and read-only. A system the user is
   // building themselves stays editable on its baseline until they branch.
   const ownSystem = state.workspace.templateId === "blank";
-  const currentTemplate =
-    systemTemplates.find(
-      (template) => template.id === (state.workspace.templateId ?? "blank"),
-    ) ?? systemTemplates[0];
   const writable =
     (activeBranch.status !== "merged" || ownSystem) &&
     activeBranch.status !== "discarded";
@@ -765,6 +765,9 @@ export function App() {
         },
       ) ?? undefined;
     stateRef.current = state;
+    // Publish it once, on the effect that created it, so consumers that
+    // render off the registry see it the moment it exists.
+    setRegistry((current) => current ?? registryRef.current);
     void registryRef.current?.refresh(state);
   }, [state]);
   useEffect(() => () => registryRef.current?.dispose(), []);
@@ -790,13 +793,11 @@ export function App() {
   // with a WebMCP client -- most will not, and they saw a static interface.
   const [agentRunning, setAgentRunning] = useState(false);
   const [agentSaid, setAgentSaid] = useState("");
-  const [agentTrace, setAgentTrace] = useState<StepResult[]>([]);
   async function runResidentAgent() {
     const registry = registryRef.current;
     if (!registry || agentRunning) return;
     setAgentRunning(true);
     setAgentSaid("");
-    setAgentTrace([]);
     const trace: StepResult[] = [];
     try {
       for (const step of reviewPlan("branch-highest_resilience")) {
@@ -805,7 +806,6 @@ export function App() {
           const result = await registry.call(step.tool, step.input ?? {});
           const entry = { step, result, refused: wasRefused(result) };
           trace.push(entry);
-          setAgentTrace([...trace]);
         }
         await new Promise((resolve) => setTimeout(resolve, step.settle ?? 800));
       }
@@ -886,7 +886,11 @@ export function App() {
   // What the agent says back. A colleague does not go silent when you make
   // a call -- they tell you what it implies for the rest of the board.
   const [agentReply, setAgentReply] = useState("");
-  const lastHumanAct = useRef(Date.now());
+  // `useState` with an initialiser function runs it once, which is what a
+  // clock reading wants; passing `Date.now()` straight to `useRef` would
+  // re-read it on every render and throw the value away.
+  const [openedAt] = useState(() => Date.now());
+  const lastHumanAct = useRef(openedAt);
   const setThreadStatus = useCallback(
     (threadId: string, status: IncidentThread["status"]) =>
       setThreads((current) => {
@@ -944,8 +948,18 @@ export function App() {
       })),
     [],
   );
+  // A reading held against the architecture is held once.
+  const markThreadApplied = useCallback(
+    (threadId: string) =>
+      setThreads((current) =>
+        current.map((thread) =>
+          thread.id === threadId ? { ...thread, applied: true } : thread,
+        ),
+      ),
+    [],
+  );
   const warRoom = useWarRoom(
-    registryRef.current,
+    registry,
     activeBranch.id,
     threads,
     addFinding,
@@ -962,6 +976,7 @@ export function App() {
         role: (agent.role ?? "external") as AgentRole,
       })),
     keepAgentPresent,
+    markThreadApplied,
   );
   const compareRef = useRef<HTMLDivElement>(null);
   useEffect(() => {

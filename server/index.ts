@@ -266,7 +266,17 @@ app.get("/api/telemetry/:component", async (context) => {
       // Fall through to the generated series rather than failing the read.
     }
   }
-  return context.json(syntheticSeries(component, kind));
+  // The caller passes what the component says about itself so the reading is
+  // taken at that component's scale.
+  const declared = Number(context.req.query("declaredPeakRps"));
+  return context.json(
+    syntheticSeries(
+      component,
+      kind,
+      24,
+      Number.isFinite(declared) && declared > 0 ? declared : undefined,
+    ),
+  );
 });
 
 app.get("/api/demand/:pkg", async (context) => {

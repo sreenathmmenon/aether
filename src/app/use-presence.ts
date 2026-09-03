@@ -24,7 +24,11 @@ export function usePresence(
 ) {
   const [agents, setAgents] = useState<Participant[]>([]);
   const selfRef = useRef(self);
-  selfRef.current = self;
+  // Written on commit, not during render: the heartbeat reads it from a
+  // timer well after the render that set it.
+  useEffect(() => {
+    selfRef.current = self;
+  });
 
   // Keep the human's own row warm while the tab is open.
   useEffect(() => {

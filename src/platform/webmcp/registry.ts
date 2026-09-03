@@ -688,6 +688,12 @@ export function createAetherToolRegistry(
               nextAction: `Choose one of: ${componentIds().join(", ")}.`,
             });
           const query = new URLSearchParams({ kind: entity.kind });
+          // What the component states about itself sets the scale the reading
+          // is taken at, so a large component is not read as a small one.
+          const declaredPeak = (entity.properties as { peakRps?: number })
+            .peakRps;
+          if (typeof declaredPeak === "number" && declaredPeak > 0)
+            query.set("declaredPeakRps", String(declaredPeak));
           if (parsed.data.package) query.set("package", parsed.data.package);
           try {
             const response = await fetch(
@@ -695,6 +701,11 @@ export function createAetherToolRegistry(
               { headers: { accept: "application/json" } },
             );
             const series = (await response.json()) as Record<string, unknown>;
+            // The reading travels with what the component is provisioned at,
+            // so a reader can tell a shortfall from a surplus without a
+            // second call.
+            series.provisionedCapacityRps =
+              (entity.properties as { capacityRps?: number }).capacityRps ?? 0;
             if (!response.ok)
               return JSON.stringify({
                 error: "TELEMETRY_UNAVAILABLE",

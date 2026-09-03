@@ -81,9 +81,18 @@ export function syntheticSeries(
   component: string,
   kind: string,
   hours = 24,
+  declaredPeakRps?: number,
 ): TelemetrySeries {
   const seed = seedOf(`${component}:${kind}`);
-  const base = baseRateFor[kind] ?? 5000;
+  // A component that states its own peak is measured against that, not
+  // against its tier. Reading a 12,000 rps ledger as a generic 4,000 rps
+  // database produces a number that argues for shrinking it, which is the
+  // opposite of what the reading is for. The tier rate is the fallback for
+  // a component that has never declared a scale.
+  const base =
+    declaredPeakRps && declaredPeakRps > 0
+      ? declaredPeakRps / 1.25
+      : (baseRateFor[kind] ?? 5000);
   // Each component sits somewhere either side of its tier's base rate, so
   // two services in one system do not carry identical load.
   const scale = 0.6 + step(seed, 0) * 0.9;

@@ -37,16 +37,32 @@ export function useWarRoom(
    * tab keeping its row warm, and aged out mid-turn.
    */
   onWorking?: (agentId: string) => void,
+  /** Called once a thread's reading has been held against the architecture,
+   * so the agent does not keep re-applying the same figure. */
+  onApplied?: (threadId: string) => void,
 ) {
   const [running, setRunning] = useState(false);
   const [saying, setSaying] = useState("");
   const busy = useRef(false);
   const threadsRef = useRef(threads);
-  threadsRef.current = threads;
   const crewRef = useRef(crew);
-  crewRef.current = crew;
   const branchRef = useRef(branchId);
-  branchRef.current = branchId;
+  // Synced in an effect rather than assigned during render. The loop reads
+  // these from a timer, long after the render that set them, so writing them
+  // on commit is both correct and enough.
+  useEffect(() => {
+    threadsRef.current = threads;
+    crewRef.current = crew;
+    branchRef.current = branchId;
+  });
+  // Keyed on the component, not the thread. Two threads can name the same
+  // component -- an unreplicated ledger is both the standby thread and the
+  // capacity thread -- and a reading is a fact about the component, so the
+  // second thread has nothing to add by writing the same number again. This
+  // also covers the render gap: `thread.applied` arrives through props and is
+  // only true once React has re-rendered, while this is written the instant
+  // the call returns.
+  const appliedRef = useRef(new Set<string>());
   // Round-robin, so attention rotates between the agents in the room
   // rather than the first one taking every turn.
   const turn = useRef(0);
@@ -89,6 +105,54 @@ export function useWarRoom(
             })
           : await registry.call("read_live_source", { source: "openai" });
         const parsed = safeParse(result);
+        // A reading nobody acts on is a dashboard. If the component has no
+        // traffic on record, the agent holds the reading against the
+        // architecture -- which is the whole point of taking it.
+        if (usesTelemetry && typeof parsed.peakRps === "number") {
+          const entity = thread.entityId;
+          // Holding a reading against the architecture is a write, and
+          // `propose_architecture_change` is the only tool that sets a
+          // property -- it needs a repair future, by design, because a
+          // reading that changes the committed architecture without one
+          // would be exactly the unreviewed change this product exists to
+          // prevent. Until then the reading stands as evidence on the
+          // thread, which is what a room does with a reading it cannot act
+          // on yet.
+          const canWrite = registry
+            .surface()
+            .some((tool) => tool.name === "propose_architecture_change");
+          if (
+            canWrite &&
+            entity &&
+            !thread.applied &&
+            !appliedRef.current.has(entity)
+          ) {
+            appliedRef.current.add(entity);
+            // Capacity, not peak. `propose_architecture_change` sets what
+            // the architecture *provides*; peak is what telemetry observed,
+            // and an agent does not get to rewrite an observation. The
+            // reading's suggested capacity is peak plus headroom, which is
+            // the change a person would actually propose off it.
+            // Never propose less than what is already provisioned. A reading
+            // taken during a quiet window would otherwise argue for shrinking
+            // a component that is correctly sized for its peak, and an agent
+            // that quietly downgrades capacity off one sample is worse than
+            // an agent that does nothing.
+            const provisioned = Number(parsed.provisionedCapacityRps ?? 0);
+            const suggested = Number(
+              parsed.suggestedCapacityRps ?? parsed.peakRps ?? 0,
+            );
+            if (suggested > provisioned) {
+              await registry.call("propose_architecture_change", {
+                branchId: branchRef.current,
+                entityId: entity,
+                property: "capacityRps",
+                value: suggested,
+              });
+            }
+            onApplied?.(thread.id);
+          }
+        }
         onFinding(thread.id, {
           id: `finding-${Date.now()}`,
           said: usesTelemetry
@@ -135,7 +199,9 @@ export function useWarRoom(
           id: `finding-${Date.now()}`,
           said: violations.length
             ? `${violations.length} violation${violations.length === 1 ? "" : "s"}: ${String(violations[0])}`
-            : `Clean under ${thread.scenario.replace(/_/g, " ")} — ${parsed.availability ?? "?"}% available`,
+            : typeof parsed.availability === "number"
+              ? `Clean under ${thread.scenario.replace(/_/g, " ")} — ${parsed.availability}% available`
+              : `${thread.scenario.replace(/_/g, " ")} could not be modelled on this branch yet.`,
           source: `${actor ? actor.name + " · " : ""}Aether engine`,
           at: new Date().toISOString(),
           live: false,
@@ -157,7 +223,9 @@ export function useWarRoom(
         id: `finding-${Date.now()}`,
         said: violations.length
           ? `Still blocked: ${String(violations[0])}`
-          : `Re-checked and still clean — ${parsed.availability ?? "?"}% available`,
+          : typeof parsed.availability === "number"
+            ? `Re-checked and still clean — ${parsed.availability}% available`
+            : "Re-check pending — the branch moved under this reading.",
         source: "Aether engine",
         at: new Date().toISOString(),
         live: false,
