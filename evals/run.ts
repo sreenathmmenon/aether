@@ -28,7 +28,7 @@ import { paymentPlatformBaseline } from "../src/fixtures/payment-platform/baseli
 import { rideHailingBaseline } from "../src/fixtures/ride-hailing/baseline";
 import { createAetherToolRegistry } from "../src/platform/webmcp/registry";
 import { maxWorkspaceBytes } from "../src/core/workspace-contract";
-import { runScenario } from "../src/simulation/engine";
+import { requiredScenarios, runScenario } from "../src/simulation/engine";
 
 type RegisteredTool = {
   name: string;
@@ -767,7 +767,73 @@ async function main() {
     );
   }
 
-  // 18. The workspace has to stay inside the size the server accepts, for
+  // 18. `SET_PROPERTY` is the one mutator with no actor check, because an
+  //     agent that cannot propose a property change has nothing to propose.
+  //     What makes that safe is where the change can land, not who made it,
+  //     so the three things that bound it are asserted rather than trusted:
+  //     an agent edit only ever leaves a branch `proposed`, it invalidates
+  //     evidence gathered before it, and a merged branch refuses it.
+  {
+    const page = surface();
+    const branchId = await withRepair(page);
+    const human = { id: "reviewer", kind: "human" as const, displayName: "R" };
+    const agent = { id: "agent", kind: "agent" as const, displayName: "A" };
+    const edited = dispatch(
+      page.state,
+      {
+        type: "SET_PROPERTY",
+        input: {
+          branchId,
+          entityId: "ledger",
+          property: "capacityRps",
+          value: 30000,
+        },
+      },
+      agent,
+    );
+    if (!edited.ok)
+      throw new Error("an agent must be able to propose a change");
+    page.state = edited.value;
+    const statusAfterEdit = page.state.branches[branchId]!.status;
+    for (const scenario of requiredScenarios)
+      await page.call("run_failure_scenario", { branchId, scenario });
+    const versionWithEvidence = page.state.branches[branchId]!.version;
+    const sneaked = dispatch(
+      page.state,
+      {
+        type: "SET_PROPERTY",
+        input: {
+          branchId,
+          entityId: "auth",
+          property: "capacityRps",
+          value: 31000,
+        },
+      },
+      agent,
+    );
+    if (sneaked.ok) page.state = sneaked.value;
+    const versionAfter = page.state.branches[branchId]!.version;
+    const approval = dispatch(
+      page.state,
+      {
+        type: "APPROVE_BRANCH",
+        input: { branchId, branchVersion: versionAfter },
+      },
+      human,
+    );
+    record(
+      "gate/agent-edits-cannot-outlive-their-evidence",
+      "Does an agent's edit stay a proposal and invalidate the evidence before it?",
+      statusAfterEdit === "proposed" &&
+        versionAfter > versionWithEvidence &&
+        !approval.ok
+        ? "pass"
+        : "fail",
+      `status ${statusAfterEdit}, evidence at v${versionWithEvidence}, edit moved it to v${versionAfter}, approval ${approval.ok ? "ACCEPTED" : "refused"}`,
+    );
+  }
+
+  // 19. The workspace has to stay inside the size the server accepts, for
   //     as long as a room is used. This is the one that would have lost it:
   //     a shared room on the deployed origin reached 2,340 audit entries and
   //     1.04 MB against a 1 MB ceiling, so every further action by anyone
@@ -844,7 +910,7 @@ async function main() {
     );
   }
 
-  // 19. Telemetry read at the component's own scale. A reading that argues
+  // 20. Telemetry read at the component's own scale. A reading that argues
   //    for shrinking a correctly sized component is worse than no reading.
   if (liveServer) {
     const response = await fetch(
@@ -871,7 +937,7 @@ async function main() {
     );
   }
 
-  // 20. A live source, read through the allowlisted proxy. Real network, so
+  // 21. A live source, read through the allowlisted proxy. Real network, so
   //     this is the check that proves the room is not reading a fixture.
   if (liveServer) {
     try {
@@ -907,7 +973,7 @@ async function main() {
     );
   }
 
-  // 21. The proxy is an allowlist, not an open relay. Anybody can load this
+  // 22. The proxy is an allowlist, not an open relay. Anybody can load this
   //     site, so a proxy forwarding arbitrary URLs would be the whole
   //     internet's problem, not just this app's.
   if (liveServer) {

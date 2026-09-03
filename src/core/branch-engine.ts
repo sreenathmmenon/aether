@@ -854,6 +854,19 @@ export function dispatch(
   }
 
   if (command.type === "SET_PROPERTY") {
+    // No actor check, deliberately, and this is the one mutator without one.
+    // Proposing a property change is the whole point of giving an agent a
+    // surface at all -- an agent that cannot raise a capacity or replicate a
+    // store has nothing to propose, and a reviewer would be back to typing
+    // numbers themselves.
+    //
+    // What makes that safe is where the change can land rather than who made
+    // it. The branch guard below refuses a merged or discarded branch, so an
+    // edit only ever reaches a draft; the handler sets `status = "proposed"`
+    // and never `approved` or `merged`; and approval filters evidence to the
+    // branch's current version, so any edit after the last scenario run
+    // invalidates that run and forces a re-run before a human can approve.
+    // An agent can reshape a future freely and still cannot commit one.
     const branch = next.branches[command.input.branchId];
     if (!branch || branch.status === "merged" || branch.status === "discarded")
       return commandFailure("NOT_AVAILABLE", "This branch cannot be changed.");
