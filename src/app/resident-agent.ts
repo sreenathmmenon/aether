@@ -43,10 +43,17 @@ export function reviewPlan(branchId: string): AgentStep[] {
     {
       // A war room's first move is to find out what is actually true right
       // now, from a source outside the room.
-      say: "Reading a live status source",
+      say: "Reading OpenAI's live status",
       tool: "read_live_source",
-      input: { source: "github" },
+      input: { source: "openai" },
       settle: 1200,
+    },
+    {
+      // And the second is to replace an assumed number with a measured one.
+      say: "Measuring real demand for a dependency",
+      tool: "measure_component_demand",
+      input: { package: "express" },
+      settle: 1300,
     },
     {
       say: "Tracing what the regional outage reaches",
