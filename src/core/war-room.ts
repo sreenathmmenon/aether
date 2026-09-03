@@ -109,6 +109,53 @@ export type AgentIntent =
   | { kind: "validate"; thread: IncidentThread; why: string }
   | { kind: "idle"; why: string };
 
+/**
+ * What the agent says when a human accepts a thread.
+ *
+ * A colleague does not go silent when you make a call -- they tell you what
+ * your call implies for everything else on the board. Accepting the standby
+ * thread while a capacity thread is still open is a decision with a
+ * consequence, and the room should say so at the moment it is made rather
+ * than leaving it to be discovered.
+ */
+export function respondToDecision(
+  decided: IncidentThread,
+  threads: IncidentThread[],
+): string {
+  const open = undecided(threads).filter((thread) => thread.id !== decided.id);
+  if (open.length === 0)
+    return `${decided.title} accepted. Every thread has a decision — the room is clear.`;
+  const critical = open.filter((thread) => thread.severity === "critical");
+  if (critical.length)
+    return `${decided.title} accepted. ${critical[0]!.title} is still critical and still open — that one changes the answer here.`;
+  const unevidenced = open.filter((thread) => thread.findings.length === 0);
+  if (unevidenced.length)
+    return `${decided.title} accepted. ${unevidenced[0]!.title} has no evidence yet; I will read it next.`;
+  return `${decided.title} accepted. ${open.length} thread${open.length === 1 ? "" : "s"} still open — I will keep checking ${open[0]!.title}.`;
+}
+
+/**
+ * What the agent says when the room has gone quiet.
+ *
+ * Silence in an incident room is not agreement, and an agent that waits
+ * politely through it is a chat box. The useful colleague names the thing
+ * nobody has answered.
+ */
+export function promptOnSilence(
+  threads: IncidentThread[],
+  quietSeconds: number,
+): string | undefined {
+  if (quietSeconds < 20) return undefined;
+  const open = undecided(threads);
+  if (open.length === 0) return undefined;
+  const critical = open.find((thread) => thread.severity === "critical");
+  const target = critical ?? open[0]!;
+  const evidence = target.findings.length;
+  return evidence
+    ? `Nobody has answered ${target.title}. I have ${evidence} reading${evidence === 1 ? "" : "s"} on it and a recommendation — it needs a person.`
+    : `Nobody has answered ${target.title}. I am still gathering on it.`;
+}
+
 export function nextIntent(threads: IncidentThread[]): AgentIntent {
   const thread = nextThread(threads);
   if (!thread)

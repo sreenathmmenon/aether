@@ -46,7 +46,12 @@ import { describeProvenance, type Provenance } from "@core/evidence-source";
 import { reviewPlan, wasRefused, type StepResult } from "./resident-agent";
 import { incidentThreads } from "./incident-threads";
 import { useWarRoom } from "./use-war-room";
-import { undecided, type IncidentThread } from "@core/war-room";
+import {
+  promptOnSilence,
+  respondToDecision,
+  undecided,
+  type IncidentThread,
+} from "@core/war-room";
 import { scenarioNarrative } from "./scenario-copy";
 import { useModalDialog } from "./use-modal-dialog";
 import { syncExplanation, syncTone } from "./sync-status";
@@ -853,15 +858,36 @@ export function App() {
       ),
     [],
   );
+  // What the agent says back. A colleague does not go silent when you make
+  // a call -- they tell you what it implies for the rest of the board.
+  const [agentReply, setAgentReply] = useState("");
+  const lastHumanAct = useRef(Date.now());
   const setThreadStatus = useCallback(
     (threadId: string, status: IncidentThread["status"]) =>
-      setThreads((current) =>
-        current.map((thread) =>
+      setThreads((current) => {
+        const next = current.map((thread) =>
           thread.id === threadId ? { ...thread, status } : thread,
-        ),
-      ),
+        );
+        if (status === "decided") {
+          lastHumanAct.current = Date.now();
+          const decided = next.find((thread) => thread.id === threadId);
+          if (decided) setAgentReply(respondToDecision(decided, next));
+        }
+        return next;
+      }),
     [],
   );
+  // Silence in an incident room is not agreement. If nobody answers, the
+  // agent names the thread that is waiting rather than waiting politely.
+  useEffect(() => {
+    if (!threads.length) return;
+    const timer = window.setInterval(() => {
+      const quiet = Math.round((Date.now() - lastHumanAct.current) / 1000);
+      const prompt = promptOnSilence(threads, quiet);
+      if (prompt) setAgentReply(prompt);
+    }, 5000);
+    return () => window.clearInterval(timer);
+  }, [threads]);
   const warRoom = useWarRoom(
     registryRef.current,
     threads,
@@ -3305,9 +3331,9 @@ export function App() {
               {warRoom.running ? "Pause the agent" : "Let the agent work"}
             </button>
           </div>
-          {warRoom.running && warRoom.saying && (
+          {(agentReply || (warRoom.running && warRoom.saying)) && (
             <p className="war-room-saying" aria-live="polite">
-              {warRoom.saying}
+              {agentReply || warRoom.saying}
             </p>
           )}
           <ol className="thread-board">
