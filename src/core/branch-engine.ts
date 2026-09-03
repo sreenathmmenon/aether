@@ -14,7 +14,11 @@ import type {
   Revision,
   Workspace,
 } from "./workspace";
-import { runScenario, type ScenarioResult } from "@simulation/engine";
+import {
+  requiredScenarios,
+  runScenario,
+  type ScenarioResult,
+} from "@simulation/engine";
 
 export type AetherState = {
   workspace: Workspace;
@@ -1112,6 +1116,21 @@ export function dispatch(
       return commandFailure(
         "NOT_AVAILABLE",
         "Resolve the current scenario violations before approval.",
+      );
+    // Clean is not the same as complete. This checked the runs that exist,
+    // so approving after running a single scenario was allowed -- a reviewer
+    // driving the product merged with three of four failures never examined,
+    // and an agent that wants a merge only has to pick the scenario that
+    // comes back clean. Every failure the architecture is expected to answer
+    // for has to have been answered at this version.
+    const answered = new Set(currentEvidence.map((run) => run.scenario));
+    const unanswered = next.workspace.requireFullScenarioCoverage
+      ? requiredScenarios.filter((scenario) => !answered.has(scenario))
+      : [];
+    if (unanswered.length)
+      return commandFailure(
+        "NOT_AVAILABLE",
+        `${unanswered.length} of ${requiredScenarios.length} scenarios have not been run at this version: ${unanswered.join(", ")}.`,
       );
     branch.status = "approved";
     branch.updatedAt = now;

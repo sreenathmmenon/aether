@@ -8,6 +8,23 @@ export type Scenario =
   | "traffic_spike"
   | "database_failure"
   | "dependency_failure";
+
+/**
+ * Every failure an architecture has to answer for before it can be approved.
+ *
+ * The gate checked that evidence was current and clean, not that it was
+ * complete. A reviewer driving this ran one scenario of four, approved, and
+ * merged with three known violations never examined -- and an agent
+ * optimising for a merge finds that immediately: run the one that comes back
+ * clean. Declared here so the engine, the gate and the interface count the
+ * same set rather than three copies of it.
+ */
+export const requiredScenarios = [
+  "regional_outage",
+  "traffic_spike",
+  "database_failure",
+  "dependency_failure",
+] as const satisfies readonly Scenario[];
 /**
  * The declared availability model.
  *
@@ -32,6 +49,19 @@ export const availabilityModel = {
   capacityDeficitWeight: 2.4,
   /** The most availability a capacity shortfall alone can remove. */
   capacityDeficitCeiling: 3.2,
+  /**
+   * Points lost for each independent path beyond the first that a single
+   * failed component serves.
+   *
+   * A shared queue and two isolated ones produced almost the same score --
+   * 0.42 points apart when measured -- because the blast radius counts the
+   * same either way. But the whole reason a shared dependency is worth
+   * flagging is that it turns two unrelated failures into one: the paths do
+   * not fail independently any more. That correlation is what this prices,
+   * and it is what the `thread-shared` incident thread has always claimed
+   * without the engine agreeing.
+   */
+  correlatedPathPenalty: 1.6,
   /** The model does not express total loss or perfect uptime. */
   floor: 80,
   ceiling: 99.99,
@@ -527,9 +557,28 @@ export function runScenario(
 
   // Availability degrades with the share of the system that is impacted, and
   // is recovered by replicas and standby replication that survive the fault.
-  const impactShare = operational.length
-    ? impacted.size / operational.length
-    : 0;
+  //
+  // Weighted by what each component carries, not counted by head. A plain
+  // ratio said a batch consumer going down cost exactly what the write path
+  // cost, and an SRE driving this found the consequence: a shared queue and
+  // an isolated one scored 0.42 points apart when the whole point of the
+  // shared one is that it correlates two failures. Weight is how much of the
+  // system depends on a component, so a store several paths terminate at
+  // counts for more than a leaf nothing reads.
+  const weightOf = (entity: ArchitectureEntity) => {
+    // Everything serves something, so nothing weighs nothing.
+    const dependents = dependentsOf(graph, entity.id).length;
+    const stateful = entity.kind === "database" ? 1 : 0;
+    return 1 + dependents + stateful;
+  };
+  const totalWeight = operational.reduce(
+    (sum, entity) => sum + weightOf(entity),
+    0,
+  );
+  const impactedWeight = operational
+    .filter((entity) => impacted.has(entity.id))
+    .reduce((sum, entity) => sum + weightOf(entity), 0);
+  const impactShare = totalWeight ? impactedWeight / totalWeight : 0;
   const impactedDatabases = databasesIn(graph).filter((entity) =>
     impacted.has(entity.id),
   );
@@ -567,6 +616,20 @@ export function runScenario(
   const model = availabilityModel;
   let availability = 100 - impactShare * model.impactedShareWeight;
   availability -= model.unreplicatedStorePenalty * unreplicated.length;
+  // A failed component serving several dependents has correlated them: they
+  // now fail together where they might have failed apart. Charged only under
+  // `dependency_failure`, which is the scenario that asks what a shared
+  // component costs -- applied to every scenario it became a flat penalty on
+  // any architecture with a well-connected store, which is most of them, and
+  // said nothing about sharing.
+  if (scenario === "dependency_failure") {
+    const correlated = seeds.reduce((worst, seed) => {
+      const entity = graph.entities[seed.id];
+      if (!entity || entity.kind === "region") return worst;
+      return Math.max(worst, dependentsOf(graph, seed.id).length - 1);
+    }, 0);
+    availability -= model.correlatedPathPenalty * Math.max(0, correlated);
+  }
   availability += model.synchronousReplicaCredit * synchronous.length;
   availability +=
     Math.min(replicaCushion, model.replicaCushionCap) *

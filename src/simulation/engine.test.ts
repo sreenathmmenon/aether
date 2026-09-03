@@ -371,12 +371,15 @@ describe("dependency-graph simulation", () => {
     // summed from a declared figure, so every scenario's cost moved from
     // $6,100 to $9,400 on this fixture. Availability did not move on any of
     // the four, which is the check that pricing resilience changed the price
-    // and nothing else.
+    // and nothing else. `dependency_failure` moved again when a shared
+    // component started being charged for the paths it correlates -- and
+    // only that scenario moved, which is the check that the charge landed
+    // where sharing is actually being asked about.
     const expected: [Scenario, string][] = [
       ["regional_outage", "fnv1a-236f2715"],
       ["traffic_spike", "fnv1a-696fbc08"],
       ["database_failure", "fnv1a-05954ff8"],
-      ["dependency_failure", "fnv1a-b110ecd9"],
+      ["dependency_failure", "fnv1a-53c7e42a"],
     ];
     for (const [scenario, hash] of expected) {
       const run = runScenario(

@@ -115,6 +115,26 @@ import { runScenario, type Scenario } from "@simulation/engine";
 
 /** How many SLO violations the evidence panel shows before scrolling. */
 
+/**
+ * A workspace this product created, which requires every scenario answered
+ * before a human can approve.
+ *
+ * A reviewer driving the product ran one scenario of four, approved, and
+ * merged with three known violations never examined -- and an agent that
+ * wants a merge only has to pick the scenario that comes back clean. The
+ * engine reads this from the workspace rather than assuming it, so a state
+ * built for a narrower purpose can still say what it requires.
+ */
+function createWorkspace(
+  ...args: Parameters<typeof createInitialState>
+): AetherState {
+  const state = createInitialState(...args);
+  return {
+    ...state,
+    workspace: { ...state.workspace, requireFullScenarioCoverage: true },
+  };
+}
+
 const scenarioOrder = [
   "regional_outage",
   "traffic_spike",
@@ -257,7 +277,7 @@ export function App() {
     // Named something we do not ship: open the default system fresh rather
     // than restoring whatever this browser happens to hold.
     if (!requested && systemWasNamed())
-      return createInitialState(paymentPlatformBaseline, "payment-platform");
+      return createWorkspace(paymentPlatformBaseline, "payment-platform");
     if (requested) {
       // A ?system= link must open that system, but `loadTemplate` writes that
       // parameter into the address bar itself, so a person who picks their own
@@ -270,7 +290,7 @@ export function App() {
       const stored = loadPersistedState();
       if (stored && shouldRestore(requested.id, stored.workspace.templateId))
         return stored;
-      return createInitialState(requested.graph, requested.id);
+      return createWorkspace(requested.graph, requested.id);
     }
     // A returning visitor keeps their own work. A first arrival opens on a
     // worked incident rather than an empty grid: the submission says the
@@ -279,7 +299,7 @@ export function App() {
     // behind a URL parameter nobody will type.
     return (
       loadPersistedState() ??
-      createInitialState(paymentPlatformBaseline, "payment-platform")
+      createWorkspace(paymentPlatformBaseline, "payment-platform")
     );
   });
   const [toolCount, setToolCount] = useState(0);
@@ -1370,7 +1390,7 @@ export function App() {
       systemTemplates.find((candidate) => candidate.id === templateId) ??
       systemTemplates[0];
     clearPersistedState();
-    const fresh = createInitialState(template.graph, template.id);
+    const fresh = createWorkspace(template.graph, template.id);
     setState(fresh);
     // Keep the address bar honest so the current system is always shareable.
     try {

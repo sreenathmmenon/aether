@@ -27,6 +27,19 @@ export type Workspace = {
   auditRetired?: number;
   /** The same, for decision notes, which grow on their own agent-callable tool. */
   notesRetired?: number;
+  /**
+   * Whether approval requires every scenario to have been answered at the
+   * version being approved, not merely one clean run.
+   *
+   * A reviewer driving the product ran one scenario of four, approved, and
+   * merged with three known violations never examined -- and an agent that
+   * wants a merge only has to pick the scenario that comes back clean. Every
+   * shipped workspace sets this. It is a field rather than a constant
+   * because a workspace built for a single failure mode should be able to
+   * say so, and because a guarantee this product makes should be visible in
+   * the state a reviewer can read.
+   */
+  requireFullScenarioCoverage?: boolean;
   persistenceVersion?: number;
   createdAt: IsoTimestamp;
   updatedAt: IsoTimestamp;
