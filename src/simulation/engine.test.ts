@@ -505,10 +505,23 @@ describe("dependency-graph simulation", () => {
         "dependency_failure",
       ] as const) {
         const run = runScenario(graph, scenario, "branch-baseline", 1);
-        expect(run.availability, `${label} / ${scenario}`).toBeGreaterThan(0);
+        // Zero is a real answer, not a broken one: a shape where the fault
+        // leaves no datastore able to serve has lost everything, and saying
+        // so is the point. What this guards is that every shape produces a
+        // number in range rather than NaN, Infinity or a negative -- the
+        // engine surviving graphs a reviewer can actually draw.
+        expect(
+          run.availability,
+          `${label} / ${scenario}`,
+        ).toBeGreaterThanOrEqual(0);
         expect(run.availability, `${label} / ${scenario}`).toBeLessThanOrEqual(
           99.99,
         );
+        // And a total loss says why, so it cannot be mistaken for a score.
+        if (run.availability === 0)
+          expect(run.sloViolations.join(" "), `${label} / ${scenario}`).toMatch(
+            /serves nothing/,
+          );
         expect(Number.isFinite(run.monthlyCostUsd), label).toBe(true);
         // A cycle must terminate rather than revisiting a component forever.
         expect(

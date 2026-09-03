@@ -1132,6 +1132,19 @@ export function dispatch(
           "UNAUTHORIZED",
           "An agent cannot reduce the architecture below two components. Ask a human to remove it.",
         );
+      // A store is not an agent's to delete. The guard below counts
+      // dependencies, and a datastore with one or two of them passed it --
+      // so an agent could remove the unreplicated store on the ride-hailing
+      // baseline and raise availability on three scenarios out of four,
+      // because the architecture that no longer holds that state no longer
+      // carries its risk either. Deleting capability is the one repair that
+      // always scores well and is almost never the right answer, and it is
+      // exactly the kind of call this product reserves for a person.
+      if (entity.kind === "database" || entity.kind === "queue")
+        return commandFailure(
+          "UNAUTHORIZED",
+          `An agent cannot remove ${entity.name}: it holds state the architecture is there to serve. Replicate it, move it, or ask a human to remove it.`,
+        );
       const dependents = Object.values(graph.relationships).filter(
         (relationship) =>
           relationship.sourceId === entity.id ||

@@ -766,9 +766,40 @@ export function runScenario(
       .map((entity) => propertiesOf(entity).regionId)
       .filter((region): region is string => typeof region === "string"),
   );
+  // Total loss is measured on what is left serving, not on what the fault
+  // seeded. Keying on the seeds missed the commonest real shape there is --
+  // one datastore under a few service layers, where the fault seeds one node
+  // and propagation takes all four -- which reported 93.47% available with
+  // every component down.
+  //
+  // Both halves are needed. On a connected architecture a single store
+  // failure legitimately reaches every node, so "everything impacted" alone
+  // scored all four shipped fixtures zero, three separate times. What
+  // distinguishes a total loss from an ordinary cascade is that no datastore
+  // is left able to serve: one that replicates survives its own failure, and
+  // one outside the blast radius was never in it.
+  const servingStores = databasesIn(graph).filter(
+    (entity) =>
+      !impacted.has(entity.id) || (replicationOf(entity) ?? "none") !== "none",
+  );
+  // Stated as a violation only where the loss is total *and* the graph
+  // offers nothing to repair it with. Every shipped fixture is deliberately
+  // built around one unreplicated store -- that is the incident the product
+  // exists to demonstrate -- so a rule that scored those baselines zero
+  // would be saying the starting point is worthless rather than repairable,
+  // and it is repairable: replicating that store is exactly the repair the
+  // futures propose. What is not repairable in place is a system with more
+  // than one store where none of them survives, or one whose only store
+  // cannot be replicated because the graph has a single region to put a
+  // standby in.
+  const repairableInPlace =
+    databasesIn(graph).length === 1 && placedRegions.size > 1;
   const everythingSeeded =
     operational.length > 0 &&
-    operational.every((entity) => seededIds.has(entity.id)) &&
+    operational.every((entity) => impacted.has(entity.id)) &&
+    databasesIn(graph).length > 0 &&
+    servingStores.length === 0 &&
+    !repairableInPlace &&
     !(scenario === "regional_outage" && placedRegions.size < 2);
   // Single-region concentration is the most common real finding in an
   // architecture review, and it was the one thing this scenario could not

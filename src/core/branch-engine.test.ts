@@ -623,8 +623,11 @@ describe("Aether command pipeline", () => {
   it("stops an agent from dismantling the system it was asked to repair", () => {
     let state = branchState();
     const branchId = "branch-highest_resilience";
-    // The agent may reshape a future, so early removals succeed.
-    for (const entityId of ["ledger", "auth", "gateway"]) {
+    // The agent may reshape a future, so early removals succeed -- but only
+    // of components that hold no state. A store or a queue is a human's to
+    // remove: deleting one used to raise the score, because an architecture
+    // that no longer holds the state no longer carries its risk either.
+    for (const entityId of ["auth", "gateway", "reconciliation"]) {
       const removed = dispatch(state, {
         type: "REMOVE_COMPONENT",
         input: { branchId, entityId },
@@ -654,13 +657,16 @@ describe("Aether command pipeline", () => {
   });
 
   it("stops an agent from removing a heavily depended-on component", () => {
+    // Targets a stateless service, so this exercises the dependency-count
+    // rule rather than the separate one that reserves a store or a queue to
+    // a human whatever its dependents.
     const state = branchState();
     const added = dispatch(state, {
       type: "CONNECT_COMPONENTS",
       input: {
         branchId: "branch-highest_resilience",
         sourceId: "reconciliation",
-        targetId: "ledger",
+        targetId: "auth",
         kind: "depends_on",
       },
     });
@@ -669,8 +675,8 @@ describe("Aether command pipeline", () => {
       type: "CONNECT_COMPONENTS",
       input: {
         branchId: "branch-highest_resilience",
-        sourceId: "gateway",
-        targetId: "ledger",
+        sourceId: "ledger",
+        targetId: "auth",
         kind: "depends_on",
       },
     });
@@ -678,7 +684,7 @@ describe("Aether command pipeline", () => {
 
     const attempt = dispatch(withThird.value, {
       type: "REMOVE_COMPONENT",
-      input: { branchId: "branch-highest_resilience", entityId: "ledger" },
+      input: { branchId: "branch-highest_resilience", entityId: "auth" },
     });
     expect(attempt).toMatchObject({ ok: false, code: "UNAUTHORIZED" });
     if (attempt.ok) throw new Error("unreachable");

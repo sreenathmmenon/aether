@@ -25,8 +25,10 @@ import {
   type AetherState,
 } from "../src/core/branch-engine";
 import { paymentPlatformBaseline } from "../src/fixtures/payment-platform/baseline";
+import { rideHailingBaseline } from "../src/fixtures/ride-hailing/baseline";
 import { createAetherToolRegistry } from "../src/platform/webmcp/registry";
 import { maxWorkspaceBytes } from "../src/core/workspace-contract";
+import { runScenario } from "../src/simulation/engine";
 
 type RegisteredTool = {
   name: string;
@@ -653,7 +655,119 @@ async function main() {
     );
   }
 
-  // 16. The workspace has to stay inside the size the server accepts, for
+  // 16. Total loss is measured on what is left serving, not on what the
+  //     fault seeded. The commonest real shape -- one datastore under a few
+  //     service layers -- seeds one node and propagates to all four, and
+  //     reported 93.47% available with every component down.
+  {
+    const at = "2026-09-03T00:00:00.000Z";
+    const chain = {
+      entities: {
+        r: {
+          id: "r",
+          kind: "region" as const,
+          name: "R",
+          position: { x: 0, y: 0 },
+          properties: { city: "R", failureDomain: "r" },
+          version: 1,
+          createdAt: at,
+          updatedAt: at,
+        },
+        db: {
+          id: "db",
+          kind: "database" as const,
+          name: "Store",
+          position: { x: 0, y: 0 },
+          properties: {
+            regionId: "r",
+            peakRps: 100,
+            capacityRps: 900,
+            replicationMode: "none",
+            recoveryTimeMinutes: 20,
+            monthlyCostUsd: 80,
+          },
+          version: 1,
+          createdAt: at,
+          updatedAt: at,
+        },
+        svc: {
+          id: "svc",
+          kind: "service" as const,
+          name: "Service",
+          position: { x: 0, y: 0 },
+          properties: {
+            regionId: "r",
+            peakRps: 100,
+            capacityRps: 900,
+            replicas: 2,
+            monthlyCostUsd: 40,
+          },
+          version: 1,
+          createdAt: at,
+          updatedAt: at,
+        },
+      },
+      relationships: {
+        e: {
+          id: "e",
+          kind: "reads_from" as const,
+          sourceId: "svc",
+          targetId: "db",
+          version: 1,
+          createdAt: at,
+          updatedAt: at,
+        },
+      },
+    };
+    const run = runScenario(chain, "database_failure", "branch-baseline", 1);
+    record(
+      "simulation/total-loss-counts-propagation",
+      "Does a cascade that leaves nothing serving report a total loss?",
+      run.availability === 0 &&
+        run.sloViolations.some((problem) => /serves nothing/.test(problem))
+        ? "pass"
+        : "fail",
+      `every component down, availability ${run.availability}${run.availability === 0 ? " and named as a total loss" : " — reported as a degradation"}`,
+    );
+  }
+
+  // 17. Deleting capability must not be an agent's move. An unreplicated
+  //     store carries a penalty, so removing it removed the penalty and
+  //     raised availability on three of four scenarios -- deleting your way
+  //     to a better score, on the ride-hailing fixture as shipped.
+  {
+    let state = createInitialState(rideHailingBaseline, "ride-hailing");
+    const human = { id: "reviewer", kind: "human" as const, displayName: "R" };
+    const branched = dispatch(
+      state,
+      {
+        type: "CREATE_BRANCH",
+        input: { name: "Repair", intent: "highest_resilience" },
+      },
+      human,
+    );
+    if (!branched.ok) throw new Error("the repair future must be creatable");
+    state = branched.value;
+    const branchId = "branch-highest_resilience";
+    const byAgent = dispatch(
+      state,
+      { type: "REMOVE_COMPONENT", input: { branchId, entityId: "supply" } },
+      { id: "agent", kind: "agent", displayName: "Agent" },
+    );
+    const byHuman = dispatch(
+      state,
+      { type: "REMOVE_COMPONENT", input: { branchId, entityId: "supply" } },
+      human,
+    );
+    record(
+      "gate/agent-cannot-delete-state",
+      "Is removing a datastore reserved to a human?",
+      !byAgent.ok && byHuman.ok ? "pass" : "fail",
+      `agent ${byAgent.ok ? "ALLOWED" : "refused"}, human ${byHuman.ok ? "allowed" : "REFUSED"}`,
+    );
+  }
+
+  // 18. The workspace has to stay inside the size the server accepts, for
   //     as long as a room is used. This is the one that would have lost it:
   //     a shared room on the deployed origin reached 2,340 audit entries and
   //     1.04 MB against a 1 MB ceiling, so every further action by anyone
@@ -730,7 +844,7 @@ async function main() {
     );
   }
 
-  // 17. Telemetry read at the component's own scale. A reading that argues
+  // 19. Telemetry read at the component's own scale. A reading that argues
   //    for shrinking a correctly sized component is worse than no reading.
   if (liveServer) {
     const response = await fetch(
@@ -757,7 +871,7 @@ async function main() {
     );
   }
 
-  // 18. A live source, read through the allowlisted proxy. Real network, so
+  // 20. A live source, read through the allowlisted proxy. Real network, so
   //     this is the check that proves the room is not reading a fixture.
   if (liveServer) {
     try {
@@ -793,7 +907,7 @@ async function main() {
     );
   }
 
-  // 19. The proxy is an allowlist, not an open relay. Anybody can load this
+  // 21. The proxy is an allowlist, not an open relay. Anybody can load this
   //     site, so a proxy forwarding arbitrary URLs would be the whole
   //     internet's problem, not just this app's.
   if (liveServer) {
