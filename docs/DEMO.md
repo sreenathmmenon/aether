@@ -8,10 +8,21 @@ step needs a pause to look right on camera, the pause is written in.
 
 ## Before you record
 
-1. Open the URL in a **fresh window** with an empty `localStorage` — a
-   returning visitor is restored into their previous workspace, so a
-   half-finished run from a rehearsal will be on screen instead of the
-   opening incident. In devtools: `localStorage.clear()` then reload.
+1. Record in a **new incognito window**, or a Chrome profile that has never
+   opened the site. A returning visitor is restored into their previous
+   workspace, so a rehearsal's three futures will be on screen instead of
+   the opening incident — and the ten-to-eighteen beat, the single most
+   important frame in the film, cannot happen if the surface is already at
+   eighteen when you start.
+
+   `localStorage.clear()` and reload is **not** reliable for this: the page
+   saves its live state again before the reload lands, so the futures come
+   straight back. Measured while preparing this script. Incognito avoids the
+   race entirely — a first-time visitor id has no stored workspace, the
+   server returns `{"state":null}`, and the page builds the ten-tool
+   baseline. Confirm before you hit record: the header must read **10 things
+   it may do here** and the futures panel **0/3**.
+
 2. Window at **1440×900** or wider. Narrower is handled, but the three
    decision columns stack and the opening frame reads less well.
 3. Close devtools before the take. The WebMCP surface is shown through the

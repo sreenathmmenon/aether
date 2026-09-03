@@ -10,3 +10,6 @@ coverage/
 evals/tmp/
 evals/sre/
 evals/_*.ts
+
+# Working notes, deliberately uncommitted.
+PRODUCT-MAP.md
