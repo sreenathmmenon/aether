@@ -480,11 +480,42 @@ export function createInitialState(
   };
 }
 
+/**
+ * Strip the prototype from a graph's two lookup maps.
+ *
+ * `graph.entities[id]` is an existence check in about forty places, and on an
+ * ordinary object `__proto__`, `constructor`, `toString` and `valueOf` all
+ * answer it. A judge drove exactly that: `trace_architecture_dependency` with
+ * `entityId: "zzz"` refused cleanly and named the five real components, while
+ * `"constructor"` returned `{"entity":"Object"}` -- a JavaScript internal
+ * reported as a component in the reviewer's own architecture. `"__proto__"`
+ * returned an empty path as though it were a real but unconnected component.
+ *
+ * Nothing was exploitable -- no prototype was ever written through -- but a
+ * product whose whole claim is that its refusals teach an agent what to do
+ * next cannot answer one class of unknown id with an internal name and
+ * another with a clean list.
+ *
+ * Fixed once here rather than at each call site: every graph a branch is read
+ * through is built by this function, so a null prototype makes the plain
+ * lookups already written correct, including the two duplicate checks that
+ * would otherwise report a collision against an inherited member.
+ */
+function withoutPrototypes(graph: ArchitectureGraph): ArchitectureGraph {
+  return {
+    ...graph,
+    entities: Object.assign(Object.create(null), graph.entities),
+    relationships: Object.assign(Object.create(null), graph.relationships),
+  } as ArchitectureGraph;
+}
+
 export function deriveGraph(
   state: AetherState,
   branch: Branch,
 ): ArchitectureGraph {
-  const graph = structuredClone(state.revisions[branch.baseRevisionId]!.graph);
+  const graph = withoutPrototypes(
+    structuredClone(state.revisions[branch.baseRevisionId]!.graph),
+  );
   for (const operation of branch.operations) {
     if (operation.kind === "set_property") {
       const entity = graph.entities[operation.entityId];
