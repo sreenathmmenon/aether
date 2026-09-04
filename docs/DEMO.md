@@ -32,6 +32,34 @@ The closing line, over the approved merge:
 
 > "Evidence, not persuasion."
 
+## Show the refusal in the first thirty seconds
+
+Two independent judging panels said the same thing about this film: the
+central achievement is a **subtraction** — a tool list that shrinks, an
+approve tool that does not exist — and subtraction has to be narrated or it
+is not seen. A judge who does not grasp why that is hard watches an
+architecture diagram tool.
+
+So do not save the refusal for 1:35. Open on it, before the walkthrough,
+as a fifteen-second cold open. On the seeded payment platform:
+
+1. **The surface grows.** Header reads **10 things it may do here**. Create
+   a repair future. It reads **18**. Say: _"the page just handed the agent
+   tools it did not have a second ago."_
+2. **The agent recommends.** Ask for a recommendation. It names the
+   strongest repair — and beside it: **`approvable: false`**, blocked
+   because a traffic spike still reports violations.
+3. **The agent is refused.** Say: _"it found the best answer and the page
+   will not let it act on it. There is no approve tool. Not disabled —
+   absent."_
+
+Then start the walkthrough properly. The rest of the film is the evidence
+for what the first thirty seconds claimed, and a viewer who has seen the
+refusal once will recognise every gate that follows.
+
+The same three beats are in `README.md` as four console calls, for a judge
+who reads rather than watches.
+
 ## What the film has to establish
 
 Aether is a whole professional workflow an agent can carry out through the

@@ -32,6 +32,58 @@ Open a specific system or a shared room with two optional parameters:
 
 They compose: [`?system=ride-hailing&room=incident-42`](https://aether-architecture-lab.sreenath-mm89.chatgpt.site/?system=ride-hailing&room=incident-42).
 
+## Four calls that show the whole thesis
+
+Paste this into the console on either origin. It is the entire argument in
+about fifteen seconds, and every value below was measured, not written from
+memory.
+
+```js
+const mc = document.modelContext;
+const call = async (name, args) => {
+  const tool = (await mc.getTools()).find((t) => t.name === name);
+  if (!tool) return { error: "NO_SUCH_TOOL", name };
+  return JSON.parse(await mc.executeTool(tool, JSON.stringify(args)));
+};
+
+(await mc.getTools()).length; // 10
+
+await call("create_architecture_branch", {
+  name: "Probe Alpha", // 3-48 chars, plain text
+  intent: "highest_resilience", // or lowest_cost | fastest_recovery
+  rationale: "Check the surface grows and the engine answers.",
+});
+(await mc.getTools()).length; // 18 — eight write tools appeared
+
+await call("run_failure_scenario", {
+  branchId: "branch-highest_resilience",
+  scenario: "traffic_spike",
+});
+// availability 95.66, engineVersion "aether-sim-7", and:
+//   sloViolations: ["Primary Ledger capacity deficit: 4,500 RPS", ...]
+//   basis: "Ranking score, not an SLO. ..."
+
+await call("recommend_architecture_future", {});
+// approvable: false, blockedBy: "traffic spike reports violations"
+// The agent found the strongest repair and is refused it.
+
+await call("approve_architecture_branch", {
+  branchId: "branch-highest_resilience",
+});
+// { error: "NO_SUCH_TOOL" } — in any state. Not gated. Absent.
+```
+
+**The last two calls are the point.** The agent's own recommendation does not
+unlock anything, and there is no approve, merge, rollback or delete tool
+registered in any state for it to reach for.
+
+Two notes that save a wasted call. Field names are exact — `capacityRps` not
+`peakRps`, `amountUsd` not `monthlyCostUsd`, `regionId` values are
+`region-mumbai` not `mumbai`. And a refusal here is not a failure: every one
+names the field, the legal values, and a `nextAction`, so a wrong guess costs
+one call rather than a dead end. Reviewers have mistaken those refusals for
+defects — read the whole response, not one field.
+
 ## The tool surface changes with the state of the argument
 
 Aether registers **18 tools**, and never all at once. What an agent may do is a
