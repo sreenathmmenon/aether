@@ -590,10 +590,23 @@ async function main() {
 
     const empty = await page.call("propose_architecture_change", {});
     const emptyProblems = (empty.problems ?? []) as string[];
+    // The discriminator first, then the missing fields. This asked for
+    // "Required" first, which is the wrong thing to want: with four required
+    // fields and a cap of three, leading with the plain ones pushed the only
+    // line naming the legal properties into the overflow, so an empty call
+    // learned three field names and not what any of them accept. The
+    // discriminator decides the shape of the rest of the call, so it is what
+    // an agent needs first -- and the other names still have to appear.
+    const namesProperties =
+      emptyProblems[0]?.includes("capacityRps") &&
+      emptyProblems[0]?.includes("replicationMode");
+    const namesFields = ["branchId", "entityId"].every((field) =>
+      emptyProblems.some((problem) => problem.startsWith(`${field}:`)),
+    );
     record(
-      "tools/rejection-leads-with-what-is-missing",
-      "Does an empty call say which fields are required, first?",
-      emptyProblems[0]?.includes("Required") ? "pass" : "fail",
+      "tools/rejection-teaches-the-call",
+      "Does an empty call name the legal properties first, then the missing fields?",
+      namesProperties && namesFields ? "pass" : "fail",
       JSON.stringify(emptyProblems).slice(0, 170),
     );
   }

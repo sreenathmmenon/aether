@@ -2930,7 +2930,16 @@ describe("Aether WebMCP registry", () => {
       (problem) => !problem.includes("not listed"),
     );
     expect(namedMissing).toHaveLength(problemLimit);
-    for (const problem of namedMissing) expect(problem).toMatch(/Required/i);
+    // The discriminator leads, then the plain missing fields. This asserted
+    // that every named problem read "Required", which held only while the
+    // discriminator sorted last -- and with four required fields against a
+    // cap of three, that pushed the one line naming the legal properties
+    // into the overflow. An empty call learned three field names and not
+    // what any of them accept, which is the opposite of self-correcting.
+    expect(namedMissing[0]).toMatch(/discriminator/i);
+    expect(namedMissing[0]).toContain("capacityRps");
+    for (const problem of namedMissing.slice(1))
+      expect(problem).toMatch(/Required/i);
     const overflow = missing.problems.find((problem) =>
       problem.includes("not listed"),
     );

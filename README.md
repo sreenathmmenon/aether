@@ -126,6 +126,19 @@ levels that fail independently:
 3. **Unspoofability.** `actor` is a module constant, not a parameter. An agent
    cannot claim to be a person, because it is never asked who it is.
 
+And the gate is not only about species. **A human with unresolved violations
+is refused too** — the two refusals are different, and both are measured:
+
+```
+agent, no evidence  →  UNAUTHORIZED: Only a human can approve an architecture branch.
+human, no evidence  →  NOT_AVAILABLE: Run a current deterministic scenario before approval.
+```
+
+So the rule is not "agents cannot approve." It is **nobody approves without
+current evidence**, and separately, only a person may be the one to do it.
+An agent's edit also invalidates the evidence gathered before it, so a
+proposal cannot be approved against numbers that have since moved.
+
 Verified live on both origins: `capacityRps: "banana"` is refused with
 _"expected number, received string"_ rather than silently corrupting approved
 evidence; an unknown branch id is refused and told which ids are real.

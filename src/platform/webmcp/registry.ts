@@ -237,16 +237,37 @@ function invalidInput(
       path: [field],
       message: "Required",
     })) as unknown as z.ZodError["issues"];
-  const issues = [...error.issues, ...missing];
+  // A field the schema already has something to say about does not also get
+  // a bare "Required". Sending `peakRps` to a discriminated union reported
+  // `property: Required` and `property: Invalid discriminator value...` --
+  // both true, since the union never matched, and the sort put the useless
+  // one first. A reviewer reads "Required" for a field they believe they
+  // supplied and concludes the tool is broken rather than that the name is
+  // wrong. The specific message is the one that teaches the fix.
+  const explained = new Set(
+    error.issues.map((issue) => issue.path.join(".") || "input"),
+  );
+  const issues = [
+    ...error.issues,
+    ...missing.filter((issue) => !explained.has(issue.path.join("."))),
+  ];
   // A missing field reads ahead of a malformed one. A discriminated union
   // reports its discriminator first, so an empty call led with "Invalid
   // discriminator value. Expected 'replicas' | 'capacityRps' | ..." and
   // pushed the three plain "Required" lines behind it -- correct, and the
   // hardest possible way to learn that four fields are missing.
+  // A discriminator failure outranks a plain "Required", because it is the
+  // field that decides what the rest of the call must look like. With four
+  // required fields and a cap of three, sorting it last pushed the one line
+  // that names the legal properties into the overflow -- so an empty call
+  // learned three field names and not what any of them accept.
   const ordered = [...issues].sort((left, right) => {
-    const missing = (issue: (typeof issues)[number]) =>
-      /required/i.test(String(issue.message)) ? 0 : 1;
-    return missing(left) - missing(right);
+    const rank = (issue: (typeof issues)[number]) => {
+      const message = String(issue.message);
+      if (/discriminator/i.test(message)) return 0;
+      return /required/i.test(message) ? 1 : 2;
+    };
+    return rank(left) - rank(right);
   });
   const named = ordered.slice(0, problemLimit).map((issue) => {
     const field = issue.path.join(".") || "input";
