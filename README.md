@@ -271,7 +271,7 @@ VITE_AETHER_API_BASE_URL=https://webmcp-production-38e5.up.railway.app npm run b
 
 ```bash
 npm run format:check && npm run lint && npm run typecheck
-npm run test          # 414 tests across 57 files
+npm run test          # 398 tests across 57 files
 npm run evals         # 26 behavioural checks against the real tool registry
 npm run build && npm run authorship:check
 ```

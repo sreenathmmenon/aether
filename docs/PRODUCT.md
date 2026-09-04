@@ -8,7 +8,7 @@ browser, and what has been verified rather than asserted. It is the
 reference the other documents in `docs/` specialise from.
 
 Scale, as of the current commit: **683 commits**, **29,234 lines** of
-TypeScript across `src/`, `server/` and `evals/`, **57 test files / 414
+TypeScript across `src/`, `server/` and `evals/`, **57 test files / 398
 tests**, **26 behavioural evals**, **18 registered WebMCP tools**, **4
 shipped example systems**, **2 live production origins**.
 
@@ -393,7 +393,7 @@ same way it is expressed to an agent.
 
 ## 12. How it is verified
 
-**414 tests / 57 files.** **26 behavioural evals** that drive the _real_
+**398 tests / 57 files.** **26 behavioural evals** that drive the _real_
 registry — not mocks. The evals exist because of a specific failure: the room
 once spent an afternoon writing `peakRps` to a tool whose schema has never
 had a `peakRps`, and 411 unit tests stayed green throughout. An eval that
