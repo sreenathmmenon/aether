@@ -18,8 +18,8 @@ shipped example systems**, **2 live production origins**.
 
 Most sites hand an agent a fixed menu. Aether's changes with the state of
 the argument — **10** tools on a committed system, **16** on a blank canvas,
-**18** once there is a repair future to defend, and fewer again after a human
-merges.
+**18** once there is a repair future to defend, and **12** again after a human
+merges — the surface contracts once the person has decided.
 
 Aether is an entire professional workflow — **architecture review** — that
 an agent can carry out through the page, because the page hands it the
@@ -113,8 +113,11 @@ one. These are risk weights, not arithmetic.
 answer. Every run carries an **input fingerprint and an output fingerprint**
 (FNV-1a), so two people reading one board see identical numbers and a run
 can be reproduced tomorrow. Verified: **200 identical runs produced one
-fingerprint**, and the four scenarios produce four _distinct_ hashes, so the
-fingerprint discriminates rather than being a constant. Canvas position is
+fingerprint**, and the four scenarios produce four _distinct_ hashes. The
+sharpest proof is that `regional_outage` and `database_failure` both report
+**93.56% availability** and still hash differently (`fnv1a-894743c9` against
+`fnv1a-f42837ef`) — the fingerprint discriminates where the headline number
+cannot. Canvas position is
 excluded, because the engine never reads it — dragging a component leaves
 both hashes untouched.
 

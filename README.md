@@ -94,7 +94,7 @@ function of what the workspace can currently justify:
 | Committed architecture | **10** | Read, trace, measure, import a repo, open a future                |
 | Blank canvas           | **16** | Build a system — components, dependencies, batch modelling        |
 | A repair future exists | **18** | Propose changes, simulate, compare, recommend                     |
-| After a human merges   | fewer  | The proposal tools withdraw — there is no open future to write to |
+| After a human merges   | **12** | The write tools close again — there is no open future to write to |
 
 This is the WebMCP `ontoolchange` contract used for what it is for. Registration
 is driven by `AbortController`, so tools are not hidden in the UI — they are
