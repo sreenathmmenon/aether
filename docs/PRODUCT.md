@@ -7,7 +7,7 @@ case, what is measured and what is modelled, how the surface reaches a
 browser, and what has been verified rather than asserted. It is the
 reference the other documents in `docs/` specialise from.
 
-Scale, as of the current commit: **681 commits**, **29,234 lines** of
+Scale, as of the current commit: **683 commits**, **29,234 lines** of
 TypeScript across `src/`, `server/` and `evals/`, **57 test files / 414
 tests**, **26 behavioural evals**, **18 registered WebMCP tools**, **4
 shipped example systems**, **2 live production origins**.
@@ -143,7 +143,9 @@ An agent cannot read the number without reading the disclaimer.
 A gate an agent can talk its way past is not a gate.
 
 1. **Absence.** No approve/merge/rollback/delete tool is registered in any
-   state. Verified: those names appear **nowhere in the shipped bundle**.
+   state. The string `approve_branch` does appear in the shipped bundle,
+   exactly once — in `src/app/resident-agent.ts`, which calls it deliberately
+   in order to be refused. That refusal is the demonstration.
 2. **Authority.** The reducer refuses outright when `actor.kind !== "human"`
    — five separate guards in `src/core/branch-engine.ts`.
 3. **Unspoofability.** `actor` is a module constant, not a tool parameter.
@@ -169,6 +171,13 @@ proposal cannot be approved against numbers that have since moved. A stale
 `branchVersion` is refused as `STALE_REVISION` regardless of actor — the
 version check runs _before_ the authority check, so the layers fail
 independently rather than nesting.
+
+**And the gate fails closed for every caller, not only the interface.** The
+required-scenario coverage was once an optional flag that only the React app
+set, which meant any other caller — an agent driving the tools directly, a
+test, a future integration — could approve on partial evidence. It now
+defaults to every scenario the engine models. A safety gate that fails open
+for anything but the happy path is not a gate.
 
 ---
 
@@ -315,15 +324,38 @@ that list against the real registry so it cannot drift.
   diffs `getTools()` against what it believes it registered and surfaces
   divergence, treating the browser as the authority.
 
+### Getting re-registration right cost three real bugs
+
+The surface rebuilds when a `capabilityKey` changes, and that key has to
+change whenever the _registered surface_ would — including its schemas.
+Each element of it is there because leaving it out broke something:
+
+- **Keying only on writability left the live enums empty forever**, so an
+  agent could not anchor a note or trace a dependency to a component the
+  reviewer had just added.
+- **The branch count had to join the key.** On a seeded system, creating a
+  future also flips writability so the key moved anyway; on a blank canvas
+  it does not, so the surface never rebuilt — and
+  `compare_architecture_futures` and `propose_architecture_change` were
+  missing from a page that was visibly showing three futures.
+- **A live region announced "0 tools"** mid-teardown, because the
+  announcement fired between abort and re-register.
+
+That is what using `ontoolchange` properly actually costs, and it is why
+the enums an agent reads are always the live ones.
+
 ---
 
 ## 10. Safety and integrity
 
-- **The live-source proxy is an allowlist of four named sources, not a URL
-  forwarder.** A proxy that forwards whatever URL a page hands it is an open
-  relay, and this one is reachable by anybody who loads the site. An eval
-  points it at `169.254.169.254/latest/meta-data/` — the cloud metadata SSRF
-  endpoint — and asserts refusal.
+- **An arbitrary URL is unrepresentable, not merely rejected.** `source` is a
+  schema `enum` — `openai | github | npm | cloudflare` — so a request for any
+  other address fails validation before a single line of network code runs.
+  That is stronger than an allowlist check, which is a filter that has to be
+  correct every time. A proxy that forwards whatever URL a page hands it is
+  an open relay, and this one is reachable by anybody who loads the site. An
+  eval still points it at `169.254.169.254/latest/meta-data/` — the cloud
+  metadata SSRF endpoint — and asserts refusal.
 - **No request carries a credential.** The repository reader works on public
   repositories only; nothing asks anyone for a token.
 - **Prototype keys refuse cleanly.** `entityId: "__proto__"` or
