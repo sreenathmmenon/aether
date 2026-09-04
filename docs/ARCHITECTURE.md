@@ -41,7 +41,7 @@ Each simulation must be reproducible from `snapshotHash + scenario + engineVersi
 
 ## Simulation model
 
-`aether-sim-6` derives every result from the branch graph rather than from per-entity special cases, so the topology is load-bearing: adding, connecting, or reconfiguring a component changes the outcome. Canvas position is not part of it — the fingerprint covers only what the engine reads, so dragging a component leaves both hashes untouched.
+`aether-sim-7` derives every result from the branch graph rather than from per-entity special cases, so the topology is load-bearing: adding, connecting, or reconfiguring a component changes the outcome. Canvas position is not part of it — the fingerprint covers only what the engine reads, so dragging a component leaves both hashes untouched.
 
 The causal evidence names the two worst capacity deficits rather than every one, because a list of nine is not read. When more components are over capacity than it names, it says so — `2 further components are over capacity in this scenario` — so the summary never understates the breach a human is approving against.
 

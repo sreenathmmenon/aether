@@ -99,7 +99,7 @@ traffic has and is deterministic, so two people reading one board see the same
 numbers. Every reply names which it is, in an `origin` field.
 
 **Modelled** — availability, recovery, latency and cost, from a deterministic
-engine (`aether-sim-6`) running on the capacities the architecture declares.
+engine (`aether-sim-7`) running on the capacities the architecture declares.
 Input and output fingerprints on every run prove reproducibility. Every
 coefficient is a declared, commented assumption in `availabilityModel` and
 `costModel`. They are **not calibrated against measured production incidents**,
@@ -195,7 +195,7 @@ VITE_AETHER_API_BASE_URL=https://webmcp-production-38e5.up.railway.app npm run b
 
 ```bash
 npm run format:check && npm run lint && npm run typecheck
-npm run test          # 413 tests across 57 files
+npm run test          # 414 tests across 57 files
 npm run evals         # 26 behavioural checks against the real tool registry
 npm run build && npm run authorship:check
 ```
