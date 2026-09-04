@@ -153,7 +153,7 @@ The headline reads:
 
 Point at three things in one sweep:
 
-- **`CURRENT · Baseline breach · 93.45% availability · 1 violation`**
+- **`CURRENT · Baseline breach · 93.56% availability · 1 violation`**
 - The causal evidence panel: **`Primary Ledger has no standby replica`**
 - The status strip: **`Waiting on — Evidence`**, which becomes **`The reviewer`** the moment the evidence is clean
 
@@ -166,7 +166,7 @@ Click **`✦ Create repair futures`**. Wait about two seconds.
 
 Three futures appear, and each states the axis it optimises rather than a
 column of the same number — **`Lowest cost · $11,495 / month`**, **`Fastest
-recovery · 12m recovery`**, **`Highest resilience · 96.61% availability`**.
+recovery · 12m recovery`**, **`Highest resilience · 96.74% availability`**.
 Point at that: the cheap future is not a worse version of the safe one, it
 is a different answer to the same failure. The header chip changes to
 **`18 things it may do here`**.
@@ -186,7 +186,7 @@ the reason beside it reads:
 > "1 scenario reports violations. Resolve them to make approval eligible."
 
 Say: _the strongest repair still is not approvable. It fixes the regional
-outage — 96.61% and no violations there — but a traffic spike breaches:_
+outage — 96.74% and no violations there — but a traffic spike breaches:_
 
 - `Primary Ledger capacity deficit: 4,500 RPS`
 - `Authentication capacity deficit: 4,000 RPS`
@@ -224,7 +224,7 @@ Raise reconciliation, re-run all four scenarios one at a time.
 Ask the agent which future to take. It calls
 `recommend_architecture_future` and answers:
 
-> **Recommended: Highest resilience** — 96.61% availability at worst across
+> **Recommended: Highest resilience** — 96.74% availability at worst across
 > 4 clean scenarios, recovering in 7m. It is also the cheapest approvable
 > future. _A human reviews and approves in the Aether interface. No tool
 > can commit Highest resilience._
@@ -257,7 +257,7 @@ tools are registered — one of them *recommends* a future — and not one can c
 
 Click approve. The record entry is the whole thesis in one row:
 
-> "Reviewer approved the exact plan — 4 clean scenarios · worst 96.61%"
+> "Reviewer approved the exact plan — 4 clean scenarios · worst 96.74%"
 
 The actor, the evidence they had, and the worst case they accepted.
 Then commit. The surface **shrinks to twelve tools**: a committed

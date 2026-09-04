@@ -375,11 +375,23 @@ describe("dependency-graph simulation", () => {
     // component started being charged for the paths it correlates -- and
     // only that scenario moved, which is the check that the charge landed
     // where sharing is actually being asked about.
+    // They changed again at aether-sim-7, when the replica cushion cap
+    // started binding. The cap is a replica count and was being applied to a
+    // mean of log2 values, which no architecture can push to 4, so it was
+    // dead code and redundancy was priced far below what the comment claimed.
+    // An SRE drove it: collapsing every component of this fixture to a single
+    // replica moved availability 0.06 points while cost fell $5,688, which
+    // reads as redundancy being nearly free to remove. The cap now applies to
+    // the count, and the credit is sized against `unreplicatedStorePenalty`
+    // so that stripping all redundancy costs less than one datastore losing
+    // its standby -- but is visible. All four scenarios moved by the same
+    // +0.11, which is the check that the change touched the redundancy term
+    // and nothing scenario-specific.
     const expected: [Scenario, string][] = [
-      ["regional_outage", "fnv1a-f1df7811"],
-      ["traffic_spike", "fnv1a-8196c31e"],
-      ["database_failure", "fnv1a-20133e4c"],
-      ["dependency_failure", "fnv1a-7ffee86b"],
+      ["regional_outage", "fnv1a-894743c9"],
+      ["traffic_spike", "fnv1a-5b064da1"],
+      ["database_failure", "fnv1a-f42837ef"],
+      ["dependency_failure", "fnv1a-c62aeb19"],
     ];
     for (const [scenario, hash] of expected) {
       const run = runScenario(

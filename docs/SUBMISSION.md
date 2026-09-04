@@ -67,12 +67,12 @@ restored into their previous workspace.
    agent can propose a system change. Aether proves what it does.", with
    `10 things it may do here` already in the header behind it.
 2. **The decision room, untouched.** The Mumbai headline, the baseline card
-   at `93.45% availability · 1 violation`, the causal evidence naming
+   at `93.56% availability · 1 violation`, the causal evidence naming
    `Primary Ledger has no standby replica`, and the human guardrail — all
    in one frame.
 3. **Immediately after "Create repair futures".** Three futures, each
    leading with the axis it optimises — `Lowest cost · $11,495 / month`,
-   `Fastest recovery · 12m recovery`, `Highest resilience · 96.61%
+   `Fastest recovery · 12m recovery`, `Highest resilience · 96.74%
 availability` — and the header chip now reading **18 things it may do
    here** with the `+8` badge beside it. This is the state-dependent registration
    claim and the trade-off in one image.
@@ -85,7 +85,7 @@ availability` — and the header chip now reading **18 things it may do
 Reconciliation capacity deficit: 2,000 RPS` directly beneath it — the
    product refusing to let a passing scenario stand in for the others.
 6. **The approval record.** `Reviewer approved the exact plan — 4 clean
-scenarios · worst 96.61%`: who decided, the evidence they had, and the
+scenarios · worst 96.74%`: who decided, the evidence they had, and the
    worst case they accepted.
 7. **After the commit.** Twelve tools registered, `Rollback this merge`
    present as a human control, and no agent tool that could undo it.

@@ -41,8 +41,16 @@ export const availabilityModel = {
   unreplicatedStorePenalty: 2.4,
   /** Points regained for each datastore replicating synchronously. */
   synchronousReplicaCredit: 0.75,
-  /** Points regained per redundant compute replica, up to the cap. */
-  replicaCushionCredit: 0.28,
+  /**
+   * Points regained per unit of mean log2 redundancy across the architecture.
+   *
+   * Sized against `unreplicatedStorePenalty` deliberately. A fully replicated
+   * architecture at the cap earns log2(4) * 0.9 = 1.8 points, so collapsing
+   * every component to a single replica costs that much -- visible in a
+   * ranking, and visibly cheaper than the 2.4 charged for one datastore with
+   * no standby. A stateless replica should not outrank a missing standby.
+   */
+  replicaCushionCredit: 0.9,
   /** Redundant replicas beyond this stop adding credit. */
   replicaCushionCap: 4,
   /**
@@ -98,7 +106,7 @@ export const availabilityModel = {
   statelessCeiling: 92,
 } as const;
 
-export const simulationEngineVersion = "aether-sim-6";
+export const simulationEngineVersion = "aether-sim-7";
 
 /**
  * The part of a graph a simulation actually depends on.
@@ -660,13 +668,25 @@ export function runScenario(
   // move when the same architecture is copied wider. Redundancy inside the
   // blast radius counts for less than redundancy that survived, because it
   // is what the component comes back on rather than what kept it serving.
+  // The cap is a replica count, so it belongs on the count -- not on the mean
+  // of the logs. Applied to the mean it was dead code: a mean of log2 values
+  // cannot reach 4 for any architecture a person would draw, so nothing was
+  // ever capped and the comment described a limit that did not exist.
+  //
+  // It mattered because the term is small by design. Collapsing every
+  // component of the payment platform from its replica count to a single
+  // replica moved availability 0.06 points while cost fell $5,688 -- a
+  // reviewer would read that as redundancy being nearly free to remove. The
+  // ceiling on what redundancy can earn is `replicaCushionCredit` times
+  // log2(replicaCushionCap), which is what the credit is scaled against.
   const replicaScores = operational.map((entity) => {
     const replicas = propertiesOf(entity).replicas;
     if (typeof replicas !== "number" || replicas <= 1) return 0;
+    const counted = Math.min(replicas, availabilityModel.replicaCushionCap);
     const survived = impacted.has(entity.id)
       ? availabilityModel.impactedReplicaShare
       : 1;
-    return Math.log2(replicas) * survived;
+    return Math.log2(counted) * survived;
   });
   const replicaCushion = replicaScores.length
     ? replicaScores.reduce((sum, score) => sum + score, 0) /
@@ -725,9 +745,7 @@ export function runScenario(
     availability -= model.correlatedPathPenalty * correlated;
   }
   availability += model.synchronousReplicaCredit * synchronous.length;
-  availability +=
-    Math.min(replicaCushion, model.replicaCushionCap) *
-    model.replicaCushionCredit;
+  availability += replicaCushion * model.replicaCushionCredit;
   if (worstDeficit > 0)
     availability -= Math.min(
       model.capacityDeficitCeiling,

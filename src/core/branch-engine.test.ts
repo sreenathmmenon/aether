@@ -426,7 +426,7 @@ describe("Aether command pipeline", () => {
     if (!simulated.ok) throw new Error("fixture simulation must work");
     expect(
       simulated.value.simulations["branch-highest_resilience"]?.[0],
-    ).toMatchObject({ availability: 96.61, rtoMinutes: 7, rerunScope: "full" });
+    ).toMatchObject({ availability: 96.74, rtoMinutes: 7, rerunScope: "full" });
   });
 
   it("keeps a human cost guardrail outside the agent's authority", () => {

@@ -155,11 +155,16 @@ TypeScript, React 19, Vite, Hono and a Node server, with PostgreSQL-backed
 workspace persistence and Zod-validated tool input throughout.
 
 WebMCP uses the top-level Imperative API against the official `webmcp-types`
-definitions. The production server supplies the origin-isolation and
-`Permissions-Policy: tools=(self)` headers WebMCP requires, and forwards an
-optional `WEBMCP_ORIGIN_TRIAL_TOKEN` as the `Origin-Trial` header for the public
-Chrome origin while the API remains experimental. Tools that mutate the
-auditable workspace never claim to be read-only.
+definitions. The Railway server sends `Permissions-Policy: tools=(self)`,
+`Cross-Origin-Opener-Policy: same-origin` and
+`Cross-Origin-Embedder-Policy: require-corp`, and forwards an optional
+`WEBMCP_ORIGIN_TRIAL_TOKEN` as the `Origin-Trial` header, which the public
+Chrome origin needs while the API is still experimental. The ChatGPT Sites
+origin is a static host that sends none of those and registers all eighteen
+tools regardless — measured, with `crossOriginIsolated` false — because the
+surface there is mediated rather than served through the origin trial. Both
+paths are exercised. Tools that mutate the auditable workspace never claim to
+be read-only.
 
 Each visitor's workspace is keyed by an unguessable identifier generated in
 their browser with `crypto.getRandomValues`. The persistence endpoints validate
