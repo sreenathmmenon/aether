@@ -4,7 +4,40 @@ A recordable script. Every step below was walked against the deployed
 origin, and every number quoted is what the page actually shows. Where a
 step needs a pause to look right on camera, the pause is written in.
 
-**Live URL:** https://webmcp-production-38e5.up.railway.app
+## Say the thesis before you show anything
+
+The first sentence of the film, over the opening frame, before any click:
+
+> "When an agent proposes a change to a running system, there is normally
+> nothing to check it against. This is a page that can tell an agent it is
+> wrong."
+
+Say it in one breath and then start. A viewer who hears the claim first
+watches the next three minutes as evidence for it; a viewer who is shown
+the UI first spends that time working out what they are looking at. This
+costs seven seconds and it is the highest-leverage seven seconds in the
+recording.
+
+The closing line, over the approved merge:
+
+> "Evidence, not persuasion."
+
+## Where to record
+
+**Record on ChatGPT Sites:**
+https://aether-architecture-lab.sreenath-mm89.chatgpt.site
+
+That origin is the demo surface. Opened in ChatGPT's browser the tools are
+simply there — no extension, no origin-trial flag, no setup shown on
+camera. Verified live on that origin: the surface opens at ten tools, moves
+to eighteen when a repair future exists, refuses `capacityRps: "banana"`
+as a type error, and registers no approve, merge or delete tool in any
+state.
+
+**Fallback:** https://webmcp-production-38e5.up.railway.app — the same
+application against the same API, on an independent origin, for Chrome with
+the WebMCP flag enabled. If one origin misbehaves mid-take, the other is a
+URL swap and nothing in the script changes.
 
 ## Before you record
 
