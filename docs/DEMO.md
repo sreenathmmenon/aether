@@ -8,9 +8,10 @@ step needs a pause to look right on camera, the pause is written in.
 
 The first sentence of the film, over the opening frame, before any click:
 
-> "When an agent proposes a change to a running system, there is normally
-> nothing to check it against. This is a page that can tell an agent it is
-> wrong."
+> "Most sites give an agent a fixed menu. Aether's changes with the state of
+> the argument — ten tools on a committed system, sixteen on a blank canvas,
+> eighteen once there's a repair to defend. The page decides what an agent
+> may do next."
 
 Say it in one breath and then start. A viewer who hears the claim first
 watches the next three minutes as evidence for it; a viewer who is shown
@@ -18,9 +19,44 @@ the UI first spends that time working out what they are looking at. This
 costs seven seconds and it is the highest-leverage seven seconds in the
 recording.
 
+It opens on WebMCP itself rather than on a constraint. A fixed tool list is
+what nearly every entry ships; a surface that re-registers through
+`ontoolchange` as the work moves is the part of the specification almost
+nobody uses, and the numbers make it concrete in the first breath.
+
+Then, once — not as the thesis, as the consequence:
+
+> "And the one thing it cannot do is approve its own work."
+
 The closing line, over the approved merge:
 
 > "Evidence, not persuasion."
+
+## What the film has to establish
+
+Aether is a whole professional workflow an agent can carry out through the
+page — not a chatbot beside a diagram. Do not let the film imply less than
+that. In three minutes it should be visible that an agent can:
+
+- **build** a system from a spoken brief, a pasted `docker-compose.yml`, or
+  a public GitHub repository — `model_architecture`, `add_architecture_component`,
+  `connect_components`, `read_repository_architecture`
+- **measure** it against live sources — OpenAI, GitHub, npm and Cloudflare
+  status, and npm's published download volume
+- **branch** repair futures in isolation, each with an immutable base and a
+  semantic diff
+- **simulate** four failure scenarios — regional outage, traffic spike,
+  database failure, dependency failure — on a deterministic engine with
+  input and output fingerprints
+- **compare** the futures side by side and **write a recommendation** that
+  says which the evidence favours and what accepting it costs
+- **work alongside people and other agents** in a shared room, with roles,
+  presence, a causal failure trace, component-anchored discussion and a
+  replayable history
+
+Every one of those is a registered tool going through the same validated
+commands a human click goes through. The gate is the last beat, not the
+premise.
 
 ## Where to record
 

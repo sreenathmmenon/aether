@@ -1,12 +1,14 @@
 # Aether
 
-> **The page that can tell an agent it is wrong.**
+> **The page decides what an agent may do next.**
 
-When a language model proposes a change to a running system, there is normally nothing to check it against. The agent reasons, the agent concludes, and the only thing standing between its conclusion and production is a human who has to take it on trust.
+Most sites give an agent a fixed menu. Aether's changes with the state of the argument — **ten** tools on a committed system, **sixteen** on a blank canvas, **eighteen** once there is a repair future to defend.
 
-Aether makes the agent's recommendation lose an argument to a computation.
+Aether is an entire professional workflow — architecture review — that an agent can carry out through the page, because the page hands it the tools. Describe a system aloud, paste a `docker-compose.yml`, or point it at a public GitHub repository, and an agent builds it. Measure it against live status sources and real npm demand. Branch three repair futures, simulate four failure modes on a deterministic engine, compare them side by side, and write a recommendation saying which the evidence favours and what accepting it costs. Argue it out with other people and other agents in a shared room, with a causal failure trace, component-anchored discussion, and a replayable history.
 
-The agent finds the strongest repair for a regional outage and recommends it. Aether refuses to approve it — a traffic spike still breaches capacity. Fix that, and a third bottleneck appears that was hidden behind the first two. Only then does the approve control unlock, and only for a person: **no approve, merge, or rollback tool is registered for an agent in any state.**
+Every one of those is a registered WebMCP tool going through the same validated commands a human click goes through. There is no second, weaker door.
+
+And the one thing an agent cannot do is approve its own work. It finds the strongest repair for a regional outage and recommends it; Aether refuses — a traffic spike still breaches capacity. Fix that, and a third bottleneck appears that was hidden behind the first two. Only then does the approve control unlock, and only for a person: **no approve, merge, or rollback tool is registered for an agent in any state.**
 
 ![Aether's decision room: Mumbai is down, the committed architecture at 93.45% availability with one violation, and the causal read naming Primary Ledger as the break.](public/share-card.png)
 
@@ -46,6 +48,18 @@ This is the WebMCP `ontoolchange` contract used for what it is for. Registration
 is driven by `AbortController`, so tools are not hidden in the UI — they are
 genuinely absent from `document.modelContext.getTools()`, and an agent asking
 for one is told it does not exist.
+
+The eighteen, by what they let an agent do:
+
+|                 |                                                                                                                 |
+| --------------- | --------------------------------------------------------------------------------------------------------------- |
+| **Build**       | `model_architecture` · `add_architecture_component` · `connect_components` · `read_repository_architecture`     |
+| **Read**        | `get_architecture_summary` · `inspect_failure_domain` · `trace_architecture_dependency` · `get_decision_record` |
+| **Measure**     | `read_live_source` · `measure_component_demand` · `read_component_telemetry`                                    |
+| **Branch**      | `create_architecture_branch` · `propose_architecture_change`                                                    |
+| **Prove**       | `run_failure_scenario` · `compare_architecture_futures` · `recommend_architecture_future`                       |
+| **Collaborate** | `join_incident_room` · `add_decision_note`                                                                      |
+| **Approve**     | _nothing — by design_                                                                                           |
 
 ## The human gate, in three independent layers
 
