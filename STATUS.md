@@ -3146,3 +3146,35 @@ Assume the entry lost, then go find why. Two agents audited the first-run and er
   - **Mutation-tested:** injecting "the registry publishes eleven tools" into `ARCHITECTURE.md` fails the guard, naming the four real surface sizes.
 
 **Verified holding, so the remaining time is not spent re-checking it:** every server endpoint validates before use, times out its upstream, and degrades to a typed JSON error; the database being unavailable leaves the page working on local state; WebMCP being absent gives an honest disabled state rather than advertising tools that cannot exist; `?system=`, `?room=` and malformed URLs are all sanitised; and the save queue genuinely serialises to one in-flight PUT.
+
+## M245 — Three reviewers drove the product, and each found one thing
+
+Re-review after the ChatGPT Sites deployment. A WebMCP specification
+reviewer, a hackathon judge, and a senior SRE each drove the running product
+independently. Two came back above their previous score; the third came back
+below it on a run that did not finish, and corrected itself once the finding
+was checked.
+
+- [x] **M245.1 — The replica cap was dead code, so redundancy was nearly free to delete** `DONE`
+  - `replicaCushionCap: 4` is documented as a replica count — "redundant replicas beyond this stop adding credit" — but was applied to `replicaCushion`, a **mean of log2 values**. No architecture a person would draw pushes that mean to 4, so the cap never bound and the comment described a limit that did not exist.
+  - **Measured before:** collapsing every component of the payment platform to a single replica moved availability **0.06 points** while cost fell **$5,688**. An agent optimising for cost takes that trade every time, and a reviewer reads it as redundancy being free to remove.
+  - The cap now applies to the count, before the log, where its own comment says. `replicaCushionCredit` 0.28 → 0.9, sized against `unreplicatedStorePenalty: 2.4` so stripping all redundancy stays cheaper than one datastore losing its standby — a stateless replica should not outrank a missing standby.
+  - **Measured after:** collapse-to-1 costs **0.19 points** for a $5,688 saving; raise-to-8 earns **0.44 points** for $87,942. The reviewer independently confirmed the cap now binds — all-to-4 and all-to-8 give identical availability at very different cost, so over-provisioning past the cap is correctly priced as waste.
+  - Engine to `aether-sim-7`, since the coefficients changed and the fingerprints are a reproducibility contract. All four scenarios moved by an identical **+0.11**, which is the check that the change touched the redundancy term and nothing scenario-specific.
+- [x] **M245.2 — Prototype keys reached past every existence check** `DONE`
+  - A judge found it: `entityId: "zzz"` refused cleanly and named the five real components, while `"constructor"` returned `{"entity":"Object"}` — a JavaScript internal reported as a component in the reviewer's own architecture — and `"__proto__"` returned an empty path as though it were real but unconnected.
+  - Nothing was exploitable; no prototype was ever written through. But a product whose claim is that its refusals teach an agent what to do next cannot answer one class of unknown id with an internal name and another with a clean list.
+  - Fixed once in `deriveGraph`, which every branch graph is read through, rather than at the forty-odd bare lookups — including the two duplicate checks that would otherwise have reported a collision against an inherited member. **Verified across the whole surface:** `trace`, `telemetry`, `propose` and `connect` now answer `__proto__`, `constructor`, `toString`, `valueOf` and `hasOwnProperty` exactly as they answer `zzz`.
+- [x] **M245.3 — Every engine number now says what kind of number it is** `DONE`
+  - An SRE read `availability: 96.74` against a causal chain listing all five components and called it incoherent. The disclosure existed — in `docs/DATA_SOURCES.md` and in the comments on `availabilityModel` — which is everywhere except where it is read.
+  - `run_failure_scenario`, `inspect_failure_domain` and `compare_architecture_futures` now carry a `basis` field: a ranking score, not an SLO, from declared assumptions not calibrated against production incidents. It sits outside `simulationInputs`, so no fingerprint, coefficient or ranking moved.
+  - `compare_architecture_futures` carries the short form. That tool is already squeezed against the 1,500-character budget twice over, and 200 characters of disclosure there costs a future its evidence — the thing the comparison exists to show.
+- [x] **M245.4 — The specification has a `title` field and eighteen tools set none** `DONE`
+  - `RegisteredTool.title` is **non-optional**, so every connected agent can read a title through `getTools()`. Ours had nothing authored to hand over: a person on the page read "Simulate a failure" while an agent saw only `run_failure_scenario`. The words already existed in `tool-plain-language.ts` for the capability panel — on the wrong side of the browser boundary.
+  - All eighteen descriptors now carry `title`, and a test holds the registry and the panel in agreement so they cannot drift into describing the same capability differently.
+  - Two reviewer suggestions were **declined with reason**: `destructiveHint`, `idempotentHint` and `outputSchema` are not in WebMCP. `ToolAnnotations` in the official `webmcp-types` defines exactly two members, and `ModelContextTool` has no `outputSchema` — they are server-side MCP fields. Shipping them would mean non-standard fields the browser drops, on a criterion of specification fidelity. The reviewer verified this and withdrew both.
+- [x] **M245.5 — Pushing to GitHub was never deploying anything** `DONE`
+  - The Railway service has **no repository attached**; every previous release was a CLI upload. Two commits sat on `origin/main` for eight hours while the live origin served the engine they fixed — and the judge's single highest-value item was that the judged URL still ran `aether-sim-6`.
+  - Deployed via `railway up` and **verified in the served bundle**, not assumed: `aether-sim-7`, the `basis` sentence, and the tool titles are all present in `index-23aflShK.js`, with all four WebMCP headers still correct.
+
+**Scores after the fixes:** WebMCP specification reviewer **9.9 leverage / 9.8 overall**, up from 9.5, with both of their remaining items withdrawn as out-of-spec. Hackathon judge **9.5 overall, 10/10 on WebMCP Leverage**, having verified the tool counts in the browser and failed to forge an unregistered tool. The SRE's 6.5 was withdrawn — _"my 6.5 was too harsh"_ — after their headline finding, a write path reported as dropping writes, was disproved by reproducing it: `branchVersion` advances 2, 3, 4, 5, 6, and they had been reading refusals, which carry no version.
