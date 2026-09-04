@@ -13,3 +13,14 @@ evals/_*.ts
 
 # Working notes, deliberately uncommitted.
 PRODUCT-MAP.md
+
+# Working notes, kept locally and deliberately not published.
+# Camera directions, submission drafts, and our own critique of the product
+# are how the work gets made -- they are not documentation of it, and a
+# reader finding them learns how the pitch was assembled rather than what
+# the product does.
+docs/DEMO.md
+docs/SUBMISSION.md
+docs/JUDGE_COUNCIL.md
+docs/OWNER_CHECKLIST.md
+.private/

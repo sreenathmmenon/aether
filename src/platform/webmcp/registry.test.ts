@@ -17,12 +17,11 @@ import registrySource from "./registry.ts?raw";
 import type { ToolCall } from "./registry";
 import webmcpDoc from "../../../docs/WEBMCP.md?raw";
 import complianceDoc from "../../../docs/WEBMCP_COMPLIANCE.md?raw";
-import submissionDoc from "../../../docs/SUBMISSION.md?raw";
 import readmeDoc from "../../../README.md?raw";
 import planDoc from "../../../docs/V3_REVERSE_WINNER_PLAN.md?raw";
 import evalsDoc from "../../../docs/WEBMCP_EVALS.md?raw";
 import architectureDoc from "../../../docs/ARCHITECTURE.md?raw";
-import demoDoc from "../../../docs/DEMO.md?raw";
+import productDoc from "../../../docs/PRODUCT.md?raw";
 import llmsDoc from "../../../public/llms.txt?raw";
 import appSource from "../../app/App.tsx?raw";
 
@@ -1137,13 +1136,13 @@ describe("Aether WebMCP registry", () => {
       ["docs/WEBMCP_COMPLIANCE.md", complianceDoc],
       ["docs/V3_REVERSE_WINNER_PLAN.md", planDoc],
       ["docs/WEBMCP_EVALS.md", evalsDoc],
-      ["docs/SUBMISSION.md", submissionDoc],
       ["README.md", readmeDoc],
-      // Both were outside this list, and both drifted: ARCHITECTURE.md still
-      // said the product ships two starting systems when it ships four, and
-      // DEMO.md is the shot list somebody records the required video from.
+      // ARCHITECTURE.md was outside this list and drifted: it still said the
+      // product ships two starting systems when it ships four. PRODUCT.md is
+      // the complete reference and quotes every surface size, so it is the
+      // one most expensive to have wrong.
       ["docs/ARCHITECTURE.md", architectureDoc],
-      ["docs/DEMO.md", demoDoc],
+      ["docs/PRODUCT.md", productDoc],
       // The file written for machine readers, and the one most likely to be
       // checked with a single curl. It said five, ten and twelve while the
       // registry published ten, fifteen and eighteen -- a verifiable

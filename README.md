@@ -18,6 +18,7 @@ And the one thing an agent cannot do is approve its own work. It finds the stron
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **ChatGPT Sites** | **[aether-architecture-lab.sreenath-mm89.chatgpt.site](https://aether-architecture-lab.sreenath-mm89.chatgpt.site)** — open in ChatGPT's browser and the tools are simply there |
 | **Railway**       | [webmcp-production-38e5.up.railway.app](https://webmcp-production-38e5.up.railway.app) — same app, same API, independent origin                                                 |
+| **Source**        | [github.com/sreenathmmenon/aether](https://github.com/sreenathmmenon/aether)                                                                                                    |
 
 Both origins are verified live. The Sites build points at the Railway API, so
 shared rooms, live sources, repository import and telemetry work identically on

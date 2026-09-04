@@ -8,8 +8,8 @@ The deployable Aether product, its WebMCP integration, production persistence, b
 
 Latest live release checked from Railway during the 2026-09-03 readiness audit: deployment `13debe8a-2868-4d10-8b08-72a431e9a9a7`, service online at `https://webmcp-production-38e5.up.railway.app`, PostgreSQL-backed `/health`, origin-isolation headers, WebMCP origin-trial header, `Permissions-Policy: tools=(self)`, and browser-visible WebMCP discovery showing ten tools on a committed seeded architecture, sixteen tools on the blank editable architecture, and eighteen tools once a repair future exists. ChatGPT Sites is now a second production UI surface at `https://aether-architecture-lab.sreenath-mm89.chatgpt.site`, with browser API calls intentionally pointed to the Railway backend. Latest Sites publish checked on 2026-09-04 is version 4 from commit `c090a07414c56ddd82e6b46a93b81abbdb640063`.
 
-**The three items only the owner can finish, with exact commands, are in
-[`docs/OWNER_CHECKLIST.md`](docs/OWNER_CHECKLIST.md).**
+**The three items only the owner can finish are tracked outside this
+repository, in working notes kept locally.**
 
 Two external/submission items remain deliberately open:
 

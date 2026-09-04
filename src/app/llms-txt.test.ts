@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import llmsTxt from "../../public/llms.txt?raw";
-import submission from "../../docs/SUBMISSION.md?raw";
+import readme from "../../README.md?raw";
 import serverSource from "../../server/index.ts?raw";
 
 /**
@@ -10,19 +10,19 @@ import serverSource from "../../server/index.ts?raw";
  * 404, and nothing compared it against the URL the submission publishes.
  */
 describe("the file an agent reads about this page", () => {
-  it("links to the same repository the submission does", () => {
-    const inSubmission = submission.match(
+  it("links to the same repository the README does", () => {
+    const inSubmission = readme.match(
       /https:\/\/github\.com\/[A-Za-z0-9-]+\/aether/,
     )?.[0];
-    expect(inSubmission, "the submission names no repository").toBeTruthy();
+    expect(inSubmission, "the README names no repository").toBeTruthy();
     expect(llmsTxt).toContain(inSubmission!);
   });
 
-  it("carries no link the submission does not also carry", () => {
+  it("carries no link the README does not also carry", () => {
     // A second URL here is a second thing to keep right, and the one that
     // drifted was the one nothing else checked.
     for (const url of llmsTxt.match(/https:\/\/github\.com\/\S+/g) ?? [])
-      expect(submission, `${url} appears only in llms.txt`).toContain(
+      expect(readme, `${url} appears only in llms.txt`).toContain(
         url.replace(/\)$/, ""),
       );
   });
