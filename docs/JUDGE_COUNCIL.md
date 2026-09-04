@@ -1,5 +1,12 @@
 # Aether Judge-Council Product Review
 
+> **Internal working record.** This is our own critique process — a way of
+> finding defects before a reviewer does, by arguing with the product from
+> several professional angles. The ratings in it are self-assessments used to
+> decide what to fix next. They are not an evaluation by anybody outside this
+> project, they carry no external authority, and nothing here belongs in a
+> submission or in any material shown to actual judges.
+
 Date: 2026-09-03
 
 This review uses the official WebMCP Challenge lenses: WebMCP leverage,

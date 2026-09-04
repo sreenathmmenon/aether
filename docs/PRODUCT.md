@@ -407,30 +407,3 @@ name the legal properties first?"_
 A gate chains format → lint → typecheck → test → build → authorship, with a
 commit-msg hook. Drift guards hold the documentation to the registry: a test
 fails if a doc claims a tool count the registry does not publish.
-
----
-
-## 13. Independent review
-
-Two adversarial panels modelled on the seven named Devpost judges drove the
-running product across three rounds.
-
-| Criterion             | Panel A  | Panel B |
-| --------------------- | -------- | ------- |
-| WebMCP Leverage       | **10**   | 9.75    |
-| Execution             | **10**   | 9.75    |
-| Potential Impact      | 9.5      | 8.5     |
-| Creativity & Ambition | **10**   | 9.0     |
-| **Overall**           | **9.75** | **9.4** |
-
-**All seven rank it first.** Across three rounds of hostile review they
-produced exactly **one** code defect — a refusal that reported
-`property: Required` before naming the legal properties. It was fixed at the
-root, along with a second-order regression the fix introduced.
-
-Their own summary of what separates it: most entries demonstrate that WebMCP
-_can_ drive an application; this one treats the agent as an untrusted caller
-and designs the whole surface around that — tools absent rather than hidden,
-rejections that teach the correct call, an authorisation gate that binds
-every actor including the human, and evidence that expires when the thing it
-measured changes.
