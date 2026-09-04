@@ -139,6 +139,16 @@ current evidence**, and separately, only a person may be the one to do it.
 An agent's edit also invalidates the evidence gathered before it, so a
 proposal cannot be approved against numbers that have since moved.
 
+Clean evidence is not enough either — it has to be **complete**. Running the
+one scenario that comes back green is the obvious way to game a gate like
+this, so it is refused, and the refusal names what is still owed:
+
+```
+human, 1 of 4 scenarios clean →  NOT_AVAILABLE: 3 of 4 scenarios have not been run
+                                 at this version: traffic_spike, database_failure,
+                                 dependency_failure.
+```
+
 Verified live on both origins: `capacityRps: "banana"` is refused with
 _"expected number, received string"_ rather than silently corrupting approved
 evidence; an unknown branch id is refused and told which ids are real.

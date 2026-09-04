@@ -53,6 +53,12 @@ as a fifteen-second cold open. On the seeded payment platform:
    will not let it act on it. There is no approve tool. Not disabled —
    absent."_
 
+One line worth adding over that third beat, because it answers the objection
+a sceptical viewer is already forming — _why not just run the scenario that
+comes back clean?_ Say: _"and one clean scenario is not enough. Approval
+needs all four at this version, and the refusal names the three still
+owed."_ Nothing to click; the gate already does this.
+
 Then start the walkthrough properly. The rest of the film is the evidence
 for what the first thirty seconds claimed, and a viewer who has seen the
 refusal once will recognise every gate that follows.
